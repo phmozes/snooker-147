@@ -76,3 +76,29 @@ Options:
 4. **Playback 1.2x** (already in "Later").
 5. **Accept longer colour shots**, up to `shot.maxDurationFlex` (2.2 s), and keep 1-1.5 s for reds.
 Recommendation: 1 + 2 in the solver tasks (4.3-4.5), then measure again before deciding on 3, 4 or 5.
+
+## Failure shots (task 4.2)
+Code: `solveFailure` in `src/core/solver.ts`. Report: `npx vitest run bench/failure.test.ts`. Types: plain miss, jaw
+rattle, in-off, wrong ball first. Each shot found is judged by the rules code: a failure of the chosen type, and no
+object ball potted (`tests/failure.test.ts`, and the Rules check line on the debug page).
+
+**How a failure looks like a real attempt:** the cue ball is always aimed along the ghost-ball line at the target
+ball for one pocket, with only a small aim error at the pocket (config `solver.failure.aimOffsets`: 6-9 cm off the
+mouth centre for a miss, 3-4.5 cm onto the jaw for a rattle), with the same powers and spins as potting shots. The
+cue ball must hit the target first (except "wrong ball first", where the aimed path is blocked by another ball). For a
+miss, the target ball must come within 15 cm of the pocket mouth, so it never stops short or goes the wrong way.
+
+Result, 20 random layouts per row (150 ms per search; a fallback searches once more):
+| Level, due | Plain miss | Jaw rattle | In-off | Wrong ball first |
+|---|---|---|---|---|
+| 6 reds, red | 13 found, 7 none | 17 found, 3 none | 12 found, 6 fallback, 2 none | 12 found, 6 fallback, 2 none |
+| 15 reds, red | 16 found, 4 none | 15 found, 2 fallback, 3 none | 6 found, 12 fallback, 2 none | 14 found, 6 fallback |
+| 15 reds, black | 12 found, 8 none | 14 found, 6 none | 5 found, 8 fallback, 7 none | 9 found, 9 fallback, 2 none |
+
+"Fallback" = the type was not found, a plain miss was used (RULES D.2). "None" = not even a plain miss.
+
+Left for later tasks:
+- **Step-1 snookered escape:** needs the break-off library (task 4.6). Not built.
+- **D.2 last fallbacks** (soft wrong-ball shot, gentle tap that hits nothing): not built, so "none" can still happen.
+- Failure shots are long (median 1.7-2.9 s), the cue ball runs on after the miss. Same plan as for pace (4.3-4.5).
+- A fallback can take 2 x 150 ms; counting shots instead of ms (4.5) fixes the budget for both.

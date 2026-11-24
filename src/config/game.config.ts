@@ -123,6 +123,16 @@ export const CONFIG = {
     aimStep: 0.005,              // metres between aim points across the mouth
     minSpeed: 0.8,               // m/s, softest power tried (powers go up to physics.maxCueSpeed)
     maxCutDeg: 75,               // thinner cuts are not tried
+    // failure shots (task 4.2): aim points across the pocket mouth (m, + = left of the approach) for each type
+    failure: {
+      aimOffsets: {
+        plainMiss: [0.06, -0.06, 0.075, -0.075, 0.09, -0.09],   // just outside the jaws
+        jawRattle: [0.03, -0.03, 0.035, -0.035, 0.04, -0.04, 0.045, -0.045], // onto the jaw
+        inOff: [0, 0.02, -0.02, 0.04, -0.04, 0.06, -0.06],
+        wrongBallFirst: [0, 0.02, -0.02],
+      },
+      mustReach: 0.15,           // a missed target ball must come within this of the pocket mouth (a real attempt)
+    },
     powerSamples: 8,
     spinSamples: [-0.8, -0.3, 0, 0.4, 0.8],
     lookahead: 1,                // accept a pot only if the NEXT step stays solvable

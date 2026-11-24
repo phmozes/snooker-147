@@ -133,3 +133,77 @@ export function randomLayout(rng: () => number, reds: number, due: 'red' | 'colo
   return { phase: due, redsLeft: left, nextColour: null, balls, lastFailure: null,
     failedIn: null, score: 0, opponentScore: 0, blackAfterEveryRed: true };
 }
+
+// ---------------- failure shots (task 4.2) ----------------
+// A failure must look like a real attempt at the pot: the cue ball is always aimed along the ghost-ball line at the
+// target ball for one pocket, with only a small aim error at the pocket (a few cm), using the same powers and spins as
+// potting shots. For a miss or a rattle the target ball must actually travel to the pocket (within
+// failureMustReach of the mouth). Wrong ball first: the attempt is aimed at the target, another ball is in the way.
+
+export type FailureKind = 'plainMiss' | 'jawRattle' | 'inOff' | 'wrongBallFirst';
+export interface SolvedFailure extends SolvedShot { kind: FailureKind; fallback: boolean }
+
+const FAIL = CONFIG.solver.failure;
+
+export function solveFailure(state: FrameState, target: BallKind, kind: FailureKind, table: TableGeometry,
+  now: () => number, cfg: PhysicsConfig = CONFIG.physics, budgetMs: number = Sv.timeBudgetMs): SolvedFailure | null {
+  const t0 = now();
+  const r = table.ballRadius;
+  const cue = state.balls.find((b) => b.kind === 'cue')!;
+  const powers = Array.from({ length: Sv.powerSamples }, (_, i) =>
+    Sv.minSpeed * (CONFIG.physics.maxCueSpeed / Sv.minSpeed) ** (i / (Sv.powerSamples - 1)));
+  const offsets = FAIL.aimOffsets[kind];
+  let best: SolvedFailure | null = null;
+  let tried = 0;
+  search: for (const ball of state.balls.filter((b) => b.kind === target)) {
+    for (const p of table.pockets) {
+      const left = { x: -p.inward.y, y: p.inward.x };
+      for (const off of offsets) {
+        const tgt = { x: p.mouthMid.x + left.x * off, y: p.mouthMid.y + left.y * off };
+        const toP = { x: tgt.x - ball.pos.x, y: tgt.y - ball.pos.y };
+        const d = Math.hypot(toP.x, toP.y);
+        const ghost = { x: ball.pos.x - (toP.x / d) * 2 * r, y: ball.pos.y - (toP.y / d) * 2 * r };
+        const dir = { x: ghost.x - cue.pos.x, y: ghost.y - cue.pos.y };
+        const cut = (Math.acos(Math.max(-1, Math.min(1, (dir.x * toP.x + dir.y * toP.y) / (Math.hypot(dir.x, dir.y) * d)))) * 180) / Math.PI;
+        if (cut > Sv.maxCutDeg) continue;
+        const blocked = !pathClear(cue.pos, ghost, state.balls, ['cue', ball.id], r);
+        if ((kind === 'wrongBallFirst') !== blocked) continue; // only wrongBallFirst wants a ball in the way
+        for (const speed of powers) {
+          for (const spin of Sv.spinSamples) {
+            if (now() - t0 > budgetMs) break search;
+            tried++;
+            const sim = createSim(state.balls, table, cfg);
+            strike(sim, 'cue', dir, speed, spin);
+            let closest = Infinity;
+            const tb = sim.balls.find((b) => b.id === ball.id)!;
+            const limit = Math.ceil((best ? best.duration : cfg.maxSimSeconds) / cfg.timestep);
+            for (let n = 0; n < limit && isMoving(sim); n++) {
+              stepSim(sim);
+              closest = Math.min(closest, Math.hypot(tb.pos.x - p.mouthMid.x, tb.pos.y - p.mouthMid.y));
+            }
+            if (isMoving(sim)) continue;
+            const first = sim.events.find((e) => e.type === 'ball');
+            const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+            const potted = sim.balls.filter((b) => b.potted).map((b) => b.id);
+            const v = judgeShot(state, target, { firstHit, potted, after: [] });
+            if (v.result !== 'failure') continue;
+            const jawHits = sim.events.some((e) => e.type === 'jaw' && e.a === ball.id);
+            const ok = kind === 'plainMiss' ? v.type === 'noPot' && firstHit === ball.id && !jawHits && closest < FAIL.mustReach
+              : kind === 'jawRattle' ? v.type === 'noPot' && firstHit === ball.id && jawHits
+              : kind === 'inOff' ? v.type === 'inOff' && firstHit === ball.id
+              : v.type === 'wrongBallFirst';
+            if (!ok) continue;
+            best = { target: ball.id, pocket: p.id, dir, speed, spin, duration: sim.time, computeMs: 0, tried: 0, kind, fallback: false };
+          }
+        }
+      }
+    }
+  }
+  if (best) { best.computeMs = now() - t0; best.tried = tried; return best; }
+  // RULES D.2: if the chosen failure type cannot be found, use a plain miss
+  if (kind !== 'plainMiss') {
+    const miss = solveFailure(state, target, 'plainMiss', table, now, cfg, budgetMs);
+    if (miss) return { ...miss, kind, fallback: true, computeMs: now() - t0 };
+  }
+  return null;
+}

@@ -8,7 +8,7 @@ import { CONFIG } from '../config/game.config';
 import { paceStudy, speedBenchmark, withFriction } from '../core/physics/bench';
 import { mulberry32 } from '../core/rng';
 import { judgeShot, type FrameState } from '../core/rules';
-import { randomLayout, solveSuccess, type SolveInfo } from '../core/solver';
+import { randomLayout, solveFailure, solveSuccess, type FailureKind, type SolveInfo } from '../core/solver';
 import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, runUntilStill, stepSim, strike, type PhysicsConfig, type Sim } from '../core/physics/sim';
 import { breakAim, pocketRollStart, runPocketRoll, type PocketRoll, type RollOutcome } from '../core/physics/testShots';
 import { arcPoints, buildTable, type JawArc, type PocketId, type TableGeometry } from '../core/table/geometry';
@@ -727,6 +727,65 @@ renderers.push(buttons('solveButtons', [
   { label: 'Solve', on: () => false, click: solveAndPlay },
   { label: 'Next layout', on: () => false, click: () => { layoutNo++; showLayout(); document.getElementById('solveOut')!.textContent = `Layout ${layoutNo}: press Solve`; } },
   { label: 'Run 20', on: () => false, click: runTwenty },
+]));
+
+// ---- failure shots (task 4.2) ----
+let failKind: FailureKind = 'plainMiss';
+const FAIL_TEXT: Record<FailureKind, string> = { plainMiss: 'Plain miss', jawRattle: 'Jaw rattle', inOff: 'In-off', wrongBallFirst: 'Wrong ball first' };
+const RULE_TYPE: Record<FailureKind, string> = { plainMiss: 'noPot', jawRattle: 'noPot', inOff: 'inOff', wrongBallFirst: 'wrongBallFirst' };
+function solveFailureAndPlay() {
+  showLayout();
+  const L = layout!;
+  const s = solveFailure(L, solveTarget(), failKind, table, () => performance.now(), physics);
+  const out = document.getElementById('solveOut')!;
+  if (!s) { out.innerHTML = `Layout ${layoutNo}: <span class="bad">no ${FAIL_TEXT[failKind]} and no plain miss found</span>`; return; }
+  const check = createSim(L.balls, table, physics);
+  strike(check, 'cue', s.dir, s.speed, s.spin);
+  runUntilStill(check);
+  const first = check.events.find((e) => e.type === 'ball');
+  const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+  const potted = check.balls.filter((b) => b.potted).map((b) => b.id);
+  const v = judgeShot(L, solveTarget(), { firstHit, potted, after: [] });
+  const wanted = s.fallback ? 'noPot' : RULE_TYPE[failKind];
+  const ok = v.result === 'failure' && v.type === wanted && potted.every((id) => id === 'cue');
+  out.innerHTML = [
+    `Layout ${layoutNo}: <b>${FAIL_TEXT[failKind]}</b>${s.fallback ? ' <span class="bad">not found: fell back to a plain miss (RULES D.2)</span>' : ''}`,
+    `Attempt at: <b>${s.target}</b> into <b>${s.pocket}</b>`,
+    `Power: ${s.speed.toFixed(2)} m/s (${Math.round((s.speed / CONFIG.physics.maxCueSpeed) * 100)}%) · spin: ${spinText(s.spin)}`,
+    `Shot length: <b>${s.duration.toFixed(2)} s</b> · compute time: <b>${s.computeMs.toFixed(0)} ms</b> (${s.tried} shots tried)`,
+    `Rules check: ${ok ? `<span class="ok">failure (${v.result === 'failure' ? v.type : ''}), no object ball potted</span>` : `<span class="bad">${JSON.stringify(v)}</span>`}`,
+  ].join('\n');
+  shoot(s.dir, s.speed, s.spin);
+}
+function runTwentyFailures() {
+  const out = document.getElementById('solveOut')!;
+  out.textContent = `finding 20 ${FAIL_TEXT[failKind]} shots...`;
+  setTimeout(() => {
+    let found = 0;
+    let fallback = 0;
+    let none = 0;
+    const ms: number[] = [];
+    const start = layoutNo;
+    for (let i = 0; i < 20; i++) {
+      layoutNo = start + i;
+      const s = solveFailure(makeLayout(), solveTarget(), failKind, table, () => performance.now(), physics);
+      if (!s) none++; else if (s.fallback) fallback++; else found++;
+      if (s) ms.push(s.computeMs);
+    }
+    layoutNo = start;
+    out.innerHTML = [
+      `<b>Run 20: ${FAIL_TEXT[failKind]}</b> (layouts ${start}-${start + 19}, ${state.reds} reds level, ${solveDue} due)`,
+      `Found: <b>${found} of 20</b> · fell back to a plain miss: <b>${fallback}</b> · nothing found: ${none}`,
+      `Compute time: longest ${ms.length ? Math.max(...ms).toFixed(0) : '-'} ms (each search up to ${CONFIG.solver.timeBudgetMs} ms, a fallback adds one more)`,
+    ].join('\n');
+  }, 30);
+}
+renderers.push(buttons('failKinds', (Object.keys(FAIL_TEXT) as FailureKind[]).map((k) => ({
+  label: FAIL_TEXT[k], on: () => failKind === k, click: () => { failKind = k; },
+}))));
+renderers.push(buttons('failButtons', [
+  { label: 'Solve failure', on: () => false, click: solveFailureAndPlay },
+  { label: 'Run 20 (this type)', on: () => false, click: runTwentyFailures },
 ]));
 
 window.addEventListener('resize', draw);
