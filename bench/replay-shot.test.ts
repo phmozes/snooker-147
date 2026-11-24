@@ -8,7 +8,7 @@ import { CONFIG } from '../src/config/game.config';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
 import { newRound, setLevel, shoot, start, type LevelId } from '../src/core/round';
 import { buildTable } from '../src/core/table/geometry';
-import { classifySuccess, naturalCheck, playFacts } from '../src/core/shotType';
+import { classifySuccess, cutAngle, naturalCheck, playFacts } from '../src/core/shotType';
 
 it('replay marked shots', () => {
   const table = buildTable();
@@ -34,6 +34,12 @@ it('replay marked shots', () => {
       const pf = playFacts(before.balls, h.shot as { dir: { x: number; y: number }; speed: number; spin: number }, table);
       const facts = { state: before.balls, target: h.target, potted: pf.potted[0]!, aimedPocket: null, events: pf.events, table };
       const t = classifySuccess(facts);
+      { // positional facts (owner, night 2026-11-24): pocket, cut angle, distances, cue ball behind the black
+        const cueB = before.balls.find((b) => b.kind === 'cue')!.pos; const ball = before.balls.find((b) => b.id === pf.potted[0])!;
+        const pe = pf.events.find((e) => e.type === 'pot' && e.a === ball.id); const pk = pe && pe.type === 'pot' ? table.pockets.find((q) => q.id === pe.pocket)! : null;
+        const blk = before.balls.find((b) => b.kind === 'black')?.pos; const cueEnd = pf.after.find((b) => b.kind === 'cue')!.pos;
+        out.push(`  position: pocket ${pk?.id} cut ${pk ? cutAngle(cueB, ball.pos, pk.mouthMid, table.ballRadius).toFixed(0) : '?'} deg, cue->ball ${Math.hypot(ball.pos.x - cueB.x, ball.pos.y - cueB.y).toFixed(2)} m, ball->pocket ${pk ? Math.hypot(pk.mouthMid.x - ball.pos.x, pk.mouthMid.y - ball.pos.y).toFixed(2) : '?'} m; cue ${blk && cueB.y > blk.y ? 'BEHIND' : 'not behind'} the black; cue ends (${cueEnd.x.toFixed(2)},${cueEnd.y.toFixed(2)})${blk && cueEnd.y > blk.y ? ' BEHIND the black' : ''}`);
+      }
       out.push(`  strict check: ${t} -> ${naturalCheck(t, { ...facts, duration: pf.duration, cueTravel: pf.cueTravel, after: pf.after }) ?? 'NATURAL'} (cue ball rolls ${pf.cueTravel.toFixed(2)} m after contact, ${pf.events.filter((e) => e.type === 'cushion' && e.a === 'cue').length} cushions)`);
     }
     out.push(`  before: ${before.balls.map((b) => `${b.id}(${b.pos.x.toFixed(3)},${b.pos.y.toFixed(3)})`).join(' ')}`);

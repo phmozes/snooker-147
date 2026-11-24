@@ -250,3 +250,19 @@ Old-definition natural for 4.7c: 88% / 93% / 87%. Results: bench/results/natural
 Left: long pots (6 reds 20 of 314, 15 reds 29 of 433, mostly reds after a colour), hard cannons, cushion-first reds
 (last resort, 7 per level), 1-4 shots per level over 3.5 s. Tried without gain: stronger long/cannon costs (brought back
 RE-RACKs at 6 reds), strict-natural lookahead, position weight 4.
+
+## Night 2026-11-24, phase 1: positional play around the black (solver 4.8a)
+Owner's rules (ends named by the balls: black end +y, baulk end -y), all numbers in `solver.natural.blackPlay`:
+1. Next ball black: cue ball in front of the black (pink side), 0.3-0.9 m away, cut 10-32 deg (three-quarter to half
+   ball); behind the black costs `behindBlackCost`. 2. Pocket choice (`pocketPrefCost`, also for the shot itself):
+   reds into the black-end corners first, middles a little dearer, a baulk-end corner only for a red already in the
+   baulk half; black only into black-end corners, pink not into baulk-end corners. 3. A next cut over 50 deg costs
+   `thinCutCost` (the shot leaving it is penalised); also for the pot itself. 4. Right side: after a colour pot the
+   cue ball leaves along the tangent line; no loose red within 70 deg of it costs `wrongSideCost`. 5. `zoneCost`:
+   while reds are in the black half, the cue ball should stop between black, pink and blue.
+These costs only rank playable next pots: they never push a playable next pot to 'no shot' (dead).
+RE-RACK avoidance added the same night: `position.lockedCost` (every red left is locked: no pocket can take it, e.g.
+two reds glued behind the pink spot) and the 'rescue' flex step (`solver.rescue`): when every shot found leaves the
+next ball unreachable, a wide search keeps a shot only if the next ball can then be potted by any shot.
+Per-level measures in bench/natural.test.ts (`position`): black shots from behind the black, reds into baulk-end
+corners, median cut, cuts over 50 deg. Results: docs/REVIEW.md "Night".

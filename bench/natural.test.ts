@@ -6,7 +6,7 @@ import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
 import { newRound, setLevel, shoot, start, type LevelId } from '../src/core/round';
-import { classifySuccess, isExhibition, NATURAL_TYPES, naturalCheck, playFacts, type ShotType } from '../src/core/shotType';
+import { classifySuccess, cutAngle, isExhibition, NATURAL_TYPES, naturalCheck, playFacts, type ShotType } from '../src/core/shotType';
 import { buildTable } from '../src/core/table/geometry';
 
 it('natural shots in real rounds', () => {
@@ -36,6 +36,8 @@ it('natural shots in real rounds', () => {
     const lastResort = new Set<string>();
     const logLen = () => provider.log.length;
     let seen = 0;
+    // positional measures (owner, night 2026-11-24): black shots from behind the black, reds into baulk-end corners, cuts
+    let blackShots = 0; let blackBehind = 0; let redPots = 0; let redBaulkCorner = 0; let redBaulkCornerFromTop = 0; const cuts: number[] = [];
     for (let seed = 1; seed <= n; seed++) {
       let r = start(setLevel(newRound(seed * 7 + 3), level), provider, table);
       while (r.phase === 'decide') {
@@ -55,6 +57,15 @@ it('natural shots in real rounds', () => {
         const potted = pf.potted[0]!;
         const facts = { state: before.balls, target: h.target, potted, aimedPocket: null, events: pf.events, table };
         const t: ShotType = classifySuccess(facts);
+        {
+          const cueB = before.balls.find((b) => b.kind === 'cue')!.pos;
+          const ball = before.balls.find((b) => b.id === potted)!;
+          const pe = pf.events.find((e) => e.type === 'pot' && e.a === potted);
+          const pk = pe && pe.type === 'pot' ? table.pockets.find((q) => q.id === pe.pocket)! : null;
+          if (pk) cuts.push(cutAngle(cueB, ball.pos, pk.mouthMid, table.ballRadius));
+          if (h.target === 'black') { blackShots++; if (cueB.y > ball.pos.y) blackBehind++; }
+          if (h.target === 'red' && pk) { redPots++; if (pk.id === 'bottomLeft' || pk.id === 'bottomRight') { redBaulkCorner++; if (ball.pos.y > 0) redBaulkCornerFromTop++; } }
+        }
         types[t] = (types[t] ?? 0) + 1;
         const lv = provider.log.find((e) => e.roundCode === r.roundCode && e.step === h.step)?.level ?? 'normal';
         if (!NATURAL_TYPES.includes(t)) { const k = `${h.target === 'red' ? 'red' : 'colour'}:${t}:${lv}`; byTarget[k] = (byTarget[k] ?? 0) + 1; }
@@ -71,8 +82,11 @@ it('natural shots in real rounds', () => {
     const med = (a: number[]) => { const b = [...a].sort((x, y) => x - y); return b[b.length >> 1] ?? NaN; };
     const pct = (a: number[], q: number) => { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.floor(q * b.length))] ?? NaN; };
     const within = (a: number[]) => Math.round((a.filter((d) => d <= 1.5).length / Math.max(1, a.length)) * 100);
+    const pc = (a: number, b: number) => Math.round((a / Math.max(1, b)) * 1000) / 10;
+    const position = { blackFromBehind: pc(blackBehind, blackShots), redsBaulkCorner: pc(redBaulkCorner, redPots),
+      redsBaulkCornerFromBlackHalf: pc(redBaulkCornerFromTop, redPots), cutMedian: +med(cuts).toFixed(1), cutsOver50: pc(cuts.filter((c) => c > 50).length, cuts.length) };
     const row = {
-      level, rounds: n, shots, success, reRacks, reRackPct: Math.round((reRacks / Math.max(1, success)) * 1000) / 10,
+      level, position, rounds: n, shots, success, reRacks, reRackPct: Math.round((reRacks / Math.max(1, success)) * 1000) / 10,
       natural: Math.round((strict / Math.max(1, played)) * 1000) / 10, naturalOld: share((t) => NATURAL_TYPES.includes(t as ShotType)),
       exhibition: share((t) => isExhibition(t as ShotType)), whyNot, byTarget,
       pace: Object.fromEntries((['red', 'colour'] as const).map((k) => { const a = k === 'red' ? redDurs : colDurs; const d = a.map((x) => x.d);
@@ -81,6 +95,7 @@ it('natural shots in real rounds', () => {
       types, fails, colours, median: med(durs), within15: within(durs), over22: durs.filter((d) => d > 2.2).length,
       flex: provider.log.reduce((m, e) => ({ ...m, [e.level]: (m[e.level] ?? 0) + 1 }), {} as Record<string, number>),
       examples: provider.log.filter((e) => e.level === 'exhibition' || e.level === 'spray' || e.level === 'reRack').slice(0, 12).map((e) => `${e.roundCode}:${e.step}${e.level === 'reRack' ? 'R' : ''}`).join(','),
+      within25: pc(durs.filter((d) => d <= 2.5).length, durs.length), over35all: durs.filter((d) => d > 3.5).length,
       blackMedian: med(blackDurs), fullPower: speeds.filter((v) => v > 0.85 * CONFIG.physics.maxCueSpeed).length,
       solveMsMedian: Math.round(med(ms)), solveMsP90: Math.round(pct(ms, 0.9)), solveMsMax: Math.round(Math.max(...ms)),
     };

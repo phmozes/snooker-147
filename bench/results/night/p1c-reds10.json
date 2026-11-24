@@ -1,0 +1,100 @@
+{
+ "reds10": {
+  "level": "reds10",
+  "position": {
+   "blackFromBehind": 4,
+   "redsBaulkCorner": 4.2,
+   "redsBaulkCornerFromBlackHalf": 4.2,
+   "cutMedian": 20.6,
+   "cutsOver50": 4.5
+  },
+  "rounds": 60,
+  "shots": 431,
+  "success": 377,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 89.4,
+  "naturalOld": 92,
+  "exhibition": 3.2,
+  "whyNot": {
+   "not a natural pot type": 30,
+   "over # s": 5,
+   "cue ball runs # m": 1,
+   "pink disturbed": 3,
+   "red# disturbed": 1
+  },
+  "byTarget": {
+   "red:double:exhibition": 1,
+   "red:long:normal": 2,
+   "red:cushionFirst:exhibition": 8,
+   "red:plant:spray": 3,
+   "red:cannon:normal": 4,
+   "colour:cannon:overLong": 2,
+   "colour:cannon:longerDuration": 3,
+   "red:long:longerDuration": 1,
+   "colour:long:longerDuration": 2,
+   "colour:long:overLong": 1,
+   "colour:long:rescue": 1,
+   "red:cannon:longerDuration": 2
+  },
+  "pace": {
+   "red": {
+    "n": 166,
+    "median": 1.43,
+    "p90": 1.91,
+    "maxNotLastResort": 2.16,
+    "over35": 0
+   },
+   "colour": {
+    "n": 211,
+    "median": 1.67,
+    "p90": 2.11,
+    "maxNotLastResort": 5.17,
+    "over35": 3
+   }
+  },
+  "types": {
+   "plain": 259,
+   "packCannon": 63,
+   "double": 1,
+   "long": 7,
+   "cushionFirst": 8,
+   "softCannon": 25,
+   "plant": 3,
+   "cannon": 11
+  },
+  "fails": {
+   "plainMiss": 33,
+   "jawRattle": 16,
+   "jawRattle->plainMiss": 2,
+   "wrongBallFirst->plainMiss": 1,
+   "inOff->plainMiss": 1,
+   "inOff": 1
+  },
+  "colours": {
+   "black": 138,
+   "pink": 70,
+   "blue": 14
+  },
+  "median": 1.5541666666666913,
+  "within15": 45,
+  "over22": 25,
+  "flex": {
+   "longerDuration": 165,
+   "rescue": 8,
+   "exhibition": 9,
+   "wideSearch": 10,
+   "overLong": 17,
+   "noLookahead": 5,
+   "spray": 3
+  },
+  "examples": "reds10-45:9,reds10-73:11,reds10-87:7,reds10-87:15,reds10-122:7,reds10-178:17,reds10-227:5,reds10-276:11,reds10-283:7,reds10-283:15,reds10-353:9,reds10-395:11",
+  "within25": 96.3,
+  "over35all": 6,
+  "blackMedian": 1.7895833333333697,
+  "fullPower": 16,
+  "solveMsMedian": 250,
+  "solveMsP90": 753,
+  "solveMsMax": 5439
+ }
+}

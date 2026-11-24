@@ -1,0 +1,101 @@
+{
+ "reds6": {
+  "level": "reds6",
+  "position": {
+   "blackFromBehind": 18.9,
+   "redsBaulkCorner": 8.7,
+   "redsBaulkCornerFromBlackHalf": 7.9,
+   "cutMedian": 19.1,
+   "cutsOver50": 3.5
+  },
+  "rounds": 60,
+  "shots": 367,
+  "success": 314,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 85,
+  "naturalOld": 87.6,
+  "exhibition": 3.2,
+  "whyNot": {
+   "not a natural pot type": 39,
+   "pink disturbed": 6,
+   "over # s": 2
+  },
+  "byTarget": {
+   "colour:long:longerDuration": 5,
+   "red:cannon:normal": 2,
+   "red:cushionFirst:exhibition": 7,
+   "red:plant:spray": 1,
+   "red:cannon:longerDuration": 4,
+   "red:long:wideSearch": 1,
+   "colour:long:wideSearch": 2,
+   "red:long:noLookahead": 1,
+   "colour:long:overLong": 3,
+   "red:long:normal": 3,
+   "colour:cannon:wideSearch": 1,
+   "colour:long:normal": 1,
+   "colour:cannon:overLong": 1,
+   "red:long:longerDuration": 3,
+   "red:farPocket:exhibition": 2,
+   "red:cannon:overLong": 1,
+   "red:long:overLong": 1
+  },
+  "pace": {
+   "red": {
+    "n": 126,
+    "median": 1.37,
+    "p90": 2.03,
+    "maxNotLastResort": 3.89,
+    "over35": 1
+   },
+   "colour": {
+    "n": 188,
+    "median": 1.63,
+    "p90": 2.19,
+    "maxNotLastResort": 3.27,
+    "over35": 0
+   }
+  },
+  "types": {
+   "plain": 243,
+   "packCannon": 26,
+   "long": 20,
+   "cannon": 9,
+   "cushionFirst": 7,
+   "plant": 1,
+   "softCannon": 6,
+   "farPocket": 2
+  },
+  "fails": {
+   "plainMiss": 33,
+   "jawRattle": 15,
+   "jawRattle->plainMiss": 2,
+   "plainMiss->softFoul": 1,
+   "inOff": 2
+  },
+  "colours": {
+   "black": 145,
+   "pink": 30,
+   "blue": 7
+  },
+  "median": 1.5312500000000235,
+  "within15": 46,
+  "over22": 24,
+  "flex": {
+   "longerDuration": 119,
+   "noLookahead": 18,
+   "exhibition": 9,
+   "spray": 1,
+   "wideSearch": 17,
+   "overLong": 19
+  },
+  "examples": "reds6-66:5,reds6-66:7,reds6-178:7,reds6-185:7,reds6-192:7,reds6-199:7,reds6-269:9,reds6-318:11,reds6-353:9,reds6-402:11",
+  "within25": 96.2,
+  "over35all": 1,
+  "blackMedian": 1.6083333333333607,
+  "fullPower": 15,
+  "solveMsMedian": 214,
+  "solveMsP90": 741,
+  "solveMsMax": 3872
+ }
+}

@@ -9,7 +9,7 @@ it('flex report', () => {
   const n = Number(process.env.N ?? 60);
   for (const [reds, due] of [[6, 'red'], [15, 'red'], [6, 'colour'], [15, 'colour']] as const) {
     const rng = mulberry32(reds * 31 + (due === 'red' ? 1 : 2));
-    const count: Record<FlexLevel, number> = { normal: 0, longerDuration: 0, wideSearch: 0, overLong: 0, exhibition: 0, spray: 0, reRack: 0 };
+    const count: Record<FlexLevel, number> = { normal: 0, longerDuration: 0, wideSearch: 0, rescue: 0, overLong: 0, exhibition: 0, spray: 0, reRack: 0 };
     let ms = 0; let maxMs = 0; const over: number[] = [];
     for (let i = 0; i < n; i++) {
       const L = randomLayout(rng, reds, due, table);

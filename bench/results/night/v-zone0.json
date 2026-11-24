@@ -1,0 +1,99 @@
+{
+ "reds6": {
+  "level": "reds6",
+  "position": {
+   "blackFromBehind": 9.1,
+   "redsBaulkCorner": 4,
+   "redsBaulkCornerFromBlackHalf": 4,
+   "cutMedian": 17.7,
+   "cutsOver50": 3.8
+  },
+  "rounds": 60,
+  "shots": 367,
+  "success": 314,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 85,
+  "naturalOld": 88.5,
+  "exhibition": 3.8,
+  "whyNot": {
+   "not a natural pot type": 36,
+   "pink disturbed": 9,
+   "cue ball runs # m": 2
+  },
+  "byTarget": {
+   "red:cannon:normal": 4,
+   "red:cushionFirst:exhibition": 9,
+   "colour:long:longerDuration": 6,
+   "red:cannon:longerDuration": 2,
+   "colour:long:normal": 4,
+   "colour:cannon:wideSearch": 1,
+   "colour:long:overLong": 3,
+   "red:double:spray": 1,
+   "red:long:longerDuration": 2,
+   "colour:cannon:longerDuration": 1,
+   "colour:cannon:overLong": 1,
+   "colour:cushionFirst:exhibition": 1,
+   "red:farPocket:exhibition": 1
+  },
+  "pace": {
+   "red": {
+    "n": 126,
+    "median": 1.41,
+    "p90": 2.05,
+    "maxNotLastResort": 2.13,
+    "over35": 0
+   },
+   "colour": {
+    "n": 188,
+    "median": 1.6,
+    "p90": 2.07,
+    "maxNotLastResort": 2.99,
+    "over35": 0
+   }
+  },
+  "types": {
+   "plain": 250,
+   "cannon": 9,
+   "packCannon": 23,
+   "cushionFirst": 10,
+   "long": 15,
+   "softCannon": 5,
+   "double": 1,
+   "farPocket": 1
+  },
+  "fails": {
+   "plainMiss": 33,
+   "jawRattle": 15,
+   "plainMiss->softFoul": 1,
+   "jawRattle->plainMiss": 1,
+   "jawRattle->softFoul": 1,
+   "inOff->plainMiss": 1,
+   "inOff": 1
+  },
+  "colours": {
+   "black": 138,
+   "pink": 31,
+   "blue": 13
+  },
+  "median": 1.5416666666666907,
+  "within15": 48,
+  "over22": 20,
+  "flex": {
+   "longerDuration": 120,
+   "wideSearch": 13,
+   "noLookahead": 19,
+   "exhibition": 11,
+   "overLong": 10,
+   "spray": 1
+  },
+  "examples": "reds6-45:9,reds6-66:5,reds6-80:9,reds6-178:7,reds6-185:7,reds6-192:7,reds6-199:5,reds6-199:9,reds6-213:7,reds6-353:7,reds6-353:13,reds6-402:11",
+  "within25": 95.9,
+  "over35all": 4,
+  "blackMedian": 1.5562500000000248,
+  "fullPower": 13,
+  "solveMsMedian": 302,
+  "solveMsP90": 981,
+  "solveMsMax": 4077
+ }
+}

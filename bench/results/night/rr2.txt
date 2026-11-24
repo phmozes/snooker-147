@@ -1,0 +1,25 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+solver 4.8a
+reds6-276:6: black success; {"target":"black","pocket":"topRight","dir":{"x":0.47383464899939565,"y":0.014224406208921847},"speed":3.834362705187325,"spin":-0.6,"duration":2.2000000000000353,"computeMs":0,"tried":424,"score":12.082607374083576,"nextCost":0.7234029586877102,"cueEnd":{"x":-0.2738725478961976,"y":0.43995750698177594},"type":"plain","natural":0.4749323320133719,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: [{"roundCode":"reds6-276","step":6,"target":"black","level":"overLong","tried":424}]
+  position: pocket topRight cut 18 deg, cue->ball 0.52 m, ball->pocket 0.95 m; cue not behind the black; cue ends (-0.27,0.44)
+  strict check: plain -> NATURAL (cue ball rolls 1.07 m after contact, 0 cushions)
+  before: cue(-0.523,1.428) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(-0.001,0.864) red1(0.021,0.939) red2(-0.509,0.727) red3(0.029,0.993) black(0.000,1.460)
+reds6-276:7: red success; {"target":"red2","pocket":"topLeft","dir":{"x":-0.2176477776824381,"y":0.23768167335414736},"speed":2.53002606050533,"spin":0,"duration":1.4708333333333539,"computeMs":0,"tried":55,"score":9.978956736917933,"nextCost":2.611672513326109,"cueEnd":{"x":-0.7141925936319786,"y":0.6351277871269178},"type":"plain","natural":0.44873724240416757,"whyNot":null,"lookahead":"ok"}
+  flex log: []
+  position: pocket topLeft cut 23 deg, cue->ball 0.37 m, ball->pocket 1.12 m; cue not behind the black; cue ends (-0.71,0.64)
+  strict check: plain -> NATURAL (cue ball rolls 0.52 m after contact, 1 cushions)
+  before: cue(-0.274,0.440) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(-0.001,0.864) red1(0.021,0.939) red2(-0.509,0.727) red3(0.029,0.993) black(0.000,1.460)
+reds6-276:8: blue success; {"target":"blue","pocket":"middleRight","dir":{"x":0.6616932925288399,"y":-0.6348568929003794},"speed":2.53002606050533,"spin":-0.8,"duration":2.2125000000000346,"computeMs":0,"tried":1042,"score":126.61195284238599,"nextCost":5.008555597644116,"cueEnd":{"x":-0.10541277142933876,"y":-0.7723703984294106},"type":"plain","natural":1.4991906996355042,"whyNot":null,"lookahead":"failed"}
+  flex log: [{"roundCode":"reds6-276","step":8,"target":"blue","level":"overLong","tried":1042}]
+  position: pocket middleRight cut 44 deg, cue->ball 0.96 m, ball->pocket 0.97 m; cue not behind the black; cue ends (-0.11,-0.77)
+  strict check: plain -> NATURAL (cue ball rolls 0.78 m after contact, 0 cushions)
+  before: cue(-0.714,0.635) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(-0.001,0.864) red1(0.021,0.939) red3(0.029,0.993) black(0.000,1.460)
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:38:13
+   Duration  3.48s (tests 98%, transform 1%, import 1%)
+

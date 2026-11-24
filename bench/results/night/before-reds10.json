@@ -1,0 +1,97 @@
+{
+ "reds10": {
+  "level": "reds10",
+  "position": {
+   "blackFromBehind": 14.6,
+   "redsBaulkCorner": 4.2,
+   "redsBaulkCornerFromBlackHalf": 4.2,
+   "cutMedian": 24.1,
+   "cutsOver50": 1.6
+  },
+  "rounds": 60,
+  "shots": 431,
+  "success": 377,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 91,
+  "naturalOld": 92.6,
+  "exhibition": 1.3,
+  "whyNot": {
+   "not a natural pot type": 28,
+   "red# disturbed": 2,
+   "pink disturbed": 2,
+   "cue ball # cushions": 1,
+   "over # s": 1
+  },
+  "byTarget": {
+   "red:double:exhibition": 1,
+   "colour:cannon:wideSearch": 1,
+   "red:long:longerDuration": 4,
+   "red:cannon:longerDuration": 6,
+   "colour:cannon:longerDuration": 3,
+   "red:farPocket:exhibition": 2,
+   "red:cushionFirst:exhibition": 2,
+   "red:cannon:normal": 3,
+   "colour:long:longerDuration": 2,
+   "red:long:normal": 2,
+   "red:cannon:wideSearch": 1,
+   "colour:long:overLong": 1
+  },
+  "pace": {
+   "red": {
+    "n": 166,
+    "median": 1.45,
+    "p90": 1.9,
+    "maxNotLastResort": 3.61,
+    "over35": 1
+   },
+   "colour": {
+    "n": 211,
+    "median": 1.75,
+    "p90": 2.15,
+    "maxNotLastResort": 4.58,
+    "over35": 1
+   }
+  },
+  "types": {
+   "plain": 261,
+   "packCannon": 68,
+   "double": 1,
+   "cannon": 14,
+   "softCannon": 20,
+   "long": 9,
+   "farPocket": 2,
+   "cushionFirst": 2
+  },
+  "fails": {
+   "plainMiss": 33,
+   "jawRattle": 16,
+   "wrongBallFirst->plainMiss": 1,
+   "jawRattle->plainMiss": 2,
+   "inOff->plainMiss": 2
+  },
+  "colours": {
+   "black": 150,
+   "pink": 58,
+   "blue": 14
+  },
+  "median": 1.59583333333336,
+  "within15": 40,
+  "over22": 16,
+  "flex": {
+   "longerDuration": 193,
+   "noLookahead": 5,
+   "exhibition": 5,
+   "wideSearch": 16,
+   "overLong": 13
+  },
+  "examples": "reds10-45:9,reds10-115:17,reds10-122:7,reds10-185:17,reds10-269:13",
+  "within25": 98.9,
+  "over35all": 2,
+  "blackMedian": 1.7729166666667022,
+  "fullPower": 4,
+  "solveMsMedian": 267,
+  "solveMsP90": 711,
+  "solveMsMax": 1936
+ }
+}

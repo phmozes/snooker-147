@@ -118,7 +118,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.7c',            // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.8a',            // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -128,7 +128,7 @@ export const CONFIG = {
             spinSamples: [-1, -0.6, -0.3, 0, 0.3, 0.6, 1] },
     // position play (task 4.3): the search minimises shot length + weight x how hard the next shot looks from where
     // the cue ball stops (cut/45 + mean distance in m; about 0.5 easy, 2-3 hard; noShotCost when no pocket is open)
-    position: { enabled: true, weight: 3, noShotCost: 4, overPenalty: 10, overFrom: 1.5, deadPenalty: 100 }, // overFrom: seconds; extra cost per second above it; deadPenalty: no open pocket for the next ball
+    position: { enabled: true, weight: 3, noShotCost: 4, overPenalty: 10, overFrom: 1.5, deadPenalty: 100, lockedCost: 5 }, // overFrom: seconds; extra cost per second above it; deadPenalty: no open pocket for the next ball
     aimSamplesPerPocket: 9,      // aim points across the pocket mouth (centre first, then alternating sides)
     aimStep: 0.005,              // metres between aim points across the mouth
     aimRetryWithin: 0.12,        // m: a missed pot tries the next aim point only if the ball came this near the pocket
@@ -199,12 +199,34 @@ export const CONFIG = {
       packClosedCost: 1.0,
       idealNextCutDeg: [5, 35],  // position: leave an angle on the next ball
       straightCost: 0.3,         // dead straight next ball (no angle to play position)
+      // Positional play around the black (owner, night 2026-11-24; docs/SOLVER.md "Phase 1"). Ends are named by the
+      // balls: black end (+y, black spot) and baulk end (-y, yellow/green/brown). All costs are position costs (x position weight).
+      blackPlay: {
+        enabled: true,
+        behindBlackCost: 2.0,      // next ball black, cue ball between the black and the black-end cushion
+        blackDist: [0.3, 0.9],     // m: comfortable cue-ball-to-black distance ...
+        blackDistCostPerM: 1.5,    // ... cost per metre outside it
+        blackCutDeg: [10, 32],     // next ball black: about three-quarter ball to half ball
+        thinCutFrom: 50,           // any next ball: a cut sharper than this is a positional failure of this shot ...
+        thinCutCost: 3.0,          // ... and costs this much
+        sideMaxDeg: 70,            // next ball a colour while reds remain: a loose red within this of the cue ball's
+        wrongSideCost: 1.0,        // natural path after the pot (the tangent line), else this cost (wrong side)
+        // pocket choice: a red from the black half into a baulk-end corner; a middle pocket (when natural);
+        // black into anything but a black-end corner; pink into a baulk-end corner
+        redBaulkCornerCost: 2.0, redMiddleCost: 0.3, colourOffPocketCost: 2.0,
+        zoneHalfWidth: 0.45,       // m: keep the cue ball between black, pink and blue (|x| <= this, blue.y - zoneBelowBlue
+        zoneBelowBlue: 0.1,        // <= y <= black.y) while reds remain in the black half ...
+        zoneCostPerM: 1.5,         // ... cost per metre outside that zone
+      },
       // RULES B.3 (owner 2026-11-24): auto colour = the first of these with a natural shot; else black
       autoColours: ['black', 'pink', 'blue'],
       nextColourCost: { black: 0, pink: 0.5, blue: 1.0 }, // position after a red: black preferred
     },
     // task 4.7: exhibition search (cushion-first, plants, blocked pairs; wide grid), last resort before the spray
     exhibition: { shotBudget: 1000 },
+    // night 2026-11-24 (RULES D: avoid RE-RACK): when every shot found leaves the next ball unreachable, search again
+    // (wide) and keep a shot only if the next ball can then be potted by any shot (exhibition and cushion-first allowed)
+    rescue: { enabled: true, candidates: 6, lookaheadShots: 300 },
     lookaheadMargin: 1.0,        // task 4.7: shots within this score of the best are kept as lookahead candidates
     lookaheadSpread: 0.15,       // m: ... and checked only if their cue ball stops this far from the ones already checked
     lookaheadCandidates: 4,      // how many of the best shots are checked (best first)

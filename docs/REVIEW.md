@@ -76,3 +76,15 @@ full power. Now that pot pays the unnatural-play cost and the two-shot plan avoi
 **To confirm:** the auto colour now treats black as natural only if it also leaves a red (else pink, then blue). Only
 the snooker score changes. Switch: config `solver.natural.autoColourNeedsNextRed`.
 **Numbers:** docs/SOLVER.md "third part". Natural 85 / 91 / 84%, exhibition 3.2 / 1.3 / 2.8%, RE-RACK 0 in 1,124.
+
+## 6. Night 2026-11-24 (overnight run; summary in docs/NIGHT-REPORT.md)
+Measurements: bench/results/night/*.sum (60 real rounds per level, strict definition; script run.sh, summary sum.mjs).
+Phase 1 (solver 4.8a), before -> after, 6/10/15 reds:
+- black shots from behind the black 18.9/14.6/13.9% -> 8.9/4.0/4.5%; reds into baulk-end corners 8.7/4.2/9.7% ->
+  5.6/4.8/5.1% (the rest are reds already in the baulk half); median cut 19/24/23 -> 19/21/19 deg; cuts over 50 deg
+  3.5/1.6/3.5% -> 3.8/4.2/3.5% (not better: mostly fallback shots); natural 85/91/84.1 -> 84.7/89.4/85.2%.
+- First try gave RE-RACKs (3 at 6 reds). Causes found: (a) the new costs could make a playable next pot look like
+  'no shot' (fixed: they only rank playable pots); (b) reds6-276/395 step 9: two reds glued behind the pink spot, no
+  pocket can take them, and the solver potted the last free red (fixed: lockedCost + rescue step). RE-RACK 0 again.
+- Your four marks: see the top of docs/WEIRD-SHOTS.md (2 fixed, 1 partly, 1 still happens but milder).
+- B.3 now needs a natural red after the colour (shot.nextNatural), as you confirmed.

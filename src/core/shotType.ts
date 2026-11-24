@@ -53,6 +53,30 @@ export function clusteredReds(balls: Ball[], r: number): Set<string> {
  * Naturalness of the pot itself, from the layout only (before simulating): cut angle, distances, and whether the red
  * comes out of the pack while loose reds exist. Used to order the search and as part of the score.
  */
+/** Phase 1 (owner, night 2026-11-24): pocket choice cost. Reds into the black-end corners first, the middles when
+ * natural, a baulk-end corner only for a red already in the baulk half. Black into a black-end corner, pink not into a
+ * baulk-end corner. */
+export function pocketPrefCost(kind: BallKind, ball: Vec2, pocket: PocketId): number {
+  const B = N.blackPlay;
+  if (!B.enabled) return 0;
+  const baulkCorner = pocket === 'bottomLeft' || pocket === 'bottomRight';
+  if (kind === 'red') return baulkCorner ? (ball.y > 0 ? B.redBaulkCornerCost : 0) : pocket.startsWith('middle') ? B.redMiddleCost : 0;
+  if (kind === 'black') return pocket === 'topLeft' || pocket === 'topRight' ? 0 : B.colourOffPocketCost;
+  if (kind === 'pink') return baulkCorner ? B.colourOffPocketCost : 0;
+  return 0;
+}
+
+/** Phase 1: keep the cue ball between the black, the pink and the blue while reds remain in the black half. */
+export function zoneCost(cueEnd: Vec2, after: Ball[], table: TableGeometry): number {
+  const B = N.blackPlay;
+  if (!B.enabled || !after.some((b) => b.kind === 'red' && b.pos.y > table.spots.blue.y)) return 0;
+  const lo = table.spots.blue.y - B.zoneBelowBlue;
+  const hi = table.spots.black.y;
+  const dx = Math.max(0, Math.abs(cueEnd.x) - B.zoneHalfWidth);
+  const dy = cueEnd.y > hi ? cueEnd.y - hi : cueEnd.y < lo ? lo - cueEnd.y : 0;
+  return Math.hypot(dx, dy) * B.zoneCostPerM;
+}
+
 export function potCost(cue: Vec2, ball: Ball, mouth: Vec2, balls: Ball[], r: number): number {
   const cut = cutAngle(cue, ball.pos, mouth, r);
   const dA = Math.hypot(ball.pos.x - cue.x, ball.pos.y - cue.y);
@@ -186,6 +210,32 @@ export function packLeftClosed(after: Ball[], r: number): number {
   if (reds.length < 2) return 0;
   const pack = clusteredReds(after, r);
   return reds.length - pack.size < N.minLooseReds && pack.size > 0 ? 1 : 0;
+}
+
+/**
+ * Night 2026-11-24 (RULES D: avoid RE-RACK): 1 when reds remain but every one is locked, else 0. A red is locked when
+ * no pocket can take it: for each pocket the path to it is blocked, or the ghost-ball spot overlaps another ball
+ * (for example two reds glued to the pink spot). Only a cannon can free such reds, so leaving only them is a dead end.
+ */
+export function allRedsLocked(after: Ball[], table: TableGeometry): number {
+  const r = table.ballRadius;
+  const reds = after.filter((b) => b.kind === 'red');
+  if (!reds.length) return 0;
+  const others = after.filter((b) => b.kind !== 'cue');
+  const blocked = (a: Vec2, b: Vec2, skip: string) => others.some((o) => {
+    if (o.id === skip) return false;
+    const dx = b.x - a.x; const dy = b.y - a.y; const L2 = dx * dx + dy * dy;
+    const t = Math.max(0, Math.min(1, ((o.pos.x - a.x) * dx + (o.pos.y - a.y) * dy) / L2));
+    return Math.hypot(a.x + t * dx - o.pos.x, a.y + t * dy - o.pos.y) < 2 * r;
+  });
+  const free = reds.some((red) => table.pockets.some((p) => {
+    const toP = { x: p.mouthMid.x - red.pos.x, y: p.mouthMid.y - red.pos.y };
+    const d = Math.hypot(toP.x, toP.y);
+    const ghost = { x: red.pos.x - (toP.x / d) * 2 * r, y: red.pos.y - (toP.y / d) * 2 * r };
+    if (others.some((o) => o.id !== red.id && Math.hypot(o.pos.x - ghost.x, o.pos.y - ghost.y) < 2 * r)) return false;
+    return !blocked(red.pos, p.mouthMid, red.id);
+  }));
+  return free ? 0 : 1;
 }
 
 /** How a next shot looks when the cut is `cut` degrees: leave an angle (not dead straight, not too thin). */
