@@ -1,0 +1,12 @@
+reds10: 390 rounds, 2775 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 12, longest 5.04 s, most simulated 6433 (cap 47161)
+  flex {"longerDuration":1319,"overLong":117,"wideSearch":49,"exhibition":24,"rescue":15,"noLookahead":2} | failures {"jawRattle":85,"wrongBallFirst->plainMiss":20,"plainMiss":183,"jawRattle->plainMiss":8,"inOff->plainMiss":32,"inOff":9,"plainMiss->softFoul":3,"inOff->softFoul":2,"wrongBallFirst":2,"plainMiss->tap":1,"jawRattle->softFoul":1}
+  types % {"plain":72.4,"packCannon":15.82,"softCannon":5.37,"long":2.99,"cannon":2.56,"cushionFirst":0.61,"plant":0.18,"double":0.07}
+  RTP % by cash-out step {"1":95.6,"2":94.1,"3":95.5,"5":95.5,"8":92.8,"12":97.1,"13":102.8,"26":115.4}
+reds15: 310 rounds, 2476 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 13, longest 4.17 s, most simulated 4479 (cap 47161)
+  flex {"longerDuration":1210,"overLong":81,"wideSearch":67,"exhibition":31,"rescue":6,"doubles":1} | failures {"jawRattle":67,"inOff->plainMiss":30,"wrongBallFirst->plainMiss":18,"plainMiss":146,"jawRattle->softFoul":2,"jawRattle->plainMiss":8,"inOff":6,"plainMiss->softFoul":2,"wrongBallFirst":2,"plainMiss->tap":1}
+  types % {"plain":65.83,"packCannon":17.85,"softCannon":7.23,"long":4.48,"cannon":3.31,"cushionFirst":0.61,"double":0.4,"plant":0.28}
+  RTP % by cash-out step {"1":96.2,"2":94.8,"3":96.4,"5":94.5,"8":90.9,"12":93.2,"18":89.7,"36":64.5}
+reds6: 540 rounds, 3122 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 40, longest 5.26 s, most simulated 6727 (cap 47161)
+  flex {"longerDuration":1392,"overLong":165,"wideSearch":95,"rescue":64,"exhibition":53,"noLookahead":3,"spray":1} | failures {"plainMiss":257,"wrongBallFirst->plainMiss":27,"jawRattle":111,"inOff":14,"inOff->plainMiss":36,"jawRattle->plainMiss":13,"plainMiss->softFoul":9,"jawRattle->softFoul":3,"wrongBallFirst":2}
+  types % {"plain":79.85,"packCannon":8.39,"long":5.67,"cannon":2.24,"softCannon":2.11,"cushionFirst":1.41,"double":0.29,"farPocket":0.03}
+  RTP % by cash-out step {"1":96.1,"2":92.9,"3":94.8,"5":96.6,"8":99.9,"9":100.2,"12":94,"18":101.9}
