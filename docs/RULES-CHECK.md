@@ -126,7 +126,7 @@ Result: **56 of 56 passed** (2026-11-24).
 ## Where RULES.md was unclear and Claude decided
 
 Decisions 1-8 were confirmed by the owner on 2026-11-24 and are now written into RULES.md C.2-C.5.
-Decision 9 (task 3.2) waits for the owner.
+Decision 9 (task 3.2) was confirmed by the owner on 2026-11-24 and is written into RULES.md C.7.
 
 1. **C.4 "exactly the target ball", red phase.** Any red counts as the target. Hitting red A so that red B drops is a
    success (allowed in real snooker). The alternative would be: only the red the solver aimed at counts.

@@ -47,7 +47,8 @@
    cue ball in an in-off.
 6. **Values:** red 1, yellow 2, green 3, brown 4, blue 5, pink 6, black 7. Opponent score is always 0.
 7. **Points remaining:** red next = 8 x redsLeft + 27; after a red, before its colour = 8 x redsLeft + 27 + 7;
-   final colours = sum of colours still on the table.
+   final colours = sum of colours still on the table. After a failure, points remaining stay at the value of the
+   shot that failed.
 8. **Opponent needs snookers** = playerScore > pointsRemaining (strictly).
 9. **Maximum** = table cleared with black after every red (75 / 107 / 147).
 10. Balls never leave the table, never overlap, and every movement has a visible physical cause.
