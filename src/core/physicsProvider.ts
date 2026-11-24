@@ -35,21 +35,21 @@ export function createPhysicsProvider(table: TableGeometry, library: BreakLibrar
       if (!list.length) throw new Error(`no break-off library for ${levelId} (run npm run breaks)`);
       const e = list[Math.floor(pick * list.length)]!;
       const stored: StoredShot = outcome === 'success' ? e.step1Success! : outcome === 'plainMiss' ? e.step1Miss! : e.step1Escape!;
-      return { afterBreak: { ...frame, balls: e.after }, breakShot: e.breakShot,
+      return { afterBreak: { ...frame, balls: e.after }, breakShot: { cueStart: e.cueStart, shot: e.breakShot },
         step1: { result: simulate(e.after, table, stored), shot: stored } };
     },
     shot(frame: FrameState, target: BallKind, outcome: 'success' | FailureLabel, ctx): PlannedShot {
       if (outcome === 'success') {
         const f = solveSuccessFlex(frame, target, table, now, ctx);
         if (f.log) log.push(f.log);
-        if (!f.shot) return { result: { firstHit: null, potted: [], after: frame.balls }, reRack: true };
-        return { result: simulate(frame.balls, table, f.shot), shot: f.shot };
+        if (!f.shot) return { result: { firstHit: null, potted: [], after: frame.balls }, reRack: true, tried: f.tried };
+        return { result: simulate(frame.balls, table, f.shot), shot: f.shot, tried: f.tried };
       }
       const kind: FailureKind = outcome === 'snookered' ? 'wrongBallFirst' : outcome;
       const s = solveFailure(frame, target, kind, table, now);
       if (!s) throw new Error('no failure shot (the gentle tap should always exist)');
       const label: FailureLabel = s.fallback === null ? outcome : s.fallback === 'plainMiss' ? 'plainMiss' : 'wrongBallFirst';
-      return { result: simulate(frame.balls, table, s), shot: s, label };
+      return { result: simulate(frame.balls, table, s), shot: s, label, tried: s.tried };
     },
   };
   return provider;

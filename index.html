@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>147</title>
   <style>
-    /* Gray-box game page (task 2.2): layout, colours and sizes from mockups A/C/D, no polish. Buttons do nothing yet. */
+    /* Gray-box game page (tasks 2.2, 5.2): layout, colours and sizes from mockups A/C/D, no polish. */
     :root { color-scheme: dark; --bg: #0f1513; --panel: #172020; --line: #34403c; --text: #d8e0dc; --dim: #7f8c87;
             --yellow: #f2c94c; }
     /* locked like an app: no scroll, no zoom, no sideways drag, no text zoom by the browser (task 2.2 phone fixes) */
@@ -46,7 +46,19 @@
     .chip.next { border: 1px solid #55625e; }
 
     /* bottom area */
-    .bottom { flex: none; display: flex; flex-direction: column; gap: 13px; margin-top: 15px; }
+    /* one fixed height for every state (bet area, SHOOT, playing), so the table never changes size during a round */
+    .bottom { flex: none; display: flex; flex-direction: column; justify-content: flex-end; gap: 13px; margin-top: 15px;
+              height: 180px; }
+    button:disabled { opacity: .45; cursor: default; }
+    .endline { flex: 1; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+               font-size: 14px; font-weight: 700; letter-spacing: .06em; background: var(--panel); }
+    .endline.won { color: var(--yellow); border: 1px solid var(--yellow); }
+    .endline.lost { color: #e57373; border: 1px solid #6b3434; }
+    #message { display: none; position: absolute; inset: 0; z-index: 2; align-items: center; justify-content: center;
+               flex-direction: column; gap: 10px; text-align: center; background: rgba(0,0,0,.35); }
+    #message.show { display: flex; }
+    #message div { font-size: 34px; font-weight: 800; color: var(--yellow); }
+    #message small { font-size: 15px; color: var(--text); }
     .cash { height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
             font-size: 12px; letter-spacing: .1em; color: #aab5b1; }
     .cash b { font-size: 16px; letter-spacing: 0; color: var(--text); margin-left: 10px; }
@@ -78,6 +90,11 @@
     #dev .opts button { min-height: 36px; padding: 0 10px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
     #dev .opts button.on { background: var(--yellow); color: #111; border-color: var(--yellow); }
     #dev a { color: var(--yellow); display: block; margin: 4px 0; font-size: 13px; }
+    #dev { max-height: calc(100% - 80px); overflow-y: auto; }
+    #dev .info { font-size: 12px; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
+    #dev input { flex: 1; min-width: 0; min-height: 36px; border-radius: 8px; background: #0a0e0d; color: var(--text);
+                 border: 1px solid var(--line); padding: 0 8px; font: inherit; font-size: 16px; user-select: text; -webkit-user-select: text; }
+    #dev .bad { color: #e57373; }
   </style>
 </head>
 <body>
@@ -89,7 +106,7 @@
         <div id="centre"></div>
         <button class="menu" id="menu" aria-label="Menu">≡</button>
       </div>
-      <div class="table"><canvas id="c3d"></canvas></div>
+      <div class="table"><canvas id="c3d"></canvas><div id="message"></div></div>
       <div class="ladder" id="ladder"></div>
       <div class="bottom" id="bottom"></div>
       <div id="dev"></div>

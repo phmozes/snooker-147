@@ -15,7 +15,8 @@ export type FailureLabel = 'plainMiss' | 'jawRattle' | 'inOff' | 'wrongBallFirst
 
 /** What the provider must deliver for one shot. `result` is what the physics reports; `shot` is opaque (for playback). */
 /** label: the failure actually shown when the provider had to use a RULES D.2 fallback (e.g. a plain miss). */
-export interface PlannedShot { result: ShotResult; shot?: unknown; reRack?: boolean; label?: FailureLabel }
+/** tried: shots the solver simulated for it (shown on the developer menu). */
+export interface PlannedShot { result: ShotResult; shot?: unknown; reRack?: boolean; label?: FailureLabel; tried?: number }
 export interface ShotProvider {
   /** Step 1: the opponent's break and our first shot, both from the library (RULES B.1, B.2, D.1). */
   breakAndStep1(levelId: LevelId, outcome: 'success' | 'plainMiss' | 'snookered', pick: number, frame: FrameState):
@@ -42,7 +43,8 @@ export interface Round {
   step: number; // successful pots so far (0 = before step 1)
   frame: FrameState | null;
   end: RoundEnd | null;
-  history: { step: number; target: BallKind; outcome: 'success' | FailureLabel | 'reRack'; shot?: unknown }[];
+  history: { step: number; target: BallKind; outcome: 'success' | FailureLabel | 'reRack'; shot?: unknown; tried?: number }[];
+  breakShot?: unknown; // the opponent's break-off of this round (opaque, for playback)
 }
 
 // ---------------- seeded streams (RULES A.5, config rng.streams) ----------------
@@ -95,8 +97,8 @@ export function start(r: Round, provider: ShotProvider, table: TableGeometry): R
     roundCode: `${r.levelId}-${r.seed}`, frame: newFrame(reds, table) };
   const ok = stepSucceeds(round, 1);
   const outcome = ok ? 'success' : streamValue(r.seed, 'break', 1) < CONFIG.failures.step1.plainMiss ? 'plainMiss' : 'snookered';
-  const { afterBreak, step1 } = provider.breakAndStep1(r.levelId, outcome, streamValue(r.seed, 'variety', 0), round.frame!);
-  round = { ...round, frame: afterBreak };
+  const { afterBreak, step1, breakShot } = provider.breakAndStep1(r.levelId, outcome, streamValue(r.seed, 'variety', 0), round.frame!);
+  round = { ...round, frame: afterBreak, breakShot };
   return playShot(round, 'red', ok ? 'success' : outcome, step1, table);
 }
 
@@ -111,7 +113,7 @@ function playShot(r: Round, target: BallKind, outcome: 'success' | FailureLabel,
       history: [...r.history, { step: k, target, outcome: 'reRack' }] };
   }
   const frame = applyShot(r.frame!, target, planned.result, table);
-  const history = [...r.history, { step: k, target, outcome, shot: planned.shot }];
+  const history = [...r.history, { step: k, target, outcome, shot: planned.shot, tried: planned.tried }];
   if (outcome !== 'success') {
     if (frame.phase !== 'lost') throw new Error('a failure outcome must be a failed shot');
     return { ...r, phase: 'over', frame, history, end: { type: 'failure', label: planned.label ?? outcome, step: k } };
@@ -134,11 +136,18 @@ export function nextTarget(r: Round, colourChoice?: Colour): BallKind {
   return f.nextColour!;
 }
 
+/** The next shot's step, its decided outcome, and the failure type it would have (RULES A.5: only the seed and the
+ *  step decide). The game page uses it to solve the next shot for both outcomes while the player decides (RULES D). */
+export function nextOutcome(r: Round): { step: number; outcome: 'success' | FailureLabel; failure: FailureLabel } {
+  const k = r.step + 1;
+  const failure = pickFailure(r, k);
+  return { step: k, outcome: stepSucceeds(r, k) ? 'success' : failure, failure };
+}
+
 /** RULES A.3: SHOOT. The outcome is decided first, then the provider finds a matching shot. */
 export function shoot(r: Round, provider: ShotProvider, table: TableGeometry, colourChoice?: Colour): Round {
   if (r.phase !== 'decide' || r.step < 1) throw new Error('SHOOT is only possible during a round, after step 1');
-  const k = r.step + 1;
-  const outcome = stepSucceeds(r, k) ? 'success' : pickFailure(r, k);
+  const { step: k, outcome } = nextOutcome(r);
   const target = nextTarget(r, colourChoice);
   const planned = provider.shot(r.frame!, target, outcome, { roundCode: r.roundCode, step: k });
   return playShot(r, target, outcome, planned, table);
