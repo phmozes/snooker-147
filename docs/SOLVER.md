@@ -151,8 +151,14 @@ library only keeps breaks where the black is pottable after the step-1 red.
 | 6 reds, before lookahead (20 rounds) | 7 of 47 (15%) | 33% | 15 | 2.02 s |
 | 6 reds, with lookahead (30 rounds) | 4 of 147 (3%) | 36% | 39 | 1.86 s |
 | 15 reds, with lookahead (15 rounds) | 3 of 59 (5%) | 38% | 17 | 1.51 s |
+| **6 reds, + spray search (30 rounds)** | **1 of 149 (0.7%)** | 41% | 42 | 1.70 s |
+| **15 reds, + spray search (15 rounds)** | **2 of 65 (3%)** | 40% | 15 | 1.60 s |
 
 The step-2 RE-RACKs (black boxed in after the break) are gone. The remaining ones are reds later in the round, when the
 last reds still sit together as a cluster: a pot exists (a 20,000-shot search found one at 3.2 s) but the normal and
 wide searches do not reach it. **This is far from RULES D.6 (at most 1 per 100,000 shots).** Needed: shots that pot a
 red out of a cluster (plants, splitting the pack) and position play that avoids leaving the reds clustered. Open.
+
+Spray search (last step before RE-RACK, config `solver.spray`, 2000 shots): aim at 9 points across each target ball,
+straight and off each cushion, firm powers. It rescued 5 + 2 shots in the runs above. The RE-RACKs left were the
+black boxed in by reds (RULES D.5 accepts RE-RACK when black has no shot). Still far from 1 per 100,000.

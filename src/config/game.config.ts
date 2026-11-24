@@ -148,6 +148,9 @@ export const CONFIG = {
     powerSamples: 8,
     spinSamples: [-0.8, -0.3, 0, 0.4, 0.8],
     lookahead: 1,                // accept a pot only if the NEXT step stays solvable
+    // last search before RE-RACK: many aim points across each target ball, straight and off each cushion, firm
+    spray: { shotBudget: 2000, offsets: [0, -0.3, 0.3, -0.55, 0.55, -0.75, 0.75, -0.9, 0.9],
+             speeds: [2.5, 3.5, 4.5, 6.0], spins: [0, -0.6, 0.6] },
     lookaheadCandidates: 6,      // how many of the best shots are checked (best first)
     lookaheadShots: 120,         // shot budget for solving the next step in that check
     requireBlackPottableAfterRed: true,

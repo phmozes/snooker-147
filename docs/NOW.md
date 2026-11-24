@@ -7,9 +7,9 @@
 - Then approve 4.2-5.1 or ask for changes. 4.4 and 5.2 wait for you.
 
 ## Claude's turn (after the owner's review)
-- Biggest open item: RE-RACK 3-5 per 100 success shots in real rounds (RULES D.6: 1 per 100,000). Cause: pots out of a
-  cluster of reds are not found. Needs a solver task (plants / splitting the pack) before real play. See docs/SOLVER.md.
-- Failure shots are long (median 1.8-3.4 s); success shots in real rounds: median 1.8 s, 36-38% within 1.5 s.
+- Biggest open item: RE-RACK 1-3 per 100 success shots in real rounds (RULES D.6: 1 per 100,000). Cause: black boxed
+  in by reds, pots out of a cluster. Needs a solver task (position for the black, plants) before real play. docs/SOLVER.md.
+- Failure shots are long (median 1.8-3.4 s); success shots in real rounds: median 1.7 s, about 40% within 1.5 s.
 - Step-1 snookered escape: built in the library (failed escape stored with each snookered break).
 - Owner 2026-11-24: quickest valid shot, friction 0.05 (provisional), shot ends when all balls stop; camera C (A/B kept).
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).

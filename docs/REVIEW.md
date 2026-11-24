@@ -125,9 +125,11 @@ solvable) are not in the state machine yet.
 ## Extra: lookahead and real-round measurement (part of the solver work, found while testing 5.1)
 **Built:** the solver's lookahead (config `solver.lookahead`, planned since the start): the best candidate shots are
 checked by solving the next step from where they leave the balls. A report of real rounds: `bench/rounds.test.ts`.
-**Numbers:** docs/SOLVER.md "Real rounds". RE-RACK per success shot in real rounds: 6 reds 15% -> 3%; 15 reds 5%.
-Success shots within 1.5 s: about 36-38%; median about 1.8 s.
-**Important, not finished:** RE-RACK is still about 3-5 per 100 success shots in real rounds, while RULES D.6 allows 1
-per 100,000. The cause is pots out of a cluster of reds (the solver does not find them in time). This needs its own
+Then a last "spray" search before RE-RACK (many aim points across each ball, straight and off each cushion, firm).
+**Numbers:** docs/SOLVER.md "Real rounds". RE-RACK per success shot in real rounds: 6 reds 15% -> 3% (lookahead)
+-> 0.7% (spray); 15 reds 5% -> 3%. The ones left: the black boxed in by reds. Success shots within 1.5 s: about 40%;
+median about 1.7 s. The spray search can cost up to 2000 more shots in those rare cases.
+**Important, not finished:** RE-RACK is still about 1-3 per 100 success shots in real rounds, while RULES D.6 allows 1
+per 100,000. The cause now is mostly the black boxed in by reds right after a red (and pots out of a cluster of reds). This needs its own
 task before the game can be played for real (my suggestion: as part of 4.4 or a new 4.7).
 **Decision to confirm:** none new (lookahead was already in the config).

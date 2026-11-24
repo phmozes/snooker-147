@@ -241,10 +241,58 @@ export function randomLayout(rng: () => number, reds: number, due: 'red' | 'colo
     failedIn: null, score: 0, opponentScore: 0, blackAfterEveryRed: true };
 }
 
+// ---------------- spray search (last step before RE-RACK) ----------------
+
+/**
+ * When the normal and wide searches find nothing (typically: the last reds still in a cluster), aim at many points
+ * across the whole width of every target ball, straight and off each cushion, with firm powers: a firm hit into a
+ * cluster often pots a ball. The physics and the rules code decide. Quickest success wins (no position play).
+ */
+export function solveSpray(state: FrameState, target: BallKind, table: TableGeometry, cfg: PhysicsConfig = CONFIG.physics,
+  shotBudget: number = Sv.spray.shotBudget): SolvedShot | null {
+  const r = table.ballRadius;
+  const cue = state.balls.find((b) => b.kind === 'cue')!.pos;
+  const X = table.halfWidth - r;
+  const Y = table.halfLength - r;
+  let best: SolvedShot | null = null;
+  let tried = 0;
+  search: for (const ball of state.balls.filter((b) => b.kind === target)) {
+    const p = ball.pos;
+    for (const m of [p, { x: 2 * X - p.x, y: p.y }, { x: -2 * X - p.x, y: p.y }, { x: p.x, y: 2 * Y - p.y }, { x: p.x, y: -2 * Y - p.y }]) {
+      const d = { x: m.x - cue.x, y: m.y - cue.y };
+      const len = Math.hypot(d.x, d.y);
+      const side = { x: -d.y / len, y: d.x / len };
+      for (const f of Sv.spray.offsets) {
+        const dir = { x: d.x + side.x * f * 2 * r, y: d.y + side.y * f * 2 * r }; // across the full width of the ball
+        for (const speed of Sv.spray.speeds) {
+          for (const spin of Sv.spray.spins) {
+            if (tried >= shotBudget) break search;
+            tried++;
+            const sim = createSim(state.balls, table, cfg);
+            strike(sim, 'cue', dir, speed, spin);
+            const limit = Math.ceil((best ? best.duration : cfg.maxSimSeconds) / cfg.timestep);
+            for (let n = 0; n < limit && isMoving(sim); n++) stepSim(sim);
+            if (isMoving(sim)) continue;
+            const first = sim.events.find((e) => e.type === 'ball');
+            const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+            const v = judgeShot(state, target, { firstHit, potted: sim.balls.filter((b) => b.potted).map((b) => b.id), after: [] });
+            if (v.result !== 'success') continue;
+            const pot = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
+            best = { target: v.potted, pocket: pot && pot.type === 'pot' ? pot.pocket : table.pockets[0]!.id, dir, speed, spin,
+              duration: sim.time, score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos },
+              computeMs: 0, tried: 0 };
+          }
+        }
+      }
+    }
+  }
+  return best && { ...best, tried };
+}
+
 // ---------------- flex chain and fallback log (task 4.5, RULES D.3 / D.4) ----------------
 
 /** Which step of the flex chain produced the success shot (RULES D.3), or RE-RACK (D.4). */
-export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'overLong' | 'reRack';
+export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'spray' | 'overLong' | 'reRack';
 export interface FallbackLogEntry { roundCode: string; step: number; target: BallKind; level: FlexLevel | 'noLookahead'; tried: number }
 export interface FlexResult { shot: SolvedShot | null; level: FlexLevel; log: FallbackLogEntry | null }
 
@@ -274,7 +322,9 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
   const pick = found[0];
   if (pick && pick.duration <= flex) return { shot: pick, level: pick === wide ? 'wideSearch' : 'longerDuration', log: log('noLookahead', tried) };
   if (pick) return { shot: pick, level: 'overLong', log: log('overLong', tried) };
-  return { shot: null, level: 'reRack', log: log('reRack', tried) };
+  const spray = solveSpray(state, target, table, cfg);
+  if (spray) return { shot: spray, level: 'spray', log: log('spray', tried + spray.tried) };
+  return { shot: null, level: 'reRack', log: log('reRack', tried + Sv.spray.shotBudget) };
 }
 
 // ---------------- failure shots (task 4.2) ----------------
