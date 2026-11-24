@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Check task 2.2: game page (home page), screens D/A/C and "compare" in the menu (≡). Tasks 1.1-2.1 approved.
+- Choose the drawn ball size (≡ menu: 1x / 1.3x / 1.6x / 2x; Claude recommends 1.3x). Tasks 1.1-2.2 approved.
 - Test replay.html on the real phone at home (smoothness, camera feel). Open; does not block the next task.
 
 ## Claude's turn
@@ -13,7 +13,6 @@
 ## Waiting on others: nothing.
 
 ## Later
-- Decide ball size (true size vs about 2x like the mockups) when the balls get their real look.
 - Measure the solver against its 150 ms budget on a real phone (1 ms per shot is a guide, not a limit).
 - Revisit friction and 1.2x playback once real solver shots are visible (at 0.05, 35% of quickest shots exceed 1.5 s).
 - Tune jaw bounce and pocket generosity once real shots are played (middle pockets generous on purpose for now).

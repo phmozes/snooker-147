@@ -232,6 +232,9 @@ export const CONFIG = {
     cushionHeight: 0.036,        // cushion nose height above the cloth (m), about 0.7 ball diameter
     cushionDepth: 0.05,          // how far the cushion boxes reach behind the face (m)
     jawPieces: 6,                // straight pieces per rounded jaw
+    // How big the balls are DRAWN (1 = true size). Visual only: physics, pockets and the solver keep the true radius.
+    ballScale: 1,
+    ballScaleOptions: [1, 1.3, 1.6, 2], // developer menu on the game page
     ambientLight: 1.2, topLight: 1.6,
   },
 

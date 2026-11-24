@@ -41,8 +41,10 @@ const params = new URLSearchParams(location.search);
 let current = Math.min(SHOTS.length - 1, Math.max(0, Number(params.get('shot') ?? 0) || 0));
 let shot = load(current);
 let preset: PresetId = params.get('cam') as PresetId in CONFIG.camera.presets ? params.get('cam') as PresetId : CONFIG.camera.main;
+let ballScale: number = Number(params.get('scale')) || CONFIG.view3d.ballScale; // drawn size only (3D view)
 let view3d = createTable3d(c3d, table, shot.kinds);
 view3d.setPreset(preset);
+view3d.setBallScale(ballScale);
 let t = Math.min(shot.end, Math.max(0, Number(params.get('t') ?? 0) || 0)); // playback time, seconds into the shot
 let playing = false;
 let slow = false;
@@ -93,6 +95,7 @@ function renderShotButtons() {
         view3d.dispose();
         view3d = createTable3d(c3d, table, shot.kinds);
         view3d.setPreset(preset);
+        view3d.setBallScale(ballScale);
         t = 0;
         renderShotButtons();
         resize();
@@ -117,6 +120,17 @@ function cameraButtons(box: HTMLElement) {
     b.textContent = `Camera ${CONFIG.camera.presets[id].label}`;
     if (id === preset) b.className = 'on';
     b.onclick = () => { preset = id; view3d.setPreset(id); renderCameraButtons(); render(); };
+    box.appendChild(b);
+  }
+}
+function renderScaleButtons() {
+  const box = document.getElementById('scales')!;
+  box.innerHTML = '';
+  for (const s of CONFIG.view3d.ballScaleOptions) {
+    const b = document.createElement('button');
+    b.textContent = `Balls ${s}x`;
+    if (s === ballScale) b.className = 'on';
+    b.onclick = () => { ballScale = s; view3d.setBallScale(s); renderScaleButtons(); render(); };
     box.appendChild(b);
   }
 }
@@ -158,6 +172,7 @@ document.getElementById('layout')!.onclick = () => setOnly3d(!only3d);
 document.getElementById('exit3d')!.onclick = () => setOnly3d(false);
 
 renderCameraButtons();
+renderScaleButtons();
 renderShotButtons();
 window.addEventListener('resize', resize);
 if (params.get('only3d') === '1') setOnly3d(true); else resize();

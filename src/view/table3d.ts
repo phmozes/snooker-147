@@ -69,9 +69,11 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
   }
   // balls
   const sphere = new THREE.SphereGeometry(r, 24, 16);
+  let ballScale: number = G.ballScale; // drawn size only; the ball centre stays where the physics put it
   const balls = kinds.map((k) => {
     const m = new THREE.Mesh(sphere, mat(BALL_COLOURS[k]));
-    m.position.z = r;
+    m.scale.setScalar(ballScale);
+    m.position.z = r * ballScale; // resting on the cloth
     scene.add(m);
     return m;
   });
@@ -91,7 +93,7 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     positions.forEach((q, i) => {
       const m = balls[i]!;
       m.visible = q !== null;
-      if (q) m.position.set(q.x, q.y, r);
+      if (q) m.position.set(q.x, q.y, r * ballScale);
     });
     renderer.render(scene, camera);
   }
@@ -100,5 +102,6 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     scene.traverse((o) => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); } });
   }
   function setPreset(p: PresetId) { preset = p; resize(); }
-  return { resize, draw, dispose, setPreset, getFit: () => fit };
+  function setBallScale(s: number) { ballScale = s; for (const m of balls) { m.scale.setScalar(s); m.position.z = r * s; } }
+  return { resize, draw, dispose, setPreset, setBallScale, getFit: () => fit };
 }

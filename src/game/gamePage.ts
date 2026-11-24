@@ -1,7 +1,8 @@
 // Task 2.2: the portrait game page from mockups A/C/D, gray-box, static. Buttons do nothing yet (game loop: later
 // stages). The menu button opens a developer panel: screen D / A / C, the "compare" toggle (mockup next to the live
 // screen at the same size, off by default) and links to the check pages.
-// Address options (for checks): ?screen=A|C|D&compare=1&size=375x667 (size = pretend to be a phone of that size)
+// Address options (for checks): ?screen=A|C|D&compare=1&size=375x667&scale=1.3&level=reds15
+// (size = pretend to be a phone of that size; scale = drawn ball size; level = reds6 | reds10 | reds15)
 
 import { CONFIG } from '../config/game.config';
 import { ladderForLevel } from '../core/ladder';
@@ -12,10 +13,13 @@ import { createTable3d } from '../view/table3d';
 
 type ScreenId = 'D' | 'A' | 'C';
 const S = CONFIG.dev.screens;
-const table = buildTable();
-const level = CONFIG.levels.find((l) => l.id === S.level)!;
-const ladder = ladderForLevel(S.level);
 const params = new URLSearchParams(location.search);
+const table = buildTable();
+type LevelId = (typeof CONFIG.levels)[number]['id'];
+let levelId: LevelId = CONFIG.levels.find((l) => l.id === params.get('level'))?.id ?? S.level;
+let level = CONFIG.levels.find((l) => l.id === levelId)!;
+let ladder = ladderForLevel(levelId);
+let ballScale: number = Number(params.get('scale')) || CONFIG.view3d.ballScale;
 let screen: ScreenId = (['D', 'A', 'C'] as const).find((s) => s === params.get('screen')) ?? 'D';
 let compare = params.get('compare') === '1';
 
@@ -40,6 +44,7 @@ function ballsFor(id: ScreenId): Ball[] {
 const canvas = $('c3d') as HTMLCanvasElement;
 let balls = ballsFor(screen);
 let view3d = createTable3d(canvas, table, balls.map((b) => b.kind));
+view3d.setBallScale(ballScale);
 const draw3d = () => { view3d.resize(); view3d.draw(balls.map((b) => b.pos)); };
 
 // ---- top bar, ladder strip, bottom area ----
@@ -112,10 +117,19 @@ function renderDev() {
   };
   const dev = $('dev');
   dev.innerHTML = '<h3>DEVELOPER · SCREEN</h3><div class="opts" id="devScreens"></div><h3>COMPARE WITH MOCKUP</h3>' +
-    '<div class="opts" id="devCompare"></div><h3>CHECK PAGES</h3>' +
+    '<div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
+    '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
   for (const id of ['D', 'A', 'C'] as const) {
     $('devScreens').appendChild(opt(`${id}: ${{ D: 'start', A: 'shoot', C: 'colour' }[id]}`, screen === id, () => setScreen(id)));
+  }
+  for (const s of CONFIG.view3d.ballScaleOptions) {
+    $('devScale').appendChild(opt(`${s}x`, ballScale === s, () => { ballScale = s; view3d.setBallScale(s); renderDev(); draw3d(); }));
+  }
+  for (const l of CONFIG.levels) {
+    $('devLevel').appendChild(opt(`${l.reds} reds`, levelId === l.id, () => {
+      levelId = l.id; level = l; ladder = ladderForLevel(l.id); setScreen(screen);
+    }));
   }
   $('devCompare').appendChild(opt('Off', !compare, () => { compare = false; renderDev(); layout(); }));
   $('devCompare').appendChild(opt('On', compare, () => { compare = true; renderDev(); layout(); }));
@@ -125,6 +139,7 @@ function setScreen(id: ScreenId) {
   balls = ballsFor(id);
   view3d.dispose();
   view3d = createTable3d(canvas, table, balls.map((b) => b.kind));
+  view3d.setBallScale(ballScale);
   renderTexts();
   renderDev();
   layout();
