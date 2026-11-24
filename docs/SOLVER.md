@@ -280,3 +280,7 @@ corners, median cut, cuts over 50 deg. Results: docs/REVIEW.md "Night".
 - 4.8e (soak reds6-5000614): object-ball doubles (`solveDoubles`, config `solver.doubles`) between the exhibition
   search and the spray: the object ball is aimed at a pocket's mirror image in each cushion. Only reached when a
   RE-RACK would otherwise be near. Flex level 'doubles'.
+- 4.8f (soak reds10-5001536): last-resort check (`nextReachable`, config `solver.lastResortCheck`). When the exhibition
+  shot leaves no ball pottable for the next step (its lookahead failed), doubles and spray are tried too, and the first
+  that leaves a ball pottable by any shot wins; if none does, the first found is played anyway. Shot cap: success
+  includes 3 checks (one shot plus one search per next ball each).
