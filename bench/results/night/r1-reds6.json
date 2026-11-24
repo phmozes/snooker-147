@@ -1,0 +1,99 @@
+{
+ "reds6": {
+  "level": "reds6",
+  "position": {
+   "blackFromBehind": 8.9,
+   "redsBaulkCorner": 4.1,
+   "redsBaulkCornerFromBlackHalf": 2.5,
+   "cutMedian": 19.5,
+   "cutsOver50": 4.7
+  },
+  "rounds": 60,
+  "shots": 354,
+  "success": 302,
+  "reRacks": 2,
+  "reRackPct": 0.7,
+  "natural": 85.3,
+  "naturalOld": 91,
+  "exhibition": 2,
+  "whyNot": {
+   "not a natural pot type": 27,
+   "pink disturbed": 8,
+   "over # s": 8,
+   "cue ball runs # m": 1
+  },
+  "byTarget": {
+   "colour:long:normal": 7,
+   "colour:long:longerDuration": 4,
+   "red:cushionFirst:exhibition": 3,
+   "red:cannon:overLong": 4,
+   "red:farPocket:exhibition": 1,
+   "colour:cannon:longerDuration": 1,
+   "red:plant:exhibition": 1,
+   "red:cannon:longerDuration": 2,
+   "red:long:longerDuration": 1,
+   "red:cushionFirst:spray": 1,
+   "red:cannon:normal": 1,
+   "colour:cannon:overLong": 1
+  },
+  "pace": {
+   "red": {
+    "n": 122,
+    "median": 1.47,
+    "p90": 2.16,
+    "maxNotLastResort": 3.32,
+    "over35": 0
+   },
+   "colour": {
+    "n": 178,
+    "median": 1.63,
+    "p90": 2.23,
+    "maxNotLastResort": 4.29,
+    "over35": 3
+   }
+  },
+  "types": {
+   "plain": 246,
+   "packCannon": 23,
+   "long": 12,
+   "softCannon": 4,
+   "cushionFirst": 4,
+   "cannon": 9,
+   "farPocket": 1,
+   "plant": 1
+  },
+  "fails": {
+   "plainMiss": 33,
+   "jawRattle": 14,
+   "jawRattle->softFoul": 3,
+   "inOff->plainMiss": 1,
+   "inOff": 1
+  },
+  "colours": {
+   "black": 128,
+   "pink": 29,
+   "blue": 21
+  },
+  "median": 1.5645833333333585,
+  "within15": 44,
+  "over22": 33,
+  "flex": {
+   "longerDuration": 119,
+   "wideSearch": 10,
+   "overLong": 26,
+   "rescue": 13,
+   "exhibition": 5,
+   "noLookahead": 4,
+   "spray": 1,
+   "reRack": 2
+  },
+  "examples": "reds6-80:9,reds6-87:9,reds6-185:9,reds6-199:9,reds6-269:11,reds6-276:9R,reds6-353:7,reds6-395:9R",
+  "within25": 95.3,
+  "over35all": 6,
+  "blackMedian": 1.6125000000000276,
+  "fullPower": 16,
+  "solveMsMedian": 181,
+  "solveMsP90": 486,
+  "solveMsMax": 2191
+ }
+}

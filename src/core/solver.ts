@@ -25,6 +25,7 @@ export interface SolvedShot {
   nextCost: number | null; // how hard the next shot looks from cueEnd (null = not scored)
   cueEnd: Vec2;
   lookahead?: 'ok' | 'failed'; // was the next step found solvable from here? (undefined = not checked)
+  lockedReds?: boolean; // every red left is locked (no pocket can take any of them): RE-RACK risk
   nextNatural?: boolean; // colour planned two shots ahead: is the red after it strictly natural? (RULES B.3)
   computeMs: number;
   tried: number; // shots simulated
@@ -272,7 +273,8 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     if (best && score >= best.score + M) return 'done';
     const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
     const shot: SolvedShot = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed,
-      spin, duration, computeMs: 0, tried: 0, score, nextCost: nexts.length ? cost : null, cueEnd: { ...cueEnd }, type, natural, whyNot };
+      spin, duration, computeMs: 0, tried: 0, score, nextCost: nexts.length ? cost : null, cueEnd: { ...cueEnd }, type, natural, whyNot,
+      ...(locked ? { lockedReds: true } : {}) };
     cands.push(shot);
     if (!best || score < best.score) best = shot;
     return 'done';
@@ -318,6 +320,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   if (best && nexts.length && (opts.lookahead ?? Sv.lookahead > 0)) {
     const order: SolvedShot[] = [];
     const rescue = !!opts.rescue;
+    let rescueOk: SolvedShot | null = null;
     for (const c of cands.filter((x) => rescue || x.score < best!.score + M).sort((a, b) => a.score - b.score)) {
       if (order.length >= (rescue ? Sv.rescue.candidates : plan ? NAT.planCandidates : Sv.lookaheadCandidates)) break;
       if (order.every((o) => Math.hypot(o.cueEnd.x - c.cueEnd.x, o.cueEnd.y - c.cueEnd.y) >= Sv.lookaheadSpread)) order.push(c);
@@ -342,7 +345,8 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
           tried += i.tried;
           if (s) { ok = true; break; }
         }
-        if (ok) { best = { ...c, lookahead: 'ok' }; break; }
+        if (ok && (!c.lockedReds || !rescueOk)) rescueOk = { ...c, lookahead: 'ok' };
+        if (rescueOk && !rescueOk.lockedReds) break;
         continue;
       }
       if (plan) {
@@ -367,6 +371,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       if (ok) { best = { ...c, lookahead: 'ok' }; break; }
     }
     if (planned) best = { ...planned.shot, lookahead: 'ok', nextNatural: planned.natural };
+    if (rescueOk) best = rescueOk;
     if (best.lookahead !== 'ok') best = { ...best, lookahead: 'failed' };
   }
   if (best) best = { ...best, computeMs: now() - t0, tried };
@@ -520,7 +525,7 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
   const flex = CONFIG.shot.maxDurationFlex;
   const log = (level: FlexLevel | 'noLookahead', tried: number): FallbackLogEntry => ({ ...ctx, target, level, tried });
   // a shot whose lookahead failed (the next step looked unsolvable) is only used when nothing better exists
-  const good = (s: SolvedShot | null) => !!s && s.lookahead !== 'failed';
+  const good = (s: SolvedShot | null) => !!s && s.lookahead !== 'failed' && !s.lockedReds;
   let tried = pre?.tried ?? 0;
   const out = (shot: SolvedShot | null, level: FlexLevel, logLevel: FlexLevel | 'noLookahead' | null): FlexResult =>
     ({ shot: shot && { ...shot, tried }, level, log: logLevel ? log(logLevel, tried) : null, tried });
@@ -545,12 +550,13 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
   const found = [normal, wide].filter((x): x is SolvedShot => x !== null);
   // prefer a shot that keeps the next step solvable, then the shortest
   found.sort((a, b) => Number(a.whyNot !== null) - Number(b.whyNot !== null) ||
-    Number(a.lookahead === 'failed') - Number(b.lookahead === 'failed') || a.duration - b.duration);
+    Number(a.lookahead === 'failed') - Number(b.lookahead === 'failed') ||
+    Number(!!a.lockedReds) - Number(!!b.lockedReds) || a.duration - b.duration);
   let pick = found[0];
   // night 2026-11-24: every shot found leaves the next ball unreachable -> rescue search (RE-RACK avoidance)
   if (Sv.rescue.enabled && !found.some(good)) {
     const res = run(Sv.wide.shotBudget, { wide: true, rescue: true });
-    if (res && res.lookahead === 'ok') return out(res, 'rescue', 'rescue');
+    if (res && res.lookahead === 'ok' && (!res.lockedReds || !pick || pick.lockedReds || pick.lookahead === 'failed')) return out(res, 'rescue', 'rescue');
     if (!pick && res) pick = res;
   }
   // realism first (owner, task 4.7): any natural shot, even long or with a doubtful next step, before an exhibition one

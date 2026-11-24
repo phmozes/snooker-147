@@ -118,7 +118,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.8a',            // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.8b',            // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -189,7 +189,7 @@ export const CONFIG = {
       planMargin: 3.0,           // ... within this score of the best colour shot
       planWeight: 1.0,           // ... the red's score counts this much in choosing the colour shot    // naturalness cost of a pot that fails the strict check (cue ball running around ...)
       softCannonSpeed: 0.8,      // m/s: the cue ball touching reds after a red pot at most this fast = soft cannon (natural)
-      cannonCost: 1.5, longCost: 2.0, exhibitionCost: 6,
+      cannonCost: 3.0, longCost: 3.0, exhibitionCost: 6, // night round 1: 1.5 / 2.0 -> 3 / 3
       poorNextCost: 2.5,         // after a colour: a next red this hard (long, touching, thin) -> also run the wide search
       touchGap: 0.01,            // m: balls closer than 2r + this touch (position: a touching red is a poor next ball)
       touchingCost: 2.5,         // ... it costs this much more as the next ball (open the pack instead)

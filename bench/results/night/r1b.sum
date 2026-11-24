@@ -1,0 +1,2 @@
+r1b-reds6.json reds6: nat 84.4 exh 1.9 RR 0 | behind 8.6 baulkC 4 (fromBlackHalf 2.4) cutMed 19.2 cut>50 4.5 | med 1.56 <=2.5 95.2% >3.5 6 (notLast red 0 col 3) | ms p90 602 max 3195
+r1b-reds15.json reds15: nat 87.1 exh 1.4 RR 0 | behind 3.7 baulkC 2.6 (fromBlackHalf 2) cutMed 18 cut>50 3 | med 1.56 <=2.5 96.8% >3.5 4 (notLast red 0 col 4) | ms p90 901 max 3268

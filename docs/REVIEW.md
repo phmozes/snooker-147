@@ -88,3 +88,8 @@ Phase 1 (solver 4.8a), before -> after, 6/10/15 reds:
   pocket can take them, and the solver potted the last free red (fixed: lockedCost + rescue step). RE-RACK 0 again.
 - Your four marks: see the top of docs/WEIRD-SHOTS.md (2 fixed, 1 partly, 1 still happens but milder).
 - B.3 now needs a natural red after the colour (shot.nextNatural), as you confirmed.
+Phase 2 (6 and 15 reds, 60 rounds each, strict; files bench/results/night/r*.sum):
+- Fix first: a shot that leaves only locked reds is not 'good' (wide search and rescue look for a cannon that frees
+  them). New base (base2): natural 84.4 / 85.7%, exhibition 2.9 / 1.8%, RE-RACK 0.
+- Round 1, cannon and long costs 1.5/2.0 -> 3/3: natural 84.4 / 87.1%, exhibition 1.9 / 1.4%, RE-RACK 0. KEPT (4.8b).
+  (Before the locked-reds fix the same change gave 2 RE-RACKs at 6 reds.)
