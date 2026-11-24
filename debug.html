@@ -26,11 +26,15 @@
 <body>
   <canvas id="c"></canvas>
   <aside>
-    <h1>Table debug (task 1.4: friction and speed)</h1>
+    <h1>Table debug (task 4.1: solver)</h1>
     <div><b>Level</b><div class="row" id="levels"></div></div>
     <div><b>Shot</b> <span style="opacity:.7">click the table: the cue ball is hit toward that point</span>
       <div class="row" id="shots"></div>
       <label>Power <input id="power" type="range" min="1" max="100" step="1" /> <span id="powerText"></span></label></div>
+    <div><b>Solver</b> <span style="opacity:.7">task 4.1: success shots on a random layout (level from the Level buttons)</span>
+      <div class="row" id="solveDue"></div>
+      <div class="row" id="solveButtons"></div>
+      <pre id="solveOut">Press Solve: a random layout and the quickest success shot the solver finds.</pre></div>
     <div><b>Cloth friction</b> <span style="opacity:.7">rolling friction for every shot on this page</span>
       <div class="row" id="frictionMarks"></div>
       <label class="sl">Friction <input id="friction" type="range" /> <span id="frictionText"></span></label>

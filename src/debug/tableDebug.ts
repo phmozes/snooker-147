@@ -6,7 +6,10 @@
 
 import { CONFIG } from '../config/game.config';
 import { paceStudy, speedBenchmark, withFriction } from '../core/physics/bench';
-import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, stepSim, strike, type PhysicsConfig, type Sim } from '../core/physics/sim';
+import { mulberry32 } from '../core/rng';
+import { judgeShot, type FrameState } from '../core/rules';
+import { randomLayout, solveSuccess, type SolveInfo } from '../core/solver';
+import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, runUntilStill, stepSim, strike, type PhysicsConfig, type Sim } from '../core/physics/sim';
 import { breakAim, pocketRollStart, runPocketRoll, type PocketRoll, type RollOutcome } from '../core/physics/testShots';
 import { arcPoints, buildTable, type JawArc, type PocketId, type TableGeometry } from '../core/table/geometry';
 import { checkRack, rackBalls } from '../core/table/rack';
@@ -641,6 +644,90 @@ const showPower = () => {
 };
 slider.oninput = () => { state.power = Number(slider.value) / 100; showPower(); };
 showPower();
+
+// ---- solver (task 4.1): random layout, the quickest success shot the solver finds, played on the table ----
+let solveDue: 'red' | 'colour' = 'red';
+let layoutNo = 1;
+let layout: FrameState | null = null;
+const makeLayout = () => randomLayout(mulberry32(CONFIG.dev.bench.seed * 1000 + layoutNo * 7919 + state.reds), state.reds, solveDue, table);
+const solveTarget = (): BallKind => (solveDue === 'red' ? 'red' : 'black'); // until the colour choice: black (RULES B.3)
+const spinText = (v: number) => (v === 0 ? 'stun' : v > 0 ? `follow ${Math.round(v * 100)}%` : `screw ${Math.round(-v * 100)}%`);
+
+function showLayout() {
+  layout = makeLayout();
+  sim = createSim(layout.balls, table, physics);
+  shot = freshShot();
+  rollMode = false;
+  lastOutcome = null;
+  trail = [];
+  spinTest = { active: false, contact: null, end: null };
+  state.view = 'table';
+}
+function solveAndPlay() {
+  showLayout(); // same layout number, level and due always give the same layout
+  const L = layout!;
+  sim = createSim(L.balls, table, physics); // back to the start of this layout
+  shot = freshShot();
+  const info: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+  const s = solveSuccess(L, solveTarget(), table, () => performance.now(), physics, undefined, info);
+  const out = document.getElementById('solveOut')!;
+  if (!s) {
+    const why = info.pairs === 0 ? 'no pocket with an open path' : info.timedOut ? `time budget used up (${info.tried} shots tried)` : 'every shot tried, none pots only the target';
+    out.innerHTML = `Layout ${layoutNo}: <span class="bad">no success shot found</span> (${why})`;
+    return;
+  }
+  // independent check: simulate the returned shot again and judge it with the rules code
+  const check = createSim(L.balls, table, physics);
+  strike(check, 'cue', s.dir, s.speed, s.spin);
+  runUntilStill(check);
+  const first = check.events.find((e) => e.type === 'ball');
+  const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+  const verdict = judgeShot(L, solveTarget(), { firstHit, potted: check.balls.filter((b) => b.potted).map((b) => b.id), after: [] });
+  const ok = verdict.result === 'success';
+  out.innerHTML = [
+    `Layout ${layoutNo} (${state.reds} reds level, ${L.redsLeft} reds on the table, ${solveDue} due)`,
+    `Target: <b>${s.target}</b> into <b>${s.pocket}</b>`,
+    `Power: ${s.speed.toFixed(2)} m/s (${Math.round((s.speed / CONFIG.physics.maxCueSpeed) * 100)}%) · spin: ${spinText(s.spin)}`,
+    `Shot length: <b>${s.duration.toFixed(2)} s</b> until all balls stop ${s.duration <= CONFIG.shot.maxDuration ? '<span class="ok">within 1.5 s</span>' : '<span class="bad">over 1.5 s</span>'}`,
+    `Compute time: <b>${s.computeMs.toFixed(0)} ms</b> (budget ${CONFIG.solver.timeBudgetMs} ms, ${s.tried} shots tried)`,
+    `Rules check: ${ok ? '<span class="ok">success (exactly the target potted, cue ball on the table)</span>' : `<span class="bad">${verdict.result}</span>`}`,
+  ].join('\n');
+  shoot(s.dir, s.speed, s.spin);
+}
+function runTwenty() {
+  const out = document.getElementById('solveOut')!;
+  out.textContent = 'solving 20 layouts...';
+  setTimeout(() => {
+    const dur: number[] = [];
+    const ms: number[] = [];
+    let solved = 0;
+    const start = layoutNo;
+    for (let i = 0; i < 20; i++) {
+      layoutNo = start + i;
+      const L = makeLayout();
+      const s = solveSuccess(L, solveTarget(), table, () => performance.now(), physics);
+      if (s) { solved++; dur.push(s.duration); ms.push(s.computeMs); }
+    }
+    layoutNo = start;
+    const med = (a: number[]) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[b.length >> 1]! : NaN; };
+    const max = (a: number[]) => (a.length ? Math.max(...a) : NaN);
+    out.innerHTML = [
+      `<b>Run 20</b>: layouts ${start}-${start + 19}, ${state.reds} reds level, ${solveDue} due`,
+      `Solved: <b>${solved} of 20</b>`,
+      `Shot length: median ${med(dur).toFixed(2)} s, longest ${max(dur).toFixed(2)} s, within 1.5 s: ${Math.round((dur.filter((d) => d <= CONFIG.shot.maxDuration).length / Math.max(1, dur.length)) * 100)}%`,
+      `Compute time: median ${med(ms).toFixed(0)} ms, longest ${max(ms).toFixed(0)} ms (budget ${CONFIG.solver.timeBudgetMs} ms)`,
+    ].join('\n');
+  }, 30);
+}
+renderers.push(buttons('solveDue', [
+  { label: 'Red due', on: () => solveDue === 'red', click: () => { solveDue = 'red'; showLayout(); } },
+  { label: 'Colour due (black)', on: () => solveDue === 'colour', click: () => { solveDue = 'colour'; showLayout(); } },
+]));
+renderers.push(buttons('solveButtons', [
+  { label: 'Solve', on: () => false, click: solveAndPlay },
+  { label: 'Next layout', on: () => false, click: () => { layoutNo++; showLayout(); document.getElementById('solveOut')!.textContent = `Layout ${layoutNo}: press Solve`; } },
+  { label: 'Run 20', on: () => false, click: runTwenty },
+]));
 
 window.addEventListener('resize', draw);
 renderAll();

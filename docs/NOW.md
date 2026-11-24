@@ -1,14 +1,15 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Check task 3.2 (score, points remaining, snookers, maximum): docs/RULES-CHECK.md; answer decision 9. Tasks 1.1-3.1 approved.
+- Check task 4.1 on debug.html (Solver: Red/Colour due, Solve, Next layout, Run 20) and docs/SOLVER.md. 1.1-3.2 approved.
 - Test replay.html on the real phone at home (smoothness, camera feel). Open; does not block the next task.
 
 ## Claude's turn
-- Next: stage 4 (task 4.1, success shots in the solver), after the owner's approval and go.
+- 4.1 done: solver (src/core/solver.ts), debug-page Solver section, tests/solver.test.ts, bench/solver.test.ts report.
+- 4.1 left: about 12-18% of red and 18-39% of black layouts have no shot (see docs/SOLVER.md); handled in 4.5.
+- Next: owner checks 4.1; then task 4.2 (failure shots) after the owner's go. Solver must count shots, not ms (4.5).
 - Balls drawn at 1.3x (owner, provisional until the real-phone test). If still too small: closer camera, not bigger balls.
-- Pace (provisional, owner 2026-11-24): solver picks the quickest valid shot, cloth friction 0.05. Shot ends when all balls stop.
-- Main camera: preset C (64°, owner 2026-11-24); A and B stay in config to switch later.
+- Owner 2026-11-24: quickest valid shot, friction 0.05 (provisional), shot ends when all balls stop; camera C (A/B kept).
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others: nothing.
@@ -23,8 +24,7 @@
 ## Working rules
 - Owner decides: design, money (odds, bets, RTP), publishing. Claude decides: code details, tests, commits.
 - Rules are locked in docs/RULES.md. Concept changes only after asking the owner.
-- Gray-box first. No visual polish until the game loop is approved.
-- Tasks of about 2 hours. Stop for review after every task. Show one thing at a time.
+- Gray-box first, no polish until the game loop is approved. Tasks of about 2 hours; stop for review after each.
 - Outcome first (seeded RNG), shot second; visuals never change odds. No Math.random in physics/rules/solver; all numbers in config.
 - Free assets only, commercial-use licence, every source in docs/ASSETS.md.
 - Costs (if any ever) go in EXPENSES.md.
