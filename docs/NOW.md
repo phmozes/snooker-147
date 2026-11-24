@@ -1,9 +1,9 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review docs/RULES.md, docs/config.draft.ts, docs/PLAN.md (incl. "Honest feedback" and "Open questions").
-- Answer the 6 open questions at the end of docs/PLAN.md.
-- Approve the plan, or send changes.
+- Answer the 6 open questions at the end of docs/PLAN.md (recommendations given in chat).
+- Approved so far: record-then-play-back; black look-ahead; RTP split; round code; 15-red break filter; postponements.
+- Review RULES.md section D (what happens when the solver finds no shot).
 
 ## Claude's turn
 - Wait for approval. No game code before approval.

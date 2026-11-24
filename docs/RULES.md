@@ -41,5 +41,24 @@
 9. **Maximum** = table cleared with black after every red (75 / 107 / 147).
 10. Balls never leave the table, never overlap, and every movement has a visible physical cause.
 
-## D. Not implemented
+## D. When the solver finds no shot (the decided outcome NEVER changes)
+The solver works out the next shot for both outcomes while the player is still deciding, so a problem is
+known before SHOOT is pressed. Every fallback is logged with the round code and step.
+1. **Step 1** never needs a fallback: every break in the library is stored together with a step-1 shot
+   that was already tested offline.
+2. **Failure outcomes** are always possible. If the chosen failure type cannot be found, use a plain miss.
+   If no plain miss is found, play a soft shot that hits the wrong ball first (FOUL). If even that fails, tap the
+   cue ball gently so it hits no ball at all (FOUL). A gentle tap can always be played.
+3. **Success outcomes** go through the flex chain in this order: longer shot time (up to `maxDurationFlex`), other
+   pocket, other ball of the same type (another red), then a wide search (more angles, powers, spins and
+   cushion-first shots, longer compute time).
+4. **Last resort, if a success is decided and still no shot exists:** the success counts. The step is credited,
+   and the round ends with an automatic cash out at the NEW multiplier. No shot is played. The strip shows
+   "TABLE LOCKED · WON <amount> - x<multiplier>". The player gets what the decided success is worth, so the odds
+   and the RTP do not change.
+5. **Colour steps:** a colour is offered only if both its success shot and its failure shot were found. The one
+   exception is black, which is always offered. If black is picked and has no success shot, rule 4 applies.
+6. The soak test fails if rule 4 happens more than once in 100,000 shots.
+
+## E. Not implemented
 Free ball, miss rule, re-racking after a foul, push shot, touching ball, side spin (maybe later), opponent turns.
