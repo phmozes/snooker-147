@@ -8,7 +8,7 @@ import { newRound, setLevel, shoot, start, type LevelId } from '../src/core/roun
 import { buildTable } from '../src/core/table/geometry';
 
 const table = buildTable();
-const cases: [string, number][] = [['reds10-5000066', 17], ['reds6-5000294', 11], ['reds6-5000311', 13]];
+const cases: [string, number][] = [['reds10-5000066', 17], ['reds6-5000294', 11], ['reds6-5000311', 13], ['reds6-5000614', 11]];
 
 describe('soak findings: no RE-RACK any more', () => {
   for (const [code, step] of cases) {

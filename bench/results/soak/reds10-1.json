@@ -3,58 +3,71 @@
  "shard": 1,
  "shards": 3,
  "solver": "4.8d",
- "rounds": 40,
- "shots": 242,
- "success": 205,
+ "rounds": 200,
+ "shots": 1563,
+ "success": 1389,
  "reRacks": 0,
  "problems": 0,
  "ends": {
-  "failure": 40
+  "failure": 194,
+  "clearance": 6
  },
  "flex": {
-  "longerDuration": 97,
-  "overLong": 7,
-  "wideSearch": 2,
-  "exhibition": 2
+  "longerDuration": 660,
+  "overLong": 54,
+  "wideSearch": 23,
+  "exhibition": 18,
+  "noLookahead": 4,
+  "rescue": 5
  },
  "failureKinds": {
-  "inOff->plainMiss": 4,
-  "plainMiss": 20,
-  "jawRattle": 7,
-  "inOff": 3,
-  "wrongBallFirst->plainMiss": 1,
-  "inOff->softFoul": 1,
-  "plainMiss->softFoul": 1
+  "inOff->plainMiss": 12,
+  "plainMiss": 98,
+  "jawRattle": 44,
+  "inOff": 6,
+  "wrongBallFirst->plainMiss": 7,
+  "inOff->softFoul": 2,
+  "plainMiss->softFoul": 2,
+  "wrongBallFirst": 1,
+  "plainMiss->tap": 1,
+  "jawRattle->plainMiss": 1
  },
  "types": {
-  "plain": 152,
-  "cannon": 4,
-  "packCannon": 31,
-  "long": 5,
-  "softCannon": 11,
-  "plant": 1,
-  "cushionFirst": 1
+  "plain": 999,
+  "cannon": 30,
+  "packCannon": 228,
+  "long": 42,
+  "softCannon": 72,
+  "plant": 2,
+  "cushionFirst": 15,
+  "double": 1
  },
  "colours": {
-  "black": 77,
-  "pink": 38,
-  "blue": 16
+  "black": 475,
+  "pink": 234,
+  "blue": 96
  },
  "lengths": {
-  "1.75": 32,
-  "0.50": 8,
-  "2.00": 21,
-  "1.25": 54,
-  "1.00": 21,
-  "1.50": 49,
-  "0.75": 12,
-  "2.75": 2,
-  "2.25": 4,
-  "0.25": 2
+  "1.75": 210,
+  "0.50": 40,
+  "2.00": 151,
+  "1.25": 356,
+  "1.00": 148,
+  "1.50": 339,
+  "0.75": 77,
+  "2.75": 11,
+  "2.25": 34,
+  "0.25": 9,
+  "2.50": 4,
+  "3.75": 1,
+  "3.50": 2,
+  "4.75": 2,
+  "3.25": 2,
+  "3.00": 3
  },
- "over35": 0,
- "maxDuration": 2.954166666666659,
- "maxTried": 2811,
+ "over35": 5,
+ "maxDuration": 4.947916666666546,
+ "maxTried": 6433,
  "cap": 36958,
  "strategies": [
   1,
@@ -67,26 +80,26 @@
   26
  ],
  "rtp": {
-  "1": 97.12,
-  "2": 91.2,
-  "3": 93.75,
-  "5": 64.6,
-  "8": 53.25,
-  "12": 63.7,
-  "13": 63.3,
-  "26": 0
+  "1": 94.5,
+  "2": 90.63,
+  "3": 91.88,
+  "5": 89.68,
+  "8": 88.39,
+  "12": 98.28,
+  "13": 103.39,
+  "26": 150
  },
  "startedAt": "2026-11-24T21:51:23.356Z",
- "updatedAt": "2026-11-24T21:55:53.610Z",
+ "updatedAt": "2026-11-24T22:17:23.429Z",
  "done": false,
  "pay": {
-  "1": 38.849999999999994,
-  "2": 36.48000000000001,
-  "3": 37.5,
-  "5": 25.839999999999996,
-  "8": 21.299999999999994,
-  "12": 25.48,
-  "13": 25.319999999999997,
-  "26": 0
+  "1": 189.00000000000043,
+  "2": 181.25999999999942,
+  "3": 183.75,
+  "5": 179.36000000000024,
+  "8": 176.7899999999998,
+  "12": 196.55999999999975,
+  "13": 206.77999999999997,
+  "26": 300
  }
 }

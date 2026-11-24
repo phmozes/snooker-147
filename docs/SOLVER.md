@@ -277,3 +277,6 @@ corners, median cut, cuts over 50 deg. Results: docs/REVIEW.md "Night".
   search for black, pink and blue (natural first, then in time) -> a natural colour anyway -> any shot. Rescue keeps
   candidates within `rescue.margin`. Shot cap: colourPick now includes 3 rescues.
 - Tried and not kept: unnaturalPlayCost 5; wide search after a red that leaves a poor colour (`wideForPoorColour`, off).
+- 4.8e (soak reds6-5000614): object-ball doubles (`solveDoubles`, config `solver.doubles`) between the exhibition
+  search and the spray: the object ball is aimed at a pocket's mirror image in each cushion. Only reached when a
+  RE-RACK would otherwise be near. Flex level 'doubles'.

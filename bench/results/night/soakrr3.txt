@@ -1,0 +1,23 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+solver 4.8d
+reds6-5000614:9: red success; {"target":"red3","pocket":"topLeft","dir":{"x":-0.23024741840535,"y":0.7480177334780949},"speed":2.450389559155243,"spin":-0.6,"duration":2.079166666666709,"computeMs":0,"tried":729,"score":25.985064491651716,"nextCost":0.6713279582537763,"cueEnd":{"x":0.3861849727147512,"y":1.3774761532862692},"type":"plain","natural":0.733498189037724,"whyNot":null,"lockedReds":true,"lookahead":"ok"}
+  flex log: [{"roundCode":"reds6-5000614","step":9,"target":"red","level":"rescue","tried":729}]
+  position: pocket topLeft cut 32 deg, cue->ball 0.83 m, ball->pocket 1.20 m; cue not behind the black; cue ends (0.39,1.38)
+  strict check: plain -> NATURAL (cue ball rolls 0.53 m after contact, 0 cushions)
+  before: cue(0.285,0.216) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) red3(0.015,0.998) black(0.000,1.460) blue(0.000,0.000)
+reds6-5000614:10: black success; {"target":"black","pocket":"topLeft","dir":{"x":-0.33686731913550055,"y":0.06502331768158776},"speed":2.53002606050533,"spin":-0.3,"duration":0.7187499999999981,"computeMs":0,"tried":6015,"score":128.32272834497726,"nextCost":4,"cueEnd":{"x":0.02770890045140069,"y":1.362404917812716},"type":"plain","natural":0.40265222998484346,"whyNot":null,"lockedReds":true,"lookahead":"failed"}
+  flex log: [{"roundCode":"reds6-5000614","step":10,"target":"black","level":"noLookahead","tried":6015}]
+  position: pocket topLeft cut 9 deg, cue->ball 0.40 m, ball->pocket 0.95 m; cue not behind the black; cue ends (0.03,1.36)
+  strict check: plain -> NATURAL (cue ball rolls 0.09 m after contact, 0 cushions)
+  before: cue(0.386,1.377) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) black(0.000,1.460) blue(0.000,0.000)
+reds6-5000614:11: red reRack; undefined
+  flex log: [{"roundCode":"reds6-5000614","step":11,"target":"red","level":"reRack","tried":1540}]
+  before: cue(0.028,1.362) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) blue(0.000,0.000) black(0.000,1.460)
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  00:14:31
+   Duration  42.74s (tests 100%)
+

@@ -1,271 +1,318 @@
 {
  "reds10": {
-  "rounds": 70,
-  "shots": 493,
-  "success": 430,
+  "rounds": 500,
+  "shots": 4013,
+  "success": 3563,
   "reRacks": 0,
   "problems": 0,
-  "over35": 1,
-  "maxDuration": 4.043749999999931,
-  "maxTried": 2608,
+  "over35": 19,
+  "maxDuration": 5.039583333333208,
+  "maxTried": 6433,
   "shards": 3,
   "ends": {
-   "failure": 70
+   "failure": 489,
+   "clearance": 11
   },
   "flex": {
-   "longerDuration": 197,
-   "overLong": 21,
-   "wideSearch": 10,
-   "exhibition": 3
+   "longerDuration": 1661,
+   "overLong": 154,
+   "wideSearch": 69,
+   "exhibition": 36,
+   "rescue": 22,
+   "noLookahead": 6
   },
   "failureKinds": {
-   "jawRattle": 14,
-   "wrongBallFirst->plainMiss": 3,
-   "plainMiss": 32,
-   "jawRattle->plainMiss": 1,
-   "inOff->plainMiss": 9,
-   "inOff": 2,
-   "inOff->softFoul": 1,
-   "wrongBallFirst": 1
-  },
-  "types": {
-   "plain": 317,
-   "packCannon": 67,
-   "softCannon": 24,
-   "long": 9,
-   "cannon": 10,
-   "double": 1,
-   "plant": 1,
-   "cushionFirst": 1
-  },
-  "colours": {
-   "black": 155,
-   "pink": 71,
-   "blue": 32
-  },
-  "lengths": {
-   "1.75": 58,
-   "0.75": 24,
-   "1.25": 115,
-   "2.25": 12,
-   "2.00": 50,
-   "1.50": 106,
-   "1.00": 49,
-   "0.50": 11,
-   "4.00": 1,
-   "2.75": 1,
-   "0.25": 1,
-   "3.25": 1,
-   "3.00": 1
-  },
-  "pay": {
-   "1": 66.15000000000002,
-   "2": 64.98000000000002,
-   "3": 66.25,
-   "5": 56.239999999999995,
-   "8": 48.98999999999999,
-   "12": 47.32,
-   "13": 54.86,
-   "26": 0
-  },
-  "solver": "4.8d",
-  "cap": 36958,
-  "rtp": {
-   "1": 94.5,
-   "2": 92.8,
-   "3": 94.6,
-   "5": 80.3,
-   "8": 70,
-   "12": 67.6,
-   "13": 78.4,
-   "26": 0
-  },
-  "typeShares": {
-   "plain": 73.72,
-   "packCannon": 15.58,
-   "softCannon": 5.58,
-   "cannon": 2.33,
-   "long": 2.09,
-   "double": 0.23,
-   "plant": 0.23,
-   "cushionFirst": 0.23
-  }
- },
- "reds15": {
-  "rounds": 50,
-  "shots": 401,
-  "success": 357,
-  "reRacks": 0,
-  "problems": 0,
-  "over35": 1,
-  "maxDuration": 3.9583333333332686,
-  "maxTried": 4479,
-  "shards": 3,
-  "ends": {
-   "failure": 50
-  },
-  "flex": {
-   "longerDuration": 172,
-   "overLong": 12,
-   "wideSearch": 8,
-   "exhibition": 4,
-   "rescue": 3
-  },
-  "failureKinds": {
-   "jawRattle": 11,
-   "inOff->plainMiss": 6,
-   "wrongBallFirst->plainMiss": 4,
-   "plainMiss": 23
-  },
-  "types": {
-   "plain": 230,
-   "long": 22,
-   "softCannon": 32,
-   "packCannon": 60,
-   "cannon": 9,
-   "plant": 2,
-   "double": 1,
-   "cushionFirst": 1
-  },
-  "colours": {
-   "black": 130,
-   "blue": 39,
-   "pink": 45
-  },
-  "lengths": {
-   "1.75": 59,
-   "1.50": 85,
-   "0.75": 18,
-   "2.00": 43,
-   "1.00": 53,
-   "1.25": 80,
-   "0.50": 7,
-   "2.25": 8,
-   "2.50": 2,
-   "3.75": 1,
-   "0.25": 1
-  },
-  "pay": {
-   "1": 46.20000000000002,
-   "2": 42.93999999999998,
-   "3": 45.879999999999995,
-   "5": 39.96000000000001,
-   "8": 39.400000000000006,
-   "12": 39.129999999999995,
-   "18": 55.62,
-   "36": 0
-  },
-  "solver": "4.8d",
-  "cap": 36958,
-  "rtp": {
-   "1": 92.4,
-   "2": 85.9,
-   "3": 91.8,
-   "5": 79.9,
-   "8": 78.8,
-   "12": 78.3,
-   "18": 111.2,
-   "36": 0
-  },
-  "typeShares": {
-   "plain": 64.43,
-   "packCannon": 16.81,
-   "softCannon": 8.96,
-   "long": 6.16,
-   "cannon": 2.52,
-   "plant": 0.56,
-   "double": 0.28,
-   "cushionFirst": 0.28
-  }
- },
- "reds6": {
-  "rounds": 90,
-  "shots": 561,
-  "success": 483,
-  "reRacks": 0,
-  "problems": 0,
-  "over35": 3,
-  "maxDuration": 5.264583333333195,
-  "maxTried": 6106,
-  "shards": 3,
-  "ends": {
-   "failure": 87,
-   "clearance": 3
-  },
-  "flex": {
-   "longerDuration": 212,
-   "overLong": 21,
-   "wideSearch": 15,
-   "rescue": 8,
-   "exhibition": 6,
-   "noLookahead": 1
-  },
-  "failureKinds": {
-   "plainMiss": 44,
-   "wrongBallFirst->plainMiss": 5,
-   "jawRattle": 13,
-   "inOff": 3,
-   "inOff->plainMiss": 11,
-   "jawRattle->plainMiss": 1,
+   "jawRattle": 108,
+   "wrongBallFirst->plainMiss": 22,
+   "plainMiss": 251,
+   "jawRattle->plainMiss": 9,
+   "inOff->plainMiss": 39,
+   "inOff": 10,
+   "plainMiss->softFoul": 4,
+   "wrongBallFirst": 3,
+   "inOff->softFoul": 2,
+   "plainMiss->tap": 1,
    "jawRattle->softFoul": 1
   },
   "types": {
-   "plain": 400,
-   "cannon": 11,
-   "packCannon": 35,
-   "softCannon": 13,
-   "long": 18,
-   "cushionFirst": 6
+   "plain": 2579,
+   "packCannon": 566,
+   "softCannon": 183,
+   "long": 108,
+   "cannon": 91,
+   "double": 3,
+   "plant": 6,
+   "cushionFirst": 26,
+   "farPocket": 1
   },
   "colours": {
-   "black": 195,
-   "pink": 50,
-   "blue": 34
+   "black": 1205,
+   "pink": 622,
+   "blue": 252
   },
   "lengths": {
-   "1.50": 121,
-   "1.25": 126,
-   "1.00": 66,
-   "1.75": 59,
-   "2.00": 58,
-   "0.50": 8,
-   "2.25": 10,
-   "0.75": 23,
-   "5.25": 1,
-   "2.75": 4,
-   "2.50": 3,
-   "3.75": 2,
-   "0.25": 2
+   "1.75": 524,
+   "0.75": 202,
+   "1.25": 902,
+   "2.25": 89,
+   "2.00": 390,
+   "1.50": 864,
+   "1.00": 407,
+   "0.50": 107,
+   "4.00": 2,
+   "2.75": 24,
+   "2.50": 11,
+   "0.25": 15,
+   "4.75": 3,
+   "5.00": 3,
+   "3.75": 4,
+   "3.50": 3,
+   "3.25": 4,
+   "3.00": 5,
+   "4.50": 2,
+   "4.25": 2
   },
   "pay": {
-   "1": 85.05000000000001,
-   "2": 83.22000000000003,
-   "3": 87.63,
-   "5": 75.66999999999999,
-   "8": 75.29999999999998,
-   "9": 83.72000000000001,
-   "12": 81,
-   "18": 75
+   "1": 484.0500000000004,
+   "2": 469.67999999999915,
+   "3": 476.25,
+   "5": 483.36000000000035,
+   "8": 474.9899999999995,
+   "12": 476.8399999999997,
+   "13": 489.5199999999999,
+   "26": 550
   },
   "solver": "4.8d",
   "cap": 36958,
   "rtp": {
-   "1": 94.5,
-   "2": 92.5,
-   "3": 97.4,
-   "5": 84.1,
-   "8": 83.7,
-   "9": 93,
-   "12": 90,
-   "18": 83.3
+   "1": 96.8,
+   "2": 93.9,
+   "3": 95.3,
+   "5": 96.7,
+   "8": 95,
+   "12": 95.4,
+   "13": 97.9,
+   "26": 110
   },
   "typeShares": {
-   "plain": 82.82,
-   "packCannon": 7.25,
-   "long": 3.73,
-   "softCannon": 2.69,
-   "cannon": 2.28,
-   "cushionFirst": 1.24
+   "plain": 72.38,
+   "packCannon": 15.89,
+   "softCannon": 5.14,
+   "long": 3.03,
+   "cannon": 2.55,
+   "cushionFirst": 0.73,
+   "plant": 0.17,
+   "double": 0.08,
+   "farPocket": 0.03
+  }
+ },
+ "reds15": {
+  "rounds": 400,
+  "shots": 3584,
+  "success": 3223,
+  "reRacks": 0,
+  "problems": 0,
+  "over35": 15,
+  "maxDuration": 4.914583333333215,
+  "maxTried": 4479,
+  "shards": 3,
+  "ends": {
+   "failure": 397,
+   "clearance": 3
+  },
+  "flex": {
+   "longerDuration": 1567,
+   "overLong": 104,
+   "wideSearch": 90,
+   "exhibition": 42,
+   "rescue": 9,
+   "spray": 1
+  },
+  "failureKinds": {
+   "jawRattle": 86,
+   "inOff->plainMiss": 40,
+   "wrongBallFirst->plainMiss": 22,
+   "plainMiss": 186,
+   "jawRattle->softFoul": 2,
+   "jawRattle->plainMiss": 11,
+   "inOff": 6,
+   "inOff->softFoul": 1,
+   "plainMiss->softFoul": 3,
+   "wrongBallFirst": 3,
+   "plainMiss->tap": 1
+  },
+  "types": {
+   "plain": 2086,
+   "long": 155,
+   "softCannon": 242,
+   "packCannon": 587,
+   "cannon": 111,
+   "plant": 8,
+   "double": 10,
+   "cushionFirst": 24
+  },
+  "colours": {
+   "black": 1200,
+   "blue": 380,
+   "pink": 304
+  },
+  "lengths": {
+   "1.75": 491,
+   "1.50": 782,
+   "0.75": 155,
+   "2.00": 414,
+   "1.00": 439,
+   "1.25": 736,
+   "0.50": 72,
+   "2.25": 73,
+   "2.50": 10,
+   "4.00": 7,
+   "3.75": 6,
+   "3.00": 8,
+   "2.75": 5,
+   "0.25": 18,
+   "3.25": 5,
+   "4.75": 1,
+   "3.50": 1
+  },
+  "pay": {
+   "1": 382.1999999999993,
+   "2": 371.7699999999994,
+   "3": 378.19999999999936,
+   "5": 377.4000000000003,
+   "8": 366.41999999999985,
+   "12": 373.24000000000024,
+   "18": 383.1600000000002,
+   "36": 300
+  },
+  "solver": "4.8d",
+  "cap": 36958,
+  "rtp": {
+   "1": 95.5,
+   "2": 92.9,
+   "3": 94.5,
+   "5": 94.4,
+   "8": 91.6,
+   "12": 93.3,
+   "18": 95.8,
+   "36": 75
+  },
+  "typeShares": {
+   "plain": 64.72,
+   "packCannon": 18.21,
+   "softCannon": 7.51,
+   "long": 4.81,
+   "cannon": 3.44,
+   "cushionFirst": 0.74,
+   "double": 0.31,
+   "plant": 0.25
+  }
+ },
+ "reds6": {
+  "rounds": 690,
+  "shots": 4583,
+  "success": 3985,
+  "reRacks": 1,
+  "problems": 1,
+  "over35": 47,
+  "maxDuration": 5.264583333333195,
+  "maxTried": 8777,
+  "shards": 3,
+  "ends": {
+   "failure": 659,
+   "clearance": 30,
+   "reRack": 1
+  },
+  "flex": {
+   "longerDuration": 1787,
+   "overLong": 213,
+   "wideSearch": 111,
+   "rescue": 79,
+   "exhibition": 63,
+   "noLookahead": 9,
+   "spray": 3,
+   "reRack": 1
+  },
+  "failureKinds": {
+   "plainMiss": 328,
+   "wrongBallFirst->plainMiss": 31,
+   "jawRattle": 145,
+   "inOff": 17,
+   "inOff->plainMiss": 46,
+   "jawRattle->plainMiss": 14,
+   "plainMiss->softFoul": 11,
+   "jawRattle->softFoul": 4,
+   "wrongBallFirst": 2
+  },
+  "types": {
+   "plain": 3171,
+   "cannon": 94,
+   "packCannon": 346,
+   "softCannon": 79,
+   "long": 228,
+   "cushionFirst": 51,
+   "double": 13,
+   "farPocket": 2
+  },
+  "colours": {
+   "black": 1454,
+   "pink": 453,
+   "blue": 357
+  },
+  "lengths": {
+   "1.50": 990,
+   "1.25": 948,
+   "1.00": 489,
+   "1.75": 616,
+   "2.00": 371,
+   "0.50": 92,
+   "2.25": 107,
+   "0.75": 219,
+   "5.25": 1,
+   "2.75": 33,
+   "2.50": 36,
+   "3.75": 23,
+   "3.00": 13,
+   "0.25": 13,
+   "3.50": 6,
+   "4.00": 5,
+   "3.25": 10,
+   "4.25": 7,
+   "4.50": 2,
+   "4.75": 1,
+   "5.00": 2
+  },
+  "pay": {
+   "1": 660.4500000000023,
+   "2": 638.3999999999971,
+   "3": 654.0500000000018,
+   "5": 672.9800000000024,
+   "8": 680.2099999999991,
+   "9": 678.7300000000007,
+   "12": 657.7800000000004,
+   "18": 754.38
+  },
+  "solver": "4.8d",
+  "cap": 36958,
+  "rtp": {
+   "1": 95.7,
+   "2": 92.5,
+   "3": 94.8,
+   "5": 97.5,
+   "8": 98.6,
+   "9": 98.4,
+   "12": 95.3,
+   "18": 109.3
+  },
+  "typeShares": {
+   "plain": 79.59,
+   "packCannon": 8.68,
+   "long": 5.72,
+   "cannon": 2.36,
+   "softCannon": 1.98,
+   "cushionFirst": 1.28,
+   "double": 0.33,
+   "farPocket": 0.05
   }
  }
 }

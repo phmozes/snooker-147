@@ -500,9 +500,67 @@ export function solveSpray(state: FrameState, target: BallKind, table: TableGeom
   return best && { ...best, tried };
 }
 
+/**
+ * Night 2026-11-24 (soak reds6-5000614 step 11): object-ball doubles, the last search before the spray. A red glued to
+ * the pink spot (or to another ball) cannot go straight into any pocket, but it can go off a cushion: aim the object
+ * ball at the pocket's mirror image in each cushion line, at a few points across the mouth.
+ */
+export function solveDoubles(state: FrameState, target: BallKind, table: TableGeometry, cfg: PhysicsConfig = CONFIG.physics,
+  shotBudget: number = Sv.doubles.shotBudget, info?: SolveInfo): SolvedShot | null {
+  const r = table.ballRadius;
+  const cue = state.balls.find((b) => b.kind === 'cue')!.pos;
+  const X = table.halfWidth - r;
+  const Y = table.halfLength - r;
+  let best: SolvedShot | null = null;
+  let tried = 0;
+  search: for (const ball of state.balls.filter((b) => b.kind === target)) {
+    const p = ball.pos;
+    for (const pk of table.pockets) {
+      const m = pk.mouthMid;
+      for (const mir of [{ x: 2 * X - m.x, y: m.y }, { x: -2 * X - m.x, y: m.y }, { x: m.x, y: 2 * Y - m.y }, { x: m.x, y: -2 * Y - m.y }]) {
+        for (const off of Sv.doubles.offsets) {
+          const t = { x: mir.x - p.x, y: mir.y - p.y };
+          const tl = Math.hypot(t.x, t.y);
+          const aim = { x: mir.x - (t.y / tl) * off, y: mir.y + (t.x / tl) * off };
+          const d = { x: aim.x - p.x, y: aim.y - p.y };
+          const dl = Math.hypot(d.x, d.y);
+          const ghost = { x: p.x - (d.x / dl) * 2 * r, y: p.y - (d.y / dl) * 2 * r };
+          // the cue ball must be able to reach the ghost-ball spot
+          if (state.balls.some((o) => o.kind !== 'cue' && o.id !== ball.id && Math.hypot(o.pos.x - ghost.x, o.pos.y - ghost.y) < 2 * r)) continue;
+          if (Math.abs(ghost.x) > X || Math.abs(ghost.y) > Y) continue;
+          if (!pathClear(cue, ghost, state.balls, ['cue', ball.id], r)) continue;
+          const dir = { x: ghost.x - cue.x, y: ghost.y - cue.y };
+          for (const speed of Sv.doubles.speeds) {
+            for (const spin of Sv.doubles.spins) {
+              if (tried >= shotBudget) break search;
+              tried++;
+              const sim = createSim(state.balls, table, cfg);
+              strike(sim, 'cue', dir, speed, spin);
+              const limit = Math.ceil((best ? best.duration : cfg.maxSimSeconds) / cfg.timestep);
+              for (let n = 0; n < limit && isMoving(sim); n++) stepSim(sim);
+              if (isMoving(sim)) continue;
+              const first = sim.events.find((e) => e.type === 'ball');
+              const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+              const v = judgeShot(state, target, { firstHit, potted: sim.balls.filter((b) => b.potted).map((b) => b.id), after: [] });
+              if (v.result !== 'success') continue;
+              const pot = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
+              const type = classifySuccess({ state: state.balls, target, potted: v.potted, aimedPocket: null, events: sim.events, table });
+              best = { target: v.potted, pocket: pot && pot.type === 'pot' ? pot.pocket : pk.id, dir, speed, spin,
+                duration: sim.time, score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos },
+                computeMs: 0, tried: 0, type, natural: typeCost(type), whyNot: 'double' };
+            }
+          }
+        }
+      }
+    }
+  }
+  if (info) info.tried = tried;
+  return best && { ...best, tried };
+}
+
 // ---------------- flex chain and fallback log (task 4.5, 4.7, RULES D.3 / D.4) ----------------
 
-export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'rescue' | 'overLong' | 'exhibition' | 'spray' | 'reRack';
+export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'rescue' | 'overLong' | 'exhibition' | 'doubles' | 'spray' | 'reRack';
 export interface FallbackLogEntry { roundCode: string; step: number; target: BallKind; level: FlexLevel | 'noLookahead'; tried: number }
 /** tried: every shot simulated for this decision (search, lookahead checks, wide search, exhibition, spray); never
  *  above shotCaps().success (plus shotCaps().colourPick when the colour was picked automatically). */
@@ -522,10 +580,10 @@ export function shotCaps() {
   const wide = Sv.wide.shotBudget + look;
   const exhibition = Sv.exhibition.shotBudget + look;
   const rescue = Sv.rescue.enabled ? Sv.wide.shotBudget + Sv.rescue.candidates * (1 + Sv.rescue.lookaheadShots * NAT.autoColours.length) : 0;
-  const success = normal + wide + rescue + exhibition + Sv.spray.shotBudget;
+  const success = normal + wide + rescue + exhibition + Sv.doubles.shotBudget + Sv.spray.shotBudget;
   const colourPick = (NAT.autoColours.length - 1) * normal + NAT.autoColours.length * rescue; // + the rescue per colour
   const failure = 2 * Sv.shotBudget + CONFIG.solver.failure.softFoulMaxShots + CONFIG.solver.failure.tapDirections;
-  return { normal, wide, rescue, exhibition, spray: Sv.spray.shotBudget, success, colourPick, failure, decision: success + colourPick + failure };
+  return { normal, wide, rescue, exhibition, doubles: Sv.doubles.shotBudget, spray: Sv.spray.shotBudget, success, colourPick, failure, decision: success + colourPick + failure };
 }
 
 /**
@@ -583,6 +641,10 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
   if (pick) return out(pick, 'overLong', 'overLong');
   const exh = run(Sv.exhibition.shotBudget, { exhibition: true });
   if (exh) return out(exh, 'exhibition', 'exhibition');
+  const di: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+  const dbl = solveDoubles(state, target, table, cfg, Sv.doubles.shotBudget, di);
+  tried += di.tried;
+  if (dbl) return out(dbl, 'doubles', 'doubles');
   const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
   const spray = solveSpray(state, target, table, cfg, Sv.spray.shotBudget, i);
   tried += i.tried;

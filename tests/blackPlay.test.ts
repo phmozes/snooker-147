@@ -56,7 +56,7 @@ describe('locked reds (RE-RACK avoidance)', () => {
   it('the rescue search is inside the fixed shot cap', () => {
     const c = shotCaps();
     expect(c.rescue).toBeGreaterThan(0);
-    expect(c.success).toBe(c.normal + c.wide + c.rescue + c.exhibition + c.spray);
+    expect(c.success).toBe(c.normal + c.wide + c.rescue + c.exhibition + c.doubles + c.spray);
     expect(r).toBeGreaterThan(0);
   });
 });

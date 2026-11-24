@@ -11,3 +11,6 @@ Replay: `SHOTS="<round code>:<step>" npx vitest run bench/replay-shot.test.ts`. 
 No crash, no invalid shot, no ball off the cloth, no overlap, no shot over its cap in that run.
 
 ## Solver 4.8d (main soak run)
+| Round code | Step | What | Fix (solver 4.8e) | Test |
+|---|---|---|---|---|
+| reds6-5000614 | 11 | RE-RACK (red): the last red touches the pink spot from above; no straight pot exists | new last search before the spray: object-ball doubles (`solver.doubles`); now a kiss pot, no RE-RACK | tests/soakRegressions.test.ts |

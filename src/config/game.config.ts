@@ -118,7 +118,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.8d',            // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.8e',            // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -155,6 +155,8 @@ export const CONFIG = {
     powerSamples: 8,
     spinSamples: [-0.8, -0.3, 0, 0.4, 0.8],
     lookahead: 1,                // accept a pot only if the NEXT step stays solvable
+    // night 2026-11-24: object-ball doubles (aim at a pocket's mirror image in a cushion), tried before the spray
+    doubles: { shotBudget: 1200, offsets: [0, -0.02, 0.02, -0.04, 0.04], speeds: [3.0, 4.5, 6.0], spins: [0, -0.6] },
     // last search before RE-RACK: many aim points across each target ball, straight and off each cushion, firm
     spray: { shotBudget: 2000, offsets: [0, -0.3, 0.3, -0.55, 0.55, -0.75, 0.75, -0.9, 0.9],
              speeds: [2.5, 3.5, 4.5, 6.0], spins: [0, -0.6, 0.6] },

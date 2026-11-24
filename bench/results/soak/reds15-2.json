@@ -3,52 +3,68 @@
  "shard": 2,
  "shards": 3,
  "solver": "4.8d",
- "rounds": 20,
- "shots": 176,
- "success": 159,
+ "rounds": 150,
+ "shots": 1371,
+ "success": 1233,
  "reRacks": 0,
  "problems": 0,
  "ends": {
-  "failure": 20
+  "failure": 150
  },
  "flex": {
-  "longerDuration": 77,
-  "overLong": 6,
-  "wideSearch": 4,
-  "rescue": 1
+  "longerDuration": 585,
+  "overLong": 42,
+  "wideSearch": 33,
+  "rescue": 2,
+  "exhibition": 7
  },
  "failureKinds": {
-  "plainMiss": 9,
-  "jawRattle": 6,
-  "inOff->plainMiss": 1,
-  "wrongBallFirst->plainMiss": 1
+  "plainMiss": 76,
+  "jawRattle": 35,
+  "inOff->plainMiss": 13,
+  "wrongBallFirst->plainMiss": 3,
+  "plainMiss->softFoul": 1,
+  "plainMiss->tap": 1,
+  "jawRattle->plainMiss": 5,
+  "jawRattle->softFoul": 1,
+  "inOff": 1,
+  "wrongBallFirst": 2
  },
  "types": {
-  "plain": 102,
-  "softCannon": 19,
-  "long": 6,
-  "packCannon": 29,
-  "cannon": 3
+  "plain": 802,
+  "softCannon": 103,
+  "long": 55,
+  "packCannon": 232,
+  "cannon": 34,
+  "cushionFirst": 4,
+  "double": 2,
+  "plant": 1
  },
  "colours": {
-  "black": 57,
-  "pink": 21,
-  "blue": 16
+  "black": 451,
+  "pink": 126,
+  "blue": 148
  },
  "lengths": {
-  "2.00": 20,
-  "1.25": 36,
-  "1.50": 39,
-  "1.75": 24,
-  "2.25": 4,
-  "1.00": 29,
-  "0.50": 3,
-  "0.75": 3,
-  "0.25": 1
+  "2.00": 146,
+  "1.25": 312,
+  "1.50": 307,
+  "1.75": 172,
+  "2.25": 32,
+  "1.00": 177,
+  "0.50": 23,
+  "0.75": 49,
+  "0.25": 6,
+  "2.50": 2,
+  "4.00": 2,
+  "3.25": 1,
+  "2.75": 2,
+  "3.00": 1,
+  "3.75": 1
  },
- "over35": 0,
- "maxDuration": 2.3500000000000267,
- "maxTried": 2491,
+ "over35": 3,
+ "maxDuration": 4.0104166666665995,
+ "maxTried": 4413,
  "cap": 36958,
  "strategies": [
   1,
@@ -61,26 +77,26 @@
   36
  ],
  "rtp": {
-  "1": 89.25,
-  "2": 84.75,
-  "3": 93,
-  "5": 88.8,
-  "8": 78.8,
-  "12": 90.3,
-  "18": 154.5,
+  "1": 96.6,
+  "2": 94.92,
+  "3": 100.03,
+  "5": 103.6,
+  "8": 105.07,
+  "12": 98.33,
+  "18": 90.64,
   "36": 0
  },
  "startedAt": "2026-11-24T21:51:23.934Z",
- "updatedAt": "2026-11-24T21:55:04.543Z",
+ "updatedAt": "2026-11-24T22:17:17.793Z",
  "done": false,
  "pay": {
-  "1": 17.850000000000005,
-  "2": 16.949999999999992,
-  "3": 18.599999999999998,
-  "5": 17.76,
-  "8": 15.760000000000002,
-  "12": 18.06,
-  "18": 30.9,
+  "1": 144.89999999999995,
+  "2": 142.37999999999974,
+  "3": 150.03999999999994,
+  "5": 155.39999999999992,
+  "8": 157.59999999999994,
+  "12": 147.49,
+  "18": 135.96000000000006,
   "36": 0
  }
 }
