@@ -118,7 +118,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.8c',            // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.8d',            // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -228,7 +228,7 @@ export const CONFIG = {
     exhibition: { shotBudget: 1000 },
     // night 2026-11-24 (RULES D: avoid RE-RACK): when every shot found leaves the next ball unreachable, search again
     // (wide) and keep a shot only if the next ball can then be potted by any shot (exhibition and cushion-first allowed)
-    rescue: { enabled: true, candidates: 6, lookaheadShots: 300 },
+    rescue: { enabled: true, candidates: 6, lookaheadShots: 300, margin: 30 }, // margin: candidates within this score of the best
     lookaheadMargin: 1.0,        // task 4.7: shots within this score of the best are kept as lookahead candidates
     lookaheadSpread: 0.15,       // m: ... and checked only if their cue ball stops this far from the ones already checked
     lookaheadCandidates: 4,      // how many of the best shots are checked (best first)

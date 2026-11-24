@@ -46,8 +46,9 @@ export interface Round {
   step: number; // successful pots so far (0 = before step 1)
   frame: FrameState | null;
   end: RoundEnd | null;
-  history: { step: number; target: BallKind; outcome: 'success' | FailureLabel | 'reRack'; shot?: unknown; tried?: number }[];
+  history: { step: number; target: BallKind; outcome: 'success' | FailureLabel | 'reRack'; shot?: unknown; tried?: number; forced?: boolean }[];
   breakShot?: unknown; // the opponent's break-off of this round (opaque, for playback)
+  forced?: boolean; // developer test panel (task 5.3): at least one outcome of this round was forced, not decided
 }
 
 // ---------------- seeded streams (RULES A.5, config rng.streams) ----------------
@@ -96,7 +97,7 @@ export function start(r: Round, provider: ShotProvider, table: TableGeometry): R
   if (r.phase !== 'betting' && r.phase !== 'over') throw new Error('START only between rounds');
   if (r.balance < r.bet) throw new Error('balance too low for this bet');
   const reds = CONFIG.levels.find((l) => l.id === r.levelId)!.reds;
-  let round: Round = { ...r, phase: 'decide', balance: money(r.balance - r.bet), step: 0, end: null, history: [],
+  let round: Round = { ...r, phase: 'decide', balance: money(r.balance - r.bet), step: 0, end: null, history: [], forced: false,
     roundCode: `${r.levelId}-${r.seed}`, frame: newFrame(reds, table) };
   const ok = stepSucceeds(round, 1);
   const outcome = ok ? 'success' : streamValue(r.seed, 'break', 1) < CONFIG.failures.step1.plainMiss ? 'plainMiss' : 'snookered';
@@ -163,4 +164,27 @@ export function cashOut(r: Round): Round {
   const m = r.ladder[r.step - 1]!.multiplier;
   const amount = money(r.bet * m);
   return { ...r, phase: 'over', balance: money(r.balance + amount), end: { type: 'cashOut', amount, multiplier: m } };
+}
+
+// ---------------- developer test panel (task 5.3) ----------------
+/** What the developer panel can force for the next shot. */
+export type ForcedOutcome = 'success' | Exclude<FailureLabel, 'snookered'> | 'reRack';
+export const FORCED_OUTCOMES: ForcedOutcome[] = ['success', 'plainMiss', 'jawRattle', 'inOff', 'wrongBallFirst', 'reRack'];
+
+/**
+ * DEVELOPER ONLY (task 5.3): SHOOT with a forced outcome instead of the decided one. The round and the shot are
+ * marked `forced`, so the screen can say so. The game page offers this only in the developer menu of a dev build
+ * (import.meta.env.DEV); the real game only ever calls shoot(). 'reRack' plays RULES D.4 as if no shot was found.
+ */
+export function shootForced(r: Round, provider: ShotProvider, table: TableGeometry, forced: ForcedOutcome, colourChoice?: Colour): Round {
+  if (r.phase !== 'decide' || r.step < 1) throw new Error('SHOOT is only possible during a round, after step 1');
+  const k = r.step + 1;
+  const outcome: 'success' | FailureLabel = forced === 'reRack' ? 'success' : forced;
+  const auto = !colourChoice && r.frame!.phase === 'colour' && provider.autoColour;
+  const target = nextTarget(r, auto ? provider.autoColour!(r.frame!, { roundCode: r.roundCode, step: k }) : colourChoice);
+  const planned: PlannedShot = forced === 'reRack' ? { result: { firstHit: null, potted: [], after: r.frame!.balls }, reRack: true }
+    : provider.shot(r.frame!, target, outcome, { roundCode: r.roundCode, step: k });
+  const next = playShot({ ...r, forced: true }, target, outcome, planned, table);
+  const h = next.history.map((e, i) => (i === next.history.length - 1 ? { ...e, forced: true } : e));
+  return { ...next, history: h };
 }

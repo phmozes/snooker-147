@@ -206,7 +206,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   // a colour while reds remain: plan two shots ahead (more candidates, a wider margin; every candidate is checked)
   const planRed = state.phase === 'red' && NAT.planReds; // night round 2: a red is planned two shots ahead too
   const plan = ((state.phase === 'colour' && state.redsLeft > 0 && NAT.planColours) || planRed) && nexts.length > 0 && (opts.lookahead ?? Sv.lookahead > 0);
-  const M = plan ? NAT.planMargin : Sv.lookaheadMargin;
+  const M = opts.rescue ? Sv.rescue.margin : plan ? NAT.planMargin : Sv.lookaheadMargin; // rescue: keep far more candidates
   let tried = 0;
   const half = (aimSamples - 1) / 2;
   // One simulated shot. 'miss' = it did not pot the target (the next aim point across the mouth may);
@@ -400,14 +400,29 @@ export function chooseAutoColour(state: FrameState, table: TableGeometry, now: (
     const s = solveSuccess(state, c, table, now, cfg, Sv.shotBudget, i);
     tried += i.tried;
     // RULES B.3 (owner confirmed 2026-11-24): natural means a natural colour that also leaves a natural red
-    if (isNaturalShot(s) && (!NAT.autoColourNeedsNextRed || (s!.lookahead !== 'failed' && s!.nextNatural !== false))) return { colour: c, normal: s, tried };
+    if (isNaturalShot(s) && (!NAT.autoColourNeedsNextRed || (s!.lookahead !== 'failed' && s!.nextNatural !== false && !s!.lockedReds))) return { colour: c, normal: s, tried };
     all.push({ colour: c, normal: s });
+  }
+  // no natural shot on any of them: the first with a shot in time that keeps the next step solvable, else black
+  const inTime = all.find((a) => a.normal && a.normal.lookahead !== 'failed' && !a.normal.lockedReds && a.normal.duration <= CONFIG.shot.maxDurationFlex);
+  if (inTime) return { ...inTime, tried };
+  // night 2026-11-24 (soak reds10-5000066 step 16): no colour keeps the next red reachable -> rescue search for each
+  // colour in order (RULES D: avoid RE-RACK); the first that leaves a red pottable by any shot is picked (layout only)
+  if (Sv.rescue.enabled) {
+    // all three are tried; a natural one first, then one in time, then the order black, pink, blue
+    const rank = (x: SolvedShot) => (x.whyNot === null ? 0 : 2) + (x.duration <= CONFIG.shot.maxDurationFlex ? 0 : 1);
+    let pick: { colour: Colour; normal: SolvedShot } | null = null;
+    for (const c of NAT.autoColours) {
+      const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+      const res = solveSuccess(state, c, table, now, cfg, Sv.wide.shotBudget, i, { wide: true, rescue: true });
+      tried += i.tried;
+      if (res && res.lookahead === 'ok' && !res.lockedReds && (!pick || rank(res) < rank(pick.normal))) pick = { colour: c, normal: res };
+    }
+    if (pick) return { ...pick, tried };
   }
   const natural = all.find((a) => isNaturalShot(a.normal)); // no colour leaves a red: a natural colour shot anyway
   if (natural) return { ...natural, tried };
-  // no natural shot on any of them: the first with a shot in time that keeps the next step solvable, else black
-  const ok = all.find((a) => a.normal && a.normal.lookahead !== 'failed' && a.normal.duration <= CONFIG.shot.maxDurationFlex) ??
-    all.find((a) => a.normal); // black with no shot at all: pink or blue with any shot (avoids a RE-RACK)
+  const ok = all.find((a) => a.normal); // black with no shot at all: pink or blue with any shot (avoids a RE-RACK)
   return { ...(ok ?? all[0]!), tried };
 }
 
@@ -508,7 +523,7 @@ export function shotCaps() {
   const exhibition = Sv.exhibition.shotBudget + look;
   const rescue = Sv.rescue.enabled ? Sv.wide.shotBudget + Sv.rescue.candidates * (1 + Sv.rescue.lookaheadShots * NAT.autoColours.length) : 0;
   const success = normal + wide + rescue + exhibition + Sv.spray.shotBudget;
-  const colourPick = (NAT.autoColours.length - 1) * normal;
+  const colourPick = (NAT.autoColours.length - 1) * normal + NAT.autoColours.length * rescue; // + the rescue per colour
   const failure = 2 * Sv.shotBudget + CONFIG.solver.failure.softFoulMaxShots + CONFIG.solver.failure.tapDirections;
   return { normal, wide, rescue, exhibition, spray: Sv.spray.shotBudget, success, colourPick, failure, decision: success + colourPick + failure };
 }

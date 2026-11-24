@@ -1,0 +1,12 @@
+reds10: 310 rounds, 2169 success shots, RE-RACK 1 (46.1 per 100k; D.6 limit 1), problems 1, over 3.5 s 9, longest 5.04 s, most simulated 3628 (cap 17740)
+  flex {"longerDuration":958,"overLong":106,"wideSearch":53,"rescue":49,"exhibition":26,"noLookahead":8,"reRack":1,"spray":1} | failures {"jawRattle":69,"wrongBallFirst->plainMiss":16,"plainMiss":143,"jawRattle->plainMiss":5,"inOff->plainMiss":27,"inOff":5,"plainMiss->softFoul":5,"inOff->softFoul":2,"wrongBallFirst":2,"jawRattle->softFoul":2}
+  types % {"plain":72.51,"packCannon":16.33,"softCannon":5.4,"long":2.44,"cannon":2.12,"cushionFirst":1.11,"double":0.05,"plant":0.05}
+  RTP % by cash-out step {"1":96.2,"2":95.6,"3":97.2,"5":95.1,"8":90.7,"12":95.1,"13":99.4,"26":115.5}
+reds15: 230 rounds, 1843 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 14, longest 4.97 s, most simulated 3719 (cap 17740)
+  flex {"longerDuration":850,"wideSearch":65,"overLong":80,"rescue":47,"exhibition":28,"noLookahead":5,"spray":1} | failures {"jawRattle":54,"inOff->plainMiss":22,"wrongBallFirst->plainMiss":16,"plainMiss":103,"plainMiss->softFoul":4,"inOff->softFoul":1,"jawRattle->plainMiss":4,"inOff":2,"wrongBallFirst":1,"jawRattle->softFoul":2,"plainMiss->tap":1}
+  types % {"plain":66.79,"packCannon":17.69,"softCannon":7.54,"cannon":3.47,"long":2.93,"cushionFirst":0.87,"plant":0.43,"double":0.27}
+  RTP % by cash-out step {"1":96.8,"2":96.8,"3":99.2,"5":93.9,"8":93.4,"12":95.5,"18":86,"36":87}
+reds6: 450 rounds, 2604 success shots, RE-RACK 2 (76.8 per 100k; D.6 limit 1), problems 2, over 3.5 s 31, longest 5.26 s, most simulated 3721 (cap 17740)
+  flex {"longerDuration":1089,"overLong":135,"rescue":123,"wideSearch":107,"exhibition":51,"noLookahead":20,"spray":2,"reRack":2} | failures {"plainMiss":216,"wrongBallFirst->plainMiss":21,"jawRattle":93,"inOff->softFoul":1,"inOff->plainMiss":27,"plainMiss->softFoul":8,"jawRattle->plainMiss":10,"inOff":12,"jawRattle->softFoul":4,"wrongBallFirst":2}
+  types % {"plain":81.51,"packCannon":8.65,"long":3.42,"cannon":2.34,"softCannon":2.04,"cushionFirst":1.61,"double":0.35,"plant":0.08}
+  RTP % by cash-out step {"1":96.4,"2":93.7,"3":95.7,"5":97.3,"8":100.4,"9":99.7,"12":92.2,"18":96.9}

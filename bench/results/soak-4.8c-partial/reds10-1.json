@@ -1,0 +1,99 @@
+{
+ "level": "reds10",
+ "shard": 1,
+ "shards": 3,
+ "solver": "4.8c",
+ "rounds": 110,
+ "shots": 829,
+ "success": 733,
+ "reRacks": 0,
+ "problems": 0,
+ "ends": {
+  "failure": 107,
+  "clearance": 3
+ },
+ "flex": {
+  "longerDuration": 335,
+  "overLong": 27,
+  "rescue": 17,
+  "wideSearch": 15,
+  "exhibition": 9,
+  "noLookahead": 2
+ },
+ "failureKinds": {
+  "inOff->plainMiss": 7,
+  "plainMiss": 51,
+  "jawRattle": 25,
+  "inOff": 4,
+  "wrongBallFirst->plainMiss": 4,
+  "inOff->softFoul": 2,
+  "plainMiss->softFoul": 2,
+  "wrongBallFirst": 1
+ },
+ "types": {
+  "plain": 530,
+  "cannon": 15,
+  "packCannon": 121,
+  "long": 17,
+  "softCannon": 42,
+  "plant": 1,
+  "cushionFirst": 7
+ },
+ "colours": {
+  "black": 266,
+  "pink": 111,
+  "blue": 50
+ },
+ "lengths": {
+  "1.75": 115,
+  "0.50": 25,
+  "2.00": 74,
+  "1.25": 188,
+  "1.00": 85,
+  "1.50": 175,
+  "0.75": 36,
+  "2.75": 6,
+  "2.25": 17,
+  "0.25": 4,
+  "3.25": 3,
+  "3.75": 2,
+  "2.50": 3
+ },
+ "over35": 2,
+ "maxDuration": 3.7895833333332782,
+ "maxTried": 3628,
+ "cap": 17740,
+ "strategies": [
+  1,
+  2,
+  3,
+  5,
+  8,
+  12,
+  13,
+  26
+ ],
+ "rtp": {
+  "1": 94.5,
+  "2": 91.2,
+  "3": 94.32,
+  "5": 85.67,
+  "8": 79.39,
+  "12": 95.96,
+  "13": 99.75,
+  "26": 136.36
+ },
+ "startedAt": "2026-11-24T21:29:18.722Z",
+ "updatedAt": "2026-11-24T21:44:46.471Z",
+ "done": false,
+ "pay": {
+  "1": 103.94999999999982,
+  "2": 100.32000000000004,
+  "3": 103.75,
+  "5": 94.23999999999998,
+  "8": 87.32999999999998,
+  "12": 105.56,
+  "13": 109.71999999999998,
+  "26": 150
+ }
+}

@@ -1,0 +1,20 @@
+import { readFileSync } from 'node:fs';
+import { it } from 'vitest';
+import { CONFIG } from '../../../src/config/game.config';
+import { createPhysicsProvider } from '../../../src/core/physicsProvider';
+import { newRound, setLevel, shoot, start } from '../../../src/core/round';
+import { chooseAutoColour, solveSuccess } from '../../../src/core/solver';
+import { buildTable } from '../../../src/core/table/geometry';
+it('d', () => {
+  const table = buildTable();
+  const lib = JSON.parse(readFileSync(`public/${CONFIG.breakLibrary.files.reds10}`, 'utf8'));
+  const p = createPhysicsProvider(table, { reds10: lib });
+  let r = start(setLevel(newRound(5000066), 'reds10'), p, table);
+  while (r.step + 1 < 16) r = shoot(r, p, table);
+  const f = r.frame!;
+  const c = chooseAutoColour(f, table, () => 0);
+  const o = (s: any) => s ? `${s.type} ${s.duration.toFixed(2)}s look ${s.lookahead} locked ${!!s.lockedReds} why ${s.whyNot} nn ${s.nextNatural}` : 'none';
+  const out = [`pick ${c.colour} tried ${c.tried}: ${o(c.normal)}`];
+  for (const k of ['black', 'pink', 'blue'] as const) out.push(`${k}: ${o(solveSuccess(f, k, table, () => 0))} | rescue: ${o(solveSuccess(f, k, table, () => 0, CONFIG.physics, 1000, undefined, { wide: true, rescue: true }))}`);
+  process.stdout.write(out.join('\n') + '\n');
+}, 600000);

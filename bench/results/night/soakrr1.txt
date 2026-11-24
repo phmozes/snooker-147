@@ -1,0 +1,23 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+solver 4.8c
+reds10-5000066:15: red success; {"target":"red1","pocket":"topRight","dir":{"x":0.1954425406980813,"y":0.26065268705350275},"speed":2.53002606050533,"spin":-0.8,"duration":1.8645833333333734,"computeMs":0,"tried":648,"score":11.352555941885,"nextCost":1.685320335191732,"cueEnd":{"x":0.4484429384694075,"y":-0.06741229548301703},"type":"plain","natural":0.5241188464284645,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: [{"roundCode":"reds10-5000066","step":15,"target":"red","level":"longerDuration","tried":648}]
+  position: pocket topRight cut 28 deg, cue->ball 0.37 m, ball->pocket 1.37 m; cue not behind the black; cue ends (0.45,-0.07)
+  strict check: plain -> NATURAL (cue ball rolls 0.76 m after contact, 1 cushions)
+  before: cue(0.485,0.113) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(-0.364,-1.550) red1(0.688,0.426) red2(-0.026,0.992) red4(-0.081,1.019) black(0.000,1.460) blue(0.000,0.000)
+reds10-5000066:16: pink success; {"target":"pink","pocket":"bottomLeft","dir":{"x":-0.7649456459006496,"y":-1.4607632429143977},"speed":3.3739119660875967,"spin":-0.8,"duration":2.3166666666666953,"computeMs":0,"tried":671,"score":132.73828752875107,"nextCost":5.804827546175221,"cueEnd":{"x":0.1280433762486787,"y":-1.3032183641168142},"type":"plain","natural":3.22698103792784,"whyNot":null,"lookahead":"failed"}
+  flex log: [{"roundCode":"reds10-5000066","step":16,"target":"pink","level":"overLong","tried":671}]
+  position: pocket bottomLeft cut 38 deg, cue->ball 1.69 m, ball->pocket 0.58 m; cue not behind the black; cue ends (0.13,-1.30)
+  strict check: plain -> NATURAL (cue ball rolls 0.82 m after contact, 1 cushions)
+  before: cue(0.448,-0.067) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(-0.364,-1.550) red2(-0.026,0.992) red4(-0.081,1.019) black(0.000,1.460) blue(0.000,0.000)
+reds10-5000066:17: red reRack; undefined
+  flex log: [{"roundCode":"reds10-5000066","step":17,"target":"red","level":"reRack","tried":2080}]
+  before: cue(0.128,-1.303) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red2(-0.026,0.992) red4(-0.081,1.019) black(0.000,1.460) blue(0.000,0.000) pink(0.000,0.892)
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  23:37:57
+   Duration  62.56s (tests 100%)
+

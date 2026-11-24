@@ -9,7 +9,8 @@
 import { CONFIG } from '../config/game.config';
 import { createSim, recordShot, strike } from '../core/physics/sim';
 import { createPhysicsProvider, type BreakLibrary } from '../core/physicsProvider';
-import { cashOut, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, start, type LevelId, type Round } from '../core/round';
+import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, type ForcedOutcome,
+  type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
 import { shotCaps, type FallbackLogEntry } from '../core/solver';
 import { buildTable } from '../core/table/geometry';
@@ -44,6 +45,14 @@ let pendingSeed: number | null = null; // developer menu: the next START uses th
 const seedParam = parseRoundCode(params.get('seed') ?? '');
 if (seedParam) { pendingSeed = seedParam.seed; if (seedParam.levelId) round = setLevel(round, seedParam.levelId); }
 let seedText = '';
+// ---- developer test panel (task 5.3). Only a dev build (import.meta.env.DEV) can set these; the real game never does.
+let force: ForcedOutcome | null = null; // the NEXT shot's outcome, forced (then back to null)
+let auto: null | { mode: 'round' | 'jump' | 'clearance'; to: number } = null; // play shots by itself
+let jumpText = '';
+const FORCE_TEXT: Record<ForcedOutcome, string> = { success: 'Success', plainMiss: 'Miss', jawRattle: 'Rattle', inOff: 'In-off',
+  wrongBallFirst: 'Foul (wrong ball)', reRack: 'RE-RACK' };
+/** The forced outcome of the next shot, if any (auto jump / clearance force success). Always null outside a dev build. */
+const forcedNow = (): ForcedOutcome | null => (!import.meta.env.DEV ? null : auto && auto.mode !== 'round' ? 'success' : force);
 let busy: null | 'rerack' | 'break' | 'step1' | 'shot' | 'solving' = null;
 let showBetArea = true; // after a round ends the bet area returns after ui.wonMessageSeconds
 let shownBalance = round.balance;
@@ -149,7 +158,9 @@ async function loadLibrary(id: LevelId) {
 function presolveNext() {
   if (round.phase !== 'decide') return;
   const { step, failure } = nextOutcome(round);
-  presolver.request(round.frame!, nextTarget(round), failure, { roundCode: round.roundCode, step });
+  const f = forcedNow(); // developer panel: a forced failure type is solved instead of the decided one
+  const fail = f && f !== 'success' && f !== 'reRack' ? f : failure;
+  presolver.request(round.frame!, nextTarget(round), fail, { roundCode: round.roundCode, step });
 }
 
 async function onStart() {
@@ -193,7 +204,10 @@ async function onStart() {
 
 async function onShoot() {
   if (busy || round.phase !== 'decide') return;
-  const { step, outcome } = nextOutcome(round);
+  const decided = nextOutcome(round);
+  const step = decided.step;
+  const forced = forcedNow(); // developer panel only (null in the real game)
+  const outcome = forced ? (forced === 'reRack' ? 'success' : forced) : decided.outcome;
   const ctx = { roundCode: round.roundCode, step };
   const colourStep = round.frame!.phase === 'colour';
   const kind = outcome === 'success' ? 'success' : 'failure';
@@ -204,8 +218,10 @@ async function onShoot() {
   const waited = performance.now() - t0;
   const before = round;
   const target = solved.target; // on a colour step: the colour the game picked (RULES B.3)
-  round = shoot(round, solvedProvider(createPhysicsProvider(table, library), solved.planned, { target, outcome }), table,
-    colourStep ? (target as Colour) : undefined);
+  const prov = solvedProvider(createPhysicsProvider(table, library), solved.planned, { target, outcome });
+  const colour = colourStep ? (target as Colour) : undefined;
+  round = forced ? shootForced(round, prov, table, forced, colour) : shoot(round, prov, table, colour);
+  if (forced) { force = null; toast(`forced: ${FORCE_TEXT[forced]}`); }
   presolveNext(); // the shot after this one starts solving during this shot's animation
   busy = 'shot';
   render();
@@ -218,7 +234,8 @@ async function onShoot() {
     lastShot = `step ${step}: RE-RACK (no shot found) · ${work}`;
     lastInfo = { code: round.roundCode, step, type: 'reRack', target: h.target, outcome: 'reRack', length: 0 };
   } else {
-    const len = await playShot(before.frame!.balls, h.shot as Shot);
+    // developer jump: no animation, the balls just move to where the shot leaves them
+    const len = auto?.mode === 'jump' ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot);
     const type = (h.shot as { type?: string }).type ?? '?';
     lastShot = `step ${step}: ${h.target} · ${h.outcome} · ${TYPE_TEXT[type] ?? type} · ${len.toFixed(2)} s long · ${work}`;
     lastInfo = { code: round.roundCode, step, type, target: h.target, outcome: h.outcome, length: len };
@@ -238,10 +255,16 @@ function afterShot() {
   busy = null;
   if (round.frame) showBalls(round.frame.balls);
   if (round.phase === 'over') endRound(); else render();
+  // developer panel: auto play goes on by itself
+  if (import.meta.env.DEV && auto && round.phase === 'decide') {
+    if (auto.mode === 'jump' && round.step >= auto.to) { auto = null; render(); return; }
+    setTimeout(() => { if (auto && !busy && round.phase === 'decide') void onShoot(); }, auto.mode === 'jump' ? 50 : 600);
+  }
 }
 
 async function endRound() {
   busy = null;
+  auto = null;
   showBetArea = false;
   render();
   countUpBalance(round.balance);
@@ -300,7 +323,7 @@ function render() {
     : `<span class="pill">${level().label}</span>`;
   // the end line stays in the strip until the next START (RULES B.4)
   $('ladder').innerHTML = round.phase === 'over' && round.end && busy === null
-    ? `<div class="endline ${round.end.type === 'failure' ? 'lost' : 'won'}">${endLine(round.end, round.bet)}</div>`
+    ? `<div class="endline ${round.end.type === 'failure' ? 'lost' : 'won'}">${endLine(round.end, round.bet)}${round.forced ? ' · FORCED' : ''}</div>`
     : chipsHtml(round.step);
 
   const bottom = $('bottom');
@@ -328,6 +351,7 @@ function render() {
     bottom.querySelectorAll<HTMLButtonElement>('.quick').forEach((b) => { b.onclick = () => setB(Number(b.dataset.q)); });
     $('bStart').onclick = () => { void onStart(); };
   }
+  renderDevTag();
   renderDev();
 }
 
@@ -442,6 +466,9 @@ function renderDev() {
     '<div class="opts" id="devRoundBtns"></div>' +
     '<h3>LAST SHOT</h3><div class="info" id="devShot"></div><div class="opts" id="devWeird"></div>' +
     '<div class="info" id="devWeirdList"></div>' +
+    (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
+      '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
+      '<div class="opts" id="devAuto"></div>' : '') +
     '<h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
@@ -480,6 +507,7 @@ function renderDev() {
       () => { showWeirdList(); });
   }, !weird.length));
   $('devWeird').appendChild(opt('Clear list', false, () => { weird = []; saveWeird(); renderFlag(); render(); }, !weird.length));
+  if (import.meta.env.DEV) renderTestPanel(opt);
   for (const s of CONFIG.view3d.ballScaleOptions) {
     $('devScale').appendChild(opt(`${s}x`, ballScale === s, () => { ballScale = s; view3d?.setBallScale(s); render(); draw3d(); }));
   }
@@ -488,6 +516,43 @@ function renderDev() {
   }
   $('devCompare').appendChild(opt('Off', !compare, () => { compare = false; render(); layout(); }));
   $('devCompare').appendChild(opt('On', compare, () => { compare = true; render(); layout(); }));
+}
+/** Developer test panel (task 5.3, dev build only): force the next outcome, jump to a step, play automatically. */
+function renderTestPanel(opt: (label: string, on: boolean, click: () => void, disabled?: boolean) => HTMLButtonElement) {
+  const inRound = round.phase === 'decide' && busy === null && mode === 'live';
+  const setForce = (f: ForcedOutcome | null) => {
+    force = f;
+    // a forced failure type must be solved instead of the decided one: solve the next shot again
+    if (round.phase === 'decide' && !busy) { presolver.cancel(); presolveNext(); }
+    render();
+  };
+  for (const f of FORCED_OUTCOMES) $('devForce').appendChild(opt(FORCE_TEXT[f], force === f, () => setForce(force === f ? null : f), !inRound));
+  $('devForce').appendChild(opt('Clearance', auto?.mode === 'clearance', () => {
+    force = null; auto = { mode: 'clearance', to: round.ladder.length }; void onShoot();
+  }, !inRound));
+  const jump = $('devJump') as HTMLInputElement;
+  jump.value = jumpText;
+  jump.oninput = () => { jumpText = jump.value; };
+  ($('devJumpGo') as HTMLButtonElement).disabled = !inRound;
+  $('devJumpGo').onclick = () => {
+    const to = Math.round(Number(jumpText));
+    if (!(to > round.step && to <= round.ladder.length)) { toast(`step ${round.step + 1} ... ${round.ladder.length}`); return; }
+    force = null; auto = { mode: 'jump', to }; void onShoot();
+  };
+  $('devAuto').appendChild(opt('Play a round automatically', auto?.mode === 'round', () => {
+    force = null; auto = { mode: 'round', to: 0 };
+    if (round.phase === 'decide') void onShoot(); else void onStart();
+  }, busy !== null || mode !== 'live' || (round.phase !== 'decide' && round.balance < round.bet)));
+  $('devAuto').appendChild(opt('Stop', false, () => { auto = null; render(); }, !auto));
+}
+/** The red tag on the table whenever an outcome is forced or the game plays by itself (developer only). */
+function renderDevTag() {
+  if (!import.meta.env.DEV) return;
+  const el = $('devTag');
+  const text = auto ? (auto.mode === 'round' ? 'DEV · AUTO PLAY' : auto.mode === 'jump' ? `DEV · FORCED · JUMP TO ${auto.to}` : 'DEV · FORCED · CLEARANCE')
+    : force ? `DEV · NEXT FORCED: ${FORCE_TEXT[force].toUpperCase()}` : round.forced ? 'DEV · FORCED ROUND' : '';
+  el.textContent = text;
+  el.classList.toggle('show', !!text);
 }
 /** When copying is not allowed (plain http on a phone): show the list in a box to select and copy by hand. */
 function showWeirdList() {

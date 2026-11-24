@@ -66,6 +66,10 @@
              border: 1px solid var(--yellow); color: var(--yellow); font-size: 12px; opacity: 0; transition: opacity .2s;
              pointer-events: none; }
     #toast.show { opacity: 1; }
+    /* developer test panel (task 5.3): forced outcomes and auto play are always marked on screen */
+    #devTag { display: none; position: absolute; top: 0; right: 0; z-index: 3; padding: 4px 8px; border-radius: 8px;
+              background: #b3261e; color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+    #devTag.show { display: block; }
     #message div { font-size: 34px; font-weight: 800; color: var(--yellow); }
     #message small { font-size: 15px; color: var(--text); }
     .cash { height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
@@ -117,7 +121,7 @@
         <button class="menu" id="menu" aria-label="Menu">≡</button>
       </div>
       <div class="table"><canvas id="c3d"></canvas><div id="message"></div>
-        <button id="flag" aria-label="Mark the last shot as weird">⚑<span id="flagCount"></span></button><div id="toast"></div></div>
+        <button id="flag" aria-label="Mark the last shot as weird">⚑<span id="flagCount"></span></button><div id="toast"></div><div id="devTag"></div></div>
       <div class="ladder" id="ladder"></div>
       <div class="bottom" id="bottom"></div>
       <div id="dev"></div>

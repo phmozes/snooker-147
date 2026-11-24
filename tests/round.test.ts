@@ -2,7 +2,7 @@
 // (it only reports what the physics would: which ball was hit first and what dropped).
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { cashOut, newRound, setBet, setLevel, shoot, start, stepSucceeds, type FailureLabel, type Round, type ShotProvider } from '../src/core/round';
+import { cashOut, FORCED_OUTCOMES, newRound, setBet, setLevel, shoot, shootForced, start, stepSucceeds, type FailureLabel, type Round, type ShotProvider } from '../src/core/round';
 import type { FrameState, ShotResult } from '../src/core/rules';
 import { buildTable } from '../src/core/table/geometry';
 import type { BallKind } from '../src/core/types';
@@ -206,4 +206,31 @@ describe('Outcome first (RULES A.5)', () => {
       expect(Math.abs((count[label] ?? 0) / total - share)).toBeLessThan(0.02);
     }
   }, 60_000);
+});
+
+describe('developer test panel: forced outcomes (task 5.3)', () => {
+  // a seed whose step 1 succeeds, so the round is in 'decide'
+  const seed = Array.from({ length: 200 }, (_, i) => i + 1).find((x) => stepSucceeds(newRound(x), 1))!;
+  it('each forced outcome plays as asked and marks the round and the shot', () => {
+    for (const f of FORCED_OUTCOMES) {
+      const r0 = start(newRound(seed), fake(), table);
+      const r = shootForced(r0, fake(), table, f);
+      const h = r.history[r.history.length - 1]!;
+      expect(r.forced).toBe(true);
+      expect(h.forced).toBe(true);
+      if (f === 'success') { expect(h.outcome).toBe('success'); expect(r.step).toBe(2); }
+      else if (f === 'reRack') { expect(r.end?.type).toBe('reRack'); expect(r.end && 'multiplier' in r.end && r.end.multiplier).toBe(r.ladder[1]!.multiplier); }
+      else { expect(r.end).toEqual({ type: 'failure', label: f, step: 2 }); }
+    }
+  });
+  it('forcing success to the end gives a clearance; a new START clears the mark; shoot() never marks', () => {
+    let r = start(newRound(seed), fake(), table);
+    while (r.phase === 'decide') r = shootForced(r, fake(), table, 'success');
+    expect(r.end?.type).toBe('clearance');
+    const next = start(r, fake(), table);
+    expect(next.forced).toBe(false);
+    const played = next.phase === 'decide' ? shoot(next, fake(), table) : next;
+    expect(played.forced).toBe(false);
+    expect(played.history.some((h) => h.forced)).toBe(false);
+  });
 });
