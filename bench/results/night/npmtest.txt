@@ -1,0 +1,70 @@
+
+> snooker-147@0.0.1 test
+> vitest run tests/
+
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+ ❯ tests/blackPlay.test.ts (7 tests | 1 failed) 81ms
+   ❯ locked reds (RE-RACK avoidance) (3)
+     × the rescue search is inside the fixed shot cap 69ms
+ ❯ tests/breaks.test.ts (3 tests | 1 failed) 55119ms
+   ❯ task 4.6: break-off library (3)
+     × the same seed builds the same breaks 43133ms
+ ❯ tests/solver.test.ts (3 tests | 1 failed) 84329ms
+   ❯ task 4.1: solver, success shots (2)
+     × every shot the solver returns is judged a success by the rules code when simulated again (20 layouts each) 74716ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/blackPlay.test.ts > locked reds (RE-RACK avoidance) > the rescue search is inside the fixed shot cap
+AssertionError: expected 24471 to be 15468 // Object.is equality
+
+- Expected
++ Received
+
+- 15468
++ 24471
+
+ ❯ tests/blackPlay.test.ts:59:23
+     57|     const c = shotCaps();
+     58|     expect(c.rescue).toBeGreaterThan(0);
+     59|     expect(c.success).toBe(c.normal + c.wide + c.rescue + c.exhibition…
+       |                       ^
+     60|     expect(r).toBeGreaterThan(0);
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/breaks.test.ts > task 4.6: break-off library > the same seed builds the same breaks
+TestTimeoutError: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/breaks.test.ts:20:3
+     18|
+     19| describe('task 4.6: break-off library', () => {
+     20|   it('the same seed builds the same breaks', () => {
+       |   ^
+     21|     expect(buildBreaks(6, 'redPottable', 2, table, 5).entries).toEqual…
+     22|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/solver.test.ts > task 4.1: solver, success shots > every shot the solver returns is judged a success by the rules code when simulated again (20 layouts each)
+TestTimeoutError: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/solver.test.ts:15:3
+     13|     expect(randomLayout(mulberry32(5), 15, 'red', table)).toEqual(rand…
+     14|   });
+     15|   it('every shot the solver returns is judged a success by the rules c…
+       |   ^
+     16|     let solved = 0;
+     17|     for (const [reds, due] of [[6, 'red'], [15, 'red'], [6, 'colour']]…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  3 failed | 16 passed (19)
+      Tests  3 failed | 199 passed (202)
+   Start at  01:50:48
+   Duration  131.39s (tests 99%)
+

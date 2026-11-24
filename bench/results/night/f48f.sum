@@ -1,0 +1,3 @@
+f48f-reds6.json reds6: nat 86.9 exh 1 RR 0 | behind 8.2 baulkC 4 (fromBlackHalf 3.2) cutMed 16.5 cut>50 2.2 | med 1.56 <=2.5 98.7% >3.5 0 (notLast red 0 col 0) | ms p90 1827 max 8806
+f48f-reds10.json reds10: nat 91 exh 1.3 RR 0 | behind 7.2 baulkC 1.2 (fromBlackHalf 1.2) cutMed 18.1 cut>50 1.6 | med 1.48 <=2.5 98.4% >3.5 1 (notLast red 0 col 0) | ms p90 2541 max 5967
+f48f-reds15.json reds15: nat 88.2 exh 1.8 RR 0 | behind 5.4 baulkC 2 (fromBlackHalf 2) cutMed 17 cut>50 3 | med 1.53 <=2.5 96.8% >3.5 3 (notLast red 2 col 1) | ms p90 2709 max 8953

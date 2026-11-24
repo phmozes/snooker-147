@@ -611,7 +611,7 @@ export function shotCaps() {
   const success = normal + wide + rescue + exhibition + Sv.doubles.shotBudget + Sv.spray.shotBudget + lastResort;
   const colourPick = (NAT.autoColours.length - 1) * normal + NAT.autoColours.length * rescue; // + the rescue per colour
   const failure = 2 * Sv.shotBudget + CONFIG.solver.failure.softFoulMaxShots + CONFIG.solver.failure.tapDirections;
-  return { normal, wide, rescue, exhibition, doubles: Sv.doubles.shotBudget, spray: Sv.spray.shotBudget, success, colourPick, failure, decision: success + colourPick + failure };
+  return { normal, wide, rescue, exhibition, doubles: Sv.doubles.shotBudget, spray: Sv.spray.shotBudget, lastResort, success, colourPick, failure, decision: success + colourPick + failure };
 }
 
 /**
