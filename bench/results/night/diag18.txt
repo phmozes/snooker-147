@@ -1,0 +1,15 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+halfLength 1.7845 halfWidth 0.889 r 0.02625
+phase red redsLeft 2 next null balls cue,yellow,green,brown,red2,red3,black,pink,blue
+red {}: pairs 0 tried 0 shot none
+red {"position":false,"lookahead":false}: pairs 0 tried 0 shot none
+red {"wide":true}: pairs 0 tried 0 shot none
+red {"position":false,"lookahead":false,"firstFound":true,"exhibition":true}: pairs 2 tried 274 shot cushionFirst look undefined next null
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:27:33
+   Duration  20.18s (tests 99%, transform 1%)
+

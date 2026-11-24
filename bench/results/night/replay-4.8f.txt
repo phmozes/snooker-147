@@ -1,0 +1,35 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+solver 4.8f
+reds10-5001536:17: red success; {"target":"red2","pocket":"middleLeft","dir":{"x":-0.5005311134120214,"y":1.0754145828095372},"speed":6,"spin":-0.6,"duration":3.3854166666666345,"score":3.3854166666666345,"nextCost":null,"cueEnd":{"x":0.5972016188756201,"y":1.5464126203531294},"computeMs":0,"tried":2574,"type":"plant","natural":6,"whyNot":"double"}
+  flex log: [{"roundCode":"reds10-5001536","step":17,"target":"red","level":"doubles","tried":2574}]
+  position: pocket middleLeft cut 112 deg, cue->ball 1.27 m, ball->pocket 1.39 m; cue not behind the black; cue ends (0.60,1.55)
+  strict check: plant -> plant (cue ball rolls 1.77 m after contact, 1 cushions)
+  before: cue(0.570,-0.095) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red2(-0.025,1.024) red3(0.028,1.012) black(-0.055,1.752) pink(0.000,0.892) blue(0.000,0.000)
+reds10-5001536:18: pink success; {"target":"pink","pocket":"middleLeft","dir":{"x":-0.5587391510276448,"y":-0.6184290427678459},"speed":2.450389559155243,"spin":0.6,"duration":2.0354166666667113,"computeMs":0,"tried":3684,"score":20.350926729720484,"nextCost":3.99,"cueEnd":{"x":-0.23791259229334966,"y":0.4196545062776228},"type":"plain","natural":0.6608955975911064,"whyNot":null,"lookahead":"ok"}
+  flex log: [{"roundCode":"reds10-5001536","step":18,"target":"pink","level":"longerDuration","tried":3684}]
+  position: pocket middleLeft cut 5 deg, cue->ball 0.89 m, ball->pocket 1.32 m; cue not behind the black; cue ends (-0.24,0.42)
+  strict check: plain -> NATURAL (cue ball rolls 0.58 m after contact, 0 cushions)
+  before: cue(0.597,1.546) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red3(0.231,1.732) black(-0.055,1.752) pink(0.000,0.892) blue(0.000,0.000)
+reds10-5001744:18: pink success; {"target":"pink","pocket":"middleLeft","dir":{"x":-0.5587391510276448,"y":-0.6184290427678459},"speed":2.450389559155243,"spin":0.6,"duration":2.0354166666667113,"computeMs":0,"tried":3684,"score":20.350926729720484,"nextCost":3.99,"cueEnd":{"x":-0.23791259229334966,"y":0.4196545062776228},"type":"plain","natural":0.6608955975911064,"whyNot":null,"lookahead":"ok"}
+  flex log: [{"roundCode":"reds10-5001744","step":18,"target":"pink","level":"longerDuration","tried":3684}]
+  position: pocket middleLeft cut 5 deg, cue->ball 0.89 m, ball->pocket 1.32 m; cue not behind the black; cue ends (-0.24,0.42)
+  strict check: plain -> NATURAL (cue ball rolls 0.58 m after contact, 0 cushions)
+  before: cue(0.597,1.546) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red3(0.231,1.732) black(-0.055,1.752) pink(0.000,0.892) blue(0.000,0.000)
+reds6-5000614:11: red success; {"target":"red1","pocket":"topRight","dir":{"x":-0.07916189070038437,"y":-0.3999042780282154},"speed":4.5,"spin":0,"duration":3.885416666666606,"score":3.885416666666606,"nextCost":null,"cueEnd":{"x":0.09662410510077421,"y":1.415203584908545},"computeMs":0,"tried":1480,"type":"kiss","natural":6,"whyNot":"double"}
+  flex log: [{"roundCode":"reds6-5000614","step":11,"target":"red","level":"doubles","tried":1480}]
+  position: pocket topRight cut 142 deg, cue->ball 0.42 m, ball->pocket 1.23 m; cue not behind the black; cue ends (0.10,1.42)
+  strict check: kiss -> kiss (cue ball rolls 6.23 m after contact, 2 cushions)
+  before: cue(0.028,1.362) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) blue(0.000,0.000) black(0.000,1.460)
+reds10-5000066:17: red success; {"target":"red4","pocket":"topLeft","dir":{"x":-0.07392435034666286,"y":0.12795656519069898},"speed":1.4226808666753987,"spin":0.8,"duration":1.3625000000000151,"computeMs":0,"tried":542,"score":4.0739943639971585,"nextCost":0.7392521487913903,"cueEnd":{"x":-0.23320994741148177,"y":1.4552036128809571},"type":"plain","natural":0.32915861174864836,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: []
+  position: pocket topLeft cut 14 deg, cue->ball 0.20 m, ball->pocket 0.90 m; cue not behind the black; cue ends (-0.23,1.46)
+  strict check: plain -> NATURAL (cue ball rolls 0.36 m after contact, 0 cushions)
+  before: cue(-0.154,0.975) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) red2(-0.056,0.962) red4(-0.264,1.141) pink(0.376,0.597) black(0.000,1.460)
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:29:48
+   Duration  127.42s (tests 100%)
+

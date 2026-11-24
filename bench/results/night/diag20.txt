@@ -1,0 +1,12 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+exh: cushionFirst 4.25s cueEnd (0.05,-1.28) next black:- pink:- blue:-
+doubles: plant 3.39s cueEnd (0.60,1.55) next black:double pink:plain blue:long
+spray: plant 4.03s cueEnd (0.40,-1.66) next black:- pink:long blue:long
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:28:18
+   Duration  27.31s (tests 99%, transform 1%)
+

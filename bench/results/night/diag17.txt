@@ -1,0 +1,17 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+5001536 pick black tried 0 normal false
+  black: reRack tried 540 
+  pink: reRack tried 1240 
+  blue: reRack tried 1240 
+5001744 pick black tried 0 normal false
+  black: reRack tried 540 
+  pink: reRack tried 1240 
+  blue: reRack tried 1240 
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:21:11
+   Duration  52.53s (tests 100%)
+

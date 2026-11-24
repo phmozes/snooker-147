@@ -574,13 +574,41 @@ export interface FlexResult { shot: SolvedShot | null; level: FlexLevel; log: Fa
  * first run the normal search for pink and blue too. A failure solve: the chosen type, a plain miss, the soft foul and
  * the gentle tap. While the player decides, both outcomes are solved.
  */
+/**
+ * Night 2026-11-25: can the ball due after `shot` be potted by any shot at all (exhibition and cushion-first allowed)?
+ * Used for the last-resort shots, so that a RE-RACK is not just pushed one step on. Shot count: config lastResortCheck.
+ */
+export function nextReachable(state: FrameState, target: BallKind, shot: SolvedShot, table: TableGeometry, now: () => number,
+  cfg: PhysicsConfig = CONFIG.physics): { ok: boolean; tried: number } {
+  const nexts = nextTargetsAfter(state, target);
+  let tried = 1;
+  const sim = createSim(state.balls, table, cfg);
+  strike(sim, 'cue', shot.dir, shot.speed, shot.spin);
+  runUntilStill(sim);
+  const first = sim.events.find((e) => e.type === 'ball');
+  const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+  const nextState = applyShot(state, target, { firstHit, potted: sim.balls.filter((b) => b.potted).map((b) => b.id),
+    after: sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) }, table);
+  if (!nexts.length) return { ok: true, tried };
+  for (const n of nexts) {
+    const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+    const s = solveSuccess(nextState, n.kind, table, now, cfg, Sv.lastResortCheck.shotBudget, i,
+      { position: false, lookahead: false, firstFound: true, exhibition: true });
+    tried += i.tried;
+    if (s) return { ok: true, tried };
+  }
+  return { ok: false, tried };
+}
+
 export function shotCaps() {
   const look = Sv.lookaheadCandidates * (1 + Sv.lookaheadShots * NAT.autoColours.length);
   const normal = Sv.shotBudget + look;
   const wide = Sv.wide.shotBudget + look;
   const exhibition = Sv.exhibition.shotBudget + look;
   const rescue = Sv.rescue.enabled ? Sv.wide.shotBudget + Sv.rescue.candidates * (1 + Sv.rescue.lookaheadShots * NAT.autoColours.length) : 0;
-  const success = normal + wide + rescue + exhibition + Sv.doubles.shotBudget + Sv.spray.shotBudget;
+  // + up to three last-resort checks (exhibition, doubles, spray), each a shot plus one search per next ball
+  const lastResort = Sv.lastResortCheck.enabled ? 3 * (1 + NAT.autoColours.length * Sv.lastResortCheck.shotBudget) : 0;
+  const success = normal + wide + rescue + exhibition + Sv.doubles.shotBudget + Sv.spray.shotBudget + lastResort;
   const colourPick = (NAT.autoColours.length - 1) * normal + NAT.autoColours.length * rescue; // + the rescue per colour
   const failure = 2 * Sv.shotBudget + CONFIG.solver.failure.softFoulMaxShots + CONFIG.solver.failure.tapDirections;
   return { normal, wide, rescue, exhibition, doubles: Sv.doubles.shotBudget, spray: Sv.spray.shotBudget, success, colourPick, failure, decision: success + colourPick + failure };
@@ -640,15 +668,21 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
   if (pick && pick.duration <= flex) return out(pick, pick === wide ? 'wideSearch' : 'longerDuration', 'noLookahead');
   if (pick) return out(pick, 'overLong', 'overLong');
   const exh = run(Sv.exhibition.shotBudget, { exhibition: true });
-  if (exh) return out(exh, 'exhibition', 'exhibition');
+  // night 2026-11-25 (soak reds10-5001536 step 17): a last-resort shot that leaves no ball pottable at all only makes
+  // the RE-RACK one step later. Then doubles and spray are tried too; the first that leaves a pottable ball wins.
+  const reach = (s: SolvedShot) => { const x = nextReachable(state, target, s, table, now, cfg); tried += x.tried; return x.ok; };
+  const lastCheck = Sv.lastResortCheck.enabled;
+  if (exh && (!lastCheck || exh.lookahead !== 'failed' || reach(exh))) return out(exh, 'exhibition', 'exhibition');
   const di: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
   const dbl = solveDoubles(state, target, table, cfg, Sv.doubles.shotBudget, di);
   tried += di.tried;
-  if (dbl) return out(dbl, 'doubles', 'doubles');
+  if (dbl && (!lastCheck || !exh || reach(dbl))) return out(dbl, 'doubles', 'doubles');
   const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
   const spray = solveSpray(state, target, table, cfg, Sv.spray.shotBudget, i);
   tried += i.tried;
-  if (spray) return out(spray, 'spray', 'spray');
+  if (spray && (!lastCheck || !(exh || dbl) || reach(spray))) return out(spray, 'spray', 'spray');
+  const any = exh ?? dbl ?? spray; // none leaves a pottable ball: the first one anyway (a RE-RACK later is still possible)
+  if (any) return out(any, any === exh ? 'exhibition' : any === dbl ? 'doubles' : 'spray', any === exh ? 'exhibition' : any === dbl ? 'doubles' : 'spray');
   return out(null, 'reRack', 'reRack');
 }
 

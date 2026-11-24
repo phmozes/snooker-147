@@ -1,0 +1,46 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+solver 4.8e
+reds10-5001536:18: black reRack; undefined
+  flex log: [{"roundCode":"reds10-5001536","step":18,"target":"black","level":"reRack","tried":540}]
+  before: cue(0.050,-1.277) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red3(0.653,-0.868) black(-0.055,1.752) pink(0.000,0.892) blue(0.000,0.000)
+reds10-5001744:18: black reRack; undefined
+  flex log: [{"roundCode":"reds10-5001744","step":18,"target":"black","level":"reRack","tried":540}]
+  before: cue(0.050,-1.277) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red3(0.653,-0.868) black(-0.055,1.752) pink(0.000,0.892) blue(0.000,0.000)
+reds6-5001773:11: red success; {"target":"red1","pocket":"topRight","dir":{"x":-0.07916189070038437,"y":-0.3999042780282154},"speed":4.5,"spin":0,"duration":3.885416666666606,"score":3.885416666666606,"nextCost":null,"cueEnd":{"x":0.09662410510077421,"y":1.415203584908545},"computeMs":0,"tried":1480,"type":"kiss","natural":6,"whyNot":"double"}
+  flex log: [{"roundCode":"reds6-5001773","step":11,"target":"red","level":"doubles","tried":1480}]
+  position: pocket topRight cut 142 deg, cue->ball 0.42 m, ball->pocket 1.23 m; cue not behind the black; cue ends (0.10,1.42)
+  strict check: kiss -> kiss (cue ball rolls 6.23 m after contact, 2 cushions)
+  before: cue(0.028,1.362) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) blue(0.000,0.000) black(0.000,1.460)
+reds6-5002385:11: red success; {"target":"red1","pocket":"topRight","dir":{"x":-0.07916189070038437,"y":-0.3999042780282154},"speed":4.5,"spin":0,"duration":3.885416666666606,"score":3.885416666666606,"nextCost":null,"cueEnd":{"x":0.09662410510077421,"y":1.415203584908545},"computeMs":0,"tried":1480,"type":"kiss","natural":6,"whyNot":"double"}
+  flex log: [{"roundCode":"reds6-5002385","step":11,"target":"red","level":"doubles","tried":1480}]
+  position: pocket topRight cut 142 deg, cue->ball 0.42 m, ball->pocket 1.23 m; cue not behind the black; cue ends (0.10,1.42)
+  strict check: kiss -> kiss (cue ball rolls 6.23 m after contact, 2 cushions)
+  before: cue(0.028,1.362) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) blue(0.000,0.000) black(0.000,1.460)
+reds6-5001006:11: red success; {"target":"red1","pocket":"topRight","dir":{"x":-0.07916189070038437,"y":-0.3999042780282154},"speed":4.5,"spin":0,"duration":3.885416666666606,"score":3.885416666666606,"nextCost":null,"cueEnd":{"x":0.09662410510077421,"y":1.415203584908545},"computeMs":0,"tried":1480,"type":"kiss","natural":6,"whyNot":"double"}
+  flex log: [{"roundCode":"reds6-5001006","step":11,"target":"red","level":"doubles","tried":1480}]
+  position: pocket topRight cut 142 deg, cue->ball 0.42 m, ball->pocket 1.23 m; cue not behind the black; cue ends (0.10,1.42)
+  strict check: kiss -> kiss (cue ball rolls 6.23 m after contact, 2 cushions)
+  before: cue(0.028,1.362) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) blue(0.000,0.000) black(0.000,1.460)
+reds6-5001417:11: red success; {"target":"red1","pocket":"topRight","dir":{"x":-0.07916189070038437,"y":-0.3999042780282154},"speed":4.5,"spin":0,"duration":3.885416666666606,"score":3.885416666666606,"nextCost":null,"cueEnd":{"x":0.09662410510077421,"y":1.415203584908545},"computeMs":0,"tried":1480,"type":"kiss","natural":6,"whyNot":"double"}
+  flex log: [{"roundCode":"reds6-5001417","step":11,"target":"red","level":"doubles","tried":1480}]
+  position: pocket topRight cut 142 deg, cue->ball 0.42 m, ball->pocket 1.23 m; cue not behind the black; cue ends (0.10,1.42)
+  strict check: kiss -> kiss (cue ball rolls 6.23 m after contact, 2 cushions)
+  before: cue(0.028,1.362) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) blue(0.000,0.000) black(0.000,1.460)
+reds6-5001867:11: red success; {"target":"red1","pocket":"topRight","dir":{"x":-0.07916189070038437,"y":-0.3999042780282154},"speed":4.5,"spin":0,"duration":3.885416666666606,"score":3.885416666666606,"nextCost":null,"cueEnd":{"x":0.09662410510077421,"y":1.415203584908545},"computeMs":0,"tried":1480,"type":"kiss","natural":6,"whyNot":"double"}
+  flex log: [{"roundCode":"reds6-5001867","step":11,"target":"red","level":"doubles","tried":1480}]
+  position: pocket topRight cut 142 deg, cue->ball 0.42 m, ball->pocket 1.23 m; cue not behind the black; cue ends (0.10,1.42)
+  strict check: kiss -> kiss (cue ball rolls 6.23 m after contact, 2 cushions)
+  before: cue(0.028,1.362) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) blue(0.000,0.000) black(0.000,1.460)
+reds6-5002339:11: red success; {"target":"red1","pocket":"topRight","dir":{"x":-0.07916189070038437,"y":-0.3999042780282154},"speed":4.5,"spin":0,"duration":3.885416666666606,"score":3.885416666666606,"nextCost":null,"cueEnd":{"x":0.09662410510077421,"y":1.415203584908545},"computeMs":0,"tried":1480,"type":"kiss","natural":6,"whyNot":"double"}
+  flex log: [{"roundCode":"reds6-5002339","step":11,"target":"red","level":"doubles","tried":1480}]
+  position: pocket topRight cut 142 deg, cue->ball 0.42 m, ball->pocket 1.23 m; cue not behind the black; cue ends (0.10,1.42)
+  strict check: kiss -> kiss (cue ball rolls 6.23 m after contact, 2 cushions)
+  before: cue(0.028,1.362) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(-0.002,0.944) blue(0.000,0.000) black(0.000,1.460)
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:17:30
+   Duration  156.82s (tests 100%)
+

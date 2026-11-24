@@ -1,0 +1,27 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+5001536 black exh 3000: tried 0 none
+5001536 black exh 8000: tried 0 none
+5001536 black fine spray: tried 1890 none
+5001536 pink exh 3000: tried 700 none
+5001536 pink exh 8000: tried 700 none
+5001536 pink fine spray: tried 1890 none
+5001536 blue exh 3000: tried 700 none
+5001536 blue exh 8000: tried 700 none
+5001536 blue fine spray: tried 1890 none
+5001744 black exh 3000: tried 0 none
+5001744 black exh 8000: tried 0 none
+5001744 black fine spray: tried 1890 none
+5001744 pink exh 3000: tried 700 none
+5001744 pink exh 8000: tried 700 none
+5001744 pink fine spray: tried 1890 none
+5001744 blue exh 3000: tried 700 none
+5001744 blue exh 8000: tried 700 none
+5001744 blue fine spray: tried 1890 none
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:24:15
+   Duration  74.48s (tests 100%)
+
