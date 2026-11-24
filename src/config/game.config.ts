@@ -81,6 +81,11 @@ export const CONFIG = {
   },
   ballValues: { red: 1, yellow: 2, green: 3, brown: 4, blue: 5, pink: 6, black: 7 },
   respotPriority: ['black', 'pink', 'blue', 'brown', 'green', 'yellow'],
+  finalColourOrder: ['yellow', 'green', 'brown', 'blue', 'pink', 'black'], // RULES C.3
+  respot: {
+    gap: 0.0002,                 // a spot is free if a ball placed there is at least this far from every other ball
+    lineStep: 0.0005,            // search step along the long centre line when every spot is covered (RULES C.2)
+  },
 
   // ---------------- PHYSICS (our own deterministic 2D module) ----------------
   physics: {
@@ -233,7 +238,7 @@ export const CONFIG = {
     cushionDepth: 0.05,          // how far the cushion boxes reach behind the face (m)
     jawPieces: 6,                // straight pieces per rounded jaw
     // How big the balls are DRAWN (1 = true size). Visual only: physics, pockets and the solver keep the true radius.
-    ballScale: 1,
+    ballScale: 1.3,              // owner's choice 2026-11-24, provisional until tested on a real phone
     ballScaleOptions: [1, 1.3, 1.6, 2], // developer menu on the game page
     ambientLight: 1.2, topLight: 1.6,
   },

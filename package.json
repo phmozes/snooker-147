@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run tests/",
     "bench": "vitest run bench/",
+    "rules-check": "node scripts/rules-check.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
