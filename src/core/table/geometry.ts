@@ -1,15 +1,20 @@
-// Table geometry: cushions, pockets with ROUNDED jaws (circular arcs), capture circles, spots, baulk line, D.
-// Pure module: numbers in, shapes out. Origin = table centre, +y toward the black end, +x right.
+// Table geometry: cushions, pockets, spots, baulk line, D. Pure module: numbers in, shapes out.
+// Origin = table centre, +y toward the black end, +x right.
+//
+// One pocket = two jaws. Each jaw = a ROUNDED part (circular arc, tangent to the cushion face, turning until it points
+// straight into the pocket: 45 degrees at a corner, 90 at a middle pocket) + a STRAIGHT part (the throat). The two
+// straight parts are parallel, `mouth` apart. The ball drops when its centre passes over the edge of the slate cut:
+// a circle (radius slateCutRadius) whose front edge is `fallSetback` behind the start of the throat.
 
 import { CONFIG } from '../../config/game.config';
 import { add, dist, normalize, scale, sub, vec, type Colour, type Vec2 } from '../types';
 
 export interface PocketConfig {
-  mouth: number;
-  jawRadius: number;
-  jawSweepDeg: number;
-  captureDepth: number;
-  captureRadius: number;
+  mouth: number; // width of the throat (between the two straight parallel parts)
+  jawRadius: number; // radius of the rounded part
+  throatLength: number; // length of the straight parallel parts
+  fallSetback: number; // front edge of the slate cut, measured from the start of the throat into the pocket
+  slateCutRadius: number; // radius of the slate cut (the hole the ball drops into)
 }
 
 export interface TableConfig {
@@ -19,6 +24,7 @@ export interface TableConfig {
   baulkLineFromBottom: number;
   dRadius: number;
   blackFromTop: number;
+  mouthExtra: number; // "effective width": added to every mouth for play (undercut cushion rubber); 0 = as measured
   corner: PocketConfig;
   middle: PocketConfig;
 }
@@ -26,10 +32,12 @@ export interface TableConfig {
 export type PocketId =
   | 'topLeft' | 'topRight' | 'middleLeft' | 'middleRight' | 'bottomLeft' | 'bottomRight';
 
-/** A straight cushion face between two pockets. */
+/** A straight face: a cushion between two pockets, or the straight (throat) part of a jaw. */
 export interface Segment {
   a: Vec2;
   b: Vec2;
+  normal: Vec2; // unit, pointing to the side where balls are (the cloth, or the middle of the throat)
+  pocket?: PocketId; // set for the straight part of a jaw
 }
 
 /**
@@ -49,11 +57,12 @@ export interface JawArc {
 export interface Pocket {
   id: PocketId;
   kind: 'corner' | 'middle';
-  mouthA: Vec2; // narrowest point on jaw 1
-  mouthB: Vec2; // narrowest point on jaw 2
+  mouthA: Vec2; // start of the throat on jaw 1 (end of its rounded part)
+  mouthB: Vec2; // start of the throat on jaw 2
   mouthMid: Vec2;
-  inward: Vec2; // unit direction from the mouth into the pocket
-  captureCentre: Vec2;
+  inward: Vec2; // unit direction from the mouth into the pocket (along the throat)
+  throat: [Segment, Segment]; // the two straight parallel parts
+  captureCentre: Vec2; // centre of the slate cut: ball centre inside this circle = dropped
   captureRadius: number;
 }
 
@@ -61,8 +70,9 @@ export interface TableGeometry {
   halfWidth: number;
   halfLength: number;
   ballRadius: number;
-  cushions: Segment[];
-  jaws: JawArc[];
+  cushions: Segment[]; // the six straight cushions between pockets
+  throatWalls: Segment[]; // the twelve straight jaw parts (two per pocket)
+  jaws: JawArc[]; // the twelve rounded jaw parts
   pockets: Pocket[];
   spots: Record<Colour, Vec2>;
   baulkY: number;
@@ -110,23 +120,32 @@ export function arcPoints(arc: JawArc, fromAngle: number, toAngle: number, n = 2
   return out;
 }
 
-/** One rounded jaw: circle tangent to the cushion face at `tangentPoint`, turning toward the opposite jaw. */
-function makeJaw(pocket: PocketId, centre: Vec2, tangentPoint: Vec2, otherCentre: Vec2, cfg: PocketConfig): JawArc {
+/**
+ * One rounded jaw: circle tangent to the cushion face at `tangentPoint`. The arc turns until it faces the opposite
+ * jaw's circle; there its direction is parallel to the throat and the straight part takes over.
+ */
+function makeJaw(pocket: PocketId, centre: Vec2, tangentPoint: Vec2, otherCentre: Vec2, radius: number): JawArc {
   const start = angleOf(sub(tangentPoint, centre));
-  const toOther = angleOf(sub(otherCentre, centre));
-  const sweep = Math.sign(angleDiff(start, toOther)) * cfg.jawSweepDeg * DEG;
+  const sweep = angleDiff(start, angleOf(sub(otherCentre, centre)));
   return {
-    pocket, centre, radius: cfg.jawRadius, start, sweep, tangentPoint,
-    narrowestPoint: add(centre, scale(normalize(sub(otherCentre, centre)), cfg.jawRadius)),
+    pocket, centre, radius, start, sweep, tangentPoint,
+    narrowestPoint: add(centre, scale(normalize(sub(otherCentre, centre)), radius)),
   };
 }
 
 function makePocket(id: PocketId, kind: 'corner' | 'middle', j1: JawArc, j2: JawArc, inward: Vec2, cfg: PocketConfig): Pocket {
   const mouthMid = scale(add(j1.narrowestPoint, j2.narrowestPoint), 0.5);
+  const wall = (j: JawArc): Segment => ({
+    pocket: id,
+    a: j.narrowestPoint,
+    b: add(j.narrowestPoint, scale(inward, cfg.throatLength)),
+    normal: normalize(sub(mouthMid, j.narrowestPoint)), // toward the middle of the throat
+  });
   return {
     id, kind, mouthA: j1.narrowestPoint, mouthB: j2.narrowestPoint, mouthMid, inward,
-    captureCentre: add(mouthMid, scale(inward, cfg.captureDepth)),
-    captureRadius: cfg.captureRadius,
+    throat: [wall(j1), wall(j2)],
+    captureCentre: add(mouthMid, scale(inward, cfg.fallSetback + cfg.slateCutRadius)),
+    captureRadius: cfg.slateCutRadius,
   };
 }
 
@@ -135,12 +154,14 @@ export function buildTable(cfg: TableConfig = CONFIG.table): TableGeometry {
   const hl = cfg.length / 2;
   const rc = cfg.corner.jawRadius;
   const rm = cfg.middle.jawRadius;
+  const mouthC = cfg.corner.mouth + cfg.mouthExtra;
+  const mouthM = cfg.middle.mouth + cfg.mouthExtra;
   // Corner: the two jaw circles sit symmetric about the diagonal. Gap between them = mouth:
   //   sqrt(2) * (rc + t) - 2 rc = mouth  ->  t = (mouth + 2 rc) / sqrt(2) - rc
   // t = distance from the table corner to where each straight cushion ends.
-  const t = (cfg.corner.mouth + 2 * rc) / Math.SQRT2 - rc;
+  const t = (mouthC + 2 * rc) / Math.SQRT2 - rc;
   // Middle: jaw circles face each other across the pocket; gap = 2 ym - 2 rm = mouth.
-  const ym = cfg.middle.mouth / 2 + rm;
+  const ym = mouthM / 2 + rm;
 
   const pockets: Pocket[] = [];
   const jaws: JawArc[] = [];
@@ -151,8 +172,8 @@ export function buildTable(cfg: TableConfig = CONFIG.table): TableGeometry {
   for (const [id, sx, sy] of corners) {
     const sideCentre = vec(sx * (hw + rc), sy * (hl - t)); // behind the long (side) cushion
     const endCentre = vec(sx * (hw - t), sy * (hl + rc)); // behind the short (end) cushion
-    const j1 = makeJaw(id, sideCentre, vec(sx * hw, sy * (hl - t)), endCentre, cfg.corner);
-    const j2 = makeJaw(id, endCentre, vec(sx * (hw - t), sy * hl), sideCentre, cfg.corner);
+    const j1 = makeJaw(id, sideCentre, vec(sx * hw, sy * (hl - t)), endCentre, rc);
+    const j2 = makeJaw(id, endCentre, vec(sx * (hw - t), sy * hl), sideCentre, rc);
     jaws.push(j1, j2);
     pockets.push(makePocket(id, 'corner', j1, j2, normalize(vec(sx, sy)), cfg.corner));
   }
@@ -160,8 +181,8 @@ export function buildTable(cfg: TableConfig = CONFIG.table): TableGeometry {
   for (const [id, sx] of [['middleLeft', -1], ['middleRight', 1]] as [PocketId, number][]) {
     const upperCentre = vec(sx * (hw + rm), ym);
     const lowerCentre = vec(sx * (hw + rm), -ym);
-    const j1 = makeJaw(id, upperCentre, vec(sx * hw, ym), lowerCentre, cfg.middle);
-    const j2 = makeJaw(id, lowerCentre, vec(sx * hw, -ym), upperCentre, cfg.middle);
+    const j1 = makeJaw(id, upperCentre, vec(sx * hw, ym), lowerCentre, rm);
+    const j2 = makeJaw(id, lowerCentre, vec(sx * hw, -ym), upperCentre, rm);
     jaws.push(j1, j2);
     pockets.push(makePocket(id, 'middle', j1, j2, vec(sx, 0), cfg.middle));
   }
@@ -169,10 +190,10 @@ export function buildTable(cfg: TableConfig = CONFIG.table): TableGeometry {
   // The six straight cushions, each ending exactly at a jaw's tangent point.
   const cushions: Segment[] = [];
   for (const sx of [-1, 1]) {
-    cushions.push({ a: vec(sx * hw, -(hl - t)), b: vec(sx * hw, -ym) });
-    cushions.push({ a: vec(sx * hw, ym), b: vec(sx * hw, hl - t) });
+    cushions.push({ a: vec(sx * hw, -(hl - t)), b: vec(sx * hw, -ym), normal: vec(-sx, 0) });
+    cushions.push({ a: vec(sx * hw, ym), b: vec(sx * hw, hl - t), normal: vec(-sx, 0) });
   }
-  for (const sy of [-1, 1]) cushions.push({ a: vec(-(hw - t), sy * hl), b: vec(hw - t, sy * hl) });
+  for (const sy of [-1, 1]) cushions.push({ a: vec(-(hw - t), sy * hl), b: vec(hw - t, sy * hl), normal: vec(0, -sy) });
 
   const baulkY = -hl + cfg.baulkLineFromBottom;
   const spots: Record<Colour, Vec2> = {
@@ -186,6 +207,6 @@ export function buildTable(cfg: TableConfig = CONFIG.table): TableGeometry {
 
   return {
     halfWidth: hw, halfLength: hl, ballRadius: cfg.ballRadius,
-    cushions, jaws, pockets, spots, baulkY, dCentre: vec(0, baulkY), dRadius: cfg.dRadius,
+    cushions, throatWalls: pockets.flatMap((p) => p.throat), jaws, pockets, spots, baulkY, dCentre: vec(0, baulkY), dRadius: cfg.dRadius,
   };
 }

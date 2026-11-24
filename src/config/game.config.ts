@@ -53,22 +53,23 @@ export const CONFIG = {
     blackFromTop: 0.324,
     // pink spot = midway between blue (centre) and the top cushion, so it is computed, not set
     // Pockets. Spots (yellow, green, brown, blue, pink, black) are computed from the numbers above.
-    // Each jaw is a ROUNDED cushion end: a circular arc that starts tangent to the cushion face and curves
-    // into the pocket. mouth = narrowest gap between the two arcs. Radii are first guesses from the reference
-    // photos (official template sizes are not published); tuned in task 1.3.
+    // Each jaw = a rounded part (arc tangent to the cushion face) + a straight part; the two straight parts are
+    // parallel, `mouth` apart. WPBSA templates are not published; widths are the accepted template widths,
+    // the fall is a fitter's figure, jaw radii are measured from the template photos (see docs/POCKETS.md).
+    mouthExtra: 0.000,           // "effective width" added to every mouth (undercut rubber); tune difficulty here
     corner: {
-      mouth: 0.086,              // narrowest gap between the two jaw arcs
-      jawRadius: 0.150,          // long gentle curve, estimated from photo pocket4 (owner to confirm on the debug page)
-      jawSweepDeg: 90,           // how far the arc curves round from the cushion face (narrowest point is at 45)
-      captureDepth: 0.060,       // capture circle centre, measured from the narrowest gap into the pocket
-      captureRadius: 0.040,      // ball centre inside this circle = potted (tuned in task 1.3)
+      mouth: 0.089,              // 3.5 in template
+      jawRadius: 0.110,          // measured from photo pocket4: 110 mm (range 85-135)
+      throatLength: 0.140,       // straight parallel part, to the back of the pocket
+      fallSetback: 0.051,        // cushion overhangs the slate by ~2 in: slate cut starts 51 mm into the throat
+      slateCutRadius: 0.089,     // slate cut ~3.5 in radius
     },
     middle: {
-      mouth: 0.105,
-      jawRadius: 0.055,          // middle noses are big and round (photos pocket2, pocket3)
-      jawSweepDeg: 120,          // narrowest point is at 90
-      captureDepth: 0.035,
-      captureRadius: 0.045,
+      mouth: 0.102,              // 4 in template
+      jawRadius: 0.100,          // measured from photo pocket3: 100 mm (range 80-130, less sure than the corner)
+      throatLength: 0.140,
+      fallSetback: 0.051,
+      slateCutRadius: 0.089,
     },
   },
   rack: {
@@ -242,6 +243,6 @@ export const CONFIG = {
     debugPowerDefault: 0.5,      // debug page power slider start (share of maxCueSpeed)
     // debug page "pocket test": roll one ball at a pocket
     pocketTest: { distance: 0.2, speed: 1.5, angleMaxDeg: 70, offsetMaxMm: 60, mapAngleStepDeg: 5, mapOffsetStepMm: 3,
-                  oldCornerJawRadius: 0.035, photoCornerJawRadius: 0.150 },
+                  cornerJawMarks: [0.035, 0.085, 0.110, 0.135], middleJawMarks: [0.055, 0.080, 0.100, 0.130] },
   },
 } as const;

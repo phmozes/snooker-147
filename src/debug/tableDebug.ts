@@ -158,15 +158,6 @@ function frame(now: number) {
 }
 
 const jawsOf = (id: PocketId) => table.jaws.filter((j) => j.pocket === id) as [JawArc, JawArc];
-/** Angle of the narrowest point, written so it lies between start and start + sweep (for drawing). */
-function narrowestAngle(j: JawArc): number {
-  const a = Math.atan2(j.narrowestPoint.y - j.centre.y, j.narrowestPoint.x - j.centre.x);
-  let d = (a - j.start) % (2 * Math.PI);
-  if (d > Math.PI) d -= 2 * Math.PI;
-  if (d < -Math.PI) d += 2 * Math.PI;
-  return j.start + d;
-}
-
 // ---- world -> screen ----
 let scale = 1;
 let origin = { x: 0, y: 0 };
@@ -221,34 +212,32 @@ function draw() {
   setView();
   const hw = table.halfWidth;
   const hl = table.halfLength;
-  const rim = 0.17;
+  const rim = 0.26; // wide enough to hold the middle-pocket throats
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // wood, cloth
   poly([{ x: -hw - rim, y: -hl - rim }, { x: hw + rim, y: -hl - rim }, { x: hw + rim, y: hl + rim }, { x: -hw - rim, y: hl + rim }], '#5b3a22');
   poly([{ x: -hw, y: -hl }, { x: hw, y: -hl }, { x: hw, y: hl }, { x: -hw, y: hl }], '#1f7a4d');
 
-  // pockets: wood behind the corner, cloth running into the mouth between the rounded jaws,
-  // then the dark hole from the narrowest gap inward
+  // pockets: wood behind the corner, cloth between the rounded jaws, then the throat: a strip of slate
+  // (lighter, the "shelf" before the fall) and the slate cut where the ball drops (dark)
   for (const p of table.pockets) {
     const [j1, j2] = jawsOf(p.id);
-    const n1 = narrowestAngle(j1);
-    const n2 = narrowestAngle(j2);
     if (p.kind === 'corner') {
       poly([j1.tangentPoint, { x: Math.sign(p.inward.x) * hw, y: Math.sign(p.inward.y) * hl }, j2.tangentPoint], '#5b3a22');
     }
-    poly([...arcPoints(j1, j1.start, n1), ...arcPoints(j2, n2, j2.start)], '#1f7a4d');
-    // hole: from the narrowest gap, along both jaws, wrapped round the far side of the capture circle
-    const side = { x: -p.inward.y, y: p.inward.x };
-    const s1 = Math.sign((j1.narrowestPoint.x - p.mouthMid.x) * side.x + (j1.narrowestPoint.y - p.mouthMid.y) * side.y);
-    const R = p.captureRadius;
-    const c = p.captureCentre;
-    const far = [s1, 0.7 * s1, 0, -0.7 * s1, -s1].map((k) => {
-      const back = Math.sqrt(Math.max(0, 1 - k * k));
-      return { x: c.x + R * (side.x * k + p.inward.x * back), y: c.y + R * (side.y * k + p.inward.y * back) };
-    });
-    poly([...arcPoints(j1, n1, j1.start + j1.sweep), ...far, ...arcPoints(j2, j2.start + j2.sweep, n2)], '#060808');
+    poly([...arcPoints(j1, j1.start, j1.start + j1.sweep), ...arcPoints(j2, j2.start + j2.sweep, j2.start)], '#1f7a4d');
+    const [w1, w2] = p.throat;
+    const throat = [w1.a, w1.b, w2.b, w2.a];
+    poly(throat, '#2a5e45');
+    ctx.save();
+    ctx.beginPath();
+    throat.forEach((q, i) => (i ? ctx.lineTo(sx(q), sy(q)) : ctx.moveTo(sx(q), sy(q))));
+    ctx.closePath();
+    ctx.clip();
     circle(p.captureCentre, p.captureRadius, '#060808');
+    ctx.restore();
+    // the whole slate cut (dashed): the part outside the throat lies under the cushions (the overhang)
     if (state.capture) circle(p.captureCentre, p.captureRadius, null, '#56ccf2', true);
     if (state.view !== 'table') line(p.mouthA, p.mouthB, 'rgba(255,255,255,0.6)', 1); // the mouth width
   }
@@ -288,6 +277,7 @@ function draw() {
     const pts = arcPoints(j, j.start, j.start + j.sweep, 48);
     for (let i = 1; i < pts.length; i++) line(pts[i - 1]!, pts[i]!, '#f2994a', 2.5);
   }
+  for (const s of table.throatWalls) line(s.a, s.b, '#f2994a', 2.5);
 
   // spots
   for (const p of Object.values(table.spots)) {
@@ -364,12 +354,14 @@ function showInfo() {
     `Balls  ${balls.length} (cue + 6 colours + ${state.reds} reds)`,
     `Start rack: overlaps ${c.overlaps} ${okText(c.overlaps === 0)}, off the cloth ${c.outside} ${okText(c.outside === 0)}, cue in D ${okText(c.cueInD)}`,
     ``,
-    `Pocket       mouth     jaw radius`,
+    `Pocket       mouth     jaw radius  fall starts`,
   );
   for (const p of table.pockets) {
     const [j1] = jawsOf(p.id);
-    lines.push(`${p.id.padEnd(12)} ${mm(dist(p.mouthA, p.mouthB))}  ${mm(j1.radius)}`);
+    const fall = dist(p.mouthMid, p.captureCentre) - p.captureRadius;
+    lines.push(`${p.id.padEnd(12)} ${mm(dist(p.mouthA, p.mouthB))}  ${mm(j1.radius)}    ${mm(fall)} into the throat`);
   }
+  lines.push(`Effective width extra (config mouthExtra): ${mm(CONFIG.table.mouthExtra)}`);
   document.getElementById('info')!.innerHTML = lines.join('\n');
 }
 
@@ -438,11 +430,13 @@ makeSlider('ptOffset', -PT.offsetMaxMm, PT.offsetMaxMm, 1, () => Math.round(roll
 makeSlider('ptSpeed', 0.3, 6, 0.1, () => roll.speed, (v) => { roll.speed = v; potMap = null; drawPotMap(); }, (v) => `${v.toFixed(1)} m/s`);
 const rebuildTable = () => { table = makeTable(); potMap = null; reset(); renderAll(); };
 const mm0 = (m: number) => `${Math.round(m * 1000)} mm`;
-makeSlider('jawCorner', 20, 250, 1, () => Math.round(jawRadius.corner * 1000), (v) => { jawRadius.corner = v / 1000; rebuildTable(); },
-  (v) => `${v} mm (old ${mm0(PT.oldCornerJawRadius)}, photo estimate ${mm0(PT.photoCornerJawRadius)}, config ${mm0(CONFIG.table.corner.jawRadius)})`,
-  [PT.oldCornerJawRadius * 1000, PT.photoCornerJawRadius * 1000]);
-makeSlider('jawMiddle', 20, 150, 1, () => Math.round(jawRadius.middle * 1000), (v) => { jawRadius.middle = v / 1000; rebuildTable(); },
-  (v) => `${v} mm (config ${mm0(CONFIG.table.middle.jawRadius)})`, [CONFIG.table.middle.jawRadius * 1000]);
+const marks = (m: readonly number[]) => m.map((x) => Math.round(x * 1000));
+makeSlider('jawCorner', 20, 200, 1, () => Math.round(jawRadius.corner * 1000), (v) => { jawRadius.corner = v / 1000; rebuildTable(); },
+  (v) => `${v} mm (photo estimate ${mm0(CONFIG.table.corner.jawRadius)}, range 85-135; marks: ${marks(PT.cornerJawMarks).join(', ')})`,
+  marks(PT.cornerJawMarks));
+makeSlider('jawMiddle', 20, 200, 1, () => Math.round(jawRadius.middle * 1000), (v) => { jawRadius.middle = v / 1000; rebuildTable(); },
+  (v) => `${v} mm (photo estimate ${mm0(CONFIG.table.middle.jawRadius)}, range 80-130; marks: ${marks(PT.middleJawMarks).join(', ')})`,
+  marks(PT.middleJawMarks));
 
 const mapCanvas = document.getElementById('potmap') as HTMLCanvasElement;
 const mapCtx = mapCanvas.getContext('2d')!;

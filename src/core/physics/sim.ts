@@ -59,18 +59,15 @@ interface Wall {
 }
 
 const walls = new WeakMap<TableGeometry, Wall[]>();
+/** Straight faces a ball can hit: the six cushions and the twelve straight jaw parts (throats). */
 function wallsOf(table: TableGeometry): Wall[] {
   let w = walls.get(table);
   if (!w) {
-    w = table.cushions.map((seg) => {
+    w = [...table.cushions, ...table.throatWalls].map((seg) => {
       const dx = seg.b.x - seg.a.x;
       const dy = seg.b.y - seg.a.y;
       const len = Math.hypot(dx, dy);
-      const dir = { x: dx / len, y: dy / len };
-      let normal = { x: -dir.y, y: dir.x };
-      // flip so the normal points toward the table centre
-      if (normal.x * -seg.a.x + normal.y * -seg.a.y < 0) normal = { x: -normal.x, y: -normal.y };
-      return { seg, normal, dir, len };
+      return { seg, normal: seg.normal, dir: { x: dx / len, y: dy / len }, len };
     });
     walls.set(table, w);
   }
@@ -133,11 +130,12 @@ function earliestHit(sim: Sim, horizon: number): Hit | null {
       if (t <= horizon && (!best || t < best.t)) best = { t, kind: 'ball', i, j };
     }
     if (!mi) continue;
-    // straight cushions
+    // straight faces: cushions and throats
     for (const w of wallsOf(sim.table)) {
       const vn = bi.vel.x * w.normal.x + bi.vel.y * w.normal.y;
       if (vn >= -APPROACH_EPS) continue;
       const gap = (bi.pos.x - w.seg.a.x) * w.normal.x + (bi.pos.y - w.seg.a.y) * w.normal.y - r;
+      if (gap < -r) continue; // ball is on the far side of this face (elsewhere on the table): not this wall
       const t = Math.max(0, gap / -vn);
       if (t > horizon || (best && t >= best.t)) continue;
       const cx = bi.pos.x + bi.vel.x * t - w.seg.a.x;
@@ -191,6 +189,12 @@ function resolve(sim: Sim, hit: Hit, at: number) {
     b.vel.x -= k * nx; b.vel.y -= k * ny;
     o.vel.x += k * nx; o.vel.y += k * ny;
     sim.events.push({ t: at, type: 'ball', a: b.id, b: o.id, speed: closing });
+  } else if (hit.kind === 'wall' && hit.wall.seg.pocket) {
+    // straight part of a jaw (throat): same as a jaw hit
+    const speed = bounceOff(b, hit.wall.normal.x, hit.wall.normal.y, sim.cfg.jawRestitution);
+    const n = hit.wall.normal;
+    const contact = { x: b.pos.x - n.x * sim.table.ballRadius, y: b.pos.y - n.y * sim.table.ballRadius };
+    sim.events.push({ t: at, type: 'jaw', a: b.id, pocket: hit.wall.seg.pocket, speed, contact });
   } else if (hit.kind === 'wall') {
     const speed = bounceOff(b, hit.wall.normal.x, hit.wall.normal.y, sim.cfg.cushionRestitution);
     sim.events.push({ t: at, type: 'cushion', a: b.id, speed });
@@ -298,7 +302,7 @@ export function checkSim(sim: Sim, tol = 1e-6): SimCheck {
     for (const w of wallsOf(sim.table)) {
       const u = (b.pos.x - w.seg.a.x) * w.dir.x + (b.pos.y - w.seg.a.y) * w.dir.y;
       const d = (b.pos.x - w.seg.a.x) * w.normal.x + (b.pos.y - w.seg.a.y) * w.normal.y;
-      if (u >= 0 && u <= w.len && d < r - tol) insideCushion++;
+      if (u >= 0 && u <= w.len && d < r - tol && d > -r) insideCushion++;
     }
     for (const jaw of sim.table.jaws) {
       const ang = Math.atan2(b.pos.y - jaw.centre.y, b.pos.x - jaw.centre.x);

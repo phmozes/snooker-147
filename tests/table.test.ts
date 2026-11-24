@@ -26,7 +26,7 @@ describe('table geometry', () => {
     expect(s.black.y).toBeCloseTo(1.4605, 6);
   });
 
-  it('mouth = narrowest gap between the two jaw arcs = configured width (86 / 105 mm)', () => {
+  it('mouth = narrowest gap between the two jaw arcs = configured width (89 / 102 mm)', () => {
     for (const p of table.pockets) {
       expect(dist(p.mouthA, p.mouthB)).toBeCloseTo(pocketCfg(p.kind).mouth, 9);
       const [j1, j2] = table.jaws.filter((j) => j.pocket === p.id);
@@ -74,12 +74,54 @@ describe('table geometry', () => {
     }
   });
 
-  it('the narrowest point lies on the arc, and the arc continues past it into the pocket', () => {
+  it('the rounded part turns 45 degrees at a corner and 90 at a middle pocket, ending at the narrowest point', () => {
     for (const j of table.jaws) {
-      const ang = Math.atan2(j.narrowestPoint.y - j.centre.y, j.narrowestPoint.x - j.centre.x);
-      expect(arcContainsAngle(j, ang)).toBe(true);
-      expect(arcContainsAngle(j, ang + Math.sign(j.sweep) * 0.05)).toBe(true);
+      const kind = table.pockets.find((p) => p.id === j.pocket)!.kind;
+      expect(Math.abs(j.sweep) * (180 / Math.PI)).toBeCloseTo(kind === 'corner' ? 45 : 90, 9);
+      expect(same(arcPoint(j, j.start + j.sweep), j.narrowestPoint)).toBe(true);
     }
+  });
+
+  it('after the rounded part, each jaw runs straight, the two straight parts parallel and one mouth apart', () => {
+    for (const p of table.pockets) {
+      const [w1, w2] = p.throat;
+      const cfg = pocketCfg(p.kind);
+      for (const w of [w1, w2]) {
+        const along = normalize(sub(w.b, w.a));
+        expect(along.x * p.inward.x + along.y * p.inward.y).toBeCloseTo(1, 12); // straight into the pocket
+        expect(dist(w.a, w.b)).toBeCloseTo(cfg.throatLength, 12);
+        expect(w.normal.x * along.x + w.normal.y * along.y).toBeCloseTo(0, 12);
+      }
+      expect(same(w1.a, p.mouthA) && same(w2.a, p.mouthB)).toBe(true);
+      // constant width: the far ends are as far apart as the start
+      expect(dist(w1.b, w2.b)).toBeCloseTo(cfg.mouth, 12);
+      // smooth join: at the narrowest point the arc runs in the throat direction
+      for (const j of table.jaws.filter((q) => q.pocket === p.id)) {
+        const radial = normalize(sub(j.narrowestPoint, j.centre));
+        expect(radial.x * p.inward.x + radial.y * p.inward.y).toBeCloseTo(0, 12);
+      }
+    }
+    expect(table.throatWalls).toHaveLength(12);
+  });
+
+  it('the ball drops over the slate cut: radius 89 mm, front edge 51 mm into the throat', () => {
+    for (const p of table.pockets) {
+      const cfg = pocketCfg(p.kind);
+      expect(p.captureRadius).toBe(cfg.slateCutRadius);
+      const frontEdge = dist(p.mouthMid, p.captureCentre) - p.captureRadius;
+      expect(frontEdge).toBeCloseTo(cfg.fallSetback, 12);
+      const c = sub(p.captureCentre, p.mouthMid);
+      expect(Math.abs(c.x * p.inward.y - c.y * p.inward.x)).toBeLessThan(1e-12); // on the throat's centre line
+    }
+  });
+
+  it('the "effective width" setting widens every mouth by exactly that much, nothing else', () => {
+    const wider = buildTable({ ...CONFIG.table, mouthExtra: 0.004 });
+    wider.pockets.forEach((p, i) => {
+      expect(dist(p.mouthA, p.mouthB) - dist(table.pockets[i]!.mouthA, table.pockets[i]!.mouthB)).toBeCloseTo(0.004, 12);
+    });
+    expect(wider.spots).toEqual(table.spots);
+    expect(CONFIG.table.mouthExtra).toBe(0); // real dimensions by default
   });
 
   it('collisions use the arc: touch near the arc, no touch where the arc does not exist', () => {
@@ -100,7 +142,7 @@ describe('table geometry', () => {
     }
   });
 
-  it('a ball fits through every mouth; capture circles lie beyond the mouth, inside the pocket', () => {
+  it('a ball fits through every mouth; the slate cut lies beyond the mouth, inside the pocket', () => {
     for (const p of table.pockets) {
       expect(dist(p.mouthA, p.mouthB)).toBeGreaterThan(2 * r);
       const depth = (p.captureCentre.x - p.mouthMid.x) * p.inward.x + (p.captureCentre.y - p.mouthMid.y) * p.inward.y;

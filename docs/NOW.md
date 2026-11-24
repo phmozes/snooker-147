@@ -1,8 +1,8 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review task 1.3 (pockets): `npm run dev`, printed address + `/debug.html`; Pocket test (Roll, Pot map). Approve before 1.3b.
-- Choose the corner jaw radius with the slider (old 35 mm, photo estimate 150 mm = config now).
+- Review task 1.3 revision (real pocket shape, docs/POCKETS.md): debug page Pocket test + Pot map. Approve before 1.3b.
+- Decide the middle jaw radius: measured 100 mm makes a deep throat (fall ~150 mm behind the cushion line).
 
 ## Claude's turn
 - Wait for approval of task 1.3. Next: 1.3b (simple follow/screw spin, split out of 1.3).

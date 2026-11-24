@@ -49,7 +49,7 @@ describe('pockets', () => {
   });
 
   it('a ball aimed well wide of the pocket misses it (hits the cushion, no jaw)', () => {
-    expect(runPocketRoll(table, { ...roll('middleRight', 30, 0), offset: -0.15 }).outcome).toBe('missed');
+    expect(runPocketRoll(table, { ...roll('middleRight', 0, 0), offset: -0.25 }).outcome).toBe('missed'); // hits the side cushion
     expect(runPocketRoll(table, roll('topRight', 0, 0, 0.3)).outcome).toBe('missed'); // too soft: stops short
   });
 
