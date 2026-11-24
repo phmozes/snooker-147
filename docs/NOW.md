@@ -1,11 +1,10 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review task 1.3b (spin): debug page, Spin: Screw / Stun / Follow + "Straight shot test". Approve before 1.4.
-- Later: tune jaw bounce (middle pockets are generous on purpose for now).
+- Say "go" for task 1.4 (speed benchmark, friction tuning). Tasks 1.1-1.3b are approved.
 
 ## Claude's turn
-- Wait for approval of task 1.3b. Next: 1.4 (benchmark, friction).
+- Next: task 1.4, after the owner's go.
 - Task 1.4: friction slider on the debug page with marked "realistic cloth" and "game" positions; list other ways to keep
   shots short (solver picks quick pots / short cue-ball travel, mild playback speed-up) with a recommendation.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
@@ -14,6 +13,7 @@
 - Nothing.
 
 ## Later
+- Tune jaw bounce and pocket generosity once real shots are played (middle pockets generous on purpose for now).
 - Voice files for the 14 announcer slots (owner supplies, stage 9-10).
 - History strip, turbo mode, landscape/desktop layout, DEMO label (stage 11).
 
