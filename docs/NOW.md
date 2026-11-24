@@ -1,10 +1,11 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review task 0.1 (ladder calculator): run `npm test`, read the ladder tables in tests/ladder.test.ts. Approve before 1.2.
+- Review task 1.2 (balls moving): `npm run dev`, open the printed address + `/debug.html`; click to shoot, Break, Reset. Approve before 1.3.
 
 ## Claude's turn
-- Wait for approval of task 0.1. Do not start 1.2 until told.
+- Wait for approval of task 1.2. Do not start 1.3 until told.
+- Task 1.2 pot rule is temporary (capture circle or past the narrowest gap = potted); 1.3 replaces it with rattles.
 - Task 1.3: corner jaw radius 35 mm looks too tight; owner sees 2-3 ball widths in reference/pocket4. Compare to that photo first; add a to-scale ball to the zoomed pocket view.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 

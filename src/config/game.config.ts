@@ -83,11 +83,13 @@ export const CONFIG = {
   physics: {
     timestep: 1 / 480,           // fixed step, seconds
     maxSimSeconds: 8,            // safety stop for a simulation
-    rollingFriction: 0.12,       // deceleration factor (tune so shots last 1.0-1.5 s)
+    gravity: 9.81,               // m/s^2
+    rollingFriction: 0.12,       // deceleration = rollingFriction * gravity (tune so shots last 1.0-1.5 s, task 1.4)
     slidingFriction: 0.2,        // used while spin converts to rolling
     ballBallRestitution: 0.95,
     cushionRestitution: 0.75,
     stopSpeed: 0.005,            // below this a ball is "stopped"
+    maxEventsPerStep: 64,        // safety limit for contacts inside one time step (should never be reached)
     maxCueSpeed: 6.0,            // m/s, hardest shot
     spinMin: -1, spinMax: 1,     // -1 = screw (back spin), +1 = follow; no side spin in v1
   },
@@ -234,5 +236,8 @@ export const CONFIG = {
   dev: {
     testPanel: true,             // ignored in production builds
     soak: { rounds: 5000, rtpRngOnlyRounds: 2_000_000 },
+    breakAimRow: 2,              // debug/test break: aim at the outer red of this triangle row (0 = front)
+    breakAimOffset: 1.4,         // ... this many ball radii outside it (picked by a scan, see testShots.ts)
+    debugPowerDefault: 0.5,      // debug page power slider start (share of maxCueSpeed)
   },
 } as const;

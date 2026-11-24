@@ -8,7 +8,7 @@
     :root { color-scheme: dark; }
     body { margin: 0; background: #0f1513; color: #d8e0dc; font: 14px/1.4 system-ui, sans-serif;
            display: flex; gap: 16px; padding: 16px; box-sizing: border-box; height: 100vh; }
-    canvas { background: #0b0f0e; border-radius: 8px; height: calc(100vh - 32px); aspect-ratio: 0.56; }
+    canvas { cursor: crosshair; background: #0b0f0e; border-radius: 8px; height: calc(100vh - 32px); aspect-ratio: 0.56; }
     aside { width: 300px; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
     h1 { font-size: 16px; margin: 0; }
     .row { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -24,8 +24,11 @@
 <body>
   <canvas id="c"></canvas>
   <aside>
-    <h1>Table debug (task 1.1)</h1>
+    <h1>Table debug (task 1.2: balls moving)</h1>
     <div><b>Level</b><div class="row" id="levels"></div></div>
+    <div><b>Shot</b> <span style="opacity:.7">click the table: the cue ball is hit toward that point</span>
+      <div class="row" id="shots"></div>
+      <label>Power <input id="power" type="range" min="1" max="100" step="1" /> <span id="powerText"></span></label></div>
     <div><b>View</b><div class="row" id="views"></div></div>
     <div><b>Show</b><div class="row" id="toggles"></div></div>
     <pre id="info"></pre>
