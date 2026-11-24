@@ -139,3 +139,20 @@ Without the "over 2.2 s" step, RE-RACK was 15 / 13 / 48 / 41 of 60 (almost all h
 RULES D.6 wants at most 1 RE-RACK per 100,000 shots. Random layouts are much harder than real rounds (reds anywhere,
 black often blocked); the real rate must come from real rounds with the lookahead (next step must stay solvable,
 config `solver.lookahead`, not built yet) and the soak test.
+
+## Real rounds (after 4.6 and 5.1): lookahead and RE-RACK
+Real rounds = break from the library, then SHOOT every time with the real solver (`N=30 LEVELS=reds6 npx vitest run
+bench/rounds.test.ts`). Lookahead (config `solver.lookahead`): the best 6 candidate shots are checked by really
+solving the next step from where they leave the balls (120 shots); the flex chain prefers a checked shot. The break
+library only keeps breaks where the black is pottable after the step-1 red.
+
+| Real rounds | RE-RACK per success shot | Success shots within 1.5 s | Over 2.2 s | Black median |
+|---|---|---|---|---|
+| 6 reds, before lookahead (20 rounds) | 7 of 47 (15%) | 33% | 15 | 2.02 s |
+| 6 reds, with lookahead (30 rounds) | 4 of 147 (3%) | 36% | 39 | 1.86 s |
+| 15 reds, with lookahead (15 rounds) | 3 of 59 (5%) | 38% | 17 | 1.51 s |
+
+The step-2 RE-RACKs (black boxed in after the break) are gone. The remaining ones are reds later in the round, when the
+last reds still sit together as a cluster: a pot exists (a 20,000-shot search found one at 3.2 s) but the normal and
+wide searches do not reach it. **This is far from RULES D.6 (at most 1 per 100,000 shots).** Needed: shots that pot a
+red out of a cluster (plants, splitting the pack) and position play that avoids leaving the reds clustered. Open.

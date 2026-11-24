@@ -84,3 +84,50 @@ shortest shot found even if it is longer than 2.2 s (median about 3 s). Alternat
 (c) The wide search budget (1500 shots) and its slowness: to revisit with the phone measurement.
 **Not finished:** the lookahead (accept a pot only if the next step stays solvable) and the 100,000-shot soak test
 (D.6): they need real rounds (stage 5).
+
+## 5. Task 4.6: break-off library
+**Built:** an offline generator (`npm run breaks`, about 16 minutes) that makes, for each level, 200 "red pottable"
+breaks (at least 2 reds with an open pocket) and 200 "snookered" breaks (no red can be hit straight). The opponent
+breaks from a random place in the D at the side of the pack (4.5-6 m/s). Breaks that pot a ball or do not hit a red
+first are skipped. Every break is stored with its tested step-1 shots (RULES D.1): red pottable = a potting shot and
+a plain miss; snookered = an escape that fails (hits a wrong ball or nothing). Files: `public/breaks/reds6.json`,
+`reds10.json`, `reds15.json`. Seeded: the same seed always gives the same library.
+**Check:** debug.html, "Break-off library": pick the level (Level buttons) and the kind, ◀ ▶ to browse, "Play break",
+"Play step 1" (pot or failed escape), "Step 1 miss".
+**Numbers:** per level 200 + 200 breaks; red pottable: 2965 / 2708 / 3669 breaks tried (6 / 10 / 15 reds),
+snookered: 5868 / 5479 / 6461 tried; build time 5-6.5 minutes per level (about 16 minutes in all); files 0.5-0.7 MB.
+Check page shortcut: debug.html?breaks=1&reds=15 opens the first stored break. Lookahead: a red
+pottable break is kept only if the black can be potted after the step-1 red (this removed the step-2 RE-RACKs in real
+rounds). `tests/breaks.test.ts` replays a break and its step-1 shots and checks them with the rules code.
+**Decisions to confirm:** (a) "snookered" = no red reachable by a straight line (edge-of-ball hits are not counted);
+(b) the break-off speed range and aim (config `breakLibrary.breakShot`); (c) breaks that pot a ball are thrown away
+(the opponent never pots in the break); (d) the failed escape is a cushion-first or straight shot at a red that hits a
+wrong ball first or nothing.
+**Not finished:** the step-1 "snookered" shot is a simple failed escape; no variety yet (task 4.4 territory).
+
+## 6. Task 5.1: round state machine (headless)
+**Built:** `src/core/round.ts`: bet and level (locked after START), START (takes the bet), opponent break + automatic
+step 1 from the library, SHOOT / CASH OUT from step 2, black picked automatically on colour steps (RULES B.3; a colour
+choice can be passed), failure ends the round, clearance pays the top multiplier, RE-RACK pays the next multiplier.
+Outcome first: success/failure of step k comes only from the round seed and k (stream "outcome"); the failure type
+from its own stream ("failureType"). `src/core/physicsProvider.ts` connects it to the library and the solver.
+**Check:** tests only (no screen; task 5.2 connects the buttons). `tests/round.test.ts` (fast fake shots) and
+`tests/roundPhysics.test.ts` (6 seeded rounds with real physics, library and solver).
+**Numbers:** "cash out after step k" returns 0.97 of the bet (+-0.03) over 20,000 rounds for k = 1, 3, 6 (the ladder
+RTP); step-1 failures split 80/20 plain miss / snookered; later failures follow the config shares (60/25/10/5) within
+2 points; the colour choice never changes the outcomes (300 seeds).
+**Decisions to confirm:** (a) CASH OUT is allowed from step 1 on (before shot 2), as RULES A.3 says "from step 2";
+(b) when the solver must use a D.2 fallback, the round's failure label is the one shown (e.g. MISSED instead of
+IN-OFF); (c) the round code is "<level>-<seed>" for now; (d) the money is rounded to cents after every step.
+**Not finished:** the colour-offer rules (B.3: which colours are offered) and the lookahead (next step must stay
+solvable) are not in the state machine yet.
+
+## Extra: lookahead and real-round measurement (part of the solver work, found while testing 5.1)
+**Built:** the solver's lookahead (config `solver.lookahead`, planned since the start): the best candidate shots are
+checked by solving the next step from where they leave the balls. A report of real rounds: `bench/rounds.test.ts`.
+**Numbers:** docs/SOLVER.md "Real rounds". RE-RACK per success shot in real rounds: 6 reds 15% -> 3%; 15 reds 5%.
+Success shots within 1.5 s: about 36-38%; median about 1.8 s.
+**Important, not finished:** RE-RACK is still about 3-5 per 100 success shots in real rounds, while RULES D.6 allows 1
+per 100,000. The cause is pots out of a cluster of reds (the solver does not find them in time). This needs its own
+task before the game can be played for real (my suggestion: as part of 4.4 or a new 4.7).
+**Decision to confirm:** none new (lookahead was already in the config).
