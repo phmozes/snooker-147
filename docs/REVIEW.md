@@ -67,3 +67,20 @@ next shot (cost x.xx, lower = easier)". The black after a red should often be an
 alternatives in the table move time from the black to the red. I suggest deciding after real rounds (task 5.x), where
 the reds start next to the black.
 **Not finished:** extra screw/stun samples for stopping the cue ball were not tried (they cost shot budget).
+
+## 4. Task 4.5: flex chain and fallback log
+**Built:** `solveSuccessFlex` follows RULES D.3: normal search, longer time (up to 2.2 s), (other pockets and other reds
+are already in the normal search), wide search (more aims/powers/spins, cushion-first shots, plants), then RE-RACK
+(D.4). Each step except "normal" returns a log entry (round code, step, target, step name, shots tried).
+**Check:** no screen yet (the round flow uses it in stage 5). Test `tests/flex.test.ts`; report
+`N=40 npx vitest run bench/flex.test.ts` (about 4 minutes).
+**Numbers:** table in docs/SOLVER.md "Flex chain". Random layouts: RE-RACK 1 of 40 for reds, 4-7 of 40 for black.
+The wide search is slow: up to 1.8 s on this PC (phones 2-4x slower).
+**Decisions to confirm:**
+(a) **"Over 2.2 s" step before RE-RACK.** With a strict 2.2 s limit, RE-RACK happened in 48 of 60 black layouts, and
+almost always a longer shot existed. RULES D.4 says RE-RACK only when "no shot exists", so I added a last step: the
+shortest shot found even if it is longer than 2.2 s (median about 3 s). Alternative: RE-RACK instead (much more often).
+(b) "Other pocket" and "other ball of the same type" (D.3) are part of the normal search, not separate steps.
+(c) The wide search budget (1500 shots) and its slowness: to revisit with the phone measurement.
+**Not finished:** the lookahead (accept a pot only if the next step stays solvable) and the 100,000-shot soak test
+(D.6): they need real rounds (stage 5).

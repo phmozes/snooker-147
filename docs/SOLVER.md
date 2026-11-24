@@ -121,3 +121,21 @@ of the score (shot length is until ALL balls stop); extra screw/stun samples wer
 Finding: in these random layouts the reds lie anywhere, often far from the black, so a short red shot cannot bring
 the cue ball near the black. Short black shots cost long red shots. In real rounds the reds start next to the black
 (the pack), so position play should do better there: measure again with real rounds (task 5.x).
+
+## Flex chain and fallback log (task 4.5, RULES D.3 / D.4)
+`solveSuccessFlex`: normal search (a shot up to 1.5 s = normal, up to 2.2 s = "longer time"); other pockets and other
+reds are already part of the normal search; then the wide search (13 aim points, 10 powers, 7 spins, cushion-first
+shots, plants, 1500 shots); then "over 2.2 s" (owner to confirm, see below); then RE-RACK. Every step except normal
+returns a log entry with round code, step, target, level and shots tried. Report: `N=40 npx vitest run bench/flex.test.ts`.
+
+| Random layouts (40 each) | Normal | Longer time | Wide search | Over 2.2 s | RE-RACK | Compute mean / longest |
+|---|---|---|---|---|---|---|
+| 6 reds, red | 15 | 12 | 1 | 11 (median 2.84 s) | 1 | 398 / 1195 ms |
+| 15 reds, red | 26 | 6 | 0 | 7 (2.95 s) | 1 | 387 / 1799 ms |
+| 6 reds, black | 2 | 4 | 2 | 28 (3.14 s) | 4 | 855 / 1223 ms |
+| 15 reds, black | 4 | 10 | 2 | 17 (3.07 s) | 7 | 865 / 1829 ms |
+
+Without the "over 2.2 s" step, RE-RACK was 15 / 13 / 48 / 41 of 60 (almost all had a longer shot).
+RULES D.6 wants at most 1 RE-RACK per 100,000 shots. Random layouts are much harder than real rounds (reds anywhere,
+black often blocked); the real rate must come from real rounds with the lookahead (next step must stay solvable,
+config `solver.lookahead`, not built yet) and the soak test.

@@ -77,19 +77,32 @@ export function nextTargetAfter(state: FrameState, target: BallKind): BallKind |
   return CONFIG.finalColourOrder[i + 1] ?? null;
 }
 
+export interface SolveOptions {
+  position?: boolean; // position play (default: config solver.position.enabled)
+  weight?: number; // position weight override (measurements)
+  overFrom?: number; // seconds above which a shot pays extra (measurements)
+  wide?: boolean; // RULES D.3 wide search
+  maxDuration?: number; // reject shots longer than this (seconds)
+}
+
 /** Why a search ended (for the debug page and the solver report). */
 export interface SolveInfo { pairs: number; tried: number; timedOut: boolean }
 
 export function solveSuccess(state: FrameState, target: BallKind, table: TableGeometry, now: () => number,
   cfg: PhysicsConfig = CONFIG.physics, shotBudget: number = Sv.shotBudget, info?: SolveInfo,
-  opts: { position?: boolean; weight?: number; overFrom?: number } = {}): SolvedShot | null {
+  opts: SolveOptions = {}): SolvedShot | null {
   const t0 = now();
+  const W = opts.wide ? Sv.wide : null; // RULES D.3 wide search: more aims, powers, spins, cushion-first, plants
   const position = opts.position ?? Sv.position.enabled;
   const next = position ? nextTargetAfter(state, target) : null;
   const r = table.ballRadius;
   const cue = state.balls.find((b) => b.kind === 'cue')!;
-  const powers = Array.from({ length: Sv.powerSamples }, (_, i) =>
-    Sv.minSpeed * (CONFIG.physics.maxCueSpeed / Sv.minSpeed) ** (i / (Sv.powerSamples - 1))); // low to high
+  const nPow = W ? W.powerSamples : Sv.powerSamples;
+  const powers = Array.from({ length: nPow }, (_, i) =>
+    Sv.minSpeed * (CONFIG.physics.maxCueSpeed / Sv.minSpeed) ** (i / (nPow - 1))); // low to high
+  const spins = W ? W.spinSamples : Sv.spinSamples;
+  const aimSamples = W ? W.aimSamples : Sv.aimSamplesPerPocket;
+  const aimStep = W ? W.aimStep : Sv.aimStep;
   // candidate (ball, pocket) pairs, easiest first
   const pairs: { ball: Ball; pocket: PocketId; score: number }[] = [];
   for (const ball of state.balls.filter((b) => b.kind === target)) {
@@ -101,8 +114,9 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       const dA = Math.hypot(aim.x, aim.y);
       const cut = (Math.acos(Math.max(-1, Math.min(1, (aim.x * toP.x + aim.y * toP.y) / (dA * dP)))) * 180) / Math.PI;
       if (cut > Sv.maxCutDeg) continue;
-      if (!pathClear(cue.pos, ghost, state.balls, ['cue', ball.id], r)) continue;
-      if (!pathClear(ball.pos, p.mouthMid, state.balls, ['cue', ball.id], r)) continue;
+      // the wide search keeps blocked pairs too: a cushion-first shot or a plant may still pot the ball
+      if (!W && !pathClear(cue.pos, ghost, state.balls, ['cue', ball.id], r)) continue;
+      if (!W && !pathClear(ball.pos, p.mouthMid, state.balls, ['cue', ball.id], r)) continue;
       pairs.push({ ball, pocket: p.id, score: cut / 45 + (dA + dP) / 2 });
     }
   }
@@ -110,19 +124,27 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
 
   let best: SolvedShot | null = null;
   let tried = 0;
-  const half = (Sv.aimSamplesPerPocket - 1) / 2;
+  const half = (aimSamples - 1) / 2;
   search: for (const { ball, pocket } of pairs) {
     const p = table.pockets.find((q) => q.id === pocket)!;
     const left = { x: -p.inward.y, y: p.inward.x };
-    for (let k = 0; k < Sv.aimSamplesPerPocket; k++) {
-      const off = (k % 2 ? 1 : -1) * Math.ceil(k / 2) * Sv.aimStep; // 0, -1, +1, -2, +2 ... steps across the mouth
-      if (Math.abs(off) > half * Sv.aimStep + 1e-9) continue;
+    for (let k = 0; k < aimSamples; k++) {
+      const off = (k % 2 ? 1 : -1) * Math.ceil(k / 2) * aimStep; // 0, -1, +1, -2, +2 ... steps across the mouth
+      if (Math.abs(off) > half * aimStep + 1e-9) continue;
       const tgt = { x: p.mouthMid.x + left.x * off, y: p.mouthMid.y + left.y * off };
       const toP = { x: tgt.x - ball.pos.x, y: tgt.y - ball.pos.y };
       const d = Math.hypot(toP.x, toP.y);
-      const dir = { x: ball.pos.x - (toP.x / d) * 2 * r - cue.pos.x, y: ball.pos.y - (toP.y / d) * 2 * r - cue.pos.y };
-      for (const speed of powers) {
-        for (const spin of Sv.spinSamples) {
+      const ghost = { x: ball.pos.x - (toP.x / d) * 2 * r, y: ball.pos.y - (toP.y / d) * 2 * r };
+      const dirs = [{ x: ghost.x - cue.pos.x, y: ghost.y - cue.pos.y }];
+      if (W) {
+        // cushion first: aim at the ghost ball's mirror image in each cushion line (the physics checks the real path)
+        const X = table.halfWidth - r;
+        const Y = table.halfLength - r;
+        for (const m of [{ x: 2 * X - ghost.x, y: ghost.y }, { x: -2 * X - ghost.x, y: ghost.y },
+          { x: ghost.x, y: 2 * Y - ghost.y }, { x: ghost.x, y: -2 * Y - ghost.y }]) dirs.push({ x: m.x - cue.pos.x, y: m.y - cue.pos.y });
+      }
+      for (const dir of dirs) for (const speed of powers) {
+        for (const spin of spins) {
           if (tried >= shotBudget) { if (info) info.timedOut = true; break search; } // a shot count: same on every device
           tried++;
           const sim = createSim(state.balls, table, cfg);
@@ -137,6 +159,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
           const potted = sim.balls.filter((b) => b.potted).map((b) => b.id);
           const v = judgeShot(state, target, { firstHit, potted, after: [] });
           if (v.result !== 'success') continue;
+          if (opts.maxDuration !== undefined && duration > opts.maxDuration) continue;
           // score = shot length + position weight x how hard the next shot looks from where the cue ball stopped
           const cueEnd = sim.balls.find((b) => b.kind === 'cue')!.pos;
           let cost = 0;
@@ -187,6 +210,36 @@ export function randomLayout(rng: () => number, reds: number, due: 'red' | 'colo
   balls.unshift({ id: 'cue', kind: 'cue', pos: freeSpot(rng, table, balls.map((b) => b.pos)) });
   return { phase: due, redsLeft: left, nextColour: null, balls, lastFailure: null,
     failedIn: null, score: 0, opponentScore: 0, blackAfterEveryRed: true };
+}
+
+// ---------------- flex chain and fallback log (task 4.5, RULES D.3 / D.4) ----------------
+
+/** Which step of the flex chain produced the success shot (RULES D.3), or RE-RACK (D.4). */
+export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'overLong' | 'reRack';
+export interface FallbackLogEntry { roundCode: string; step: number; target: BallKind; level: FlexLevel; tried: number }
+export interface FlexResult { shot: SolvedShot | null; level: FlexLevel; log: FallbackLogEntry | null }
+
+/**
+ * A decided SUCCESS (the outcome never changes): normal search; a shot up to shot.maxDuration is 'normal', up to
+ * shot.maxDurationFlex 'longerDuration'. Other pockets and other balls of the same kind are already part of the
+ * normal search. Then the wide search (more aims, powers and spins, cushion-first, plants), within maxDurationFlex.
+ * Then 'overLong' (OWNER TO CONFIRM): the shortest shot found that is longer than maxDurationFlex. RULES D.4 says
+ * RE-RACK only when "no shot exists", and a long shot is still a shot. Nothing at all: RE-RACK. Every step other than
+ * 'normal' returns a log entry (RULES D: logged with the round code and step).
+ */
+export function solveSuccessFlex(state: FrameState, target: BallKind, table: TableGeometry, now: () => number,
+  ctx: { roundCode: string; step: number }, cfg: PhysicsConfig = CONFIG.physics): FlexResult {
+  const flex = CONFIG.shot.maxDurationFlex;
+  const log = (level: FlexLevel, tried: number): FallbackLogEntry => ({ ...ctx, target, level, tried });
+  const normal = solveSuccess(state, target, table, now, cfg, Sv.shotBudget);
+  if (normal && normal.duration <= CONFIG.shot.maxDuration) return { shot: normal, level: 'normal', log: null };
+  if (normal && normal.duration <= flex) return { shot: normal, level: 'longerDuration', log: log('longerDuration', normal.tried) };
+  const wide = solveSuccess(state, target, table, now, cfg, Sv.wide.shotBudget, undefined, { wide: true });
+  const tried = Sv.shotBudget + (wide ? wide.tried : Sv.wide.shotBudget);
+  if (wide && wide.duration <= flex) return { shot: wide, level: 'wideSearch', log: log('wideSearch', tried) };
+  const longest = [normal, wide].filter((x): x is SolvedShot => x !== null).sort((a, b) => a.duration - b.duration)[0];
+  if (longest) return { shot: longest, level: 'overLong', log: log('overLong', tried) };
+  return { shot: null, level: 'reRack', log: log('reRack', tried) };
 }
 
 // ---------------- failure shots (task 4.2) ----------------
