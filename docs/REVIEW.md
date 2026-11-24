@@ -65,3 +65,14 @@ docs/WEIRD-SHOTS.md on the PC (dev server endpoint in vite.config.ts) and kept o
 rebuilt with three rules (colours still, natural step 1 + black + next red, pack opened).
 **Numbers per level:** docs/SOLVER.md "second part". 10 reds reaches the exhibition target (1.7%) and nearly the
 natural one (89%); 6 reds 85% / 4%; 15 reds 83% / 7% with 2 RE-RACKs in 177 shots. Targets not fully reached.
+
+## 5. Strict naturalness, two shots ahead (task 4.7 third part)
+**Your marked shot reds15-3804251161 step 10** (black, "plain", 5.22 s): under the strict definition NOT natural
+(over 2.5 s; the cue ball rolls 7.8 m with 4 cushions). Why it was chosen: no colour had a natural shot within 2.2 s,
+and the flex rule "a natural-looking pot, even long, before an exhibition shot" took the shortest plain pot: a black at
+full power. Now that pot pays the unnatural-play cost and the two-shot plan avoids such positions.
+**RACKING:** the hint line at START now says RACKING.
+**Pace:** your decision is in docs/SPEED.md and NOW.md; reported for reds and colours separately (docs/SOLVER.md).
+**To confirm:** the auto colour now treats black as natural only if it also leaves a red (else pink, then blue). Only
+the snooker score changes. Switch: config `solver.natural.autoColourNeedsNextRed`.
+**Numbers:** docs/SOLVER.md "third part". Natural 85 / 91 / 84%, exhibition 3.2 / 1.3 / 2.8%, RE-RACK 0 in 1,124.

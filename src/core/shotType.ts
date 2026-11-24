@@ -4,7 +4,7 @@
 // labels are reported over real rounds (target: 90% plain pots or planned cannons, exhibition shots under 2%).
 
 import { CONFIG } from '../config/game.config';
-import type { SimEvent } from './physics/sim';
+import { createSim, isMoving, stepSim, strike, type PhysicsConfig, type SimEvent } from './physics/sim';
 import type { PocketId, TableGeometry } from './table/geometry';
 import type { Ball, BallKind, Vec2 } from './types';
 
@@ -121,6 +121,56 @@ export function classifySuccess(f: ShotFacts): ShotType {
     return allReds && hits.every((e) => e.speed <= N.softCannonSpeed) ? 'softCannon' : 'cannon';
   }
   return 'plain';
+}
+
+/** What the whole shot did (for the strict naturalness check, owner 2026-11-24). */
+export interface PlayFacts extends ShotFacts {
+  duration: number; // seconds until every ball stopped
+  cueTravel: number; // metres the cue ball rolled after its first contact with a ball
+  after: Ball[]; // balls on the table at the end
+}
+
+/**
+ * Strict naturalness (owner 2026-11-24). Natural only if ALL hold: the pot is plain or a planned soft cannon into the
+ * pack; the whole shot lasts at most natural.maxSeconds; after its first contact the cue ball touches at most
+ * maxCueCushions cushions and rolls at most maxCueTravel; no other ball moves, except reds touched softly by a
+ * (pack / soft) cannon. Returns null when natural, else the first reason it is not.
+ */
+export function naturalCheck(type: ShotType, f: PlayFacts): string | null {
+  if (!NATURAL_TYPES.includes(type)) return type;
+  if (f.duration > N.maxSeconds) return `over ${N.maxSeconds} s`;
+  const firstContact = f.events.find((e) => e.type === 'ball');
+  const t0 = firstContact ? firstContact.t : 0;
+  const cushions = f.events.filter((e) => e.type === 'cushion' && e.a === 'cue' && e.t > t0).length;
+  if (cushions > N.maxCueCushions) return `cue ball ${cushions} cushions`;
+  if (f.cueTravel > N.maxCueTravel) return `cue ball runs ${f.cueTravel.toFixed(1)} m`;
+  if (type === 'packCannon' && f.events.some((e) => e.type === 'ball' && e.t > t0 && (e.a === 'cue' || e.b === 'cue') &&
+    (e.a === 'cue' ? e.b : e.a) !== f.potted && e.speed > N.packCannonSpeed)) return 'hard cannon into the pack';
+  for (const b of f.state) {
+    if (b.kind === 'cue' || b.id === f.potted) continue;
+    const a = f.after.find((x) => x.id === b.id);
+    const moved = a ? Math.hypot(a.pos.x - b.pos.x, a.pos.y - b.pos.y) : Infinity;
+    if (moved <= N.disturbFrom) continue;
+    const softReds = b.kind === 'red' && (type === 'softCannon' || type === 'packCannon') && moved <= N.packDisturbMax;
+    if (!softReds) return `${b.id} disturbed`;
+  }
+  return null;
+}
+
+/** Play a shot and collect what the strict check needs (used by the reports; the solver measures while it searches). */
+export function playFacts(balls: Ball[], s: { dir: Vec2; speed: number; spin: number }, table: TableGeometry, cfg?: PhysicsConfig) {
+  const sim = createSim(balls, table, cfg);
+  strike(sim, 'cue', s.dir, s.speed, s.spin);
+  const cue = sim.balls.find((b) => b.kind === 'cue')!;
+  let travel = 0;
+  let prev = { ...cue.pos };
+  while (isMoving(sim)) {
+    stepSim(sim);
+    if (sim.events.some((e) => e.type === 'ball')) travel += Math.hypot(cue.pos.x - prev.x, cue.pos.y - prev.y);
+    prev = { ...cue.pos };
+  }
+  return { events: sim.events, duration: sim.time, cueTravel: travel, potted: sim.balls.filter((b) => b.potted).map((b) => b.id),
+    after: sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) };
 }
 
 /** Extra naturalness cost of a shot type (0 for the natural ones). */

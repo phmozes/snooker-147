@@ -4,13 +4,19 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { createSim, runUntilStill, strike } from '../src/core/physics/sim';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
 import { newRound, setLevel, shoot, start, type LevelId } from '../src/core/round';
-import { classifySuccess, isExhibition, NATURAL_TYPES, type ShotType } from '../src/core/shotType';
+import { classifySuccess, isExhibition, NATURAL_TYPES, naturalCheck, playFacts, type ShotType } from '../src/core/shotType';
 import { buildTable } from '../src/core/table/geometry';
 
 it('natural shots in real rounds', () => {
+  // measurement only: PATCH='{"solver":{"natural":{"longCost":3}}}' changes config numbers for this run
+  const merge = (t: Record<string, unknown>, p: Record<string, unknown>) => {
+    for (const [k, v] of Object.entries(p)) {
+      if (v && typeof v === 'object' && !Array.isArray(v)) merge(t[k] as Record<string, unknown>, v as Record<string, unknown>); else t[k] = v;
+    }
+  };
+  if (process.env.PATCH) merge(CONFIG as unknown as Record<string, unknown>, JSON.parse(process.env.PATCH));
   const table = buildTable();
   const lines: string[] = [];
   const n = Number(process.env.N ?? 30);
@@ -22,7 +28,14 @@ it('natural shots in real rounds', () => {
     const fails: Record<string, number> = {};
     const colours: Record<string, number> = {};
     const durs: number[] = []; const blackDurs: number[] = []; const ms: number[] = []; const speeds: number[] = [];
-    let shots = 0; let success = 0; let reRacks = 0;
+    let shots = 0; let success = 0; let reRacks = 0; let strict = 0;
+    const whyNot: Record<string, number> = {};
+    const byTarget: Record<string, number> = {};
+    const redDurs: { d: number; last: boolean }[] = []; const colDurs: { d: number; last: boolean }[] = [];
+    // shots from the last-resort steps before RE-RACK (exhibition, spray): excluded from the 3.5 s pace limit
+    const lastResort = new Set<string>();
+    const logLen = () => provider.log.length;
+    let seen = 0;
     for (let seed = 1; seed <= n; seed++) {
       let r = start(setLevel(newRound(seed * 7 + 3), level), provider, table);
       while (r.phase === 'decide') {
@@ -30,6 +43,7 @@ it('natural shots in real rounds', () => {
         const t0 = performance.now();
         r = shoot(r, provider, table);
         ms.push(performance.now() - t0);
+        for (; seen < logLen(); seen++) { const e = provider.log[seen]!; if (e.level === 'exhibition' || e.level === 'spray') lastResort.add(`${e.roundCode}:${e.step}`); }
         shots++;
         const h = r.history[r.history.length - 1]!;
         if (before.phase === 'colour') colours[h.target] = (colours[h.target] ?? 0) + 1;
@@ -37,13 +51,18 @@ it('natural shots in real rounds', () => {
         const s = h.shot as { dir: { x: number; y: number }; speed: number; spin: number; duration: number; fallback?: string | null; type?: string };
         if (h.outcome !== 'success') { const k = `${h.outcome}${s.fallback ? `->${s.fallback}` : ''}`; fails[k] = (fails[k] ?? 0) + 1; continue; }
         success++;
-        const sim = createSim(before.balls, table);
-        strike(sim, 'cue', s.dir, s.speed, s.spin);
-        runUntilStill(sim);
-        const potted = sim.balls.find((b) => b.potted)!.id;
-        const t: ShotType = classifySuccess({ state: before.balls, target: h.target, potted, aimedPocket: null, events: sim.events, table });
+        const pf = playFacts(before.balls, s, table);
+        const potted = pf.potted[0]!;
+        const facts = { state: before.balls, target: h.target, potted, aimedPocket: null, events: pf.events, table };
+        const t: ShotType = classifySuccess(facts);
         types[t] = (types[t] ?? 0) + 1;
+        const lv = provider.log.find((e) => e.roundCode === r.roundCode && e.step === h.step)?.level ?? 'normal';
+        if (!NATURAL_TYPES.includes(t)) { const k = `${h.target === 'red' ? 'red' : 'colour'}:${t}:${lv}`; byTarget[k] = (byTarget[k] ?? 0) + 1; }
+        const why = naturalCheck(t, { ...facts, duration: pf.duration, cueTravel: pf.cueTravel, after: pf.after });
+        if (why === null) strict++; else { const k = NATURAL_TYPES.includes(t) ? why.replace(/[\d.]+/g, '#') : 'not a natural pot type'; whyNot[k] = (whyNot[k] ?? 0) + 1; }
         durs.push(s.duration); speeds.push(s.speed);
+        const last = lastResort.has(`${r.roundCode}:${h.step}`);
+        (h.target === 'red' ? redDurs : colDurs).push({ d: s.duration, last });
         if (h.target === 'black') blackDurs.push(s.duration);
       }
     }
@@ -54,7 +73,11 @@ it('natural shots in real rounds', () => {
     const within = (a: number[]) => Math.round((a.filter((d) => d <= 1.5).length / Math.max(1, a.length)) * 100);
     const row = {
       level, rounds: n, shots, success, reRacks, reRackPct: Math.round((reRacks / Math.max(1, success)) * 1000) / 10,
-      natural: share((t) => NATURAL_TYPES.includes(t as ShotType)), exhibition: share((t) => isExhibition(t as ShotType)),
+      natural: Math.round((strict / Math.max(1, played)) * 1000) / 10, naturalOld: share((t) => NATURAL_TYPES.includes(t as ShotType)),
+      exhibition: share((t) => isExhibition(t as ShotType)), whyNot, byTarget,
+      pace: Object.fromEntries((['red', 'colour'] as const).map((k) => { const a = k === 'red' ? redDurs : colDurs; const d = a.map((x) => x.d);
+        return [k, { n: d.length, median: +med(d).toFixed(2), p90: +pct(d, 0.9).toFixed(2), maxNotLastResort: +Math.max(0, ...a.filter((x) => !x.last).map((x) => x.d)).toFixed(2),
+          over35: a.filter((x) => !x.last && x.d > 3.5).length }]; })),
       types, fails, colours, median: med(durs), within15: within(durs), over22: durs.filter((d) => d > 2.2).length,
       flex: provider.log.reduce((m, e) => ({ ...m, [e.level]: (m[e.level] ?? 0) + 1 }), {} as Record<string, number>),
       examples: provider.log.filter((e) => e.level === 'exhibition' || e.level === 'spray' || e.level === 'reRack').slice(0, 12).map((e) => `${e.roundCode}:${e.step}${e.level === 'reRack' ? 'R' : ''}`).join(','),

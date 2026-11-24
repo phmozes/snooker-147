@@ -226,3 +226,27 @@ whose cue ball ends far from every loose red. Cap per decision rose to 11,334 sh
 | Solve per SHOOT median / 90% (PC) | about 1 s / 2-3 s | 0.14-0.19 s / 0.6 s | 0.13-0.20 s / 0.4-0.85 s | at once |
 (*) part 1 code with the soft-cannon labels, old library. Results: bench/results/natural-after2.txt.
 Left: 15 reds (cushion-first shots when the pack is still tight late, 2 RE-RACKs); long pots 6-7% on every level.
+
+### Task 4.7, third part: strict naturalness and two shots ahead (2026-11-24 night)
+**Strict definition (owner):** natural only if ALL hold: plain pot or planned soft cannon into the pack; whole shot at
+most 2.5 s; after its first contact the cue ball touches at most 1 cushion and rolls at most 1.5 m; no other ball
+moves more than 1 cm, except reds moved at most 0.5 m by a (pack / soft) cannon (pack cannon at most 1.5 m/s).
+Code: `naturalCheck` in src/core/shotType.ts, config `solver.natural` (maxSeconds, maxCueCushions, maxCueTravel ...).
+The solver adds `unnaturalPlayCost` to a pot that fails the check; `isNaturalShot` (auto colour, break library) uses it.
+**Two shots ahead:** on a colour while reds remain, up to 8 colour shots (within 3.0 of the best score, cue balls 15 cm
+apart) are each followed by a real solve of the next red (with position); the best colour + red pair wins.
+**Auto colour (owner to confirm):** black counts as "natural" only if it also leaves a red (config
+`autoColourNeedsNextRed`); with no colour leaving a red, the first natural colour; black with no shot at all: pink or
+blue with any shot. **Position weight** 2 -> 3. Solver version 4.7c.
+
+| 60 real rounds per level, strict definition | 4.7b (30 rounds) | **4.7c** | Target |
+|---|---|---|---|
+| 6 reds: natural / exhibition / RE-RACK | 79% / 4.0% / 0 of 150 | **85% / 3.2% / 0 of 314** | 90% / 2% / 0 |
+| 10 reds | 82% / 1.7% / 0 of 178 | **91% / 1.3% / 0 of 377** | |
+| 15 reds | 77% / 6.9% / 2 of 177 | **84% / 2.8% / 0 of 433** | |
+| Reds: median / 90% / over 3.5 s (6, 10, 15) | 1.47/2.12/0, 1.45/2.09/1, 1.50/2.63/1 | 1.37/2.03/1, 1.45/1.90/1, 1.50/2.05/2 | 1.8 / 2.5 / 0 |
+| Colours: median / 90% / over 3.5 s | 1.56/2.14/1, 1.64/2.10/2, 1.54/2.08/1 | 1.63/2.19/0, 1.75/2.15/1, 1.79/2.24/2 | 1.8 / 2.5 / 0 |
+Old-definition natural for 4.7c: 88% / 93% / 87%. Results: bench/results/natural-after3.txt, natural-strict-old47b.txt.
+Left: long pots (6 reds 20 of 314, 15 reds 29 of 433, mostly reds after a colour), hard cannons, cushion-first reds
+(last resort, 7 per level), 1-4 shots per level over 3.5 s. Tried without gain: stronger long/cannon costs (brought back
+RE-RACKs at 6 reds), strict-natural lookahead, position weight 4.

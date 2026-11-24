@@ -118,7 +118,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.7b',            // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.7c',            // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -128,7 +128,7 @@ export const CONFIG = {
             spinSamples: [-1, -0.6, -0.3, 0, 0.3, 0.6, 1] },
     // position play (task 4.3): the search minimises shot length + weight x how hard the next shot looks from where
     // the cue ball stops (cut/45 + mean distance in m; about 0.5 easy, 2-3 hard; noShotCost when no pocket is open)
-    position: { enabled: true, weight: 2, noShotCost: 4, overPenalty: 10, overFrom: 1.5, deadPenalty: 100 }, // overFrom: seconds; extra cost per second above it; deadPenalty: no open pocket for the next ball
+    position: { enabled: true, weight: 3, noShotCost: 4, overPenalty: 10, overFrom: 1.5, deadPenalty: 100 }, // overFrom: seconds; extra cost per second above it; deadPenalty: no open pocket for the next ball
     aimSamplesPerPocket: 9,      // aim points across the pocket mouth (centre first, then alternating sides)
     aimStep: 0.005,              // metres between aim points across the mouth
     aimRetryWithin: 0.12,        // m: a missed pot tries the next aim point only if the ball came this near the pocket
@@ -174,6 +174,20 @@ export const CONFIG = {
       farPocketFrom: 1.2,        // m: a pot this far into a pocket ...
       farPocketMargin: 0.6,      // ... when another pocket was this much nearer at a comfortable angle = far pocket
       doubleFrom: 0.3,           // m: a cushion touch further than this from the pocket it drops into = a double
+      // strict naturalness (owner 2026-11-24): ALL must hold, else the shot is not natural (shotType.naturalCheck)
+      maxSeconds: 2.5,           // the whole shot
+      maxCueCushions: 1,         // cushions the cue ball touches after its first contact
+      maxCueTravel: 1.5,         // m the cue ball rolls after its first contact (about 40% of the table length)
+      disturbFrom: 0.01,         // m: a ball that moves more than this is disturbed ...
+      packDisturbMax: 0.5,       // ... except reds moved at most this far by a (pack / soft) cannon
+      packCannonSpeed: 1.5,      // m/s: a pack cannon hitting the reds harder is not planned
+      unnaturalPlayCost: 3.0,
+      lookaheadNatural: false,   // the lookahead check accepts only a strictly natural next shot
+      autoColourNeedsNextRed: true, // RULES B.3 auto colour: black is 'natural' only if it also leaves a red (owner to confirm)
+      planColours: true,         // task 4.7: on a colour, solve the red after it for each candidate (two shots ahead)
+      planCandidates: 8,         // ... colour shots checked (cap: 8 x (1 + lookaheadShots) stays below the lookahead cap)
+      planMargin: 3.0,           // ... within this score of the best colour shot
+      planWeight: 1.0,           // ... the red's score counts this much in choosing the colour shot    // naturalness cost of a pot that fails the strict check (cue ball running around ...)
       softCannonSpeed: 0.8,      // m/s: the cue ball touching reds after a red pot at most this fast = soft cannon (natural)
       cannonCost: 1.5, longCost: 2.0, exhibitionCost: 6,
       poorNextCost: 2.5,         // after a colour: a next red this hard (long, touching, thin) -> also run the wide search

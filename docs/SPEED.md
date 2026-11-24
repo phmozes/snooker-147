@@ -1,5 +1,12 @@
 # Speed and pace (task 1.4)
 
+## Pace targets (owner decision 2026-11-24, replaces the old 1-1.5 s per shot target)
+A full step of about 2.1 s on average is fine. In shot length (until every ball stops), for reds and colours separately:
+median 1.8 s or less; 90% of shots 2.5 s or less; no shot over 3.5 s except the last-resort step before RE-RACK
+(exhibition / spray search). Realism is not traded for speed: a natural 2.2 s shot beats an unnatural 1.2 s one.
+Measured with `bench/natural.test.ts` ("pace" in each row). The solver's own pace numbers (shot.maxDuration 1.5,
+maxDurationFlex 2.2, position.overFrom 1.5) are unchanged so far.
+
 Run again with `npm run bench` (about 1 minute). Numbers below: this PC, Node, 2026-11-24.
 
 ## Speed: computer time per simulated shot (target under 1 ms)

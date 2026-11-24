@@ -8,6 +8,7 @@ import { CONFIG } from '../src/config/game.config';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
 import { newRound, setLevel, shoot, start, type LevelId } from '../src/core/round';
 import { buildTable } from '../src/core/table/geometry';
+import { classifySuccess, naturalCheck, playFacts } from '../src/core/shotType';
 
 it('replay marked shots', () => {
   const table = buildTable();
@@ -29,6 +30,12 @@ it('replay marked shots', () => {
     const h = r.history[r.history.length - 1]!;
     out.push(`${item}: ${h.target} ${h.outcome}; ${JSON.stringify(h.shot)}`);
     out.push(`  flex log: ${JSON.stringify(provider.log.slice(logFrom))}`);
+    if (h.outcome === 'success') {
+      const pf = playFacts(before.balls, h.shot as { dir: { x: number; y: number }; speed: number; spin: number }, table);
+      const facts = { state: before.balls, target: h.target, potted: pf.potted[0]!, aimedPocket: null, events: pf.events, table };
+      const t = classifySuccess(facts);
+      out.push(`  strict check: ${t} -> ${naturalCheck(t, { ...facts, duration: pf.duration, cueTravel: pf.cueTravel, after: pf.after }) ?? 'NATURAL'} (cue ball rolls ${pf.cueTravel.toFixed(2)} m after contact, ${pf.events.filter((e) => e.type === 'cushion' && e.a === 'cue').length} cushions)`);
+    }
     out.push(`  before: ${before.balls.map((b) => `${b.id}(${b.pos.x.toFixed(3)},${b.pos.y.toFixed(3)})`).join(' ')}`);
   }
   process.stdout.write(out.join('\n') + '\n');

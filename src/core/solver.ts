@@ -10,8 +10,8 @@ import { CONFIG } from '../config/game.config';
 import { createSim, isMoving, runUntilStill, stepSim, strike, type PhysicsConfig } from './physics/sim';
 import { applyShot, judgeShot, type FrameState } from './rules';
 import type { PocketId, TableGeometry } from './table/geometry';
-import { angleCost, classifySuccess, cutAngle, isExhibition, NATURAL_TYPES, packLeftClosed, potCost, powerCost, typeCost,
-  type ShotType } from './shotType';
+import { angleCost, classifySuccess, cutAngle, isExhibition, NATURAL_TYPES, naturalCheck, packLeftClosed, potCost, powerCost,
+  typeCost, type ShotType } from './shotType';
 import { type Ball, type BallKind, type Colour, type Vec2 } from './types';
 
 export interface SolvedShot {
@@ -29,6 +29,7 @@ export interface SolvedShot {
   tried: number; // shots simulated
   type: ShotType; // what kind of shot it is (task 4.7)
   natural: number; // naturalness cost (0 = what a professional would play)
+  whyNot: string | null; // null = natural by the strict check (owner 2026-11-24), else the reason
 }
 
 const Sv = CONFIG.solver;
@@ -159,7 +160,9 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   // every success within lookaheadMargin of the best score (the lookahead checks the best ones that leave the cue
   // ball in clearly different places, task 4.7)
   const cands: SolvedShot[] = [];
-  const M = Sv.lookaheadMargin;
+  // a colour while reds remain: plan two shots ahead (more candidates, a wider margin; every candidate is checked)
+  const plan = state.phase === 'colour' && state.redsLeft > 0 && NAT.planColours && nexts.length > 0 && (opts.lookahead ?? Sv.lookahead > 0);
+  const M = plan ? NAT.planMargin : Sv.lookaheadMargin;
   let tried = 0;
   const half = (aimSamples - 1) / 2;
   // One simulated shot. 'miss' = it did not pot the target (the next aim point across the mouth may);
@@ -172,10 +175,19 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     // stop early once this shot is already longer than the best one's score (every cost is >= 0: it cannot win)
     const limit = Math.ceil((best ? best.score + M : cfg.maxSimSeconds) / cfg.timestep);
     const tb = sim.balls.find((b) => b.id === ballId)!;
+    const cb = sim.balls.find((b) => b.kind === 'cue')!;
     let closest = Infinity; // how near the aimed ball came to the pocket mouth
+    let travel = 0; // how far the cue ball rolls after its first contact (strict naturalness)
+    let px = cb.pos.x;
+    let py = cb.pos.y;
+    let touched = false;
     for (let n = 0; n < limit && isMoving(sim); n++) {
       stepSim(sim);
       if (!tb.potted) closest = Math.min(closest, Math.hypot(tb.pos.x - mouth.x, tb.pos.y - mouth.y));
+      touched ||= sim.events.length > 0 && sim.events.some((e) => e.type === 'ball');
+      if (touched) travel += Math.hypot(cb.pos.x - px, cb.pos.y - py);
+      px = cb.pos.x;
+      py = cb.pos.y;
     }
     if (isMoving(sim)) return 'done';
     const duration = sim.time;
@@ -208,12 +220,15 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     const dead = nexts.length && Sv.lookahead > 0 && cost >= Sv.position.noShotCost ? Sv.position.deadPenalty : 0;
     // naturalness (task 4.7): the pot itself, medium power, the kind of shot, and opening the pack in time
     const closed = target !== 'red' && state.redsLeft > 1 ? packLeftClosed(after, r) * NAT.packClosedCost : 0;
-    const natural = pairCost + powerCost(speed) + typeCost(type) + closed;
+    const whyNot = naturalCheck(type, { state: state.balls, target, potted: v.potted, aimedPocket: pocket, events: sim.events, table,
+      duration, cueTravel: travel, after });
+    if (opts.naturalOnly && whyNot !== null) return 'done';
+    const natural = pairCost + powerCost(speed) + typeCost(type) + closed + (whyNot && NATURAL_TYPES.includes(type) ? NAT.unnaturalPlayCost : 0);
     const score = duration + over + dead + (opts.weight ?? Sv.position.weight) * cost + NAT.weight * natural;
     if (best && score >= best.score + M) return 'done';
     const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
     const shot: SolvedShot = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed,
-      spin, duration, computeMs: 0, tried: 0, score, nextCost: nexts.length ? cost : null, cueEnd: { ...cueEnd }, type, natural };
+      spin, duration, computeMs: 0, tried: 0, score, nextCost: nexts.length ? cost : null, cueEnd: { ...cueEnd }, type, natural, whyNot };
     cands.push(shot);
     if (!best || score < best.score) best = shot;
     return 'done';
@@ -259,9 +274,10 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   if (best && nexts.length && (opts.lookahead ?? Sv.lookahead > 0)) {
     const order: SolvedShot[] = [];
     for (const c of cands.filter((x) => x.score < best!.score + M).sort((a, b) => a.score - b.score)) {
-      if (order.length >= Sv.lookaheadCandidates) break;
+      if (order.length >= (plan ? NAT.planCandidates : Sv.lookaheadCandidates)) break;
       if (order.every((o) => Math.hypot(o.cueEnd.x - c.cueEnd.x, o.cueEnd.y - c.cueEnd.y) >= Sv.lookaheadSpread)) order.push(c);
     }
+    let planned: { shot: SolvedShot; total: number } | null = null;
     for (const c of order) {
       tried++; // simulating where this candidate leaves the balls is one more shot
       const sim = createSim(state.balls, table, cfg);
@@ -271,16 +287,28 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
       const nextState = applyShot(state, target, { firstHit, potted: sim.balls.filter((b) => b.potted).map((b) => b.id),
         after: sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) }, table);
+      if (plan) {
+        // two shots ahead (task 4.7): really solve the red after this colour, with position play, and score the pair
+        const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+        const s = solveSuccess(nextState, 'red', table, now, cfg, Sv.lookaheadShots, i,
+          { lookahead: false, maxDuration: CONFIG.shot.maxDurationFlex });
+        tried += i.tried;
+        if (!s) continue;
+        const total = c.score + NAT.planWeight * (s.score + (s.whyNot === null ? 0 : NAT.unnaturalPlayCost));
+        if (!planned || total < planned.total) planned = { shot: c, total };
+        continue;
+      }
       let ok = false;
       for (const n of nexts) {
         const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
         const s = solveSuccess(nextState, n.kind, table, now, cfg, Sv.lookaheadShots, i,
-          { position: false, lookahead: false, firstFound: true, maxDuration: CONFIG.shot.maxDurationFlex });
+          { position: false, lookahead: false, firstFound: true, maxDuration: CONFIG.shot.maxDurationFlex, naturalOnly: NAT.lookaheadNatural });
         tried += i.tried;
         if (s) { ok = true; break; }
       }
       if (ok) { best = { ...c, lookahead: 'ok' }; break; }
     }
+    if (planned) best = { ...planned.shot, lookahead: 'ok' };
     if (best.lookahead !== 'ok') best = { ...best, lookahead: 'failed' };
   }
   if (best) best = { ...best, computeMs: now() - t0, tried };
@@ -288,9 +316,8 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   return best;
 }
 
-/** Natural enough to be the automatic colour (RULES B.3): a plain pot or a planned cannon, within maxDurationFlex. */
-export const isNaturalShot = (s: SolvedShot | null): boolean =>
-  !!s && s.duration <= CONFIG.shot.maxDurationFlex && NATURAL_TYPES.includes(s.type);
+/** Natural by the strict check (owner 2026-11-24): used for the automatic colour (RULES B.3) and the break library. */
+export const isNaturalShot = (s: SolvedShot | null): boolean => !!s && s.whyNot === null;
 
 /**
  * RULES B.3 (owner 2026-11-24): until the colour-choice stage the game picks the colour: black when it has a natural
@@ -305,11 +332,15 @@ export function chooseAutoColour(state: FrameState, table: TableGeometry, now: (
     const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
     const s = solveSuccess(state, c, table, now, cfg, Sv.shotBudget, i);
     tried += i.tried;
-    if (isNaturalShot(s)) return { colour: c, normal: s, tried };
+    // two shots ahead (owner's task 4.7 plan): natural means a natural colour that also leaves a red (lookahead ok)
+    if (isNaturalShot(s) && (!NAT.autoColourNeedsNextRed || s!.lookahead !== 'failed')) return { colour: c, normal: s, tried };
     all.push({ colour: c, normal: s });
   }
+  const natural = all.find((a) => isNaturalShot(a.normal)); // no colour leaves a red: a natural colour shot anyway
+  if (natural) return { ...natural, tried };
   // no natural shot on any of them: the first with a shot in time that keeps the next step solvable, else black
-  const ok = all.find((a) => a.normal && a.normal.lookahead !== 'failed' && a.normal.duration <= CONFIG.shot.maxDurationFlex);
+  const ok = all.find((a) => a.normal && a.normal.lookahead !== 'failed' && a.normal.duration <= CONFIG.shot.maxDurationFlex) ??
+    all.find((a) => a.normal); // black with no shot at all: pink or blue with any shot (avoids a RE-RACK)
   return { ...(ok ?? all[0]!), tried };
 }
 
@@ -377,7 +408,7 @@ export function solveSpray(state: FrameState, target: BallKind, table: TableGeom
             const type = classifySuccess({ state: state.balls, target, potted: v.potted, aimedPocket: null, events: sim.events, table });
             best = { target: v.potted, pocket: pot && pot.type === 'pot' ? pot.pocket : table.pockets[0]!.id, dir, speed, spin,
               duration: sim.time, score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos },
-              computeMs: 0, tried: 0, type, natural: typeCost(type) };
+              computeMs: 0, tried: 0, type, natural: typeCost(type), whyNot: 'spray' };
           }
         }
       }
@@ -454,7 +485,8 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
   if (good(wide) && wide!.duration <= flex) return out(wide, 'wideSearch', 'wideSearch');
   const found = [normal, wide].filter((x): x is SolvedShot => x !== null);
   // prefer a shot that keeps the next step solvable, then the shortest
-  found.sort((a, b) => Number(a.lookahead === 'failed') - Number(b.lookahead === 'failed') || a.duration - b.duration);
+  found.sort((a, b) => Number(a.whyNot !== null) - Number(b.whyNot !== null) ||
+    Number(a.lookahead === 'failed') - Number(b.lookahead === 'failed') || a.duration - b.duration);
   const pick = found[0];
   // realism first (owner, task 4.7): any natural shot, even long or with a doubtful next step, before an exhibition one
   if (pick && pick.duration <= flex) return out(pick, pick === wide ? 'wideSearch' : 'longerDuration', 'noLookahead');
@@ -560,7 +592,7 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
           : v.type === 'wrongBallFirst';
         if (!ok) continue;
         best = { target: ball.id, pocket, dir, speed, spin, duration: sim.time, computeMs: 0, tried: 0, kind, fallback: null,
-          type: 'attempt', natural: 0,
+          type: 'attempt', natural: 0, whyNot: null,
           score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos } };
         if (best.duration <= CONFIG.shot.maxDurationFlex) break search; // good enough: a failure need not be the quickest
       }
@@ -590,7 +622,7 @@ function softFoul(state: FrameState, target: BallKind, table: TableGeometry, cfg
       const v = judgeShot(state, target, { firstHit: firstHitOf(sim), potted, after: [] });
       if (v.result === 'failure' && v.type === 'wrongBallFirst') {
         return { target: w.id, pocket: table.pockets[0]!.id, dir, speed, spin: 0, duration: sim.time, computeMs: 0, tried,
-          kind: 'wrongBallFirst', fallback: 'softFoul', type: 'softFoul', natural: 0, score: sim.time, nextCost: null, cueEnd: { ...sim.balls[0]!.pos } };
+          kind: 'wrongBallFirst', fallback: 'softFoul', type: 'softFoul', natural: 0, whyNot: 'fallback', score: sim.time, nextCost: null, cueEnd: { ...sim.balls[0]!.pos } };
       }
     }
   }
@@ -610,7 +642,7 @@ function gentleTap(state: FrameState, target: BallKind, table: TableGeometry, cf
     const v = judgeShot(state, target, { firstHit: firstHitOf(sim), potted, after: [] });
     if (v.result === 'failure' && v.type === 'missedAll') {
       return { target: 'cue', pocket: table.pockets[0]!.id, dir, speed: FAIL.tapSpeed, spin: 0, duration: sim.time,
-        computeMs: 0, tried: k + 1, kind: 'wrongBallFirst', fallback: 'tap', type: 'tap', natural: 0, score: sim.time, nextCost: null,
+        computeMs: 0, tried: k + 1, kind: 'wrongBallFirst', fallback: 'tap', type: 'tap', natural: 0, whyNot: 'fallback', score: sim.time, nextCost: null,
         cueEnd: { ...sim.balls[0]!.pos } };
     }
   }

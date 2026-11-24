@@ -1,15 +1,17 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Play rounds on the phone; tap the flag (top-left of the table) on weird shots: they land in docs/WEIRD-SHOTS.md.
-- Read docs/REVIEW.md 4. Natural 85 / 89 / 83% (6 / 10 / 15 reds), exhibition 4 / 1.7 / 7%. Decide: go on with 4.7?
+- Play rounds; flag weird shots (they land in docs/WEIRD-SHOTS.md). Read docs/REVIEW.md 5.
+- Confirm: auto colour treats black as natural only if it also leaves a red (config autoColourNeedsNextRed).
+- 4.7 strict: natural 85 / 91 / 84%, exhibition 3.2 / 1.3 / 2.8% (6/10/15 reds). Decide: go on or move to 5.3.
 
 ## Claude's turn (after the owner's review)
-- 4.7 left: 15 reds (cushion-first when the pack stays tight late; 2 RE-RACKs in 177), long pots 6-7%, 6 reds 85%/4%.
-  Idea: plan two shots ahead for colours (which colour shot opens the pack AND keeps a natural red). docs/SOLVER.md.
-- Replay owner's marks: SHOTS="code:step" npx vitest run bench/replay-shot.test.ts (same solver version only).
-- Owner 2026-11-24: realism first; B.3 auto colour; breaks keep baulk colours + blue within 2 cm; caps fixed (shotCaps).
-- Owner 2026-11-24: quickest valid shot, friction 0.05 (provisional), shot ends when all balls stop; camera C (A/B kept).
+- 4.7 left: long red pots after a colour, hard cannons, cushion-first reds (last resort); 6 and 15 reds below 90%.
+- Pace (owner 2026-11-24, replaces 1-1.5 s): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort
+  before RE-RACK; realism before speed. Now 1-4 shots per level over 3.5 s. docs/SPEED.md.
+- Strict naturalness (owner): plain/soft-cannon pot, <= 2.5 s, cue ball <= 1 cushion and <= 1.5 m after contact,
+  nothing else disturbed. Solver 4.7c. RE-RACK 0 in 1,124 success shots of real rounds.
+- Owner 2026-11-24: B.3 auto colour; breaks keep baulk colours + blue within 2 cm; caps fixed (shotCaps); camera C.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others: nothing.

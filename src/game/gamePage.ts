@@ -305,7 +305,7 @@ function render() {
 
   const bottom = $('bottom');
   if (busy) {
-    const what = { rerack: 'RE-RACK', break: 'OPPONENT BREAKS OFF', step1: 'STEP 1 · RED', shot: '', solving: 'THINKING…' }[busy];
+    const what = { rerack: 'RACKING', break: 'OPPONENT BREAKS OFF', step1: 'STEP 1 · RED', shot: '', solving: 'THINKING…' }[busy];
     bottom.innerHTML = `<div class="hint">${what}</div><button class="big" disabled>SHOOT</button>`;
   } else if (round.phase === 'decide') {
     const amount = (cashOut(round).end as { amount: number }).amount; // exactly what CASH OUT pays
