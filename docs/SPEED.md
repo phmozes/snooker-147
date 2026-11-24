@@ -40,3 +40,13 @@ Finding: on realistic cloth the red is down in time, but the cue ball keeps roll
 - D. Realistic cloth, and the shot ends for the player when the red drops; the cue ball rolls on while the buttons
   come back. Needs a rules change (today: shot ends when the cue ball stops).
 Recommendation: A + B, with C at 1.2x only if needed. D is the most realistic, but it is a rules decision.
+
+## Follow-up checks (owner questions, 2026-11-24)
+- Speed at 0.05 (three runs): 6 reds 0.79-0.91 ms (under 1 ms), 15 reds 1.25-1.30 ms (over 1 ms).
+- "Pottable 22-23 of 30" is a limit of the pace study, not of the physics: it tries ONE pocket (smallest cut) and
+  aims only at the mouth centre. Retrying the 8 failed layouts with every pocket and aim points across the mouth
+  found potting shots for all 8 (0.12 and 0.015). Task 4.1 must test "every success outcome finds a shot" on many
+  layouts, with the flex order as the backup.
+- Break at 0.12: energy 0.02 s after the cue ball reaches the pack is identical at 0.015, 0.05 and 0.12
+  (26.1 of 36 left, 9.4 in the object balls). Only the roll-out afterwards differs: reds moving more than 10 cm
+  are 10/15 (0.015), 5/15 (0.05), 3/15 (0.12). So the closed pack is the friction value, not a bug.

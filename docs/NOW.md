@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Check task 1.4 on the debug page (friction slider, Speed benchmark, Pace study) and read docs/SPEED.md.
+- Check task 1.4 additions: "Light game (0.05)" button; answers in docs/SPEED.md (Follow-up checks).
 - Choose how to keep shots short (A-D in docs/SPEED.md); recommendation A + B (friction 0.05).
 
 ## Claude's turn

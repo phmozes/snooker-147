@@ -531,14 +531,15 @@ function setFriction(f: number) {
 }
 function frictionLabel() {
   const f = physics.rollingFriction;
-  const name = f === MARKS.realisticCloth ? ' = realistic cloth' : f === MARKS.game ? ' = game' : '';
+  const name = f === MARKS.realisticCloth ? ' = realistic cloth' : f === MARKS.lightGame ? ' = light game' : f === MARKS.game ? ' = game' : '';
   return `${f.toFixed(3)}${name}: ${rollText(f)}`;
 }
 function showFriction() { document.getElementById('frictionText')!.textContent = frictionLabel(); }
 makeSlider('friction', 5, 200, 5, () => Math.round(physics.rollingFriction * 1000), (v) => { setFriction(v / 1000); renderAll(); },
-  frictionLabel, [Math.round(MARKS.realisticCloth * 1000), Math.round(MARKS.game * 1000)]);
+  frictionLabel, [MARKS.realisticCloth, MARKS.lightGame, MARKS.game].map((m) => Math.round(m * 1000)));
 renderers.push(buttons('frictionMarks', [
   { label: `Realistic cloth (${MARKS.realisticCloth})`, on: () => physics.rollingFriction === MARKS.realisticCloth, click: () => setFriction(MARKS.realisticCloth) },
+  { label: `Light game (${MARKS.lightGame})`, on: () => physics.rollingFriction === MARKS.lightGame, click: () => setFriction(MARKS.lightGame) },
   { label: `Game (${MARKS.game})`, on: () => physics.rollingFriction === MARKS.game, click: () => setFriction(MARKS.game) },
 ]));
 // Benchmarks run at the friction on the slider. They block the page for a moment (seconds for the pace study).

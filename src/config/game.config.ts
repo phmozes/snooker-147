@@ -89,7 +89,7 @@ export const CONFIG = {
     gravity: 9.81,               // m/s^2
     rollingFriction: 0.12,       // deceleration = rollingFriction * gravity; "game" value (see frictionMarks, task 1.4)
     // Debug friction slider marks. Real snooker cloth: about 0.01-0.02 (a ball rolled at 1 m/s runs 2.5-5 m).
-    frictionMarks: { realisticCloth: 0.015, game: 0.12 },
+    frictionMarks: { realisticCloth: 0.015, lightGame: 0.05, game: 0.12 },
     slidingFriction: 0.2,        // cloth friction while a ball slides (spin and speed do not match)
     maxTipOffset: 0.5,           // full follow/screw = cue tip half a ball radius above/below centre
     ballBallRestitution: 0.95,
