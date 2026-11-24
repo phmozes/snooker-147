@@ -3,51 +3,54 @@
  "shard": 0,
  "shards": 3,
  "solver": "4.8d",
- "rounds": 10,
- "shots": 107,
- "success": 98,
+ "rounds": 20,
+ "shots": 179,
+ "success": 161,
  "reRacks": 0,
  "problems": 0,
  "ends": {
-  "failure": 10
+  "failure": 20
  },
  "flex": {
-  "longerDuration": 46,
-  "overLong": 5,
-  "wideSearch": 3
+  "longerDuration": 77,
+  "overLong": 7,
+  "wideSearch": 4,
+  "exhibition": 1
  },
  "failureKinds": {
-  "jawRattle": 2,
+  "jawRattle": 3,
   "wrongBallFirst->plainMiss": 1,
-  "plainMiss": 4,
+  "plainMiss": 10,
   "jawRattle->plainMiss": 1,
-  "inOff->plainMiss": 1
+  "inOff->plainMiss": 3
  },
  "types": {
-  "plain": 73,
-  "packCannon": 18,
-  "softCannon": 5,
-  "long": 1,
-  "cannon": 1
+  "plain": 122,
+  "packCannon": 27,
+  "softCannon": 6,
+  "long": 4,
+  "cannon": 1,
+  "double": 1
  },
  "colours": {
-  "black": 30,
-  "pink": 15,
-  "blue": 9
+  "black": 49,
+  "pink": 23,
+  "blue": 17
  },
  "lengths": {
-  "1.75": 11,
-  "0.75": 5,
-  "1.25": 23,
-  "2.25": 4,
-  "2.00": 8,
-  "1.50": 31,
-  "1.00": 14,
-  "0.50": 2
+  "1.75": 21,
+  "0.75": 8,
+  "1.25": 44,
+  "2.25": 5,
+  "2.00": 16,
+  "1.50": 45,
+  "1.00": 19,
+  "0.50": 2,
+  "4.00": 1
  },
- "over35": 0,
- "maxDuration": 2.3645833333333592,
- "maxTried": 1810,
+ "over35": 1,
+ "maxDuration": 4.043749999999931,
+ "maxTried": 2608,
  "cap": 36958,
  "strategies": [
   1,
@@ -62,24 +65,24 @@
  "rtp": {
   "1": 94.5,
   "2": 102.6,
-  "3": 112.5,
-  "5": 121.6,
-  "8": 149.1,
-  "12": 109.2,
-  "13": 126.6,
+  "3": 100,
+  "5": 98.8,
+  "8": 117.15,
+  "12": 72.8,
+  "13": 84.4,
   "26": 0
  },
  "startedAt": "2026-11-24T21:51:36.003Z",
- "updatedAt": "2026-11-24T21:53:33.401Z",
+ "updatedAt": "2026-11-24T21:54:49.889Z",
  "done": false,
  "pay": {
-  "1": 9.450000000000001,
-  "2": 10.26,
-  "3": 11.25,
-  "5": 12.159999999999998,
-  "8": 14.909999999999997,
-  "12": 10.92,
-  "13": 12.66,
+  "1": 18.900000000000006,
+  "2": 20.520000000000003,
+  "3": 20,
+  "5": 19.759999999999998,
+  "8": 23.429999999999993,
+  "12": 14.56,
+  "13": 16.88,
   "26": 0
  }
 }

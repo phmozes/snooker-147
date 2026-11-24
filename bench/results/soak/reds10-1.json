@@ -3,49 +3,51 @@
  "shard": 1,
  "shards": 3,
  "solver": "4.8d",
- "rounds": 20,
- "shots": 108,
- "success": 90,
+ "rounds": 30,
+ "shots": 179,
+ "success": 151,
  "reRacks": 0,
  "problems": 0,
  "ends": {
-  "failure": 20
+  "failure": 30
  },
  "flex": {
-  "longerDuration": 45,
-  "overLong": 2,
-  "wideSearch": 1,
+  "longerDuration": 70,
+  "overLong": 6,
+  "wideSearch": 2,
   "exhibition": 1
  },
  "failureKinds": {
-  "inOff->plainMiss": 2,
-  "plainMiss": 11,
-  "jawRattle": 2,
+  "inOff->plainMiss": 4,
+  "plainMiss": 15,
+  "jawRattle": 5,
   "inOff": 2,
-  "wrongBallFirst->plainMiss": 1
+  "wrongBallFirst->plainMiss": 1,
+  "inOff->softFoul": 1
  },
  "types": {
-  "plain": 68,
+  "plain": 110,
   "cannon": 4,
-  "packCannon": 10,
-  "long": 2,
-  "softCannon": 5,
+  "packCannon": 23,
+  "long": 3,
+  "softCannon": 10,
   "plant": 1
  },
  "colours": {
-  "black": 40,
-  "pink": 15,
-  "blue": 5
+  "black": 59,
+  "pink": 28,
+  "blue": 10
  },
  "lengths": {
-  "1.75": 15,
-  "0.50": 2,
-  "2.00": 9,
-  "1.25": 26,
-  "1.00": 9,
-  "1.50": 24,
-  "0.75": 4,
-  "2.75": 1
+  "1.75": 24,
+  "0.50": 7,
+  "2.00": 15,
+  "1.25": 40,
+  "1.00": 17,
+  "1.50": 36,
+  "0.75": 8,
+  "2.75": 1,
+  "2.25": 3
  },
  "over35": 0,
  "maxDuration": 2.8208333333333333,
@@ -62,26 +64,26 @@
   26
  ],
  "rtp": {
-  "1": 94.5,
-  "2": 79.8,
-  "3": 81.25,
-  "5": 53.2,
-  "8": 53.25,
-  "12": 54.6,
-  "13": 63.3,
+  "1": 98,
+  "2": 91.2,
+  "3": 91.67,
+  "5": 60.8,
+  "8": 49.7,
+  "12": 60.67,
+  "13": 70.33,
   "26": 0
  },
  "startedAt": "2026-11-24T21:51:23.356Z",
- "updatedAt": "2026-11-24T21:53:24.805Z",
+ "updatedAt": "2026-11-24T21:54:40.906Z",
  "done": false,
  "pay": {
-  "1": 18.900000000000006,
-  "2": 15.960000000000003,
-  "3": 16.25,
-  "5": 10.639999999999999,
-  "8": 10.649999999999999,
-  "12": 10.92,
-  "13": 12.66,
+  "1": 29.400000000000013,
+  "2": 27.360000000000007,
+  "3": 27.5,
+  "5": 18.24,
+  "8": 14.909999999999997,
+  "12": 18.2,
+  "13": 21.099999999999998,
   "26": 0
  }
 }

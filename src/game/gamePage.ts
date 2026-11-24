@@ -3,7 +3,8 @@
 // balance counts up, bet area returns. RE-RACK as RULES D.4. Black is picked automatically (no colour buttons yet).
 // The next shot is solved for both outcomes in a Web Worker while the player decides (presolve.ts), so SHOOT plays at
 // once. The menu button opens the developer panel: live game or the static mockup screens D / A / C, compare, ball
-// size, level, a seed field to replay a round, the last shot's length and compute time, check pages.
+// size, level, a seed field to replay a round, the last shot's length and compute time, check pages. In a dev build only
+// (import.meta.env.DEV) it also has the test panel (task 5.3): force the next outcome, clearance, jump to a step, auto play.
 // Address options: ?screen=A|C|D&compare=1&size=375x667&scale=1.3&level=reds15&seed=reds6-12345
 
 import { CONFIG } from '../config/game.config';

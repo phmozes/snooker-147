@@ -266,3 +266,14 @@ two reds glued behind the pink spot) and the 'rescue' flex step (`solver.rescue`
 next ball unreachable, a wide search keeps a shot only if the next ball can then be potted by any shot.
 Per-level measures in bench/natural.test.ts (`position`): black shots from behind the black, reds into baulk-end
 corners, median cut, cuts over 50 deg. Results: docs/REVIEW.md "Night".
+
+## Night 2026-11-24, phase 2 and soak fixes (solver 4.8b-4.8d)
+- 4.8b: cannon and long costs 3 / 3 (were 1.5 / 2.0); a shot that leaves only locked reds is never 'good' (the wide
+  search and the rescue look for a cannon that frees them).
+- 4.8c: `planReds`: a red is planned two shots ahead too (each candidate red pot: black, pink and blue are really solved
+  after it, best pair wins). Same shot cap as before (lookahead candidates x 3 colours x lookaheadShots).
+- 4.8d (soak findings, docs/SOAK-FAILURES.md): the automatic colour pick (RULES B.3) goes: natural colour that leaves a
+  natural red (and no locked reds) -> first colour with a shot in time that keeps the next red reachable -> rescue
+  search for black, pink and blue (natural first, then in time) -> a natural colour anyway -> any shot. Rescue keeps
+  candidates within `rescue.margin`. Shot cap: colourPick now includes 3 rescues.
+- Tried and not kept: unnaturalPlayCost 5; wide search after a red that leaves a poor colour (`wideForPoorColour`, off).

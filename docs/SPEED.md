@@ -6,6 +6,8 @@ median 1.8 s or less; 90% of shots 2.5 s or less; no shot over 3.5 s except the 
 (exhibition / spray search). Realism is not traded for speed: a natural 2.2 s shot beats an unnatural 1.2 s one.
 Measured with `bench/natural.test.ts` ("pace" in each row). The solver's own pace numbers (shot.maxDuration 1.5,
 maxDurationFlex 2.2, position.overFrom 1.5) are unchanged so far.
+Night 2026-11-24, solver 4.8d (60 rounds per level, all success shots): median 1.56 / 1.48 / 1.53 s, within 2.5 s
+98.7 / 98.4 / 96.8%, over 3.5 s 0 / 1 / 3 (6 / 10 / 15 reds); bench/results/night/final2.sum.
 
 Run again with `npm run bench` (about 1 minute). Numbers below: this PC, Node, 2026-11-24.
 
