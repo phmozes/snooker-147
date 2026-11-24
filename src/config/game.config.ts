@@ -227,7 +227,7 @@ export const CONFIG = {
 
   // gray-box 3D view (task 2.1): plain shapes only
   view3d: {
-    background: '#0b0f0e',
+    background: '#0f1513',       // same as the game page background
     rim: 0.2,                    // wooden frame width outside the cushion faces (m), wide enough for the throats
     cushionHeight: 0.036,        // cushion nose height above the cloth (m), about 0.7 ball diameter
     cushionDepth: 0.05,          // how far the cushion boxes reach behind the face (m)
@@ -239,6 +239,7 @@ export const CONFIG = {
   // to draw placeholder boxes; task 2.2 builds the real layout.
   layout: {
     phoneAspect: 9 / 19.5,
+    portraitBelow: 0.8,          // window width/height below this = a phone: the game uses the full screen
     sidePad: 0.04,               // share of the width
     topBar: [0.0, 0.075], table: [0.075, 0.735], ladder: [0.74, 0.785], cashOut: [0.80, 0.855],
     hint: [0.86, 0.89], shoot: [0.898, 0.98],
@@ -281,6 +282,16 @@ export const CONFIG = {
              paceLayouts: 30, paceMaxCutDeg: 45, paceMinSpeed: 0.3, paceSpeedStep: 0.1,
              paceFrictions: [0.015, 0.03, 0.05, 0.08, 0.12] },
     spinTest: { gap: 0.3, cueY: -1.0 },
+    // task 2.2 static game screens (placeholders until the game loop exists). Ball places copied from mockups A/C/D
+    // (table metres; colours not listed stay on their spots; D = the start rack).
+    screens: {
+      level: 'reds6',              // balance and bet: money.startingBalance and money.defaultBet
+      D: { step: 0, hint: '' },
+      A: { step: 4, hint: 'RED · NEXT x{next}', cue: [-0.12, -0.49],
+           reds: [[-0.045, 0.75], [0.13, 0.61], [-0.2, 0.51], [0.27, 0.30]] },
+      C: { step: 5, hint: 'CHOOSE A COLOUR · NEXT x{next}', cue: [-0.165, 0.68],
+           reds: [[0.13, 0.61], [-0.2, 0.51], [0.27, 0.30]], colourChoices: ['blue', 'pink', 'black'] },
+    },
     // task 2.1 check page: a red potted into a corner (quickest valid shot is searched, see testShots.ts)
     potRedShot: { cue: [0.25, 0.2], red: [0.55, 1.15], pocket: 'topRight', aimRange: 0.03, aimStep: 0.005,
                   minSpeed: 0.3, speedStep: 0.1 }, // debug "straight shot test": cue ball position and distance to the red

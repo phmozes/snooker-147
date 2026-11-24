@@ -2,15 +2,94 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>147</title>
-  <style>body { margin: 0; padding: 24px; background: #0f1513; color: #d8e0dc; font: 16px system-ui, sans-serif; }
-    a { color: #f2c94c; }</style>
+  <style>
+    /* Gray-box game page (task 2.2): layout, colours and sizes from mockups A/C/D, no polish. Buttons do nothing yet. */
+    :root { color-scheme: dark; --bg: #0f1513; --panel: #172020; --line: #34403c; --text: #d8e0dc; --dim: #7f8c87;
+            --yellow: #f2c94c; }
+    html, body { margin: 0; height: 100%; background: #0a0e0d; overflow: hidden; }
+    body { color: var(--text); font: 14px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    button { font: inherit; color: inherit; cursor: pointer; }
+
+    #stage { position: absolute; left: 50%; top: 0; transform-origin: top center; display: flex; gap: 16px; }
+    #screen { position: relative; background: var(--bg); display: flex; flex-direction: column;
+              padding: 0 16px 18px; box-sizing: border-box; overflow: hidden; }
+    #mockup { display: none; height: 844px; width: 390px; }
+    body.compare #mockup { display: block; }
+
+    /* top bar */
+    .top { height: 64px; flex: none; display: flex; align-items: center; justify-content: space-between; padding-top: 6px; }
+    .balance .label { font-size: 11px; letter-spacing: .08em; color: var(--dim); }
+    .balance .value { font-size: 19px; font-weight: 600; margin-top: 3px; }
+    .mult { font-size: 26px; font-weight: 800; color: var(--yellow); }
+    .pill { border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; font-size: 13px; color: var(--text); }
+    .menu { width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
+            font-size: 24px; padding: 0; }
+
+    /* table: the 3D canvas fills this box; nothing is drawn on the cloth */
+    .table { flex: 1; min-height: 0; position: relative; margin: 8px 0 6px; }
+    .table canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+    /* ladder strip (display only, not buttons) */
+    .ladder { height: 34px; flex: none; display: flex; align-items: center; gap: 6px; }
+    .ladder .step { width: 48px; font-size: 11px; line-height: 1.25; color: var(--dim); }
+    .chip { flex: 1; height: 34px; border-radius: 10px; background: var(--panel); display: flex; align-items: center;
+            justify-content: center; font-size: 13px; color: var(--text); box-sizing: border-box; }
+    .chip.prev { color: var(--dim); background: #141b19; }
+    .chip.current { background: var(--yellow); color: #111; font-weight: 700; }
+    .chip.next { border: 1px solid #55625e; }
+
+    /* bottom area */
+    .bottom { flex: none; display: flex; flex-direction: column; gap: 13px; margin-top: 15px; }
+    .cash { height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
+            font-size: 12px; letter-spacing: .1em; color: #aab5b1; }
+    .cash b { font-size: 16px; letter-spacing: 0; color: var(--text); margin-left: 10px; }
+    .hint { text-align: center; font-size: 12px; letter-spacing: .08em; color: #aab5b1; height: 14px; margin: -2px 0; }
+    .big { height: 66px; border-radius: 18px; border: none; background: var(--yellow); color: #111;
+           font-size: 24px; font-weight: 800; letter-spacing: .04em; }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    .sq { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
+          font-size: 22px; padding: 0; }
+    .bet { height: 44px; border-radius: 12px; background: #141b19; display: flex; align-items: center; justify-content: center;
+           font-size: 12px; letter-spacing: .1em; color: #aab5b1; }
+    .bet b { font-size: 18px; letter-spacing: 0; color: var(--text); margin-left: 10px; }
+    .quick { height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); font-size: 15px; }
+    .quick.on { border-color: var(--yellow); color: var(--yellow); background: #24210f; }
+    .colour { height: 66px; border-radius: 18px; border: none; font-size: 20px; font-weight: 700; }
+    .colour.blue { background: #2f6fdb; color: #fff; }
+    .colour.pink { background: #f29cb8; color: #3a0f1d; }
+    .colour.black { background: #121717; color: #fff; border: 1px solid var(--line); }
+    .colour.green { background: #1f9d55; color: #fff; } .colour.yellow { background: #f2c94c; color: #111; }
+    .colour.brown { background: #8b5a2b; color: #fff; }
+
+    /* developer panel (opened from the menu button; only until the real menu exists) */
+    #dev { display: none; position: absolute; top: 64px; right: 16px; z-index: 5; background: #111816; border: 1px solid var(--line);
+           border-radius: 12px; padding: 10px; width: 230px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+    #dev.open { display: block; }
+    #dev h3 { margin: 4px 0 6px; font-size: 11px; letter-spacing: .08em; color: var(--dim); font-weight: 600; }
+    #dev .opts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    #dev .opts button { min-height: 36px; padding: 0 10px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
+    #dev .opts button.on { background: var(--yellow); color: #111; border-color: var(--yellow); }
+    #dev a { color: var(--yellow); display: block; margin: 4px 0; font-size: 13px; }
+  </style>
 </head>
 <body>
-  <h1>147</h1>
-  <p>The game is not built yet. Development pages:</p>
-  <ul><li><a href="/debug.html">Table debug (tasks 1.1-1.4)</a></li>
-    <li><a href="/replay.html">Replay check: 2D and 3D (task 2.1)</a></li></ul>
+  <div id="stage">
+    <div id="screen">
+      <div class="top">
+        <div class="balance"><div class="label">BALANCE</div><div class="value" id="balance"></div></div>
+        <div id="centre"></div>
+        <button class="menu" id="menu" aria-label="Menu">≡</button>
+      </div>
+      <div class="table"><canvas id="c3d"></canvas></div>
+      <div class="ladder" id="ladder"></div>
+      <div class="bottom" id="bottom"></div>
+      <div id="dev"></div>
+    </div>
+    <img id="mockup" alt="mockup" />
+  </div>
+  <script type="module" src="/src/game/gamePage.ts"></script>
 </body>
 </html>

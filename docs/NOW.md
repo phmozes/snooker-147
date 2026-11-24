@@ -1,11 +1,11 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Say "go" for task 2.2 (portrait page layout from mockups A/C/D, static buttons). Tasks 1.1-2.1 are approved.
+- Check task 2.2: game page (home page), screens D/A/C and "compare" in the menu (≡). Tasks 1.1-2.1 approved.
 - Test replay.html on the real phone at home (smoothness, camera feel). Open; does not block the next task.
 
 ## Claude's turn
-- Next: task 2.2, after the owner's go.
+- Next: stage 3 (task 3.1, rules state), after the owner's approval of 2.2 and go.
 - Pace (provisional, owner 2026-11-24): solver picks the quickest valid shot, cloth friction 0.05. Shot ends when all balls stop.
 - Main camera: preset C (64°, owner 2026-11-24); A and B stay in config to switch later.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
