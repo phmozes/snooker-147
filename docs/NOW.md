@@ -1,13 +1,14 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Check task 4.2 on debug.html (Failure shot: type, Solve failure, Run 20) and docs/SOLVER.md. 1.1-4.1 approved.
-- Test replay.html on the real phone at home (smoothness, camera feel). Open; does not block the next task.
+- Test replay.html on the real phone at home (smoothness, camera feel). 1.1-4.1 approved; 4.2 NOT yet approved.
 
-## Claude's turn
-- 4.2 done: plain miss, jaw rattle, in-off, wrong ball first (+ plain-miss fallback D.2); tests/failure.test.ts.
-- 4.2 left: step-1 snookered escape (needs break library, 4.6); D.2 soft wrong-ball / gentle-tap fallbacks.
-- Next: task 4.3 after the owner's go. Pace plan: position play + cue-ball stop (4.3-4.5); count shots, not ms.
+## Claude's turn (first thing next session, before 4.3; then the owner checks again and approves 4.2)
+1. Explain why a plain miss is often not found (owner's Run 20, 6 reds, red due: 7 of 20 nothing) and fix it.
+2. Build the last D.2 fallbacks (soft wrong-ball-first shot, gentle tap that hits nothing): "nothing found" = 0; test it.
+3. In-off found in only about 6 of 20: say whether that is acceptable or can be improved.
+4. Step-1 snookered escape waits for task 4.6.
+- Pace plan for 4.3-4.5: position play + cue-ball stop; solver counts shots, not ms.
 - Balls drawn at 1.3x (owner, provisional until the real-phone test). If still too small: closer camera, not bigger balls.
 - Owner 2026-11-24: quickest valid shot, friction 0.05 (provisional), shot ends when all balls stop; camera C (A/B kept).
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
