@@ -2,9 +2,11 @@
 // Click the table to strike the cue ball toward that point (power slider). Buttons: Break, Reset, Slow motion.
 // Pocket test: roll one ball at a chosen pocket (angle, aim offset, speed) and a full "pot map".
 // Spin: screw / stun / follow for every cue-ball shot; "Straight shot test" hits the cue ball straight at a red.
+// Cloth friction slider (marks: realistic cloth, game) and the task 1.4 speed benchmark and pace study.
 
 import { CONFIG } from '../config/game.config';
-import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, stepSim, strike, type Sim } from '../core/physics/sim';
+import { paceStudy, speedBenchmark, withFriction } from '../core/physics/bench';
+import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, stepSim, strike, type PhysicsConfig, type Sim } from '../core/physics/sim';
 import { breakAim, pocketRollStart, runPocketRoll, type PocketRoll, type RollOutcome } from '../core/physics/testShots';
 import { arcPoints, buildTable, type JawArc, type PocketId, type TableGeometry } from '../core/table/geometry';
 import { checkRack, rackBalls } from '../core/table/rack';
@@ -57,7 +59,10 @@ const OUTCOME_TEXT: Record<RollOutcome, string> = {
 };
 
 // ---- physics state for the interactive shots ----
-let sim: Sim = createSim(rackBalls(state.reds, table), table);
+// The friction slider changes the rolling friction of every simulation on this page (the config keeps its value).
+const MARKS = CONFIG.physics.frictionMarks;
+let physics: PhysicsConfig = withFriction(CONFIG.physics.rollingFriction);
+let sim: Sim = createSim(rackBalls(state.reds, table), table, physics);
 let mouse: Vec2 | null = null;
 const freshShot = () => ({ running: false, start: 0, settledAfter: null as number | null,
   overlaps: 0, insideCushion: 0, freeEnergy: 0, startSpeed: 0 });
@@ -67,7 +72,7 @@ const speedOf = (v: Vec2) => Math.hypot(v.x, v.y);
 const cueStart = (): Vec2 => ({ x: CONFIG.rack.cueStart[0], y: CONFIG.rack.cueStart[1] });
 
 function reset() {
-  sim = createSim(rackBalls(state.reds, table), table);
+  sim = createSim(rackBalls(state.reds, table), table, physics);
   shot = freshShot();
   rollMode = false;
   trail = [];
@@ -79,10 +84,10 @@ function rollAtPocket() {
   state.view = roll.pocket;
   trail = [];
   lastOutcome = start ? null : 'offTable';
-  if (!start) { sim = createSim([], table); shot = freshShot(); return; }
-  sim = createSim([{ id: 'red1', kind: 'red', pos: start.pos }], table);
+  if (!start) { sim = createSim([], table, physics); shot = freshShot(); return; }
+  sim = createSim([{ id: 'red1', kind: 'red', pos: start.pos }], table, physics);
   rollMode = true;
-  strike(sim, 'red1', start.dir, roll.speed, naturalRollSpin()); // rolling naturally, as in the pot map
+  strike(sim, 'red1', start.dir, roll.speed, naturalRollSpin(physics)); // rolling naturally, as in the pot map
   shot = { ...freshShot(), running: true, start: sim.time, startSpeed: roll.speed };
   energyBefore = sim.balls.map(ballEnergy);
   trail.push({ ...start.pos });
@@ -94,7 +99,7 @@ function buildPotMap() {
   for (let a = PT.angleMaxDeg; a >= -PT.angleMaxDeg; a -= PT.mapAngleStepDeg) angles.push(a);
   for (let o = -PT.offsetMaxMm; o <= PT.offsetMaxMm; o += PT.mapOffsetStepMm) offsets.push(o);
   const cells = angles.map((a) => offsets.map((o) =>
-    runPocketRoll(table, { ...roll, angleDeg: a, offset: o / 1000 }).outcome));
+    runPocketRoll(table, { ...roll, angleDeg: a, offset: o / 1000 }, physics).outcome));
   potMap = { angles, offsets, cells };
 }
 
@@ -117,7 +122,7 @@ function shoot(direction: Vec2, speed: number, spin = state.spin) {
 /** Cue ball and one red on the long axis, `gap` apart; hit straight with the current power and spin. */
 function straightShotTest() {
   const y0 = CONFIG.dev.spinTest.cueY;
-  sim = createSim([{ id: 'cue', kind: 'cue', pos: { x: 0, y: y0 } }, { id: 'red1', kind: 'red', pos: { x: 0, y: y0 + state.gap } }], table);
+  sim = createSim([{ id: 'cue', kind: 'cue', pos: { x: 0, y: y0 } }, { id: 'red1', kind: 'red', pos: { x: 0, y: y0 + state.gap } }], table, physics);
   rollMode = false;
   lastOutcome = null;
   trail = [];
@@ -400,7 +405,7 @@ function showInfo() {
     `Ball inside a cushion:      ${shot.insideCushion}  ${okText(shot.insideCushion === 0)}`,
     `Energy gained without a hit: ${shot.freeEnergy}  ${okText(shot.freeEnergy === 0)}`,
     `(energy = moving + spinning; with follow a ball may speed up after a hit, but never gain energy)`,
-    `(counted over the whole shot, checked every 1/${Math.round(1 / CONFIG.physics.timestep)} s)`,
+    `(counted over the whole shot, checked every 1/${Math.round(1 / CONFIG.physics.timestep)} s, cloth friction ${physics.rollingFriction.toFixed(3)})`,
     `Smallest gap now: ${sc.minGap === Infinity ? '-' : mm(sc.minGap)}`,
     `Potted: ${potted.length ? potted.join(', ') : 'none'}`,
     ``,
@@ -509,6 +514,66 @@ makeSlider('jawCorner', 20, 200, 1, () => Math.round(jawRadius.corner * 1000), (
 makeSlider('jawMiddle', 20, 200, 1, () => Math.round(jawRadius.middle * 1000), (v) => { jawRadius.middle = v / 1000; rebuildTable(); },
   (v) => `${v} mm (config ${mm0(CONFIG.table.middle.jawRadius)}; marks: ${marks(PT.middleJawMarks).join(', ')})`,
   marks(PT.middleJawMarks));
+
+// ---- cloth friction ----
+/** How far a ball rolled at 1 m/s runs, and for how long, at this rolling friction. */
+const rollText = (f: number) => {
+  const a = f * CONFIG.physics.gravity;
+  return `a ball rolled at 1 m/s runs ${(1 / (2 * a)).toFixed(1)} m in ${(1 / a).toFixed(1)} s`;
+};
+function setFriction(f: number) {
+  physics = withFriction(f);
+  sim.cfg = physics; // also the shot that is rolling now
+  potMap = null;
+  const el = document.getElementById('friction') as HTMLInputElement;
+  el.value = String(Math.round(f * 1000));
+  showFriction();
+}
+function frictionLabel() {
+  const f = physics.rollingFriction;
+  const name = f === MARKS.realisticCloth ? ' = realistic cloth' : f === MARKS.game ? ' = game' : '';
+  return `${f.toFixed(3)}${name}: ${rollText(f)}`;
+}
+function showFriction() { document.getElementById('frictionText')!.textContent = frictionLabel(); }
+makeSlider('friction', 5, 200, 5, () => Math.round(physics.rollingFriction * 1000), (v) => { setFriction(v / 1000); renderAll(); },
+  frictionLabel, [Math.round(MARKS.realisticCloth * 1000), Math.round(MARKS.game * 1000)]);
+renderers.push(buttons('frictionMarks', [
+  { label: `Realistic cloth (${MARKS.realisticCloth})`, on: () => physics.rollingFriction === MARKS.realisticCloth, click: () => setFriction(MARKS.realisticCloth) },
+  { label: `Game (${MARKS.game})`, on: () => physics.rollingFriction === MARKS.game, click: () => setFriction(MARKS.game) },
+]));
+// Benchmarks run at the friction on the slider. They block the page for a moment (seconds for the pace study).
+function runBench(kind: 'speed' | 'pace') {
+  const out = document.getElementById('benchOut')!;
+  out.textContent = 'running...';
+  setTimeout(() => {
+    const now = () => performance.now();
+    const f = physics.rollingFriction.toFixed(3);
+    if (kind === 'speed') {
+      speedBenchmark(table, physics, now, 15, 20); // warm-up
+      const rows = [6, 15].map((reds) => {
+        const r = speedBenchmark(table, physics, now, reds);
+        const ok = r.msPerShot < CONFIG.dev.bench.targetMsPerShot;
+        return `${reds} reds: ${r.msPerShot.toFixed(2)} ms per shot <span class="${ok ? 'ok' : 'bad'}">${ok ? 'OK' : 'over'}</span>` +
+          ` (shot lasts ${r.simSecondsPerShot.toFixed(2)} s of game time)`;
+      });
+      out.innerHTML = [`<b>Speed</b> at friction ${f}, ${CONFIG.dev.bench.shots} random shots, target under ${CONFIG.dev.bench.targetMsPerShot} ms`, ...rows].join('\n');
+    } else {
+      const p = paceStudy(table, physics, now);
+      out.innerHTML = [
+        `<b>Pace</b> at friction ${f}: quickest potting shot for ${p.layouts} random layouts`,
+        `pottable: ${p.potted} of ${p.layouts}`,
+        `median time until all balls stop: <b>${p.medianSettle.toFixed(2)} s</b> (at 1.3x playback ${(p.medianSettle / 1.3).toFixed(2)} s)`,
+        `median time until the red drops: ${p.medianPot.toFixed(2)} s`,
+        `shots that stop within ${CONFIG.shot.maxDuration} s: ${Math.round(p.withinMax * 100)}%`,
+        `(computer time ${(p.msTotal / 1000).toFixed(1)} s)`,
+      ].join('\n');
+    }
+  }, 30);
+}
+renderers.push(buttons('benchButtons', [
+  { label: 'Speed benchmark', on: () => false, click: () => runBench('speed') },
+  { label: 'Pace study', on: () => false, click: () => runBench('pace') },
+]));
 
 makeSlider('spin', -100, 100, 5, () => Math.round(state.spin * 100), (v) => { state.spin = v / 100; renderAll(); }, (v) => spinLabel(v / 100));
 makeSlider('gap', 15, 150, 5, () => Math.round(state.gap * 100), (v) => { state.gap = v / 100; }, (v) => `${v} cm between cue ball and red`);

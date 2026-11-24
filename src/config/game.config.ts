@@ -87,7 +87,9 @@ export const CONFIG = {
     timestep: 1 / 480,           // fixed step, seconds
     maxSimSeconds: 8,            // safety stop for a simulation
     gravity: 9.81,               // m/s^2
-    rollingFriction: 0.12,       // deceleration = rollingFriction * gravity (tune so shots last 1.0-1.5 s, task 1.4)
+    rollingFriction: 0.12,       // deceleration = rollingFriction * gravity; "game" value (see frictionMarks, task 1.4)
+    // Debug friction slider marks. Real snooker cloth: about 0.01-0.02 (a ball rolled at 1 m/s runs 2.5-5 m).
+    frictionMarks: { realisticCloth: 0.015, game: 0.12 },
     slidingFriction: 0.2,        // cloth friction while a ball slides (spin and speed do not match)
     maxTipOffset: 0.5,           // full follow/screw = cue tip half a ball radius above/below centre
     ballBallRestitution: 0.95,
@@ -244,6 +246,10 @@ export const CONFIG = {
     breakAimRow: 1,              // debug/test break: aim at the outer red of this triangle row (0 = front)
     breakAimOffset: 1.5,         // ... this many ball radii outside it (picked by a scan, see testShots.ts)
     debugPowerDefault: 0.5,      // debug page power slider start (share of maxCueSpeed)
+    // speed benchmark + pace study (task 1.4): random full-rack shots; quickest potting shot per one-red layout
+    bench: { seed: 147, reds: 15, shots: 200, minSpeed: 1.0, maxSpeed: 6.0, targetMsPerShot: 1.0,
+             paceLayouts: 30, paceMaxCutDeg: 45, paceMinSpeed: 0.3, paceSpeedStep: 0.1,
+             paceFrictions: [0.015, 0.03, 0.05, 0.08, 0.12] },
     spinTest: { gap: 0.3, cueY: -1.0 }, // debug "straight shot test": cue ball position and distance to the red
     // debug page "pocket test": roll one ball at a pocket
     pocketTest: { distance: 0.2, speed: 1.5, angleMaxDeg: 70, offsetMaxMm: 60, mapAngleStepDeg: 5, mapOffsetStepMm: 3,

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run",
+    "test": "vitest run tests/",
+    "bench": "vitest run bench/",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

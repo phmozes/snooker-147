@@ -3,7 +3,7 @@
 import { CONFIG } from '../../config/game.config';
 import type { PocketId, TableGeometry } from '../table/geometry';
 import { sub, type Ball, type Vec2 } from '../types';
-import { createSim, naturalRollSpin, runUntilStill, strike, type Sim } from './sim';
+import { createSim, naturalRollSpin, runUntilStill, strike, type PhysicsConfig, type Sim } from './sim';
 
 /**
  * Direction for a hard break from the cue ball's place in the D. It aims just outside the outer red of
@@ -48,7 +48,7 @@ export function pocketRollStart(table: TableGeometry, roll: PocketRoll): { pos: 
 }
 
 /** Run a pocket roll to the end. Returns what happened, or 'offTable' if the start is not on the cloth. */
-export function runPocketRoll(table: TableGeometry, roll: PocketRoll, cfg = CONFIG.physics): { outcome: RollOutcome; sim: Sim | null } {
+export function runPocketRoll(table: TableGeometry, roll: PocketRoll, cfg: PhysicsConfig = CONFIG.physics): { outcome: RollOutcome; sim: Sim | null } {
   const start = pocketRollStart(table, roll);
   if (!start) return { outcome: 'offTable', sim: null };
   const sim = createSim([{ id: 'red1', kind: 'red', pos: start.pos }], table, cfg);

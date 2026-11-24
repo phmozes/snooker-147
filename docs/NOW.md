@@ -1,12 +1,11 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Say "go" for task 1.4 (speed benchmark, friction tuning). Tasks 1.1-1.3b are approved.
+- Check task 1.4 on the debug page (friction slider, Speed benchmark, Pace study) and read docs/SPEED.md.
+- Choose how to keep shots short (A-D in docs/SPEED.md); recommendation A + B (friction 0.05).
 
 ## Claude's turn
-- Next: task 1.4, after the owner's go.
-- Task 1.4: friction slider on the debug page with marked "realistic cloth" and "game" positions; list other ways to keep
-  shots short (solver picks quick pots / short cue-ball travel, mild playback speed-up) with a recommendation.
+- After the owner's choice: set the chosen friction/playback in the config, then task 2.1 after the owner's go.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others

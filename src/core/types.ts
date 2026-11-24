@@ -21,5 +21,5 @@ export const add = (a: Vec2, b: Vec2): Vec2 => ({ x: a.x + b.x, y: a.y + b.y });
 export const sub = (a: Vec2, b: Vec2): Vec2 => ({ x: a.x - b.x, y: a.y - b.y });
 export const scale = (a: Vec2, s: number): Vec2 => ({ x: a.x * s, y: a.y * s });
 export const length = (a: Vec2): number => Math.hypot(a.x, a.y);
-export const dist = (a: Vec2, b: Vec2): number => Math.hypot(a.x - b.x, a.y - b.y);
+export const dist = (a: Vec2, b: Vec2): number => Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 export const normalize = (a: Vec2): Vec2 => scale(a, 1 / length(a));

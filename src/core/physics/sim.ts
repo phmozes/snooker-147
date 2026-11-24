@@ -107,7 +107,7 @@ export function strike(sim: Sim, ballId: string, direction: Vec2, speed: number,
 /** The spin value that makes a ball roll naturally from the start (no sliding). */
 export const naturalRollSpin = (cfg: PhysicsConfig = CONFIG.physics) => 1 / (2.5 * cfg.maxTipOffset);
 
-const speedOf = (b: SimBall) => Math.hypot(b.vel.x, b.vel.y);
+const speedOf = (b: SimBall) => Math.sqrt(b.vel.x * b.vel.x + b.vel.y * b.vel.y);
 const isMovingBall = (b: SimBall) => !b.potted && (b.vel.x !== 0 || b.vel.y !== 0 || b.roll.x !== 0 || b.roll.y !== 0);
 /** Energy per unit mass (x2): moving part + spinning part (solid ball: spin energy = 2/5 of roll^2). */
 export const ballEnergy = (b: SimBall) => b.vel.x ** 2 + b.vel.y ** 2 + 0.4 * (b.roll.x ** 2 + b.roll.y ** 2);
@@ -135,22 +135,28 @@ type Hit =
 function earliestHit(sim: Sim, horizon: number): Hit | null {
   const { balls } = sim;
   const r = sim.table.ballRadius;
+  const walls = wallsOf(sim.table);
+  // Broad phase: every cushion, throat and jaw contact happens with the ball centre outside this inner box
+  // (they all sit on or beyond the cushion faces), so a ball that cannot leave the box this step skips them.
+  const innerX = sim.table.halfWidth - r;
+  const innerY = sim.table.halfLength - r;
   let best: Hit | null = null;
   for (let i = 0; i < balls.length; i++) {
     const bi = balls[i]!;
-    if (bi.potted) continue;
-    const mi = bi.vel.x !== 0 || bi.vel.y !== 0;
-    // ball-ball (only pairs where at least one is moving)
-    for (let j = i + 1; j < balls.length; j++) {
+    if (bi.potted || (bi.vel.x === 0 && bi.vel.y === 0)) continue; // only moving balls start a contact test
+    // ball-ball: against every other ball (a pair of two moving balls is tested once, from the lower index)
+    for (let j = 0; j < balls.length; j++) {
+      if (j === i) continue;
       const bj = balls[j]!;
-      if (bj.potted || (!mi && bj.vel.x === 0 && bj.vel.y === 0)) continue;
+      if (bj.potted || (j < i && (bj.vel.x !== 0 || bj.vel.y !== 0))) continue;
       const t = timeToCircleContact(bj.pos.x - bi.pos.x, bj.pos.y - bi.pos.y,
         bj.vel.x - bi.vel.x, bj.vel.y - bi.vel.y, 2 * r);
-      if (t <= horizon && (!best || t < best.t)) best = { t, kind: 'ball', i, j };
+      if (t <= horizon && (!best || t < best.t)) best = i < j ? { t, kind: 'ball', i, j } : { t, kind: 'ball', i: j, j: i };
     }
-    if (!mi) continue;
+    const reach = (Math.abs(bi.vel.x) + Math.abs(bi.vel.y)) * horizon;
+    if (Math.abs(bi.pos.x) + reach < innerX && Math.abs(bi.pos.y) + reach < innerY) continue;
     // straight faces: cushions and throats
-    for (const w of wallsOf(sim.table)) {
+    for (const w of walls) {
       const vn = bi.vel.x * w.normal.x + bi.vel.y * w.normal.y;
       if (vn >= -APPROACH_EPS) continue;
       const gap = (bi.pos.x - w.seg.a.x) * w.normal.x + (bi.pos.y - w.seg.a.y) * w.normal.y - r;
@@ -205,7 +211,7 @@ function resolve(sim: Sim, hit: Hit, at: number) {
   if (hit.kind === 'ball') {
     const o = sim.balls[hit.j]!;
     sim.hitLastStep.add(hit.j);
-    const d = Math.hypot(o.pos.x - b.pos.x, o.pos.y - b.pos.y);
+    const d = dist(b.pos, o.pos);
     const nx = (o.pos.x - b.pos.x) / d;
     const ny = (o.pos.y - b.pos.y) / d;
     const closing = (b.vel.x - o.vel.x) * nx + (b.vel.y - o.vel.y) * ny; // > 0
@@ -238,11 +244,18 @@ function resolve(sim: Sim, hit: Hit, at: number) {
  */
 function checkPots(sim: Sim) {
   const { halfWidth: hw, halfLength: hl } = sim.table;
+  const innerX = hw - 2 * sim.table.ballRadius;
+  const innerY = hl - 2 * sim.table.ballRadius;
   for (const b of sim.balls) {
-    if (b.potted) continue;
+    // a ball can only drop if it moved (balls that stopped earlier were checked when they stopped), and only
+    // near the edge: every hole lies beyond the cushion faces
+    if (b.potted || (b.vel.x === 0 && b.vel.y === 0)) continue;
+    if (Math.abs(b.pos.x) < innerX && Math.abs(b.pos.y) < innerY) continue;
     for (const p of sim.table.pockets) {
       const depth = (b.pos.x - p.mouthMid.x) * p.inward.x + (b.pos.y - p.mouthMid.y) * p.inward.y;
-      const inHole = dist(b.pos, p.captureCentre) < p.captureRadius;
+      const cx = b.pos.x - p.captureCentre.x;
+      const cy = b.pos.y - p.captureCentre.y;
+      const inHole = cx * cx + cy * cy < p.captureRadius * p.captureRadius;
       const tooDeep = depth > dist(p.mouthMid, p.captureCentre) + p.captureRadius && dist(b.pos, p.mouthMid) < 0.3;
       if (inHole || tooDeep) { pot(sim, b, p.id, !inHole); break; }
     }
@@ -266,14 +279,15 @@ function applyFriction(sim: Sim) {
     if (!isMovingBall(b)) continue;
     const sx = b.vel.x - b.roll.x;
     const sy = b.vel.y - b.roll.y;
-    const slip = Math.hypot(sx, sy);
+    const slip = Math.sqrt(sx * sx + sy * sy);
     if (slip > 3.5 * dvSlide) {
       // sliding: friction against the slip slows/turns vel and changes the spin 2.5x as fast
       b.vel.x -= (sx / slip) * dvSlide;
       b.vel.y -= (sy / slip) * dvSlide;
       b.roll.x += (sx / slip) * 2.5 * dvSlide;
       b.roll.y += (sy / slip) * 2.5 * dvSlide;
-      if (Math.hypot(b.vel.x, b.vel.y) <= sim.cfg.stopSpeed && Math.hypot(b.roll.x, b.roll.y) <= sim.cfg.stopSpeed) stop(b);
+      const stop2 = sim.cfg.stopSpeed * sim.cfg.stopSpeed;
+      if (b.vel.x ** 2 + b.vel.y ** 2 <= stop2 && b.roll.x ** 2 + b.roll.y ** 2 <= stop2) stop(b);
       continue;
     }
     if (slip > 0) {
@@ -296,7 +310,7 @@ function stop(b: SimBall) {
 /** Advance the simulation by one fixed time step. */
 export function stepSim(sim: Sim): void {
   const dt = sim.cfg.timestep;
-  sim.hitLastStep = new Set();
+  sim.hitLastStep.clear();
   let remaining = dt;
   let events = 0;
   for (;;) {
