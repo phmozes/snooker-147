@@ -202,3 +202,27 @@ Solve times: two reports ran at the same time on this PC in both columns. Still 
 remaining exhibition shots are mostly step 3 or 5 when the reds are still packed and the black could not open them
 (a planned pack cannon search with more screw/stun and side angles into the pack); long pots come after a colour
 whose cue ball ends far from every loose red. Cap per decision rose to 11,334 shots (worst case; typical 50-600).
+
+### Task 4.7, second part (2026-11-24 evening)
+- Cannons split (owner): after a red pot the cue ball touching reds at most 0.8 m/s = "soft cannon" (natural); harder,
+  or touching a colour = "cannon" (accidental, not natural). A colour pot that runs into reds stays "pack cannon".
+- A colour pot that leaves a poor next red (next-ball cost 2.5 or more: long, in the pack, thin) also runs the wide
+  search (more spins and powers, cannons into the pack); the better score wins. The wide search runs at most once.
+- Lookahead candidates: every shot within 1.0 of the best score is kept; the check takes the best ones whose cue balls
+  stop at least 15 cm apart (more different positions checked). 6 x 150 instead of 4 x 100 changed nothing: kept 4 x 100.
+- Break library (owner): yellow, green, brown and blue may move at most 2 cm (371 of 1,200 old breaks moved one more,
+  up to 1.9 m); a red-pottable break must give a natural step-1 red, a natural black after it and a natural red after
+  that; and at most half of the reds (15 reds: 60%) may still be packed. All 1,200 breaks were rebuilt
+  (`npm run breaks`; LEVELS=reds6 for one level). Without the packed rule, 6 reds had 4 RE-RACKs in 131 shots: the
+  natural-chain rule had picked breaks that leave the rest of the pack closed.
+
+| Real rounds, 30 per level | Before 4.7 | After part 1 | **Now** | Target |
+|---|---|---|---|---|
+| 6 reds: natural / exhibition | 65% / 22% | 71% / 7% | **85% / 4%** | 90% / 2% |
+| 10 reds: natural / exhibition | not measured | 81% / 7% (*) | **89% / 1.7%** | 90% / 2% |
+| 15 reds: natural / exhibition | 65% / 26% | 73% / 7% | **83% / 7%** | 90% / 2% |
+| RE-RACK per success shot (6 / 10 / 15) | 0.7% / - / 1.8% | 0 / - / 0 | **0 of 150 / 0 of 178 / 2 of 177** | 1 per 100,000 |
+| Over 2.2 s (6 / 10 / 15, count) | 47 / - / 41 | 19 / - / 17 | 11 / 9 / 17 | - |
+| Solve per SHOOT median / 90% (PC) | about 1 s / 2-3 s | 0.14-0.19 s / 0.6 s | 0.13-0.20 s / 0.4-0.85 s | at once |
+(*) part 1 code with the soft-cannon labels, old library. Results: bench/results/natural-after2.txt.
+Left: 15 reds (cushion-first shots when the pack is still tight late, 2 RE-RACKs); long pots 6-7% on every level.

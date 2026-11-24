@@ -8,7 +8,8 @@ import { CONFIG } from '../config/game.config';
 import { createSim, runUntilStill, strike, type PhysicsConfig } from './physics/sim';
 import { mulberry32 } from './rng';
 import { applyShot, judgeShot, newFrame, type FrameState } from './rules';
-import { nextShotCost, solveFailure, solveSuccess } from './solver';
+import { clusteredReds } from './shotType';
+import { isNaturalShot, nextShotCost, solveFailure, solveSuccess } from './solver';
 import type { TableGeometry } from './table/geometry';
 import type { Ball, Vec2 } from './types';
 
@@ -147,8 +148,12 @@ export function buildBreaks(reds: number, kind: BreakKind, count: number, table:
     }
     const pottable = pottableReds(state, table);
     if (pottable < L.minPottableRedsForRedPottable) continue;
+    // task 4.7: the break must really open the pack (a closed pack later leaves no natural pot, even no pot at all)
+    const packed = clusteredReds(b.after, table.ballRadius).size;
+    if (packed > (L.maxPackedShare[`reds${reds}` as keyof typeof L.maxPackedShare] ?? 1) * reds) continue;
     const ok = solveSuccess(state, 'red', table, now, cfg);
     if (!ok || ok.duration > CONFIG.shot.maxDurationFlex) continue;
+    if (L.requireNaturalChain && !isNaturalShot(ok)) continue; // task 4.7: step 1 itself must look natural
     // lookahead (config solver.lookahead, requireBlackPottableAfterRed): after the step-1 red the black must be pottable
     if (CONFIG.solver.requireBlackPottableAfterRed) {
       const sim = createSim(state.balls, table, cfg);
@@ -160,6 +165,18 @@ export function buildBreaks(reds: number, kind: BreakKind, count: number, table:
         after: sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) }, table);
       const black = solveSuccess(s2, 'black', table, now, cfg);
       if (!black || black.duration > CONFIG.shot.maxDurationFlex) continue;
+      if (L.requireNaturalChain) {
+        // task 4.7: the black is natural and leaves a natural red (the break does not leave the reds locked up)
+        if (!isNaturalShot(black)) continue;
+        const sim3 = createSim(s2.balls, table, cfg);
+        strike(sim3, 'cue', black.dir, black.speed, black.spin);
+        runUntilStill(sim3);
+        const f3 = sim3.events.find((e) => e.type === 'ball');
+        const fh3 = f3 && f3.type === 'ball' ? (f3.a === 'cue' ? f3.b : f3.a) : null;
+        const s3 = applyShot(s2, 'black', { firstHit: fh3, potted: sim3.balls.filter((b) => b.potted).map((b) => b.id),
+          after: sim3.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) }, table);
+        if (s3.phase !== 'red' || !isNaturalShot(solveSuccess(s3, 'red', table, now, cfg))) continue;
+      }
     }
     const miss = solveFailure(state, 'red', 'plainMiss', table, now, cfg);
     if (!miss || miss.fallback) continue;

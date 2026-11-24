@@ -53,7 +53,7 @@ describe('task 4.7: shot labels', () => {
   });
   it('exhibition labels are the exhibition ones', () => {
     for (const t of ['cushionFirst', 'plant', 'double', 'kiss', 'farPocket', 'fluke'] as const) expect(isExhibition(t)).toBe(true);
-    for (const t of ['plain', 'packCannon', 'cannon', 'long'] as const) expect(isExhibition(t)).toBe(false);
+    for (const t of ['plain', 'packCannon', 'softCannon', 'cannon', 'long'] as const) expect(isExhibition(t)).toBe(false);
   });
 });
 

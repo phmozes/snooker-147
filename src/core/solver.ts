@@ -156,7 +156,10 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   pairs.sort((a, b) => a.score - b.score);
 
   let best: SolvedShot | null = null;
-  const improving: SolvedShot[] = []; // every new best in turn (the lookahead checks them, best first)
+  // every success within lookaheadMargin of the best score (the lookahead checks the best ones that leave the cue
+  // ball in clearly different places, task 4.7)
+  const cands: SolvedShot[] = [];
+  const M = Sv.lookaheadMargin;
   let tried = 0;
   const half = (aimSamples - 1) / 2;
   // One simulated shot. 'miss' = it did not pot the target (the next aim point across the mouth may);
@@ -167,7 +170,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     const sim = createSim(state.balls, table, cfg);
     strike(sim, 'cue', dir, speed, spin);
     // stop early once this shot is already longer than the best one's score (every cost is >= 0: it cannot win)
-    const limit = Math.ceil((best ? best.score : cfg.maxSimSeconds) / cfg.timestep);
+    const limit = Math.ceil((best ? best.score + M : cfg.maxSimSeconds) / cfg.timestep);
     const tb = sim.balls.find((b) => b.id === ballId)!;
     let closest = Infinity; // how near the aimed ball came to the pocket mouth
     for (let n = 0; n < limit && isMoving(sim); n++) {
@@ -207,11 +210,12 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     const closed = target !== 'red' && state.redsLeft > 1 ? packLeftClosed(after, r) * NAT.packClosedCost : 0;
     const natural = pairCost + powerCost(speed) + typeCost(type) + closed;
     const score = duration + over + dead + (opts.weight ?? Sv.position.weight) * cost + NAT.weight * natural;
-    if (best && score >= best.score) return 'done';
+    if (best && score >= best.score + M) return 'done';
     const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
-    best = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed, spin,
-      duration, computeMs: 0, tried: 0, score, nextCost: nexts.length ? cost : null, cueEnd: { ...cueEnd }, type, natural };
-    improving.push(best);
+    const shot: SolvedShot = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed,
+      spin, duration, computeMs: 0, tried: 0, score, nextCost: nexts.length ? cost : null, cueEnd: { ...cueEnd }, type, natural };
+    cands.push(shot);
+    if (!best || score < best.score) best = shot;
     return 'done';
   };
   // Order (task 4.7): for each pot, each power and spin, the aim points across the mouth are tried only until one
@@ -253,7 +257,11 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   // shot needed). The best candidates are checked in order by really solving the next shot from where they leave the balls
   // (small budget, first success found; after a red: black, else pink, else blue). If none passes, the best is kept.
   if (best && nexts.length && (opts.lookahead ?? Sv.lookahead > 0)) {
-    const order = [...improving].sort((a, b) => a.score - b.score).slice(0, Sv.lookaheadCandidates);
+    const order: SolvedShot[] = [];
+    for (const c of cands.filter((x) => x.score < best!.score + M).sort((a, b) => a.score - b.score)) {
+      if (order.length >= Sv.lookaheadCandidates) break;
+      if (order.every((o) => Math.hypot(o.cueEnd.x - c.cueEnd.x, o.cueEnd.y - c.cueEnd.y) >= Sv.lookaheadSpread)) order.push(c);
+    }
     for (const c of order) {
       tried++; // simulating where this candidate leaves the balls is one more shot
       const sim = createSim(state.balls, table, cfg);
@@ -432,10 +440,17 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
     tried += i.tried;
     return s;
   };
-  const normal = pre ? pre.normal : run(Sv.shotBudget, {});
+  let normal = pre ? pre.normal : run(Sv.shotBudget, {});
+  let wideDone: SolvedShot | null | undefined; // the wide search runs at most once per decision (shot cap)
+  // task 4.7: a colour pot that leaves a poor next red (long, in the pack): the wide search (more spins and powers,
+  // cannons into the pack) looks for better position; the better score wins
+  if (good(normal) && target !== 'red' && state.redsLeft > 0 && (normal!.nextCost ?? 0) >= NAT.poorNextCost) {
+    const w = (wideDone = run(Sv.wide.shotBudget, { wide: true }));
+    if (good(w) && w!.duration <= flex && w!.score < normal!.score) normal = w;
+  }
   if (good(normal) && normal!.duration <= CONFIG.shot.maxDuration) return out(normal, 'normal', null);
   if (good(normal) && normal!.duration <= flex) return out(normal, 'longerDuration', 'longerDuration');
-  const wide = run(Sv.wide.shotBudget, { wide: true });
+  const wide = wideDone !== undefined ? wideDone : run(Sv.wide.shotBudget, { wide: true });
   if (good(wide) && wide!.duration <= flex) return out(wide, 'wideSearch', 'wideSearch');
   const found = [normal, wide].filter((x): x is SolvedShot => x !== null);
   // prefer a shot that keeps the next step solvable, then the shortest

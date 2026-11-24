@@ -50,3 +50,18 @@ I replay listed shots with `SHOTS="reds6-123:4" npx vitest run bench/replay-shot
 **Numbers:** docs/SOLVER.md "Task 4.7". Natural 65% -> 71-73% (target 90%: NOT reached), exhibition 22-26% -> 7%
 (target 2%: not reached), RE-RACK 0.7-1.8% -> 0 in 338 success shots, solve time median about 1 s -> 0.14-0.19 s.
 **Open:** reds still packed after the black (step 3/5) and long pots after a colour. Next: a planned pack-cannon search.
+
+## 4. Flag button, break library, task 4.7 second part
+**Flag (developer only):** top-left corner of the table area. One tap marks the last shot played; it is appended to
+docs/WEIRD-SHOTS.md on the PC (dev server endpoint in vite.config.ts) and kept on the phone as a backup.
+**Your two marked shots (replayed: same shots, 3.43 s and 1.78 s):**
+- reds6-1145075499 step 9: two reds left by the pink, the pink between the cue ball and both: no direct pot at all.
+  The flex chain's last step before RE-RACK (exhibition search) played a cushion-first. The real fault was step 8:
+  the colour left the cue ball behind the pink.
+- reds6-2988766261 step 3: after the black the cue ball stopped by the blue, the reds still in two tight groups: every
+  direct pot blocked or too thin, so again the exhibition step. Fault: the break left the reds packed and the black
+  did not open them. Now: breaks must open the pack, and a colour that leaves a poor red runs the pack search.
+**Break library:** 371 of 1,200 breaks moved a baulk colour or the blue more than 2 cm (up to 1.9 m). All 1,200 were
+rebuilt with three rules (colours still, natural step 1 + black + next red, pack opened).
+**Numbers per level:** docs/SOLVER.md "second part". 10 reds reaches the exhibition target (1.7%) and nearly the
+natural one (89%); 6 reds 85% / 4%; 15 reds 83% / 7% with 2 RE-RACKs in 177 shots. Targets not fully reached.

@@ -118,7 +118,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.7',             // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.7b',            // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -174,7 +174,9 @@ export const CONFIG = {
       farPocketFrom: 1.2,        // m: a pot this far into a pocket ...
       farPocketMargin: 0.6,      // ... when another pocket was this much nearer at a comfortable angle = far pocket
       doubleFrom: 0.3,           // m: a cushion touch further than this from the pocket it drops into = a double
+      softCannonSpeed: 0.8,      // m/s: the cue ball touching reds after a red pot at most this fast = soft cannon (natural)
       cannonCost: 1.5, longCost: 2.0, exhibitionCost: 6,
+      poorNextCost: 2.5,         // after a colour: a next red this hard (long, touching, thin) -> also run the wide search
       touchGap: 0.01,            // m: balls closer than 2r + this touch (position: a touching red is a poor next ball)
       touchingCost: 2.5,         // ... it costs this much more as the next ball (open the pack instead)
       pathMargin: 0.02,          // m: position: the next ball's paths must clear other balls by this much
@@ -189,6 +191,8 @@ export const CONFIG = {
     },
     // task 4.7: exhibition search (cushion-first, plants, blocked pairs; wide grid), last resort before the spray
     exhibition: { shotBudget: 1000 },
+    lookaheadMargin: 1.0,        // task 4.7: shots within this score of the best are kept as lookahead candidates
+    lookaheadSpread: 0.15,       // m: ... and checked only if their cue ball stops this far from the ones already checked
     lookaheadCandidates: 4,      // how many of the best shots are checked (best first)
     lookaheadShots: 100,         // shot budget for solving the next step in that check (per colour tried after a red)
     requireBlackPottableAfterRed: true,
@@ -256,6 +260,8 @@ export const CONFIG = {
     // owner 2026-11-24: a break may move these colours at most this far (m) from their spots
     stillColours: ['yellow', 'green', 'brown', 'blue'] as const,
     maxColourMove: 0.02,
+    requireNaturalChain: true,
+    maxPackedShare: { reds6: 0.5, reds10: 0.5, reds15: 0.6 }, // at most this share of the reds still packed after the break   // task 4.7: step-1 red, the black after it and the next red all natural
   },
 
   // ---------------- COLOUR CHOICE ----------------

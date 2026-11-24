@@ -16,7 +16,7 @@ it('natural shots in real rounds', () => {
   const n = Number(process.env.N ?? 30);
   const json: Record<string, unknown> = {};
   for (const level of (process.env.LEVELS ?? 'reds6,reds15').split(',') as LevelId[]) {
-    const lib = JSON.parse(readFileSync(`public/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
+    const lib = JSON.parse(readFileSync(`${process.env.LIB_DIR ?? 'public'}/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
     const provider = createPhysicsProvider(table, { [level]: lib });
     const types: Record<string, number> = {};
     const fails: Record<string, number> = {};
@@ -57,7 +57,7 @@ it('natural shots in real rounds', () => {
       natural: share((t) => NATURAL_TYPES.includes(t as ShotType)), exhibition: share((t) => isExhibition(t as ShotType)),
       types, fails, colours, median: med(durs), within15: within(durs), over22: durs.filter((d) => d > 2.2).length,
       flex: provider.log.reduce((m, e) => ({ ...m, [e.level]: (m[e.level] ?? 0) + 1 }), {} as Record<string, number>),
-      examples: provider.log.filter((e) => e.level === 'exhibition' || e.level === 'spray').slice(0, 12).map((e) => `${e.roundCode}:${e.step}`).join(','),
+      examples: provider.log.filter((e) => e.level === 'exhibition' || e.level === 'spray' || e.level === 'reRack').slice(0, 12).map((e) => `${e.roundCode}:${e.step}${e.level === 'reRack' ? 'R' : ''}`).join(','),
       blackMedian: med(blackDurs), fullPower: speeds.filter((v) => v > 0.85 * CONFIG.physics.maxCueSpeed).length,
       solveMsMedian: Math.round(med(ms)), solveMsP90: Math.round(pct(ms, 0.9)), solveMsMax: Math.round(Math.max(...ms)),
     };

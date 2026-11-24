@@ -51,7 +51,8 @@ let lastShot = '—';
 /** The last shot played, for "Mark this shot as weird" (task 4.7). */
 let lastInfo: { code: string; step: number; type: string; target: string; outcome: string; length: number } | null = null;
 const TYPE_TEXT: Record<string, string> = {
-  plain: 'plain pot', packCannon: 'pot with cannon into the pack', cannon: 'pot with cannon', long: 'long pot',
+  plain: 'plain pot', packCannon: 'pot with cannon into the pack', softCannon: 'pot with soft cannon (planned)',
+  cannon: 'pot with hard cannon (accidental)', long: 'long pot',
   cushionFirst: 'cushion-first', plant: 'plant', double: 'double', kiss: 'kiss', farPocket: 'far pocket', fluke: 'fluke',
   attempt: 'attempt that misses', softFoul: 'fallback: soft foul', tap: 'fallback: gentle tap', library: 'from the library',
 };

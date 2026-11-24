@@ -12,7 +12,8 @@ export type ShotType =
   // success shots
   | 'plain' // direct pot, nothing else touched by the cue ball (or only after the pot... see cannon)
   | 'packCannon' // a colour pot where the cue ball then runs into the reds (planned: opens the pack)
-  | 'cannon' // the cue ball touches other balls after the pot (not planned)
+  | 'softCannon' // after the pot the cue ball runs gently into reds (heading to the pack area anyway): natural
+  | 'cannon' // after the pot the cue ball hits other balls hard, or a colour: accidental
   | 'long' // a long pot (far from the cue ball and/or the pocket)
   | 'cushionFirst' | 'plant' | 'double' | 'kiss' | 'farPocket' | 'fluke' // exhibition shots
   // failure shots
@@ -20,7 +21,7 @@ export type ShotType =
   | 'softFoul' | 'tap' // RULES D.2 fallbacks
   | 'library'; // step 1, from the break-off library
 
-export const NATURAL_TYPES: readonly ShotType[] = ['plain', 'packCannon'];
+export const NATURAL_TYPES: readonly ShotType[] = ['plain', 'packCannon', 'softCannon'];
 export const EXHIBITION_TYPES: readonly ShotType[] = ['cushionFirst', 'plant', 'double', 'kiss', 'farPocket', 'fluke'];
 export const isExhibition = (t: ShotType) => EXHIBITION_TYPES.includes(t);
 
@@ -110,19 +111,21 @@ export function classifySuccess(f: ShotFacts): ShotType {
     if (dA + dP > N.longFrom) return 'long';
   }
   // the cue ball touching other balls after its first contact
-  const cannoned = events.filter((e) => e.type === 'ball' && e.t > tFirst && (e.a === 'cue' || e.b === 'cue'))
-    .map((e) => (e.type === 'ball' ? (e.a === 'cue' ? e.b : e.a) : ''))
-    .filter((id) => id !== potted);
-  if (cannoned.length) {
-    const kinds = cannoned.map((id) => f.state.find((b) => b.id === id)?.kind);
-    return f.target !== 'red' && kinds.every((k) => k === 'red') ? 'packCannon' : 'cannon';
+  const hits = events.filter((e): e is Extract<SimEvent, { type: 'ball' }> => e.type === 'ball' && e.t > tFirst &&
+    (e.a === 'cue' || e.b === 'cue') && (e.a === 'cue' ? e.b : e.a) !== potted);
+  if (hits.length) {
+    const kinds = hits.map((e) => f.state.find((b) => b.id === (e.a === 'cue' ? e.b : e.a))?.kind);
+    const allReds = kinds.every((k) => k === 'red');
+    if (f.target !== 'red' && allReds) return 'packCannon'; // a colour pot that opens the pack (planned)
+    // owner 2026-11-24: a soft contact with reds after potting is natural; a hard one, or a colour, is accidental
+    return allReds && hits.every((e) => e.speed <= N.softCannonSpeed) ? 'softCannon' : 'cannon';
   }
   return 'plain';
 }
 
 /** Extra naturalness cost of a shot type (0 for the natural ones). */
 export const typeCost = (t: ShotType): number =>
-  t === 'plain' || t === 'packCannon' ? 0 : t === 'cannon' ? N.cannonCost : t === 'long' ? N.longCost : N.exhibitionCost;
+  t === 'plain' || t === 'packCannon' || t === 'softCannon' ? 0 : t === 'cannon' ? N.cannonCost : t === 'long' ? N.longCost : N.exhibitionCost;
 
 /**
  * After the shot: are reds left only in the pack? (a natural player opens the pack before the loose reds run out)
