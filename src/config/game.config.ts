@@ -53,18 +53,21 @@ export const CONFIG = {
     blackFromTop: 0.324,
     // pink spot = midway between blue (centre) and the top cushion, so it is computed, not set
     // Pockets. Spots (yellow, green, brown, blue, pink, black) are computed from the numbers above.
+    // Each jaw is a ROUNDED cushion end: a circular arc that starts tangent to the cushion face and curves
+    // into the pocket. mouth = narrowest gap between the two arcs. Radii are first guesses from the reference
+    // photos (official template sizes are not published); tuned in task 1.3.
     corner: {
-      mouth: 0.086,              // distance between the two jaw points
-      jawLength: 0.055,          // length of each jaw cushion going into the pocket
-      jawNarrowingDeg: 4,        // 0 = jaws parallel; >0 = pocket gets narrower inside (more rattles)
-      captureDepth: 0.065,       // capture circle centre, measured from the mouth line into the pocket
+      mouth: 0.086,              // narrowest gap between the two jaw arcs
+      jawRadius: 0.035,          // corner noses are tighter (photo pocket4)
+      jawSweepDeg: 90,           // how far the arc curves round from the cushion face (narrowest point is at 45)
+      captureDepth: 0.060,       // capture circle centre, measured from the narrowest gap into the pocket
       captureRadius: 0.040,      // ball centre inside this circle = potted (tuned in task 1.3)
     },
     middle: {
       mouth: 0.105,
-      jawLength: 0.040,
-      jawNarrowingDeg: 8,
-      captureDepth: 0.050,
+      jawRadius: 0.055,          // middle noses are big and round (photos pocket2, pocket3)
+      jawSweepDeg: 120,          // narrowest point is at 90
+      captureDepth: 0.035,
       captureRadius: 0.045,
     },
   },

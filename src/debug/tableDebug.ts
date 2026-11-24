@@ -1,7 +1,7 @@
 // Development-only 2D view of the table geometry and racks. Plain canvas, no Three.js.
 
 import { CONFIG } from '../config/game.config';
-import { buildTable, type PocketId } from '../core/table/geometry';
+import { arcPoints, buildTable, type JawArc, type PocketId } from '../core/table/geometry';
 import { checkRack, rackBalls } from '../core/table/rack';
 import { dist, type BallKind, type Vec2 } from '../core/types';
 
@@ -22,6 +22,16 @@ const state = {
   capture: true,
   labels: true,
 };
+
+const jawsOf = (id: PocketId) => table.jaws.filter((j) => j.pocket === id) as [JawArc, JawArc];
+/** Angle of the narrowest point, written so it lies between start and start + sweep (for drawing). */
+function narrowestAngle(j: JawArc): number {
+  const a = Math.atan2(j.narrowestPoint.y - j.centre.y, j.narrowestPoint.x - j.centre.x);
+  let d = (a - j.start) % (2 * Math.PI);
+  if (d > Math.PI) d -= 2 * Math.PI;
+  if (d < -Math.PI) d += 2 * Math.PI;
+  return j.start + d;
+}
 
 // ---- world -> screen ----
 let scale = 1;
@@ -77,20 +87,36 @@ function draw() {
   setView();
   const hw = table.halfWidth;
   const hl = table.halfLength;
-  const rim = 0.09;
+  const rim = 0.17;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // wood, cloth
   poly([{ x: -hw - rim, y: -hl - rim }, { x: hw + rim, y: -hl - rim }, { x: hw + rim, y: hl + rim }, { x: -hw - rim, y: hl + rim }], '#5b3a22');
   poly([{ x: -hw, y: -hl }, { x: hw, y: -hl }, { x: hw, y: hl }, { x: -hw, y: hl }], '#1f7a4d');
 
-  // pockets: wood triangle behind corner mouths, then the dark throat between the jaws
+  // pockets: wood behind the corner, cloth running into the mouth between the rounded jaws,
+  // then the dark hole from the narrowest gap inward
   for (const p of table.pockets) {
-    const [j1, j2] = table.segments.filter((s) => s.pocket === p.id);
-    if (p.kind === 'corner') poly([p.mouthA, { x: Math.sign(p.inward.x) * hw, y: Math.sign(p.inward.y) * hl }, p.mouthB], '#5b3a22');
-    poly([j1!.a, j1!.b, j2!.b, j2!.a], '#060808');
+    const [j1, j2] = jawsOf(p.id);
+    const n1 = narrowestAngle(j1);
+    const n2 = narrowestAngle(j2);
+    if (p.kind === 'corner') {
+      poly([j1.tangentPoint, { x: Math.sign(p.inward.x) * hw, y: Math.sign(p.inward.y) * hl }, j2.tangentPoint], '#5b3a22');
+    }
+    poly([...arcPoints(j1, j1.start, n1), ...arcPoints(j2, n2, j2.start)], '#1f7a4d');
+    // hole: from the narrowest gap, along both jaws, wrapped round the far side of the capture circle
+    const side = { x: -p.inward.y, y: p.inward.x };
+    const s1 = Math.sign((j1.narrowestPoint.x - p.mouthMid.x) * side.x + (j1.narrowestPoint.y - p.mouthMid.y) * side.y);
+    const R = p.captureRadius;
+    const c = p.captureCentre;
+    const far = [s1, 0.7 * s1, 0, -0.7 * s1, -s1].map((k) => {
+      const back = Math.sqrt(Math.max(0, 1 - k * k));
+      return { x: c.x + R * (side.x * k + p.inward.x * back), y: c.y + R * (side.y * k + p.inward.y * back) };
+    });
+    poly([...arcPoints(j1, n1, j1.start + j1.sweep), ...far, ...arcPoints(j2, j2.start + j2.sweep, n2)], '#060808');
     circle(p.captureCentre, p.captureRadius, '#060808');
     if (state.capture) circle(p.captureCentre, p.captureRadius, null, '#56ccf2', true);
+    if (state.view !== 'table') line(p.mouthA, p.mouthB, 'rgba(255,255,255,0.6)', 1); // the mouth width
   }
 
   // baulk line and D
@@ -101,8 +127,12 @@ function draw() {
   ctx.lineWidth = px(1);
   ctx.stroke();
 
-  // cushions and jaws
-  for (const s of table.segments) line(s.a, s.b, s.kind === 'jaw' ? '#f2994a' : '#e8d9a8', 2.5);
+  // straight cushions (cream) and rounded jaws (orange)
+  for (const s of table.cushions) line(s.a, s.b, '#e8d9a8', 2.5);
+  for (const j of table.jaws) {
+    const pts = arcPoints(j, j.start, j.start + j.sweep, 48);
+    for (let i = 1; i < pts.length; i++) line(pts[i - 1]!, pts[i]!, '#f2994a', 2.5);
+  }
 
   // spots
   for (const p of Object.values(table.spots)) {
@@ -142,11 +172,11 @@ function showInfo() {
     `Cue ball in the D:  ${c.cueInD ? 'yes' : 'no'}  ${okText(c.cueInD)}`,
     `Smallest gap between balls: ${mm(c.minGap)}`,
     ``,
-    `Pocket   mouth -> inner end of jaws`,
+    `Pocket       mouth     jaw radius`,
   ];
   for (const p of table.pockets) {
-    const [j1, j2] = table.segments.filter((s) => s.pocket === p.id);
-    lines.push(`${p.id.padEnd(12)} ${mm(dist(p.mouthA, p.mouthB))} -> ${mm(dist(j1!.b, j2!.b))}`);
+    const [j1] = jawsOf(p.id);
+    lines.push(`${p.id.padEnd(12)} ${mm(dist(p.mouthA, p.mouthB))}  ${mm(j1.radius)}`);
   }
   document.getElementById('info')!.innerHTML = lines.join('\n');
 }

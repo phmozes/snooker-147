@@ -1,11 +1,12 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review task 1.1: `npm run dev`, open http://localhost:5173/debug.html (levels, pocket zooms); `npm test`.
-- Decide: do the rest of task 0.1 (ladder calculator + ladder tests) next, or go on to 1.2?
+- Review rounded jaws (task 1.1 fix): `npm run dev`, open the address the terminal prints + `/debug.html`.
+- Then decide: task 0.1 (ladder calculator + tests) or 1.2 next.
 
 ## Claude's turn
-- Wait for approval of task 1.1.
+- Wait for approval of task 1.1. Do not start 0.1 until told.
+- Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others
 - Nothing.
