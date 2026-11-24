@@ -59,6 +59,39 @@ const TYPE_TEXT: Record<string, string> = {
 const WEIRD_KEY = 'snooker147.weird';
 let weird: string[] = (() => { try { return JSON.parse(localStorage.getItem(WEIRD_KEY) ?? '[]') as string[]; } catch { return []; } })();
 const saveWeird = () => { try { localStorage.setItem(WEIRD_KEY, JSON.stringify(weird)); } catch { /* private window: list lives until reload */ } };
+
+// ---- the flag button (developer only, owner 2026-11-24): one tap marks the LAST shot played. The mark is sent to
+// the dev server, which appends it to docs/WEIRD-SHOTS.md; the list in this browser is the backup. ----
+let toastTimer = 0;
+function toast(text: string) {
+  const el = $('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => el.classList.remove('show'), 1500);
+}
+const renderFlag = () => { $('flagCount').textContent = weird.length ? String(weird.length) : ''; };
+async function markWeird() {
+  const i = lastInfo;
+  if (!i) { toast('no shot played yet'); return; }
+  const line = `${i.code} step ${i.step} · ${i.target} ${i.outcome} · ${i.type} · ${i.length.toFixed(2)} s · solver ${CONFIG.solver.version}`;
+  if (weird[weird.length - 1] === line) { toast('this shot is already marked'); return; }
+  weird.push(line);
+  saveWeird();
+  renderFlag();
+  let sent = false;
+  try {
+    const res = await fetch('/__dev/weird', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code: i.code, step: i.step, ball: i.target, outcome: i.outcome, type: i.type,
+        length: i.length.toFixed(2), level: i.code.split('-')[0], solver: CONFIG.solver.version }) });
+    sent = res.ok;
+  } catch { /* no dev server: kept on the phone */ }
+  toast(sent ? `marked: step ${i.step} (${weird.length})` : `marked on the phone only (${weird.length})`);
+}
+if (import.meta.env.DEV) {
+  $('flag').style.display = 'flex';
+  $('flag').onclick = () => { void markWeird(); };
+}
 const fallbacks: FallbackLogEntry[] = [];
 const library: BreakLibrary = {};
 const presolver = createPresolver((entries) => {
@@ -439,18 +472,13 @@ function renderDev() {
   }, locked));
   $('devShot').textContent = lastShot;
   // task 4.7: mark the last shot as weird; the list can be copied and sent to Claude (bench/replay-shot.test.ts)
-  $('devWeird').appendChild(opt('Mark this shot as weird', false, () => {
-    const i = lastInfo!;
-    const line = `${i.code} step ${i.step} · ${i.target} ${i.outcome} · ${i.type} · ${i.length.toFixed(2)} s · solver ${CONFIG.solver.version}`;
-    if (weird[weird.length - 1] !== line) { weird.push(line); saveWeird(); }
-    render();
-  }, !lastInfo || busy !== null));
+  $('devWeird').appendChild(opt('Mark this shot as weird', false, () => { void markWeird().then(render); }, !lastInfo));
   $('devWeird').appendChild(opt(`Copy list (${weird.length})`, false, () => {
     if (!navigator.clipboard) { showWeirdList(); return; }
     navigator.clipboard.writeText(weird.join('\n')).then(() => { $('devWeirdList').textContent = `Copied ${weird.length} lines.`; },
       () => { showWeirdList(); });
   }, !weird.length));
-  $('devWeird').appendChild(opt('Clear list', false, () => { weird = []; saveWeird(); render(); }, !weird.length));
+  $('devWeird').appendChild(opt('Clear list', false, () => { weird = []; saveWeird(); renderFlag(); render(); }, !weird.length));
   for (const s of CONFIG.view3d.ballScaleOptions) {
     $('devScale').appendChild(opt(`${s}x`, ballScale === s, () => { ballScale = s; view3d?.setBallScale(s); render(); draw3d(); }));
   }
@@ -484,6 +512,7 @@ $('menu').onclick = () => { $('dev').classList.toggle('open'); renderDev(); };
 (window as unknown as { __game: unknown }).__game = () => ({ round, drawn: rest, ids, busy });
 if (mode === 'live') { const rack = newFrame(level().reds, table).balls; buildView(rack); showBalls(rack); } else setMode(mode);
 render();
+renderFlag();
 window.addEventListener('resize', layout);
 // browser bars showing or hiding change the visible area without always firing a window resize
 window.visualViewport?.addEventListener('resize', layout);

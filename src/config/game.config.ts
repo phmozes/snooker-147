@@ -253,6 +253,9 @@ export const CONFIG = {
     // the opponent's break-off: cue ball in the D, aimed this many ball radii outside the outer red of the pack
     breakShot: { speedMin: 4.5, speedMax: 6.0, offsetMin: 0.6, offsetMax: 2.0, spins: [-0.3, 0, 0.3] },
     escapeSpeeds: [1.5, 2.5, 3.5], // the failed escape from a snooker (step 1)
+    // owner 2026-11-24: a break may move these colours at most this far (m) from their spots
+    stillColours: ['yellow', 'green', 'brown', 'blue'] as const,
+    maxColourMove: 0.02,
   },
 
   // ---------------- COLOUR CHOICE ----------------

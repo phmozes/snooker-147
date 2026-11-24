@@ -57,8 +57,18 @@ function breakAttempt(seed: number, reds: number, table: TableGeometry, cfg: Phy
   const after: Ball[] = sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { x: r2(b.pos.x), y: r2(b.pos.y) } }));
   const firstHit = sim.events.find((e) => e.type === 'ball');
   const hitRedFirst = !!firstHit && firstHit.type === 'ball' && [firstHit.a, firstHit.b].some((id) => id.startsWith('red'));
+  // a real break-off leaves the baulk colours and the blue (almost) where they were
+  const quiet = coloursMovedByBreak(after, table) <= L.maxColourMove;
   return { cueStart: { x: cue.pos.x, y: cue.pos.y }, breakShot: shotOf({ dir, speed, spin, duration }), after,
-    valid: !pottedAny && hitRedFirst };
+    valid: !pottedAny && hitRedFirst && quiet };
+}
+
+/** The largest distance (m) the break moved the yellow, green, brown or blue from its spot (a potted one: Infinity). */
+export function coloursMovedByBreak(after: Ball[], table: TableGeometry): number {
+  return Math.max(...L.stillColours.map((c) => {
+    const b = after.find((x) => x.id === c);
+    return b ? Math.hypot(b.pos.x - table.spots[c].x, b.pos.y - table.spots[c].y) : Infinity;
+  }));
 }
 
 /** Reds with an open straight path and an open pocket from the cue ball (same test as the solver's pair filter). */
