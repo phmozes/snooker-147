@@ -1,9 +1,10 @@
 // Development-only 2D view of the table geometry, racks and ball physics. Plain canvas, no Three.js.
 // Click the table to strike the cue ball toward that point (power slider). Buttons: Break, Reset, Slow motion.
 // Pocket test: roll one ball at a chosen pocket (angle, aim offset, speed) and a full "pot map".
+// Spin: screw / stun / follow for every cue-ball shot; "Straight shot test" hits the cue ball straight at a red.
 
 import { CONFIG } from '../config/game.config';
-import { checkSim, createSim, isMoving, stepSim, strike, type Sim } from '../core/physics/sim';
+import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, stepSim, strike, type Sim } from '../core/physics/sim';
 import { breakAim, pocketRollStart, runPocketRoll, type PocketRoll, type RollOutcome } from '../core/physics/testShots';
 import { arcPoints, buildTable, type JawArc, type PocketId, type TableGeometry } from '../core/table/geometry';
 import { checkRack, rackBalls } from '../core/table/rack';
@@ -34,7 +35,11 @@ const state = {
   labels: true,
   power: CONFIG.dev.debugPowerDefault as number, // share of maxCueSpeed
   slow: false, // play at 1/4 speed
+  spin: 0, // -1 screw ... 0 stun (centre ball) ... +1 follow
+  gap: CONFIG.dev.spinTest.gap as number, // straight shot test: distance between cue ball and red (m)
 };
+// straight shot test: where the cue ball was when it hit the red, and where it ended up (stop or next contact)
+let spinTest: { active: boolean; contact: Vec2 | null; end: Vec2 | null } = { active: false, contact: null, end: null };
 
 // ---- pocket test ----
 const PT = CONFIG.dev.pocketTest;
@@ -55,9 +60,9 @@ const OUTCOME_TEXT: Record<RollOutcome, string> = {
 let sim: Sim = createSim(rackBalls(state.reds, table), table);
 let mouse: Vec2 | null = null;
 const freshShot = () => ({ running: false, start: 0, settledAfter: null as number | null,
-  overlaps: 0, insideCushion: 0, freeSpeed: 0, startSpeed: 0 });
+  overlaps: 0, insideCushion: 0, freeEnergy: 0, startSpeed: 0 });
 let shot = freshShot();
-let speedsBefore: number[] = [];
+let energyBefore: number[] = [];
 const speedOf = (v: Vec2) => Math.hypot(v.x, v.y);
 const cueStart = (): Vec2 => ({ x: CONFIG.rack.cueStart[0], y: CONFIG.rack.cueStart[1] });
 
@@ -66,6 +71,7 @@ function reset() {
   shot = freshShot();
   rollMode = false;
   trail = [];
+  spinTest = { active: false, contact: null, end: null };
 }
 
 function rollAtPocket() {
@@ -76,9 +82,9 @@ function rollAtPocket() {
   if (!start) { sim = createSim([], table); shot = freshShot(); return; }
   sim = createSim([{ id: 'red1', kind: 'red', pos: start.pos }], table);
   rollMode = true;
-  strike(sim, 'red1', start.dir, roll.speed);
+  strike(sim, 'red1', start.dir, roll.speed, naturalRollSpin()); // rolling naturally, as in the pot map
   shot = { ...freshShot(), running: true, start: sim.time, startSpeed: roll.speed };
-  speedsBefore = [roll.speed];
+  energyBefore = sim.balls.map(ballEnergy);
   trail.push({ ...start.pos });
 }
 
@@ -92,7 +98,7 @@ function buildPotMap() {
   potMap = { angles, offsets, cells };
 }
 
-function shoot(direction: Vec2, speed: number) {
+function shoot(direction: Vec2, speed: number, spin = state.spin) {
   if (isMoving(sim)) return;
   const cue = sim.balls.find((b) => b.kind === 'cue');
   if (!cue) return;
@@ -103,15 +109,27 @@ function shoot(direction: Vec2, speed: number) {
     cue.potted = null;
     cue.pos = cueStart();
   }
-  strike(sim, 'cue', direction, speed);
+  strike(sim, 'cue', direction, speed, spin);
   shot = { ...freshShot(), running: true, start: sim.time, startSpeed: speed };
-  speedsBefore = sim.balls.map((b) => speedOf(b.vel));
+  energyBefore = sim.balls.map(ballEnergy);
+}
+
+/** Cue ball and one red on the long axis, `gap` apart; hit straight with the current power and spin. */
+function straightShotTest() {
+  const y0 = CONFIG.dev.spinTest.cueY;
+  sim = createSim([{ id: 'cue', kind: 'cue', pos: { x: 0, y: y0 } }, { id: 'red1', kind: 'red', pos: { x: 0, y: y0 + state.gap } }], table);
+  rollMode = false;
+  lastOutcome = null;
+  trail = [];
+  state.view = 'table';
+  spinTest = { active: true, contact: null, end: null };
+  shoot({ x: 0, y: 1 }, state.power * CONFIG.physics.maxCueSpeed);
 }
 
 function breakOff() {
   reset();
   rollMode = false;
-  shoot(breakAim(table, rackBalls(state.reds, table)), CONFIG.physics.maxCueSpeed);
+  shoot(breakAim(table, rackBalls(state.reds, table)), CONFIG.physics.maxCueSpeed, 0);
 }
 
 /** Run the physics for a number of fixed steps, checking the owner's rules after every step. */
@@ -122,10 +140,20 @@ function advancePhysics(steps: number) {
     shot.overlaps += c.overlaps;
     shot.insideCushion += c.insideCushion;
     sim.balls.forEach((b, i) => {
-      const v = speedOf(b.vel);
-      if (v > (speedsBefore[i] ?? 0) + 1e-12 && !sim.hitLastStep.has(i)) shot.freeSpeed++;
-      speedsBefore[i] = v;
+      const e = ballEnergy(b);
+      if (e > (energyBefore[i] ?? 0) * (1 + 1e-12) + 1e-15 && !sim.hitLastStep.has(i)) shot.freeEnergy++;
+      energyBefore[i] = e;
     });
+    if (spinTest.active && !spinTest.end) {
+      const cue = sim.balls.find((b) => b.kind === 'cue')!;
+      const cueEvents = sim.events.filter((e) => e.a === 'cue' || (e.type === 'ball' && e.b === 'cue'));
+      const first = cueEvents.find((e) => e.type === 'ball');
+      if (first && !spinTest.contact) spinTest.contact = { ...(first.type === 'ball' && first.a === 'cue' ? first.at : cue.pos) };
+      // the cue ball's travel after the hit ends when it stops, drops, or touches something else
+      if (spinTest.contact && (cueEvents.length > 1 || cue.potted || (cue.vel.x === 0 && cue.vel.y === 0 && cue.roll.x === 0 && cue.roll.y === 0))) {
+        spinTest.end = { ...cue.pos };
+      }
+    }
   }
   if (rollMode) {
     const b = sim.balls[0]!;
@@ -321,6 +349,18 @@ function draw() {
   showInfo();
 }
 
+/** Short text: is the ball sliding or rolling, and which way is it spinning? */
+function cueState(b: Sim['balls'][number]): string {
+  const v = speedOf(b.vel);
+  const r = speedOf(b.roll);
+  if (v === 0 && r === 0) return 'still';
+  const slip = Math.hypot(b.vel.x - b.roll.x, b.vel.y - b.roll.y);
+  if (slip < 1e-9) return `rolling at ${v.toFixed(2)} m/s`;
+  const along = v > 0 ? (b.roll.x * b.vel.x + b.roll.y * b.vel.y) / v : r;
+  const spin = Math.abs(along) < 0.05 ? 'no spin (stun)' : along > 0 ? `forward spin ${along.toFixed(2)}` : `back spin ${(-along).toFixed(2)}`;
+  return `sliding at ${v.toFixed(2)} m/s, ${spin}`;
+}
+
 function showInfo() {
   const balls = rackBalls(state.reds, table);
   const c = checkRack(balls, table);
@@ -340,16 +380,26 @@ function showInfo() {
     lastOutcome ? `Result: <b style="color:${OUTCOME_COLOURS[lastOutcome]}">${OUTCOME_TEXT[lastOutcome]}</b>` : status,
     `Jaw contacts: ${sim.events.filter((e) => e.type === 'jaw').length}` +
       (sim.events.some((e) => e.type === 'jaw') ? `  (speed into the jaw: ${sim.events.filter((e) => e.type === 'jaw').map((e) => (e as { speed: number }).speed.toFixed(2)).join(', ')} m/s)` : ''),
-    `Overlaps ${shot.overlaps} ${okText(shot.overlaps === 0)} · inside a cushion ${shot.insideCushion} ${okText(shot.insideCushion === 0)} · free speed ${shot.freeSpeed} ${okText(shot.freeSpeed === 0)}`,
+    `Overlaps ${shot.overlaps} ${okText(shot.overlaps === 0)} · inside a cushion ${shot.insideCushion} ${okText(shot.insideCushion === 0)} · free energy ${shot.freeEnergy} ${okText(shot.freeEnergy === 0)}`,
     ``,
   ] : [];
+  const cueNow = sim.balls.find((b) => b.kind === 'cue' && !b.potted);
+  if (spinTest.active) {
+    const d = spinTest.contact && spinTest.end ? spinTest.end.y - spinTest.contact.y : null;
+    const text = d === null ? (spinTest.contact ? 'cue ball still moving...' : 'not hit yet')
+      : Math.abs(d) < 0.03 ? `stopped dead (${(d * 100).toFixed(0)} cm)`
+      : d > 0 ? `followed through ${(d * 100).toFixed(0)} cm` : `came back ${(-d * 100).toFixed(0)} cm`;
+    lines.push(`<b>Straight shot test</b>`, `Cue ball after hitting the red: <b>${text}</b>`, ``);
+  }
   lines.push(
     `<b>Shot</b>`,
     status,
+    cueNow ? `Cue ball: ${cueState(cueNow)}` : 'Cue ball: off the table',
     `Fastest ball now: ${fastest.toFixed(2)} m/s (hit at ${shot.startSpeed.toFixed(2)})`,
     `Overlapping balls:          ${shot.overlaps}  ${okText(shot.overlaps === 0)}`,
     `Ball inside a cushion:      ${shot.insideCushion}  ${okText(shot.insideCushion === 0)}`,
-    `Speed gained without a hit: ${shot.freeSpeed}  ${okText(shot.freeSpeed === 0)}`,
+    `Energy gained without a hit: ${shot.freeEnergy}  ${okText(shot.freeEnergy === 0)}`,
+    `(energy = moving + spinning; with follow a ball may speed up after a hit, but never gain energy)`,
     `(counted over the whole shot, checked every 1/${Math.round(1 / CONFIG.physics.timestep)} s)`,
     `Smallest gap now: ${sc.minGap === Infinity ? '-' : mm(sc.minGap)}`,
     `Potted: ${potted.length ? potted.join(', ') : 'none'}`,
@@ -395,6 +445,12 @@ const renderers = [
     { label: 'Reset', on: () => false, click: () => { lastOutcome = null; reset(); } },
     { label: 'Slow motion', on: () => state.slow, click: () => { state.slow = !state.slow; } },
   ]),
+  buttons('spins', [
+    { label: 'Screw', on: () => state.spin === -1, click: () => { setSpin(-1); } },
+    { label: 'Stun', on: () => state.spin === 0, click: () => { setSpin(0); } },
+    { label: 'Follow', on: () => state.spin === 1, click: () => { setSpin(1); } },
+    { label: 'Straight shot test', on: () => false, click: straightShotTest },
+  ]),
   buttons('views', [
     { label: 'Whole table', on: () => state.view === 'table', click: () => { state.view = 'table'; } },
     ...table.pockets.map((p) => ({ label: p.id, on: () => state.view === p.id, click: () => { state.view = p.id; } })),
@@ -411,6 +467,16 @@ renderers.push(buttons('ptActions', [
   { label: 'Roll', on: () => false, click: rollAtPocket },
   { label: 'Pot map', on: () => false, click: buildPotMap },
 ]));
+function setSpin(v: number) {
+  state.spin = v;
+  const el = document.getElementById('spin') as HTMLInputElement;
+  el.value = String(Math.round(v * 100));
+  document.getElementById('spinText')!.textContent = spinLabel(v);
+}
+function spinLabel(v: number) {
+  return v === 0 ? 'stun (centre ball)' : v > 0 ? `follow ${Math.round(v * 100)}%` : `screw ${Math.round(-v * 100)}%`;
+}
+
 function renderAll() { renderers.forEach((r) => r()); draw(); drawPotMap(); }
 
 // ---- pocket-test sliders and the pot map ----
@@ -443,6 +509,9 @@ makeSlider('jawCorner', 20, 200, 1, () => Math.round(jawRadius.corner * 1000), (
 makeSlider('jawMiddle', 20, 200, 1, () => Math.round(jawRadius.middle * 1000), (v) => { jawRadius.middle = v / 1000; rebuildTable(); },
   (v) => `${v} mm (config ${mm0(CONFIG.table.middle.jawRadius)}; marks: ${marks(PT.middleJawMarks).join(', ')})`,
   marks(PT.middleJawMarks));
+
+makeSlider('spin', -100, 100, 5, () => Math.round(state.spin * 100), (v) => { state.spin = v / 100; renderAll(); }, (v) => spinLabel(v / 100));
+makeSlider('gap', 15, 150, 5, () => Math.round(state.gap * 100), (v) => { state.gap = v / 100; }, (v) => `${v} cm between cue ball and red`);
 
 const mapCanvas = document.getElementById('potmap') as HTMLCanvasElement;
 const mapCtx = mapCanvas.getContext('2d')!;

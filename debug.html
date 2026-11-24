@@ -26,11 +26,15 @@
 <body>
   <canvas id="c"></canvas>
   <aside>
-    <h1>Table debug (task 1.3: pockets)</h1>
+    <h1>Table debug (task 1.3b: spin)</h1>
     <div><b>Level</b><div class="row" id="levels"></div></div>
     <div><b>Shot</b> <span style="opacity:.7">click the table: the cue ball is hit toward that point</span>
       <div class="row" id="shots"></div>
       <label>Power <input id="power" type="range" min="1" max="100" step="1" /> <span id="powerText"></span></label></div>
+    <div><b>Spin</b> <span style="opacity:.7">for every cue-ball shot</span>
+      <div class="row" id="spins"></div>
+      <label class="sl">Spin <input id="spin" type="range" /> <span id="spinText"></span></label>
+      <label class="sl">Straight shot test: gap <input id="gap" type="range" /> <span id="gapText"></span></label></div>
     <div><b>Pocket test</b> <span style="opacity:.7">roll one red at a pocket</span>
       <div class="row" id="ptPockets"></div>
       <label class="sl">Angle <input id="ptAngle" type="range" /> <span id="ptAngleText"></span></label>

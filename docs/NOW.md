@@ -1,11 +1,11 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review task 1.3 revision 3: corner drop edge 20 mm past the end of the curves (was 51); hole drawn rounded. Approve before 1.3b.
+- Review task 1.3b (spin): debug page, Spin: Screw / Stun / Follow + "Straight shot test". Approve before 1.4.
 - Later: tune jaw bounce (middle pockets are generous on purpose for now).
 
 ## Claude's turn
-- Wait for approval of task 1.3. Next: 1.3b (simple follow/screw spin, split out of 1.3).
+- Wait for approval of task 1.3b. Next: 1.4 (benchmark, friction).
 - Task 1.4: friction slider on the debug page with marked "realistic cloth" and "game" positions; list other ways to keep
   shots short (solver picks quick pots / short cue-ball travel, mild playback speed-up) with a recommendation.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).

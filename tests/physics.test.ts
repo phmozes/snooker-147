@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { checkSim, createSim, isMoving, runUntilStill, stepSim, strike, type Sim } from '../src/core/physics/sim';
+import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, runUntilStill, stepSim, strike, type Sim } from '../src/core/physics/sim';
 import { breakAim } from '../src/core/physics/testShots';
 import { mulberry32 } from '../src/core/rng';
 import { buildTable } from '../src/core/table/geometry';
@@ -14,34 +14,38 @@ const decel = P.rollingFriction * P.gravity;
 const one = (id: string, x: number, y: number): Ball => ({ id, kind: id === 'cue' ? 'cue' : 'red', pos: vec(x, y) });
 const ball = (sim: Sim, id: string) => sim.balls.find((b) => b.id === id)!;
 const speed = (sim: Sim, id: string) => Math.hypot(ball(sim, id).vel.x, ball(sim, id).vel.y);
-const kinetic = (sim: Sim) => sim.balls.reduce((e, b) => e + b.vel.x ** 2 + b.vel.y ** 2, 0);
+const totalEnergy = (sim: Sim) => sim.balls.reduce((e, b) => e + ballEnergy(b), 0);
 
-/** Run a shot to the end, checking the owner's rules after EVERY time step. */
+/**
+ * Run a shot to the end, checking the owner's rules after EVERY time step.
+ * freeEnergy: a ball's energy (moving + spinning) grew without it touching anything. (With spin a ball may
+ * gain SPEED after a hit - follow - but never energy.) energyGain: the whole table's energy grew.
+ */
 function runChecked(sim: Sim) {
-  const problems = { overlaps: 0, insideCushion: 0, freeSpeed: 0, energyGain: 0 };
-  let before = sim.balls.map((b) => Math.hypot(b.vel.x, b.vel.y));
-  let energy = kinetic(sim);
+  const problems = { overlaps: 0, insideCushion: 0, freeEnergy: 0, energyGain: 0 };
+  let before = sim.balls.map(ballEnergy);
+  let energy = totalEnergy(sim);
   const time = runUntilStill(sim, (s) => {
     const c = checkSim(s);
     problems.overlaps += c.overlaps;
     problems.insideCushion += c.insideCushion;
     s.balls.forEach((b, i) => {
-      const v = Math.hypot(b.vel.x, b.vel.y);
-      if (v > before[i]! + 1e-12 && !s.hitLastStep.has(i)) problems.freeSpeed++;
+      if (ballEnergy(b) > before[i]! * (1 + 1e-12) + 1e-15 && !s.hitLastStep.has(i)) problems.freeEnergy++;
     });
-    const e = kinetic(s);
+    const e = totalEnergy(s);
     if (e > energy * (1 + 1e-12) + 1e-15) problems.energyGain++;
     energy = e;
-    before = s.balls.map((b) => Math.hypot(b.vel.x, b.vel.y));
+    before = s.balls.map(ballEnergy);
   });
   return { problems, time };
 }
+const NO_PROBLEMS = { overlaps: 0, insideCushion: 0, freeEnergy: 0, energyGain: 0 };
 
 describe('single ball', () => {
   it('rolls in a straight line, only slows down, and stops where friction says', () => {
     const sim = createSim([one('cue', 0, -1)], table);
     const v0 = 1.5;
-    strike(sim, 'cue', vec(0, 1), v0);
+    strike(sim, 'cue', vec(0, 1), v0, naturalRollSpin()); // rolling from the start: no sliding
     let last = v0;
     while (isMoving(sim)) {
       stepSim(sim);
@@ -83,14 +87,15 @@ describe('single ball', () => {
 describe('two balls', () => {
   it('straight hit: the cue ball almost stops and the object ball takes the speed', () => {
     const sim = createSim([one('cue', 0, -0.5), one('red1', 0, 0)], table);
-    strike(sim, 'cue', vec(0, 1), 2);
+    strike(sim, 'cue', vec(0, 1), 2, naturalRollSpin());
     while (!sim.events.some((e) => e.type === 'ball')) stepSim(sim);
     const e = P.ballBallRestitution;
-    // friction already took one step's worth of speed (dv) off both balls after the hit
-    const dv = decel * P.timestep;
-    const total = speed(sim, 'cue') + speed(sim, 'red1') + 2 * dv;
-    expect((speed(sim, 'red1') + dv) / total).toBeCloseTo((1 + e) / 2, 6);
-    expect((speed(sim, 'cue') + dv) / total).toBeCloseTo((1 - e) / 2, 6);
+    const closing = (sim.events.find((x) => x.type === 'ball') as { speed: number }).speed;
+    // right after the hit both balls slide for one step: the red (no spin) is slowed by sliding friction,
+    // the cue ball (still spinning forward) is pulled forward by it
+    const dv = P.slidingFriction * P.gravity * P.timestep;
+    expect(speed(sim, 'red1')).toBeCloseTo(((1 + e) / 2) * closing - dv, 9);
+    expect(speed(sim, 'cue')).toBeCloseTo(((1 - e) / 2) * closing + dv, 9);
     expect(checkSim(sim).overlaps).toBe(0);
   });
 
@@ -111,7 +116,7 @@ describe('full rack', () => {
     const sim = createSim(balls, table);
     strike(sim, 'cue', breakAim(table, balls), P.maxCueSpeed);
     const { problems, time } = runChecked(sim);
-    expect(problems).toEqual({ overlaps: 0, insideCushion: 0, freeSpeed: 0, energyGain: 0 });
+    expect(problems).toEqual(NO_PROBLEMS);
     expect(isMoving(sim)).toBe(false); // stopped before the safety limit
     expect(time).toBeLessThan(P.maxSimSeconds);
     expect(sim.eventLimitHits).toBe(0);
@@ -120,21 +125,21 @@ describe('full rack', () => {
     expect(moved.length).toBeGreaterThanOrEqual(reds / 4);
   });
 
-  it('100 random shots (seeded): no overlap, no free speed, energy never grows', () => {
+  it('100 random shots with random spin (seeded): no overlap, no free energy, energy never grows', () => {
     const rand = mulberry32(147);
-    const totals = { overlaps: 0, insideCushion: 0, freeSpeed: 0, energyGain: 0 };
+    const totals = { ...NO_PROBLEMS };
     let maxTime = 0;
     for (let n = 0; n < 100; n++) {
       const reds = CONFIG.levels[n % 3]!.reds;
       const sim = createSim(rackBalls(reds, table), table);
       const ang = rand() * 2 * Math.PI;
-      strike(sim, 'cue', vec(Math.cos(ang), Math.sin(ang)), (0.2 + 0.8 * rand()) * P.maxCueSpeed);
+      strike(sim, 'cue', vec(Math.cos(ang), Math.sin(ang)), (0.2 + 0.8 * rand()) * P.maxCueSpeed, 2 * rand() - 1);
       const { problems, time } = runChecked(sim);
       for (const k of Object.keys(totals) as (keyof typeof totals)[]) totals[k] += problems[k];
       maxTime = Math.max(maxTime, time);
       expect(sim.eventLimitHits).toBe(0);
     }
-    expect(totals).toEqual({ overlaps: 0, insideCushion: 0, freeSpeed: 0, energyGain: 0 });
+    expect(totals).toEqual(NO_PROBLEMS);
     expect(maxTime).toBeLessThan(P.maxSimSeconds);
   });
 

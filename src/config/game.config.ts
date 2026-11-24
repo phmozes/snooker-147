@@ -88,7 +88,8 @@ export const CONFIG = {
     maxSimSeconds: 8,            // safety stop for a simulation
     gravity: 9.81,               // m/s^2
     rollingFriction: 0.12,       // deceleration = rollingFriction * gravity (tune so shots last 1.0-1.5 s, task 1.4)
-    slidingFriction: 0.2,        // used while spin converts to rolling
+    slidingFriction: 0.2,        // cloth friction while a ball slides (spin and speed do not match)
+    maxTipOffset: 0.5,           // full follow/screw = cue tip half a ball radius above/below centre
     ballBallRestitution: 0.95,
     cushionRestitution: 0.75,
     jawRestitution: 0.6,         // pocket jaws are softer than the straight cushions (more rattles drop)
@@ -243,6 +244,7 @@ export const CONFIG = {
     breakAimRow: 1,              // debug/test break: aim at the outer red of this triangle row (0 = front)
     breakAimOffset: 1.5,         // ... this many ball radii outside it (picked by a scan, see testShots.ts)
     debugPowerDefault: 0.5,      // debug page power slider start (share of maxCueSpeed)
+    spinTest: { gap: 0.3, cueY: -1.0 }, // debug "straight shot test": cue ball position and distance to the red
     // debug page "pocket test": roll one ball at a pocket
     pocketTest: { distance: 0.2, speed: 1.5, angleMaxDeg: 70, offsetMaxMm: 60, mapAngleStepDeg: 5, mapOffsetStepMm: 3,
                   cornerJawMarks: [0.085, 0.110, 0.135], middleJawMarks: [0.070, 0.080, 0.095, 0.130] },

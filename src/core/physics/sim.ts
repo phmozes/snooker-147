@@ -7,7 +7,12 @@
 //      Because we stop at the exact moment of contact, balls never overlap or pass through anything.
 //   2. A ball whose centre is over the hole (capture circle) drops. The jaws keep going past the
 //      narrowest gap, so a ball that comes in at a bad angle bounces between them (rattle) and may come out.
-//   3. Friction lowers every speed a little. Friction can only slow a ball, never speed it up.
+//   3. Cloth friction. Each ball also carries SPIN, stored as `roll`: the velocity it would have if it were simply
+//      rolling with its current spin. When vel = roll the ball rolls (small rolling friction). Otherwise it slides:
+//      sliding friction pulls vel and roll together (vel changes by 2 units for every 5 units roll changes, as for a
+//      solid ball) until it rolls. That is how follow and screw work: a collision changes vel but not the spin, so a
+//      cue ball that stops dead keeps its spin and is then pulled forward (follow) or back (screw).
+//      A ball can gain SPEED this way after a hit, but its total energy (moving + spinning) only ever goes down.
 
 import { CONFIG } from '../../config/game.config';
 import { arcContainsAngle, type JawArc, type PocketId, type Segment, type TableGeometry } from '../table/geometry';
@@ -18,6 +23,8 @@ export interface PhysicsConfig {
   maxSimSeconds: number;
   gravity: number;
   rollingFriction: number;
+  slidingFriction: number;
+  maxTipOffset: number;
   ballBallRestitution: number;
   cushionRestitution: number;
   jawRestitution: number;
@@ -30,11 +37,12 @@ export interface SimBall {
   kind: BallKind;
   pos: Vec2;
   vel: Vec2;
+  roll: Vec2; // spin, as the velocity a purely rolling ball with this spin would have (= vel when rolling)
   potted: PocketId | null;
 }
 
 export type SimEvent =
-  | { t: number; type: 'ball'; a: string; b: string; speed: number }
+  | { t: number; type: 'ball'; a: string; b: string; speed: number; at: Vec2 } // at = position of ball a
   | { t: number; type: 'cushion'; a: string; speed: number }
   | { t: number; type: 'jaw'; a: string; pocket: PocketId; speed: number; contact: Vec2 } // contact = point on the jaw
   | { t: number; type: 'pot'; a: string; pocket: PocketId; fallback: boolean };
@@ -77,21 +85,32 @@ function wallsOf(table: TableGeometry): Wall[] {
 export function createSim(balls: Ball[], table: TableGeometry, cfg: PhysicsConfig = CONFIG.physics): Sim {
   return {
     table, cfg, time: 0, events: [], hitLastStep: new Set(), eventLimitHits: 0,
-    balls: balls.map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos }, vel: { x: 0, y: 0 }, potted: null })),
+    balls: balls.map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos }, vel: { x: 0, y: 0 }, roll: { x: 0, y: 0 }, potted: null })),
   };
 }
 
-/** Hit a ball: direction (any length) and speed in m/s. */
-export function strike(sim: Sim, ballId: string, direction: Vec2, speed: number): void {
+/**
+ * Hit a ball: direction (any length), speed in m/s, spin from -1 (full screw) through 0 (centre ball = stun)
+ * to +1 (full follow). The cue tip hits `spin * maxTipOffset` ball radii above or below centre, which gives
+ * roll = 2.5 * (tip offset / radius) * speed (solid ball). Natural roll (no sliding at all) is spin = naturalRollSpin().
+ */
+export function strike(sim: Sim, ballId: string, direction: Vec2, speed: number, spin = 0): void {
   const b = sim.balls.find((x) => x.id === ballId);
   if (!b || b.potted) throw new Error(`ball ${ballId} is not on the table`);
   const l = Math.hypot(direction.x, direction.y);
-  if (!(l > 0) || !(speed >= 0)) throw new Error('bad strike');
+  if (!(l > 0) || !(speed >= 0) || !(spin >= -1 && spin <= 1)) throw new Error('bad strike');
   b.vel = { x: (direction.x / l) * speed, y: (direction.y / l) * speed };
+  const k = 2.5 * spin * sim.cfg.maxTipOffset;
+  b.roll = { x: b.vel.x * k, y: b.vel.y * k };
 }
 
+/** The spin value that makes a ball roll naturally from the start (no sliding). */
+export const naturalRollSpin = (cfg: PhysicsConfig = CONFIG.physics) => 1 / (2.5 * cfg.maxTipOffset);
+
 const speedOf = (b: SimBall) => Math.hypot(b.vel.x, b.vel.y);
-const isMovingBall = (b: SimBall) => !b.potted && (b.vel.x !== 0 || b.vel.y !== 0);
+const isMovingBall = (b: SimBall) => !b.potted && (b.vel.x !== 0 || b.vel.y !== 0 || b.roll.x !== 0 || b.roll.y !== 0);
+/** Energy per unit mass (x2): moving part + spinning part (solid ball: spin energy = 2/5 of roll^2). */
+export const ballEnergy = (b: SimBall) => b.vel.x ** 2 + b.vel.y ** 2 + 0.4 * (b.roll.x ** 2 + b.roll.y ** 2);
 export const isMoving = (sim: Sim) => sim.balls.some(isMovingBall);
 
 const APPROACH_EPS = 1e-12;
@@ -167,11 +186,16 @@ function advance(sim: Sim, t: number) {
   }
 }
 
-/** Bounce off a fixed surface with unit normal n (pointing toward the ball). */
+/**
+ * Bounce off a fixed surface with unit normal n (pointing toward the ball). Simple model: the spin's component
+ * toward the cushion is turned round the same way as the velocity's, so a rolling ball still rolls afterwards.
+ */
 function bounceOff(b: SimBall, nx: number, ny: number, e: number): number {
   const vn = b.vel.x * nx + b.vel.y * ny;
   b.vel.x -= (1 + e) * vn * nx;
   b.vel.y -= (1 + e) * vn * ny;
+  const rn = b.roll.x * nx + b.roll.y * ny;
+  if (rn < 0) { b.roll.x -= (1 + e) * rn * nx; b.roll.y -= (1 + e) * rn * ny; }
   return -vn;
 }
 
@@ -188,7 +212,7 @@ function resolve(sim: Sim, hit: Hit, at: number) {
     const k = ((1 + sim.cfg.ballBallRestitution) / 2) * closing; // equal masses
     b.vel.x -= k * nx; b.vel.y -= k * ny;
     o.vel.x += k * nx; o.vel.y += k * ny;
-    sim.events.push({ t: at, type: 'ball', a: b.id, b: o.id, speed: closing });
+    sim.events.push({ t: at, type: 'ball', a: b.id, b: o.id, speed: closing, at: { ...b.pos } }); // spin unchanged
   } else if (hit.kind === 'wall' && hit.wall.seg.pocket) {
     // straight part of a jaw (throat): same as a jaw hit
     const speed = bounceOff(b, hit.wall.normal.x, hit.wall.normal.y, sim.cfg.jawRestitution);
@@ -230,19 +254,43 @@ function checkPots(sim: Sim) {
 }
 function pot(sim: Sim, b: SimBall, pocket: PocketId, fallback: boolean) {
   b.potted = pocket;
-  b.vel = { x: 0, y: 0 };
+  stop(b);
   sim.events.push({ t: sim.time, type: 'pot', a: b.id, pocket, fallback });
 }
 
 function applyFriction(sim: Sim) {
-  const dv = sim.cfg.rollingFriction * sim.cfg.gravity * sim.cfg.timestep;
+  const dt = sim.cfg.timestep;
+  const dvRoll = sim.cfg.rollingFriction * sim.cfg.gravity * dt;
+  const dvSlide = sim.cfg.slidingFriction * sim.cfg.gravity * dt;
   for (const b of sim.balls) {
     if (!isMovingBall(b)) continue;
+    const sx = b.vel.x - b.roll.x;
+    const sy = b.vel.y - b.roll.y;
+    const slip = Math.hypot(sx, sy);
+    if (slip > 3.5 * dvSlide) {
+      // sliding: friction against the slip slows/turns vel and changes the spin 2.5x as fast
+      b.vel.x -= (sx / slip) * dvSlide;
+      b.vel.y -= (sy / slip) * dvSlide;
+      b.roll.x += (sx / slip) * 2.5 * dvSlide;
+      b.roll.y += (sy / slip) * 2.5 * dvSlide;
+      if (Math.hypot(b.vel.x, b.vel.y) <= sim.cfg.stopSpeed && Math.hypot(b.roll.x, b.roll.y) <= sim.cfg.stopSpeed) stop(b);
+      continue;
+    }
+    if (slip > 0) {
+      // slip is used up within this step: the ball now rolls (common velocity = vel - 2/7 slip)
+      b.vel.x -= (2 / 7) * sx;
+      b.vel.y -= (2 / 7) * sy;
+      b.roll = { ...b.vel };
+    }
     const s = speedOf(b);
-    const next = s - dv;
-    if (next <= sim.cfg.stopSpeed) b.vel = { x: 0, y: 0 };
-    else { b.vel.x *= next / s; b.vel.y *= next / s; }
+    const next = s - dvRoll;
+    if (next <= sim.cfg.stopSpeed) stop(b);
+    else { b.vel.x *= next / s; b.vel.y *= next / s; b.roll = { ...b.vel }; }
   }
+}
+function stop(b: SimBall) {
+  b.vel = { x: 0, y: 0 };
+  b.roll = { x: 0, y: 0 };
 }
 
 /** Advance the simulation by one fixed time step. */
