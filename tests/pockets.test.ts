@@ -4,6 +4,7 @@ import { checkSim, createSim, recordShot, strike } from '../src/core/physics/sim
 import { breakAim, runPocketRoll, type PocketRoll, type RollOutcome } from '../src/core/physics/testShots';
 import { buildTable, type PocketId } from '../src/core/table/geometry';
 import { rackBalls } from '../src/core/table/rack';
+import { dist } from '../src/core/types';
 
 const table = buildTable();
 const PT = CONFIG.dev.pocketTest;
@@ -46,6 +47,21 @@ describe('pockets', () => {
       const seen = new Set(potMap(pocket, 2).out.flat());
       for (const o of ['clean', 'rattleIn', 'rattleOut'] as const) expect(seen, `${pocket} ${o}`).toContain(o);
     }
+  });
+
+  it('middle pocket: a ball can sit on the lip at the cushion line; a little further and it drops', () => {
+    const p = table.pockets.find((q) => q.id === 'middleRight')!;
+    const edgeX = table.halfWidth + CONFIG.table.middle.fallSetback;
+    const drops = (x: number) => dist({ x, y: 0 }, p.captureCentre) < p.captureRadius;
+    expect(drops(table.halfWidth)).toBe(false); // ball centre on the cushion line: stays
+    expect(drops(edgeX - 0.001)).toBe(false);
+    expect(drops(edgeX + 0.001)).toBe(true); // past the slate edge: drops
+    // a ball rolled gently straight at the pocket stops on the lip without dropping
+    const travel = 0.2 - CONFIG.table.middle.jawRadius + 0.005; // start -> 5 mm past the cushion line
+    const speed = Math.sqrt(2 * CONFIG.physics.rollingFriction * CONFIG.physics.gravity * travel);
+    const slow = runPocketRoll(table, { pocket: 'middleRight', angleDeg: 0, offset: 0, speed, distance: 0.2 });
+    expect(slow.outcome).toBe('missed');
+    expect(slow.sim!.balls[0]!.pos.x).toBeGreaterThan(table.halfWidth);
   });
 
   it('a ball aimed well wide of the pocket misses it (hits the cushion, no jaw)', () => {

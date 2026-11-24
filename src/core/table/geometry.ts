@@ -4,7 +4,8 @@
 // One pocket = two jaws. Each jaw = a ROUNDED part (circular arc, tangent to the cushion face, turning until it points
 // straight into the pocket: 45 degrees at a corner, 90 at a middle pocket) + a STRAIGHT part (the throat). The two
 // straight parts are parallel, `mouth` apart. The ball drops when its centre passes over the edge of the slate cut:
-// a circle (radius slateCutRadius) whose front edge is `fallSetback` behind the start of the throat.
+// a circle (radius slateCutRadius) on the pocket's centre line. Its front edge is `fallSetback` behind either the
+// start of the throat (corners) or the cushion line (middle pockets) - see `fallFrom`.
 
 import { CONFIG } from '../../config/game.config';
 import { add, dist, normalize, scale, sub, vec, type Colour, type Vec2 } from '../types';
@@ -13,7 +14,8 @@ export interface PocketConfig {
   mouth: number; // width of the throat (between the two straight parallel parts)
   jawRadius: number; // radius of the rounded part
   throatLength: number; // length of the straight parallel parts
-  fallSetback: number; // front edge of the slate cut, measured from the start of the throat into the pocket
+  fallSetback: number; // front edge of the slate cut, measured into the pocket from `fallFrom`
+  fallFrom: 'throat' | 'cushionLine'; // throat = start of the straight parts; cushionLine = where the jaws begin
   slateCutRadius: number; // radius of the slate cut (the hole the ball drops into)
 }
 
@@ -62,6 +64,8 @@ export interface Pocket {
   mouthMid: Vec2;
   inward: Vec2; // unit direction from the mouth into the pocket (along the throat)
   throat: [Segment, Segment]; // the two straight parallel parts
+  cushionLineDepth: number; // line through both jaw tangent points, measured from mouthMid along inward (negative)
+  fallFront: number; // front edge of the slate cut, measured from mouthMid along inward
   captureCentre: Vec2; // centre of the slate cut: ball centre inside this circle = dropped
   captureRadius: number;
 }
@@ -141,10 +145,13 @@ function makePocket(id: PocketId, kind: 'corner' | 'middle', j1: JawArc, j2: Jaw
     b: add(j.narrowestPoint, scale(inward, cfg.throatLength)),
     normal: normalize(sub(mouthMid, j.narrowestPoint)), // toward the middle of the throat
   });
+  const cushionLineDepth = (j1.tangentPoint.x - mouthMid.x) * inward.x + (j1.tangentPoint.y - mouthMid.y) * inward.y;
+  const fallFront = (cfg.fallFrom === 'cushionLine' ? cushionLineDepth : 0) + cfg.fallSetback;
   return {
     id, kind, mouthA: j1.narrowestPoint, mouthB: j2.narrowestPoint, mouthMid, inward,
     throat: [wall(j1), wall(j2)],
-    captureCentre: add(mouthMid, scale(inward, cfg.fallSetback + cfg.slateCutRadius)),
+    cushionLineDepth, fallFront,
+    captureCentre: add(mouthMid, scale(inward, fallFront + cfg.slateCutRadius)),
     captureRadius: cfg.slateCutRadius,
   };
 }

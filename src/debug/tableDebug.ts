@@ -228,11 +228,12 @@ function draw() {
     }
     poly([...arcPoints(j1, j1.start, j1.start + j1.sweep), ...arcPoints(j2, j2.start + j2.sweep, j2.start)], '#1f7a4d');
     const [w1, w2] = p.throat;
-    const throat = [w1.a, w1.b, w2.b, w2.a];
-    poly(throat, '#2a5e45');
+    poly([w1.a, w1.b, w2.b, w2.a], '#2a5e45');
+    // the hole = the part of the slate cut that is not under a jaw: clip to the mouth + throat
+    const open = [...arcPoints(j1, j1.start, j1.start + j1.sweep), w1.b, w2.b, ...arcPoints(j2, j2.start + j2.sweep, j2.start)];
     ctx.save();
     ctx.beginPath();
-    throat.forEach((q, i) => (i ? ctx.lineTo(sx(q), sy(q)) : ctx.moveTo(sx(q), sy(q))));
+    open.forEach((q, i) => (i ? ctx.lineTo(sx(q), sy(q)) : ctx.moveTo(sx(q), sy(q))));
     ctx.closePath();
     ctx.clip();
     circle(p.captureCentre, p.captureRadius, '#060808');
@@ -358,8 +359,8 @@ function showInfo() {
   );
   for (const p of table.pockets) {
     const [j1] = jawsOf(p.id);
-    const fall = dist(p.mouthMid, p.captureCentre) - p.captureRadius;
-    lines.push(`${p.id.padEnd(12)} ${mm(dist(p.mouthA, p.mouthB))}  ${mm(j1.radius)}    ${mm(fall)} into the throat`);
+    const fall = p.kind === 'corner' ? `${mm(p.fallFront)} into the throat` : `${mm(p.fallFront - p.cushionLineDepth)} behind the cushion line`;
+    lines.push(`${p.id.padEnd(12)} ${mm(dist(p.mouthA, p.mouthB))}  ${mm(j1.radius)}    ${fall}`);
   }
   lines.push(`Effective width extra (config mouthExtra): ${mm(CONFIG.table.mouthExtra)}`);
   document.getElementById('info')!.innerHTML = lines.join('\n');
@@ -432,10 +433,10 @@ const rebuildTable = () => { table = makeTable(); potMap = null; reset(); render
 const mm0 = (m: number) => `${Math.round(m * 1000)} mm`;
 const marks = (m: readonly number[]) => m.map((x) => Math.round(x * 1000));
 makeSlider('jawCorner', 20, 200, 1, () => Math.round(jawRadius.corner * 1000), (v) => { jawRadius.corner = v / 1000; rebuildTable(); },
-  (v) => `${v} mm (photo estimate ${mm0(CONFIG.table.corner.jawRadius)}, range 85-135; marks: ${marks(PT.cornerJawMarks).join(', ')})`,
+  (v) => `${v} mm (approved ${mm0(CONFIG.table.corner.jawRadius)}; marks: ${marks(PT.cornerJawMarks).join(', ')})`,
   marks(PT.cornerJawMarks));
 makeSlider('jawMiddle', 20, 200, 1, () => Math.round(jawRadius.middle * 1000), (v) => { jawRadius.middle = v / 1000; rebuildTable(); },
-  (v) => `${v} mm (photo estimate ${mm0(CONFIG.table.middle.jawRadius)}, range 80-130; marks: ${marks(PT.middleJawMarks).join(', ')})`,
+  (v) => `${v} mm (config ${mm0(CONFIG.table.middle.jawRadius)}; marks: ${marks(PT.middleJawMarks).join(', ')})`,
   marks(PT.middleJawMarks));
 
 const mapCanvas = document.getElementById('potmap') as HTMLCanvasElement;

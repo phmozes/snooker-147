@@ -62,13 +62,15 @@ export const CONFIG = {
       jawRadius: 0.110,          // measured from photo pocket4: 110 mm (range 85-135)
       throatLength: 0.140,       // straight parallel part, to the back of the pocket
       fallSetback: 0.051,        // cushion overhangs the slate by ~2 in: slate cut starts 51 mm into the throat
+      fallFrom: 'throat',
       slateCutRadius: 0.089,     // slate cut ~3.5 in radius
     },
     middle: {
       mouth: 0.102,              // 4 in template
-      jawRadius: 0.100,          // measured from photo pocket3: 100 mm (range 80-130, less sure than the corner)
+      jawRadius: 0.080,          // owner's choice: low end of the photo range (pocket3 80-130; pocket2 suggests 70-95)
       throatLength: 0.140,
-      fallSetback: 0.051,
+      fallSetback: 0.012,        // measured from photo pocket2: hole edge ~12 mm behind the cushion line (5-25)
+      fallFrom: 'cushionLine',   // here the "2 in overhang" is sideways: the cut starts near the cushion line
       slateCutRadius: 0.089,
     },
   },
@@ -243,6 +245,6 @@ export const CONFIG = {
     debugPowerDefault: 0.5,      // debug page power slider start (share of maxCueSpeed)
     // debug page "pocket test": roll one ball at a pocket
     pocketTest: { distance: 0.2, speed: 1.5, angleMaxDeg: 70, offsetMaxMm: 60, mapAngleStepDeg: 5, mapOffsetStepMm: 3,
-                  cornerJawMarks: [0.035, 0.085, 0.110, 0.135], middleJawMarks: [0.055, 0.080, 0.100, 0.130] },
+                  cornerJawMarks: [0.085, 0.110, 0.135], middleJawMarks: [0.070, 0.080, 0.095, 0.130] },
   },
 } as const;
