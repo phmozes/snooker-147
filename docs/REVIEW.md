@@ -93,3 +93,5 @@ Phase 2 (6 and 15 reds, 60 rounds each, strict; files bench/results/night/r*.sum
   them). New base (base2): natural 84.4 / 85.7%, exhibition 2.9 / 1.8%, RE-RACK 0.
 - Round 1, cannon and long costs 1.5/2.0 -> 3/3: natural 84.4 / 87.1%, exhibition 1.9 / 1.4%, RE-RACK 0. KEPT (4.8b).
   (Before the locked-reds fix the same change gave 2 RE-RACKs at 6 reds.)
+- Round 2, plan a red two shots ahead (solve black / pink / blue after each candidate red pot, `planReds`):
+  natural 87.9 / 87.8%, exhibition 1.3 / 1.4%, cuts over 50 deg 2.5 / 2.5%, RE-RACK 0. KEPT (4.8c).

@@ -118,7 +118,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.8b',            // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.8c',            // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -185,6 +185,7 @@ export const CONFIG = {
       lookaheadNatural: false,   // the lookahead check accepts only a strictly natural next shot
       autoColourNeedsNextRed: true, // RULES B.3 auto colour: black is 'natural' only if it also leaves a red
       planColours: true,         // task 4.7: on a colour, solve the red after it for each candidate (two shots ahead)
+      planReds: true,            // night round 2: plan a red two shots ahead too (solve black / pink / blue after it)
       planCandidates: 8,         // ... colour shots checked (cap: 8 x (1 + lookaheadShots) stays below the lookahead cap)
       planMargin: 3.0,           // ... within this score of the best colour shot
       planWeight: 1.0,           // ... the red's score counts this much in choosing the colour shot    // naturalness cost of a pot that fails the strict check (cue ball running around ...)

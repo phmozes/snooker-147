@@ -204,7 +204,8 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   // ball in clearly different places, task 4.7)
   const cands: SolvedShot[] = [];
   // a colour while reds remain: plan two shots ahead (more candidates, a wider margin; every candidate is checked)
-  const plan = state.phase === 'colour' && state.redsLeft > 0 && NAT.planColours && nexts.length > 0 && (opts.lookahead ?? Sv.lookahead > 0);
+  const planRed = state.phase === 'red' && NAT.planReds; // night round 2: a red is planned two shots ahead too
+  const plan = ((state.phase === 'colour' && state.redsLeft > 0 && NAT.planColours) || planRed) && nexts.length > 0 && (opts.lookahead ?? Sv.lookahead > 0);
   const M = plan ? NAT.planMargin : Sv.lookaheadMargin;
   let tried = 0;
   const half = (aimSamples - 1) / 2;
@@ -322,7 +323,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     const rescue = !!opts.rescue;
     let rescueOk: SolvedShot | null = null;
     for (const c of cands.filter((x) => rescue || x.score < best!.score + M).sort((a, b) => a.score - b.score)) {
-      if (order.length >= (rescue ? Sv.rescue.candidates : plan ? NAT.planCandidates : Sv.lookaheadCandidates)) break;
+      if (order.length >= (rescue ? Sv.rescue.candidates : plan ? (planRed ? Sv.lookaheadCandidates : NAT.planCandidates) : Sv.lookaheadCandidates)) break;
       if (order.every((o) => Math.hypot(o.cueEnd.x - c.cueEnd.x, o.cueEnd.y - c.cueEnd.y) >= Sv.lookaheadSpread)) order.push(c);
     }
     let planned: { shot: SolvedShot; total: number; natural: boolean } | null = null;
@@ -351,13 +352,16 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       }
       if (plan) {
         // two shots ahead (task 4.7): really solve the red after this colour, with position play, and score the pair
-        const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
-        const s = solveSuccess(nextState, 'red', table, now, cfg, Sv.lookaheadShots, i,
-          { lookahead: false, maxDuration: CONFIG.shot.maxDurationFlex });
-        tried += i.tried;
-        if (!s) continue;
-        const total = c.score + NAT.planWeight * (s.score + (s.whyNot === null ? 0 : NAT.unnaturalPlayCost));
-        if (!planned || total < planned.total) planned = { shot: c, total, natural: s.whyNot === null };
+        // (after a red: each auto colour, black / pink / blue, with its extra position cost)
+        for (const n of planRed ? nexts : [{ kind: 'red' as BallKind, extra: 0 }]) {
+          const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+          const s = solveSuccess(nextState, n.kind, table, now, cfg, Sv.lookaheadShots, i,
+            { lookahead: false, maxDuration: CONFIG.shot.maxDurationFlex });
+          tried += i.tried;
+          if (!s) continue;
+          const total = c.score + NAT.planWeight * (s.score + n.extra + (s.whyNot === null ? 0 : NAT.unnaturalPlayCost));
+          if (!planned || total < planned.total) planned = { shot: c, total, natural: s.whyNot === null };
+        }
         continue;
       }
       let ok = false;
