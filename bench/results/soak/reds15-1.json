@@ -1,0 +1,84 @@
+{
+ "level": "reds15",
+ "shard": 1,
+ "shards": 3,
+ "solver": "4.8d",
+ "rounds": 10,
+ "shots": 62,
+ "success": 53,
+ "reRacks": 0,
+ "problems": 0,
+ "ends": {
+  "failure": 10
+ },
+ "flex": {
+  "longerDuration": 29,
+  "wideSearch": 1,
+  "exhibition": 2
+ },
+ "failureKinds": {
+  "inOff->plainMiss": 1,
+  "plainMiss": 7,
+  "jawRattle": 1
+ },
+ "types": {
+  "packCannon": 8,
+  "plain": 36,
+  "softCannon": 2,
+  "long": 5,
+  "double": 1,
+  "cushionFirst": 1
+ },
+ "colours": {
+  "black": 23,
+  "blue": 8,
+  "pink": 2
+ },
+ "lengths": {
+  "1.50": 13,
+  "1.25": 8,
+  "1.75": 11,
+  "2.00": 7,
+  "1.00": 8,
+  "0.75": 3,
+  "0.50": 2,
+  "3.75": 1
+ },
+ "over35": 1,
+ "maxDuration": 3.9583333333332686,
+ "maxTried": 2512,
+ "cap": 36958,
+ "strategies": [
+  1,
+  2,
+  3,
+  5,
+  8,
+  12,
+  18,
+  36
+ ],
+ "rtp": {
+  "1": 94.5,
+  "2": 79.1,
+  "3": 86.8,
+  "5": 59.2,
+  "8": 39.4,
+  "12": 60.2,
+  "18": 123.6,
+  "36": 0
+ },
+ "startedAt": "2026-11-24T21:51:23.689Z",
+ "updatedAt": "2026-11-24T21:52:53.590Z",
+ "done": false,
+ "pay": {
+  "1": 9.450000000000001,
+  "2": 7.909999999999999,
+  "3": 8.68,
+  "5": 5.92,
+  "8": 3.94,
+  "12": 6.02,
+  "18": 12.36,
+  "36": 0
+ }
+}
