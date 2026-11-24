@@ -1,4 +1,4 @@
-// Builds the results table in docs/RULES-CHECK.md from tests/rules.test.ts. Run: npm run rules-check
+// Builds the results table in docs/RULES-CHECK.md from tests/rules.test.ts and tests/score.test.ts. Run: npm run rules-check
 // Only the part between the RESULTS markers is rewritten; the notes around it are kept.
 import { execSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const out = join(mkdtempSync(join(tmpdir(), 'rules-')), 'r.json');
-try { execSync(`npx vitest run tests/rules.test.ts --reporter=json --outputFile="${out}"`, { stdio: 'ignore' }); } catch { /* failures are reported below */ }
+try { execSync(`npx vitest run tests/rules.test.ts tests/score.test.ts --reporter=json --outputFile="${out}"`, { stdio: 'ignore' }); } catch { /* failures are reported below */ }
 const json = JSON.parse(readFileSync(out, 'utf8'));
 const cases = json.testResults.flatMap((f) => f.assertionResults);
 const groups = new Map();

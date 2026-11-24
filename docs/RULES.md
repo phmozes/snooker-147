@@ -30,15 +30,20 @@
 
 ## C. Snooker rules (simplified: only our player shoots after the break)
 1. **Order:** red, colour, red, colour ... While reds remain, a pot of a red is followed by a pot of one colour.
-2. **Re-spotting:** while reds remain, a potted colour returns to its own spot. If the spot is covered: the highest
-   free spot (black, pink, blue, brown, green, yellow); if none free, the nearest free point on the long centre line
-   above its own spot (toward the top cushion), else below it.
-3. **Last red:** after the last red and its colour, the colours are potted in order yellow, green, brown, blue,
-   pink, black, and they stay down (not re-spotted).
+2. **Re-spotting:** while reds remain, a potted colour returns to its own spot. A spot is covered when a ball placed
+   there would touch another ball. If the spot is covered: the highest free spot (black, pink, blue, brown, green,
+   yellow); if none free, the nearest free point on the straight line from its own spot toward the top cushion
+   (the long centre line for black, pink, blue and brown; a parallel line through their own spot for yellow and
+   green), else on the same line below its own spot.
+3. **Last red:** the colour potted after the last red is re-spotted. After that, the colours are potted in order
+   yellow, green, brown, blue, pink, black, and they stay down (not re-spotted).
 4. **A success shot** pots exactly the target ball and nothing else; the cue ball stays on the table.
-   (Real snooker allows two reds in one shot; we do not, to keep 1 pot = 1 step.)
-5. **Fouls** (all end the round as a failure): cue ball potted (IN-OFF), hitting a wrong ball first (FOUL),
-   missing every ball (escape from a snooker fails = SNOOKERED). A failed shot never pots any ball except the
+   In the red phase any red is the target (hitting one red that knocks another red in is a success).
+   (Real snooker allows two reds in one shot; we do not, to keep 1 pot = 1 step.) A shot that pots two balls, or
+   the target plus the cue ball, is neither a success nor a failure: it is invalid and is never shown.
+5. **Failures and fouls** (all end the round): right ball hit but nothing potted (MISSED), cue ball potted
+   (IN-OFF), hitting a wrong ball first (FOUL), missing every ball. "Missing every ball" is one type; its label is
+   SNOOKERED for the step-1 escape and FOUL for the D.2 fallback. A failed shot never pots any ball except the
    cue ball in an in-off.
 6. **Values:** red 1, yellow 2, green 3, brown 4, blue 5, pink 6, black 7. Opponent score is always 0.
 7. **Points remaining:** red next = 8 x redsLeft + 27; after a red, before its colour = 8 x redsLeft + 27 + 7;

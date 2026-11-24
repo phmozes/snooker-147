@@ -1,13 +1,13 @@
-# Rules check (task 3.1)
+# Rules check (tasks 3.1 and 3.2)
 
-Each case below is one test in `tests/rules.test.ts`, written as a sentence. The first column is the section of
+Each case below is one test in `tests/rules.test.ts` (3.1) or `tests/score.test.ts` (3.2), written as a sentence. The first column is the section of
 `docs/RULES.md` it comes from. The results table is rebuilt by `npm run rules-check` (it runs the tests and rewrites
 the part between the markers). The code is `src/core/rules.ts`.
 
 ## Results
 
 <!-- RESULTS START -->
-Result: **33 of 33 passed** (2026-11-24).
+Result: **56 of 56 passed** (2026-11-24).
 
 ### Reds and colours alternate
 
@@ -65,7 +65,50 @@ Result: **33 of 33 passed** (2026-11-24).
 | C.5 | hitting the right ball but potting nothing is a failure (MISSED) | pass |
 | C.5 | a failed shot never pots an object ball: wrong ball first plus a pot is not playable | pass |
 | C.5 | every failure ends the round, and the round remembers which failure it was | pass |
+| C.5 | no shot can be played after a failure (the round is over) | pass |
+| C.3 | no shot can be played after the table is cleared | pass |
 | C.5 | a shot the solver must never play is refused instead of being applied | pass |
+
+### Score and ball values
+
+| RULES.md | Case | Result |
+|---|---|---|
+| C.6 | a new round starts at 0 points for both players | pass |
+| C.6 | each pot scores its value: red 1, yellow 2, green 3, brown 4, blue 5, pink 6, black 7 | pass |
+| C.6 | the final colours add 2 + 3 + 4 + 5 + 6 + 7 = 27 | pass |
+| C.6 | the opponent score stays 0 for the whole round | pass |
+| C.6 | a failed shot scores nothing | pass |
+
+### Points remaining
+
+| RULES.md | Case | Result |
+|---|---|---|
+| C.7 | before any shot, points remaining = 8 x reds + 27: 75 (6 reds), 107 (10 reds), 147 (15 reds) | pass |
+| C.7 | after a red, before its colour, points remaining = 8 x reds left + 27 + 7 | pass |
+| C.7 | in the final colours, points remaining = the colours still on the table (27, 25, 22, 18, 13, 7, then 0) | pass |
+| C.7 | with black after every red, score + points remaining stays at the starting total after every shot | pass |
+| C.7 | after a failure, points remaining are those of the shot that failed | pass |
+
+### Opponent needs snookers
+
+| RULES.md | Case | Result |
+|---|---|---|
+| C.8 | 6 reds, after 4 reds and 4 blacks: score 32, 43 remaining, snookers are NOT needed | pass |
+| C.8 | 6 reds, after 5 reds and 5 blacks: score 40, 35 remaining, snookers ARE needed | pass |
+| C.8 | 10 reds, after 6 reds and 6 blacks: score 48, 59 remaining, snookers are NOT needed | pass |
+| C.8 | 10 reds, after 7 reds and 7 blacks: score 56, 51 remaining, snookers ARE needed | pass |
+| C.8 | 15 reds, after 9 reds and 9 blacks: score 72, 75 remaining, snookers are NOT needed | pass |
+| C.8 | 15 reds, after 10 reds and 10 blacks: score 80, 67 remaining, snookers ARE needed | pass |
+| C.8 | score equal to points remaining means snookers are NOT needed (it must be strictly greater) | pass |
+
+### Maximum
+
+| RULES.md | Case | Result |
+|---|---|---|
+| C.9 | black after every red, then all the colours, is a maximum: 75 (6 reds), 107 (10 reds), 147 (15 reds) | pass |
+| C.9 | the maximum of every level matches the config (maximumBreak) | pass |
+| C.9 | one pink instead of a black: the table can still be cleared (74 with 6 reds) but it is not a maximum | pass |
+| C.9 | a round that is not finished is not a maximum, even with black after every red so far | pass |
 
 <!-- RESULTS END -->
 
@@ -73,10 +116,6 @@ Result: **33 of 33 passed** (2026-11-24).
 
 | RULES.md | What | When |
 |---|---|---|
-| C.6 | Ball values; opponent score always 0 | Task 3.2 |
-| C.7 | Points remaining | Task 3.2 |
-| C.8 | "Opponent needs snookers" | Task 3.2 |
-| C.9 | Maximum (75 / 107 / 147) | Task 3.2 |
 | C.10 | Balls never leave the table or overlap | Partly covered by the physics tests (`tests/physics.test.ts`), not by the rules tests |
 | A.1, A.3, A.4, A.5 | Bet, SHOOT / CASH OUT, round end, outcome first | Stage 4-5 (A.2, the ladder multipliers, is already tested in `tests/ladder.test.ts`) |
 | B.1 - B.6 | Round flow (break-off, step 1, colour buttons, end messages, pocket-camera cut) | Stage 4-8 |
@@ -84,7 +123,10 @@ Result: **33 of 33 passed** (2026-11-24).
 | E | Rules text in the menu | Later (menu) |
 | F | Not implemented on purpose | Nothing to test |
 
-## Where RULES.md was unclear and Claude decided (owner to confirm)
+## Where RULES.md was unclear and Claude decided
+
+Decisions 1-8 were confirmed by the owner on 2026-11-24 and are now written into RULES.md C.2-C.5.
+Decision 9 (task 3.2) waits for the owner.
 
 1. **C.4 "exactly the target ball", red phase.** Any red counts as the target. Hitting red A so that red B drops is a
    success (allowed in real snooker). The alternative would be: only the red the solver aimed at counts.
@@ -105,3 +147,5 @@ Result: **33 of 33 passed** (2026-11-24).
    as buttons (B.3: black always, up to 3) is decided later by the solver and the screen.
 8. **Hitting the right ball and potting nothing** (plain miss or jaw rattle) is a failure, MISSED. RULES.md lists it in
    A.4 / B.4 rather than in C.5.
+9. **C.7 after a failure.** Points remaining are those of the shot that failed (for example 74 if a colour was due
+   with 5 reds left). RULES.md does not say what they are once the round has ended.

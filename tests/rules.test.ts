@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
 import { createSim, runUntilStill, strike } from '../src/core/physics/sim';
 import { potRedShot } from '../src/core/physics/testShots';
-import { applyShot, judgeShot, legalTargets, newFrame, respotPosition, type FrameState, type ShotResult } from '../src/core/rules';
+import { applyShot, isMaximum, judgeShot, legalTargets, newFrame, opponentNeedsSnookers, pointsRemaining, respotPosition,
+  type FrameState, type ShotResult } from '../src/core/rules';
 import { buildTable } from '../src/core/table/geometry';
 import { COLOURS, dist, type Ball, type Colour } from '../src/core/types';
 
@@ -23,7 +24,7 @@ function finalState(next: Colour): FrameState {
   const i = CONFIG.finalColourOrder.indexOf(next);
   const balls: Ball[] = [{ id: 'cue', kind: 'cue', pos: { x: 0.3, y: -1.2 } },
     ...CONFIG.finalColourOrder.slice(i).map((c) => ({ id: c, kind: c, pos: { ...table.spots[c] } }))];
-  return { phase: 'final', redsLeft: 0, nextColour: next, balls, lastFailure: null };
+  return { ...newFrame(6, table), phase: 'final', redsLeft: 0, nextColour: next, balls };
 }
 const has = (s: FrameState, id: string) => s.balls.some((b) => b.id === id);
 const posOf = (s: FrameState, id: string) => s.balls.find((b) => b.id === id)!.pos;
@@ -181,7 +182,7 @@ describe('Exactly the target ball is potted', () => {
     runUntilStill(sim);
     const first = sim.events.find((e) => e.type === 'ball')!;
     const firstHit = first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
-    const state: FrameState = { phase: 'red', redsLeft: 1, nextColour: null, balls: setup.balls, lastFailure: null };
+    const state: FrameState = { ...newFrame(6, table), redsLeft: 1, balls: setup.balls };
     const result: ShotResult = { firstHit, potted: sim.balls.filter((b) => b.potted).map((b) => b.id),
       after: sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: b.pos })) };
     expect(judgeShot(state, 'red', result)).toEqual({ result: 'success', potted: 'red1' });
@@ -218,6 +219,16 @@ describe('Fouls and failures end the round', () => {
     expect(s.phase).toBe('lost');
     expect(s.lastFailure).toBe('inOff');
     expect(legalTargets(s)).toEqual([]);
+  });
+  it('[C.5] no shot can be played after a failure (the round is over)', () => {
+    const lost = applyShot(newFrame(6, table), 'red', shot(newFrame(6, table), 'pink'), table);
+    expect(lost.phase).toBe('lost');
+    expect(() => applyShot(lost, 'red', shot(lost, 'red1', ['red1']), table)).toThrow();
+  });
+  it('[C.3] no shot can be played after the table is cleared', () => {
+    const won = pot(finalState('black'), 'black', 'black');
+    expect(won.phase).toBe('cleared');
+    expect(() => applyShot(won, 'black', shot(won, null), table)).toThrow();
   });
   it('[C.5] a shot the solver must never play is refused instead of being applied', () => {
     const s = newFrame(6, table);

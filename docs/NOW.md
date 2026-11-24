@@ -1,11 +1,11 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Check task 3.1 (rules state): docs/RULES-CHECK.md. Tasks 1.1-2.2 approved.
+- Check task 3.2 (score, points remaining, snookers, maximum): docs/RULES-CHECK.md; answer decision 9. Tasks 1.1-3.1 approved.
 - Test replay.html on the real phone at home (smoothness, camera feel). Open; does not block the next task.
 
 ## Claude's turn
-- Next: task 3.2 (score, points remaining, snookers, maximum), after the owner's approval and go.
+- Next: stage 4 (task 4.1, success shots in the solver), after the owner's approval and go.
 - Balls drawn at 1.3x (owner, provisional until the real-phone test). If still too small: closer camera, not bigger balls.
 - Pace (provisional, owner 2026-11-24): solver picks the quickest valid shot, cloth friction 0.05. Shot ends when all balls stop.
 - Main camera: preset C (64°, owner 2026-11-24); A and B stay in config to switch later.

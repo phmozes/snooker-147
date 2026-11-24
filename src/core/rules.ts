@@ -1,6 +1,6 @@
-// Snooker rules state (task 3.1): what must be potted next, whether a shot was a success, a failure or a shot the
-// solver must never play, and what the table looks like afterwards (re-spotting). Pure: no rendering, no randomness.
-// Score, points remaining, snookers and the maximum come in task 3.2. Rules: docs/RULES.md section C.
+// Snooker rules state: what must be potted next, whether a shot was a success, a failure or a shot the solver must
+// never play, and what the table looks like afterwards (re-spotting) (task 3.1). Score, points remaining,
+// "opponent needs snookers" and the maximum (task 3.2). Pure: no rendering, no randomness. Rules: docs/RULES.md C.
 
 import { CONFIG } from '../config/game.config';
 import type { TableGeometry } from './table/geometry';
@@ -20,6 +20,10 @@ export interface FrameState {
   nextColour: Colour | null; // only in the final phase
   balls: Ball[]; // every ball on the table (cue ball included)
   lastFailure: FailureType | null;
+  failedIn: Phase | null; // the phase the failed shot was played in (points remaining stay as they were)
+  score: number; // our player's points (RULES C.6)
+  opponentScore: 0; // the opponent never shoots after the break-off (RULES C.6)
+  blackAfterEveryRed: boolean; // still on for a maximum (RULES C.9)
 }
 
 /** Labels from RULES B.4/C.5: noPot = plain miss or jaw rattle (MISSED), inOff = IN-OFF, wrongBallFirst = FOUL,
@@ -39,8 +43,38 @@ export type Verdict =
   | { result: 'invalid'; reason: string }; // the solver must never show such a shot (RULES C.4 / C.5)
 
 export function newFrame(reds: number, table: TableGeometry): FrameState {
-  return { phase: 'red', redsLeft: reds, nextColour: null, balls: rackBalls(reds, table), lastFailure: null };
+  return { phase: 'red', redsLeft: reds, nextColour: null, balls: rackBalls(reds, table), lastFailure: null,
+    failedIn: null, score: 0, opponentScore: 0, blackAfterEveryRed: true };
 }
+
+export const ballValue = (kind: BallKind): number => (kind === 'cue' ? 0 : CONFIG.ballValues[kind]);
+const COLOUR_SUM = CONFIG.finalColourOrder.reduce((s, c) => s + CONFIG.ballValues[c], 0); // 27
+
+/**
+ * RULES C.7, points still available to our player: red next = 8 x redsLeft + 27 (each red with a black, then the
+ * colours); after a red, before its colour = 8 x redsLeft + 27 + 7; final colours = the colours still on the table.
+ */
+export function pointsRemaining(state: FrameState): number {
+  const phase = state.phase === 'lost' ? state.failedIn! : state.phase;
+  const red = CONFIG.ballValues.red;
+  const black = CONFIG.ballValues.black;
+  switch (phase) {
+    case 'red': return (red + black) * state.redsLeft + COLOUR_SUM;
+    case 'colour': return (red + black) * state.redsLeft + COLOUR_SUM + black;
+    case 'final': {
+      const i = CONFIG.finalColourOrder.indexOf(state.nextColour!);
+      return CONFIG.finalColourOrder.slice(i).reduce((s, c) => s + CONFIG.ballValues[c], 0);
+    }
+    default: return 0;
+  }
+}
+
+/** RULES C.8: the opponent needs snookers when our lead is strictly greater than the points remaining. */
+export const opponentNeedsSnookers = (state: FrameState): boolean =>
+  state.score - state.opponentScore > pointsRemaining(state);
+
+/** RULES C.9: the table was cleared with the black after every red (75 / 107 / 147). */
+export const isMaximum = (state: FrameState): boolean => state.phase === 'cleared' && state.blackAfterEveryRed;
 
 /** The kinds of ball that may be the target of the next shot. In the colour phase any colour (the player picks). */
 export function legalTargets(state: FrameState): BallKind[] {
@@ -78,10 +112,12 @@ export function judgeShot(state: FrameState, target: BallKind, shot: ShotResult)
 export function applyShot(state: FrameState, target: BallKind, shot: ShotResult, table: TableGeometry): FrameState {
   const v = judgeShot(state, target, shot);
   if (v.result === 'invalid') throw new Error(`invalid shot: ${v.reason}`);
-  if (v.result === 'failure') return { ...state, phase: 'lost', balls: shot.after, lastFailure: v.type };
+  if (v.result === 'failure') return { ...state, phase: 'lost', failedIn: state.phase, balls: shot.after, lastFailure: v.type };
   const balls = shot.after.map((b) => ({ ...b, pos: { ...b.pos } }));
-  if (state.phase === 'red') return { ...state, phase: 'colour', redsLeft: state.redsLeft - 1, balls };
+  const score = state.score + ballValue(target);
+  if (state.phase === 'red') return { ...state, phase: 'colour', redsLeft: state.redsLeft - 1, balls, score };
   if (state.phase === 'colour') {
+    state = { ...state, score, blackAfterEveryRed: state.blackAfterEveryRed && target === 'black' };
     // C.2: while reds remain (and for the colour after the last red, C.3) the colour comes back
     const colour = target as Colour;
     balls.push({ id: colour, kind: colour, pos: respotPosition(colour, balls, table) });
@@ -92,7 +128,7 @@ export function applyShot(state: FrameState, target: BallKind, shot: ShotResult,
   // final phase: the colour stays down (C.3)
   const i = CONFIG.finalColourOrder.indexOf(target as Colour);
   const next = CONFIG.finalColourOrder[i + 1];
-  return next ? { ...state, nextColour: next, balls } : { ...state, phase: 'cleared', nextColour: null, balls };
+  return next ? { ...state, nextColour: next, balls, score } : { ...state, phase: 'cleared', nextColour: null, balls, score };
 }
 
 /**
