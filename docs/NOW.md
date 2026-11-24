@@ -1,17 +1,19 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Check task 1.4 additions: "Light game (0.05)" button; answers in docs/SPEED.md (Follow-up checks).
-- Choose how to keep shots short (A-D in docs/SPEED.md); recommendation A + B (friction 0.05).
+- Say "go" for task 2.1 (Three.js gray-box table, playback of a recording). Tasks 1.1-1.4 are approved.
 
 ## Claude's turn
-- After the owner's choice: set the chosen friction/playback in the config, then task 2.1 after the owner's go.
+- Next: task 2.1, after the owner's go.
+- Pace (provisional, owner 2026-11-24): solver picks the quickest valid shot, cloth friction 0.05. Shot ends when all balls stop.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others
 - Nothing.
 
 ## Later
+- Measure the solver against its 150 ms budget on a real phone (1 ms per shot is a guide, not a limit).
+- Revisit friction and 1.2x playback once real solver shots are visible (at 0.05, 35% of quickest shots exceed 1.5 s).
 - Tune jaw bounce and pocket generosity once real shots are played (middle pockets generous on purpose for now).
 - Voice files for the 14 announcer slots (owner supplies, stage 9-10).
 - History strip, turbo mode, landscape/desktop layout, DEMO label (stage 11).

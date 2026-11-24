@@ -50,3 +50,9 @@ Recommendation: A + B, with C at 1.2x only if needed. D is the most realistic, b
 - Break at 0.12: energy 0.02 s after the cue ball reaches the pack is identical at 0.015, 0.05 and 0.12
   (26.1 of 36 left, 9.4 in the object balls). Only the roll-out afterwards differs: reds moving more than 10 cm
   are 10/15 (0.015), 5/15 (0.05), 3/15 (0.12). So the closed pack is the friction value, not a bug.
+
+## Decision (owner, 2026-11-24, provisional)
+- Chosen: A + B. The solver picks the quickest valid shot; cloth friction 0.05 is the config default.
+- Not chosen: D. A shot ends when all balls stop. Playback 1.2x (C) is not set; revisit with real solver shots.
+- 1 ms per shot is a guide. No further physics optimisation now; measure the solver's 150 ms budget on a phone later.
+- Final pace decision when real solver shots can be watched.

@@ -87,7 +87,7 @@ export const CONFIG = {
     timestep: 1 / 480,           // fixed step, seconds
     maxSimSeconds: 8,            // safety stop for a simulation
     gravity: 9.81,               // m/s^2
-    rollingFriction: 0.12,       // deceleration = rollingFriction * gravity; "game" value (see frictionMarks, task 1.4)
+    rollingFriction: 0.05,       // deceleration = rollingFriction * gravity; "light game" (owner, task 1.4, provisional)
     // Debug friction slider marks. Real snooker cloth: about 0.01-0.02 (a ball rolled at 1 m/s runs 2.5-5 m).
     frictionMarks: { realisticCloth: 0.015, lightGame: 0.05, game: 0.12 },
     slidingFriction: 0.2,        // cloth friction while a ball slides (spin and speed do not match)
