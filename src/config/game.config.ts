@@ -205,7 +205,7 @@ export const CONFIG = {
     // aim point are fitted to the screen so the whole table (plus fitEdge) always shows, as large as possible.
     // Angle = degrees above the cloth (90 = straight down). History: first config camera [0,-2.6,4.2] -> [0,0.15,0]
     // was about 57 degrees but cut off the table on a portrait phone; task 2.1 used [0,-2.7,7.4] -> [0,-0.15,0] = 71.
-    main: 'A' as 'A' | 'B' | 'C',
+    main: 'C' as 'A' | 'B' | 'C',  // owner's choice 2026-11-24 (task 2.1); A and B kept to switch later
     presets: {
       A: { label: 'A steep', elevationDeg: 71, fov: 38 },   // the task 2.1 angle
       B: { label: 'B flat', elevationDeg: 57, fov: 38 },    // the first config camera's angle
