@@ -64,6 +64,15 @@ describe('pockets', () => {
     expect(slow.sim!.balls[0]!.pos.x).toBeGreaterThan(table.halfWidth);
   });
 
+  it('corner pocket: a ball stopping just inside the neck stays; 20 mm in, it drops', () => {
+    const p = table.pockets.find((q) => q.id === 'topRight')!;
+    const at = (d: number) => ({ x: p.mouthMid.x + p.inward.x * d, y: p.mouthMid.y + p.inward.y * d });
+    const drops = (d: number) => dist(at(d), p.captureCentre) < p.captureRadius;
+    expect(drops(0)).toBe(false); // ball centre at the end of the curves (start of the neck)
+    expect(drops(CONFIG.table.corner.fallSetback - 0.001)).toBe(false);
+    expect(drops(CONFIG.table.corner.fallSetback + 0.001)).toBe(true);
+  });
+
   it('a ball aimed well wide of the pocket misses it (hits the cushion, no jaw)', () => {
     expect(runPocketRoll(table, { ...roll('middleRight', 0, 0), offset: -0.25 }).outcome).toBe('missed'); // hits the side cushion
     expect(runPocketRoll(table, roll('topRight', 0, 0, 0.3)).outcome).toBe('missed'); // too soft: stops short

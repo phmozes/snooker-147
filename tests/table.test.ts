@@ -104,14 +104,14 @@ describe('table geometry', () => {
     expect(table.throatWalls).toHaveLength(12);
   });
 
-  it('the ball drops over the slate cut: corners 51 mm into the throat, middles 12 mm behind the cushion line', () => {
+  it('the ball drops over the slate cut: corners 20 mm into the throat, middles 12 mm behind the cushion line', () => {
     for (const p of table.pockets) {
       const cfg = pocketCfg(p.kind);
       expect(p.captureRadius).toBe(cfg.slateCutRadius);
       const edge = add(p.captureCentre, scale(p.inward, -p.captureRadius)); // front edge on the centre line
       if (p.kind === 'corner') {
         const e = sub(edge, p.mouthMid);
-        expect(e.x * p.inward.x + e.y * p.inward.y).toBeCloseTo(0.051, 12);
+        expect(e.x * p.inward.x + e.y * p.inward.y).toBeCloseTo(0.020, 12);
       } else {
         expect(Math.abs(edge.x) - table.halfWidth).toBeCloseTo(0.012, 12); // cushion line is x = +-halfWidth
         expect(edge.y).toBeCloseTo(0, 12);

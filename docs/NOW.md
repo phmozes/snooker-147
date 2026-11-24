@@ -1,8 +1,8 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review task 1.3 revision 2 (middle drop edge 12 mm behind cushion line, jaw 80 mm; docs/POCKETS.md). Approve before 1.3b.
-- Middle pocket is now generous (69% potted, straight-in window 119 mm); keep, or try a smaller middle jaw radius.
+- Review task 1.3 revision 3: corner drop edge 20 mm past the end of the curves (was 51); hole drawn rounded. Approve before 1.3b.
+- Later: tune jaw bounce (middle pockets are generous on purpose for now).
 
 ## Claude's turn
 - Wait for approval of task 1.3. Next: 1.3b (simple follow/screw spin, split out of 1.3).

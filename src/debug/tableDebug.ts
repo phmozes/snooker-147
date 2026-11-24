@@ -228,9 +228,14 @@ function draw() {
     }
     poly([...arcPoints(j1, j1.start, j1.start + j1.sweep), ...arcPoints(j2, j2.start + j2.sweep, j2.start)], '#1f7a4d');
     const [w1, w2] = p.throat;
-    poly([w1.a, w1.b, w2.b, w2.a], '#2a5e45');
-    // the hole = the part of the slate cut that is not under a jaw: clip to the mouth + throat
-    const open = [...arcPoints(j1, j1.start, j1.start + j1.sweep), w1.b, w2.b, ...arcPoints(j2, j2.start + j2.sweep, j2.start)];
+    poly([w1.a, w1.b, w2.b, w2.a], '#1f7a4d'); // cloth on the slate between the jaws, up to the fall
+    // the hole = the part of the slate cut that is not under a jaw: clip to the mouth + the throat, the throat
+    // continued to the back of the slate cut, so the hole shows its rounded front AND back
+    const c0 = sub(p.captureCentre, p.mouthMid);
+    const back = c0.x * p.inward.x + c0.y * p.inward.y + p.captureRadius + 0.01;
+    const far1 = { x: w1.a.x + p.inward.x * back, y: w1.a.y + p.inward.y * back };
+    const far2 = { x: w2.a.x + p.inward.x * back, y: w2.a.y + p.inward.y * back };
+    const open = [...arcPoints(j1, j1.start, j1.start + j1.sweep), far1, far2, ...arcPoints(j2, j2.start + j2.sweep, j2.start)];
     ctx.save();
     ctx.beginPath();
     open.forEach((q, i) => (i ? ctx.lineTo(sx(q), sy(q)) : ctx.moveTo(sx(q), sy(q))));

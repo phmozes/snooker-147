@@ -61,7 +61,7 @@ export const CONFIG = {
       mouth: 0.089,              // 3.5 in template
       jawRadius: 0.110,          // measured from photo pocket4: 110 mm (range 85-135)
       throatLength: 0.140,       // straight parallel part, to the back of the pocket
-      fallSetback: 0.051,        // cushion overhangs the slate by ~2 in: slate cut starts 51 mm into the throat
+      fallSetback: 0.020,        // measured (pocket4 template front, pocket1): fall ~20 mm past the end of the curve (0-40)
       fallFrom: 'throat',
       slateCutRadius: 0.089,     // slate cut ~3.5 in radius
     },
