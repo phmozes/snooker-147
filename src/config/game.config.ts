@@ -122,6 +122,9 @@ export const CONFIG = {
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
     shotBudget: 250,
+    // position play (task 4.3): the search minimises shot length + weight x how hard the next shot looks from where
+    // the cue ball stops (cut/45 + mean distance in m; about 0.5 easy, 2-3 hard; noShotCost when no pocket is open)
+    position: { enabled: true, weight: 2, noShotCost: 4, overPenalty: 10, overFrom: 1.5 }, // overFrom: seconds; extra cost per second above it
     aimSamplesPerPocket: 9,      // aim points across the pocket mouth (centre first, then alternating sides)
     aimStep: 0.005,              // metres between aim points across the mouth
     minSpeed: 0.8,               // m/s, softest power tried (powers go up to physics.maxCueSpeed)

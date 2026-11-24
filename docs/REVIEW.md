@@ -52,3 +52,18 @@ clock 50x slower pick identical success and failure shots.
 **Decisions to confirm:** the budget of 250 shots (about 150 ms on this PC). The real-phone time is still to be
 measured (already in "Later").
 **Not finished:** nothing.
+
+## 3. Task 4.3: position play and stopping the cue ball
+**Built:** the success solver now also scores where the cue ball stops: shot length + 2 x "how hard the next shot
+looks from there", with a heavy extra cost above 1.5 s so red shots stay short. Debug page: "Next shot from here"
+continues the round (applies the shot with the rules code, then solves the next ball: red, black, red...).
+**Check:** debug.html, Solver: Solve, then "Next shot from here" several times. Each result shows "Position for the
+next shot (cost x.xx, lower = easier)". The black after a red should often be an easy one.
+**Numbers:** see the table in docs/SOLVER.md "Position play". Default: reds unchanged (median 1.4 s), black within
+1.5 s from 3% to 5% (6 reds) and from 8% to 27% (15 reds); more blacks are pottable after the red (33 -> 37 of 40,
+25 -> 30 of 35). Without the 1.5 s cap the black is short (median 1.1 s, about 60% within 1.5 s) but the red gets long
+(median 2.6 s). It is a trade-off in random layouts.
+**Decisions to confirm (pace, your area):** weight 2 and "red capped at 1.5 s" (config `solver.position`). The
+alternatives in the table move time from the black to the red. I suggest deciding after real rounds (task 5.x), where
+the reds start next to the black.
+**Not finished:** extra screw/stun samples for stopping the cue ball were not tried (they cost shot budget).

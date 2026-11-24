@@ -19,6 +19,9 @@ export interface SolvedShot {
   speed: number; // m/s
   spin: number; // -1 screw ... +1 follow
   duration: number; // seconds until every ball stops
+  score: number; // what the search minimises: duration (+ position weight x next-shot cost, task 4.3)
+  nextCost: number | null; // how hard the next shot looks from cueEnd (null = not scored)
+  cueEnd: Vec2;
   computeMs: number;
   tried: number; // shots simulated
 }
@@ -41,12 +44,48 @@ function pathClear(a: Vec2, b: Vec2, balls: Ball[], skip: string[], r: number): 
 }
 
 /** Find the quickest success shot at `target` (a kind from legalTargets), or null if none within the budget. */
+/**
+ * Position play (task 4.3): how hard the NEXT shot looks with the cue ball at `cue` (same measure as the pair
+ * ranking: cut angle and distances; lower = easier). No open pocket for the next ball = position.noShotCost.
+ */
+export function nextShotCost(cue: Vec2, balls: Ball[], next: BallKind, table: TableGeometry): number {
+  const r = table.ballRadius;
+  let best: number = Sv.position.noShotCost;
+  for (const ball of balls.filter((b) => b.kind === next)) {
+    for (const p of table.pockets) {
+      const toP = { x: p.mouthMid.x - ball.pos.x, y: p.mouthMid.y - ball.pos.y };
+      const dP = Math.hypot(toP.x, toP.y);
+      const ghost = { x: ball.pos.x - (toP.x / dP) * 2 * r, y: ball.pos.y - (toP.y / dP) * 2 * r };
+      const aim = { x: ghost.x - cue.x, y: ghost.y - cue.y };
+      const dA = Math.hypot(aim.x, aim.y);
+      if (dA < 1e-6) continue;
+      const cut = (Math.acos(Math.max(-1, Math.min(1, (aim.x * toP.x + aim.y * toP.y) / (dA * dP)))) * 180) / Math.PI;
+      if (cut > Sv.maxCutDeg) continue;
+      const others = balls.filter((b) => b.kind !== 'cue');
+      if (!pathClear(cue, ghost, others, [ball.id], r) || !pathClear(ball.pos, p.mouthMid, others, [ball.id], r)) continue;
+      best = Math.min(best, cut / 45 + (dA + dP) / 2);
+    }
+  }
+  return best;
+}
+
+/** The kind of ball due after potting `target` in this state (the game picks black until the colour choice, B.3). */
+export function nextTargetAfter(state: FrameState, target: BallKind): BallKind | null {
+  if (state.phase === 'red') return 'black';
+  if (state.phase === 'colour') return state.redsLeft > 0 ? 'red' : CONFIG.finalColourOrder[0];
+  const i = CONFIG.finalColourOrder.indexOf(target as (typeof CONFIG.finalColourOrder)[number]);
+  return CONFIG.finalColourOrder[i + 1] ?? null;
+}
+
 /** Why a search ended (for the debug page and the solver report). */
 export interface SolveInfo { pairs: number; tried: number; timedOut: boolean }
 
 export function solveSuccess(state: FrameState, target: BallKind, table: TableGeometry, now: () => number,
-  cfg: PhysicsConfig = CONFIG.physics, shotBudget: number = Sv.shotBudget, info?: SolveInfo): SolvedShot | null {
+  cfg: PhysicsConfig = CONFIG.physics, shotBudget: number = Sv.shotBudget, info?: SolveInfo,
+  opts: { position?: boolean; weight?: number; overFrom?: number } = {}): SolvedShot | null {
   const t0 = now();
+  const position = opts.position ?? Sv.position.enabled;
+  const next = position ? nextTargetAfter(state, target) : null;
   const r = table.ballRadius;
   const cue = state.balls.find((b) => b.kind === 'cue')!;
   const powers = Array.from({ length: Sv.powerSamples }, (_, i) =>
@@ -89,7 +128,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
           const sim = createSim(state.balls, table, cfg);
           strike(sim, 'cue', dir, speed, spin);
           // stop early once this shot is already longer than the best one found (it cannot win)
-          const limit = Math.ceil((best ? best.duration : cfg.maxSimSeconds) / cfg.timestep);
+          const limit = Math.ceil((best ? best.score : cfg.maxSimSeconds) / cfg.timestep);
           for (let n = 0; n < limit && isMoving(sim); n++) stepSim(sim);
           if (isMoving(sim)) continue;
           const duration = sim.time;
@@ -98,9 +137,25 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
           const potted = sim.balls.filter((b) => b.potted).map((b) => b.id);
           const v = judgeShot(state, target, { firstHit, potted, after: [] });
           if (v.result !== 'success') continue;
+          // score = shot length + position weight x how hard the next shot looks from where the cue ball stopped
+          const cueEnd = sim.balls.find((b) => b.kind === 'cue')!.pos;
+          let cost = 0;
+          if (next) {
+            const after: Ball[] = sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: b.pos }));
+            if (state.phase === 'colour' && state.redsLeft > 0) {
+              const c = target as (typeof CONFIG.finalColourOrder)[number];
+              after.push({ id: c, kind: c, pos: { ...table.spots[c] } }); // re-spotted (approximately: own spot)
+            }
+            cost = nextShotCost(cueEnd, after, next, table);
+          }
+          // a shot over the pace target (shot.maxDuration) pays heavily per extra second, so position play chooses among
+          // shots that are themselves short; the quickest shot still wins when none is short
+          const over = Math.max(0, duration - (opts.overFrom ?? Sv.position.overFrom)) * Sv.position.overPenalty;
+          const score = duration + over + (opts.weight ?? Sv.position.weight) * cost;
+          if (best && score >= best.score) continue;
           const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
           best = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed, spin,
-            duration, computeMs: 0, tried: 0 };
+            duration, computeMs: 0, tried: 0, score, nextCost: next ? cost : null, cueEnd: { ...cueEnd } };
         }
       }
     }
@@ -219,7 +274,8 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
           : kind === 'inOff' ? v.type === 'inOff' && firstHit === ball.id
           : v.type === 'wrongBallFirst';
         if (!ok) continue;
-        best = { target: ball.id, pocket, dir, speed, spin, duration: sim.time, computeMs: 0, tried: 0, kind, fallback: null };
+        best = { target: ball.id, pocket, dir, speed, spin, duration: sim.time, computeMs: 0, tried: 0, kind, fallback: null,
+          score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos } };
         if (best.duration <= CONFIG.shot.maxDurationFlex) break search; // good enough: a failure need not be the quickest
       }
     }
@@ -245,7 +301,7 @@ function softFoul(state: FrameState, target: BallKind, table: TableGeometry, cfg
       const v = judgeShot(state, target, { firstHit: firstHitOf(sim), potted, after: [] });
       if (v.result === 'failure' && v.type === 'wrongBallFirst') {
         return { target: w.id, pocket: table.pockets[0]!.id, dir, speed, spin: 0, duration: sim.time, computeMs: 0, tried,
-          kind: 'wrongBallFirst', fallback: 'softFoul' };
+          kind: 'wrongBallFirst', fallback: 'softFoul', score: sim.time, nextCost: null, cueEnd: { ...sim.balls[0]!.pos } };
       }
     }
   }
@@ -264,7 +320,8 @@ function gentleTap(state: FrameState, target: BallKind, table: TableGeometry, cf
     const v = judgeShot(state, target, { firstHit: firstHitOf(sim), potted, after: [] });
     if (v.result === 'failure' && v.type === 'missedAll') {
       return { target: 'cue', pocket: table.pockets[0]!.id, dir, speed: FAIL.tapSpeed, spin: 0, duration: sim.time,
-        computeMs: 0, tried: k + 1, kind: 'wrongBallFirst', fallback: 'tap' };
+        computeMs: 0, tried: k + 1, kind: 'wrongBallFirst', fallback: 'tap', score: sim.time, nextCost: null,
+        cueEnd: { ...sim.balls[0]!.pos } };
     }
   }
   return null;

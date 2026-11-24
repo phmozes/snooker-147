@@ -7,8 +7,8 @@
 import { CONFIG } from '../config/game.config';
 import { paceStudy, speedBenchmark, withFriction } from '../core/physics/bench';
 import { mulberry32 } from '../core/rng';
-import { judgeShot, type FrameState } from '../core/rules';
-import { randomLayout, solveFailure, solveSuccess, type FailureKind, type SolveInfo } from '../core/solver';
+import { applyShot, judgeShot, type FrameState } from '../core/rules';
+import { randomLayout, solveFailure, solveSuccess, type FailureKind, type SolvedShot, type SolveInfo } from '../core/solver';
 import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, runUntilStill, stepSim, strike, type PhysicsConfig, type Sim } from '../core/physics/sim';
 import { breakAim, pocketRollStart, runPocketRoll, type PocketRoll, type RollOutcome } from '../core/physics/testShots';
 import { arcPoints, buildTable, type JawArc, type PocketId, type TableGeometry } from '../core/table/geometry';
@@ -663,13 +663,16 @@ function showLayout() {
   spinTest = { active: false, contact: null, end: null };
   state.view = 'table';
 }
-function solveAndPlay() {
-  showLayout(); // same layout number, level and due always give the same layout
+let lastSolved: { state: FrameState; target: BallKind; shot: SolvedShot } | null = null;
+function solveAndPlay(keep = false) {
+  if (!keep) showLayout(); // same layout number, level and due always give the same layout
   const L = layout!;
   sim = createSim(L.balls, table, physics); // back to the start of this layout
   shot = freshShot();
   const info: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
-  const s = solveSuccess(L, solveTarget(), table, () => performance.now(), physics, undefined, info);
+  const target = keep ? currentTarget(L) : solveTarget();
+  const s = solveSuccess(L, target, table, () => performance.now(), physics, undefined, info);
+  lastSolved = s ? { state: L, target, shot: s } : null;
   const out = document.getElementById('solveOut')!;
   if (!s) {
     const why = info.pairs === 0 ? 'no pocket with an open path' : info.timedOut ? `time budget used up (${info.tried} shots tried)` : 'every shot tried, none pots only the target';
@@ -682,17 +685,37 @@ function solveAndPlay() {
   runUntilStill(check);
   const first = check.events.find((e) => e.type === 'ball');
   const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
-  const verdict = judgeShot(L, solveTarget(), { firstHit, potted: check.balls.filter((b) => b.potted).map((b) => b.id), after: [] });
+  const verdict = judgeShot(L, target, { firstHit, potted: check.balls.filter((b) => b.potted).map((b) => b.id), after: [] });
   const ok = verdict.result === 'success';
   out.innerHTML = [
     `Layout ${layoutNo} (${state.reds} reds level, ${L.redsLeft} reds on the table, ${solveDue} due)`,
     `Target: <b>${s.target}</b> into <b>${s.pocket}</b>`,
     `Power: ${s.speed.toFixed(2)} m/s (${Math.round((s.speed / CONFIG.physics.maxCueSpeed) * 100)}%) · spin: ${spinText(s.spin)}`,
     `Shot length: <b>${s.duration.toFixed(2)} s</b> until all balls stop ${s.duration <= CONFIG.shot.maxDuration ? '<span class="ok">within 1.5 s</span>' : '<span class="bad">over 1.5 s</span>'}`,
+    `Position for the next shot (${s.nextCost === null ? 'not scored' : `cost ${s.nextCost.toFixed(2)}, lower = easier`})`,
     `Compute time: <b>${s.computeMs.toFixed(0)} ms</b> (${s.tried} of ${CONFIG.solver.shotBudget} shots tried; guide ${CONFIG.solver.timeBudgetMs} ms)`,
     `Rules check: ${ok ? '<span class="ok">success (exactly the target potted, cue ball on the table)</span>' : `<span class="bad">${verdict.result}</span>`}`,
   ].join('\n');
   shoot(s.dir, s.speed, s.spin);
+}
+/** The target of the next shot in a continued round: red, else black (game pick, B.3), else the next final colour. */
+function currentTarget(L: FrameState): BallKind {
+  return L.phase === 'red' ? 'red' : L.phase === 'colour' ? 'black' : L.nextColour!;
+}
+/** Continue the round: apply the last solved shot (rules code), then solve and play the next one from there. */
+function nextShotFromHere() {
+  const out = document.getElementById('solveOut')!;
+  if (!lastSolved) { out.textContent = 'Press Solve first.'; return; }
+  const { state: L, target, shot: s } = lastSolved;
+  const check = createSim(L.balls, table, physics);
+  strike(check, 'cue', s.dir, s.speed, s.spin);
+  runUntilStill(check);
+  const first = check.events.find((e) => e.type === 'ball');
+  const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+  layout = applyShot(L, target, { firstHit, potted: check.balls.filter((b) => b.potted).map((b) => b.id),
+    after: check.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) }, table);
+  if (layout.phase === 'cleared' || layout.phase === 'lost') { out.textContent = `Round over: ${layout.phase}`; return; }
+  solveAndPlay(true);
 }
 function runTwenty() {
   const out = document.getElementById('solveOut')!;
@@ -727,6 +750,7 @@ renderers.push(buttons('solveButtons', [
   { label: 'Solve', on: () => false, click: solveAndPlay },
   { label: 'Next layout', on: () => false, click: () => { layoutNo++; showLayout(); document.getElementById('solveOut')!.textContent = `Layout ${layoutNo}: press Solve`; } },
   { label: 'Run 20', on: () => false, click: runTwenty },
+  { label: 'Next shot from here', on: () => false, click: nextShotFromHere },
 ]));
 
 // ---- failure shots (task 4.2) ----

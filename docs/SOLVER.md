@@ -102,3 +102,22 @@ Left for later tasks:
 - **D.2 last fallbacks** (soft wrong-ball shot, gentle tap that hits nothing): not built, so "none" can still happen.
 - Failure shots are long (median 1.7-2.9 s), the cue ball runs on after the miss. Same plan as for pace (4.3-4.5).
 - A fallback can take 2 x 150 ms; counting shots instead of ms (4.5) fixes the budget for both.
+
+## Position play (task 4.3)
+The success search now minimises: shot length + weight x "how hard the next shot looks from where the cue ball
+stops" (cut/45 + mean distance; none open = 4), plus 10 per second above 1.5 s (so red shots stay at the pace target).
+Config `solver.position`. Measurement: `npx vitest run bench/pace/sequence.test.ts` (a red, then the black from where
+the cue ball stopped; 35-40 layouts; set `W=1,2,4` and `OVER=2.2` to try other settings).
+
+| Setting | 6 reds: red median / ≤1.5 s | black median / ≤1.5 s | 15 reds: red | black |
+|---|---|---|---|---|
+| Off (before) | 1.39 s / 55% | 3.15 s / 3% (33 of 40 pottable) | 1.06 s / 66% | 3.11 s / 8% (25 of 35) |
+| **On, weight 2, red capped at 1.5 s (default)** | 1.41 s / 53% | 2.77 s / 5% (37 of 40) | 1.43 s / 63% | 3.06 s / 27% (30 of 35) |
+| On, weight 2, red allowed to 2.2 s | 1.82 s / 35% | 2.68 s / 19% | 1.58 s / 46% | 2.89 s / 30% |
+| On, weight 2, no cap | 2.58 s / 20% | 1.06 s / 62% | 2.70 s / 20% | 1.16 s / 54% |
+
+Cue ball moving after the black drops: 1.6 s (off) -> 1.2-1.4 s (default). Stopping the cue ball soon is already part
+of the score (shot length is until ALL balls stop); extra screw/stun samples were not tried (shot budget).
+Finding: in these random layouts the reds lie anywhere, often far from the black, so a short red shot cannot bring
+the cue ball near the black. Short black shots cost long red shots. In real rounds the reds start next to the black
+(the pack), so position play should do better there: measure again with real rounds (task 5.x).
