@@ -15,12 +15,18 @@
 2. Step 1 (our first red) plays automatically, no button.
    - Success: break was of kind "red pottable"; we pot a red.
    - Failure: 80% plain miss after the break, 20% "snookered" (break leaves us snookered, our escape fails = foul).
-3. From step 2: SHOOT / CASH OUT before every shot. On colour steps the player picks one of 2-3 offered colours
-   (BLACK is always offered; the choice changes only the snooker score). Until the colour-choice stage, the game
-   picks the colour automatically.
-4. End: cash out ("WON <amount> - x<mult>"), failure (MISSED / IN-OFF / FOUL / SNOOKERED), or clearance
-   (big message on the empty cloth, max 3 s, tap to skip). No modal, no separate screen. Balls stay until the next START.
+3. From step 2: SHOOT / CASH OUT before every shot. On colour steps (while reds remain) the player picks a colour.
+   Offered: BLACK always, plus every other colour with a ready pot, up to 3 buttons, higher values first.
+   The choice changes only the snooker score. Until the colour-choice stage, the game picks black automatically.
+   In the final colours (yellow ... black) only one ball is legal, so SHOOT is shown and the label names the colour.
+4. End: cash out ("WON <amount> · x<mult>"), failure (MISSED / IN-OFF / FOUL / SNOOKERED), RE-RACK (see D.4), or
+   clearance (big message on the empty cloth, max 3 s, tap to skip). No modal, no separate screen. Balls stay until
+   the next START.
 5. After a cash out we never show what the next shot would have been.
+6. **Pocket-camera cut must never reveal the result.** From step 2, the cut to a pocket camera (same timing, same slow
+   motion) is played on a share of rattles AND on a share of successful pots. Both rates are in the config and are set
+   so that P(cut | success) = P(cut | failure). The clearance finale does not cut during the shot: the final pot plays
+   from the main camera, then is replayed from the pocket camera in slow motion.
 
 ## C. Snooker rules (simplified: only our player shoots after the break)
 1. **Order:** red, colour, red, colour ... While reds remain, a pot of a red is followed by a pot of one colour.
@@ -52,13 +58,16 @@ known before SHOOT is pressed. Every fallback is logged with the round code and 
 3. **Success outcomes** go through the flex chain in this order: longer shot time (up to `maxDurationFlex`), other
    pocket, other ball of the same type (another red), then a wide search (more angles, powers, spins and
    cushion-first shots, longer compute time).
-4. **Last resort, if a success is decided and still no shot exists:** the success counts. The step is credited,
-   and the round ends with an automatic cash out at the NEW multiplier. No shot is played. The strip shows
-   "TABLE LOCKED · WON <amount> - x<multiplier>". The player gets what the decided success is worth, so the odds
-   and the RTP do not change.
+4. **Last resort: RE-RACK.** This happens only if a success is decided and still no shot exists. The pot counts and
+   no shot is played. The ladder strip advances one step and shows "RE-RACK · WON <amount> · x<multiplier>" at the NEW
+   multiplier. The balance counts up and the bet area returns, just like after a normal cash out. An optional
+   announcer slot says "Re-rack". The odds and the RTP do not change.
 5. **Colour steps:** a colour is offered only if both its success shot and its failure shot were found. The one
    exception is black, which is always offered. If black is picked and has no success shot, rule 4 applies.
 6. The soak test fails if rule 4 happens more than once in 100,000 shots.
 
-## E. Not implemented
+## E. In-game rules text (menu) must include
+"In the rare case of a stalemate (re-rack), the round ends and you are paid the next step's multiplier."
+
+## F. Not implemented
 Free ball, miss rule, re-racking after a foul, push shot, touching ball, side spin (maybe later), opponent turns.

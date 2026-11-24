@@ -43,7 +43,7 @@ Estimates are working time; total is about 60 hours (32 tasks) before stage 11.
 | 5.1 | Round state machine (headless): bet, START, break, auto step 1, SHOOT/CASH OUT, end; balance; seeded outcomes | 2h | Tests |
 | 5.2 | Connect to the UI: bet row, quick bets, START, ladder strip, CASH OUT amount, next label, results in strip | 2h | Play a round on the phone |
 | 5.3 | Developer test panel (B): force success/fail, failure type, jump to step, level, messages, clearance/maximum, cameras, replay last shot | 2h | The panel |
-| 5.4 | Replay by seed (D): seed in the menu, enter seed in panel -> same round | 1.5h | Send a seed, get the same round |
+| 5.4 | Replay by round code (D): code + in-game rules text in the menu; RE-RACK end; enter code in panel -> same round | 2h | Send a code, get the same round |
 | 5.5 | Soak test (C): thousands of headless rounds; fails on stuck solver, ball off table/overlap, RTP out of range | 2h | Soak report |
 
 ## Stage 6 - 10 and 15 reds (2 tasks)
@@ -55,7 +55,7 @@ Estimates are working time; total is about 60 hours (32 tasks) before stage 11.
 
 ## Stage 8 - Messages, score, cameras (3 tasks)
 | 8.1 | BREAK in the top bar, 10 messages with priority, frame-ball marks on colour buttons | 2h | Panel triggers each message |
-| 8.2 | Pocket cameras: near-miss drama on ~40% of rattles, clearance finale in slow motion | 2h | Panel triggers both |
+| 8.2 | Pocket cameras: cut on ~40% of rattles AND the matching share of successful pots (test: cut never reveals result); clearance finale replay in slow motion | 2h | Panel triggers both |
 | 8.3 | Clearance message on the empty cloth (tap to skip), MAXIMUM 75/107/147, FLUKE detection | 1.5h | Panel |
 
 ## Stage 9 - Sound (2 tasks)
@@ -99,10 +99,12 @@ History strip of last rounds, turbo mode (skip animations; easy thanks to record
    money the RNG and the balance must move to a server, and a gambling licence plus a certified RNG are needed. The
    "outcome first" design already makes that move easy.
 
-## Open questions for the owner
-1. Near-miss: may the camera CUT to a pocket camera while the ball is still rolling (it never moves, only cuts)?
-2. Soak RTP: accept the split in point 4 (formula + RNG-only run for RTP, physics soak for success rates)?
-3. Replay: accept a round code `seed-colours` instead of a plain seed?
-4. Colour step: 2 or 3 buttons - rule proposal: offer black + every other colour that is pottable, max 3.
-5. Colours in the final sequence (yellow...black): only one ball is legal, so SHOOT appears (no colour buttons). OK?
-6. "MAXIMUM IS ON" from red 3 (6 reds), red 5 (10 and 15 reds) - OK?
+## Decisions (owner, 2026-11-24)
+- Approved: record-then-play-back; black look-ahead; RTP split (formula + RNG-only run, physics soak checks
+  per-step success rates); round code `seed-colours`; 15-red break filter; postponements (FLUKE, side spin).
+- No universal fallback: last resort is RE-RACK (RULES.md D.4), with the menu sentence in RULES.md E.
+1. Pocket-camera cut mid-shot: yes, but also cut on successful pots so the cut never reveals the result (RULES B.6).
+2. Soak RTP split: yes.  3. Round code: yes.
+4. Colour buttons: black + every other colour with a ready pot, max 3, higher values first.
+5. Final colours: SHOOT button, label names the colour.
+6. MAXIMUM IS ON: 3rd red (6 reds), 4th red (10 reds), 5th red (15 reds).

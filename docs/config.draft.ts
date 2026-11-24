@@ -129,10 +129,24 @@ export const CONFIG = {
   failures: {
     step1: { plainMiss: 0.80, snookered: 0.20 },
     later: { plainMiss: 0.60, jawRattle: 0.25, inOff: 0.10, wrongBallFirst: 0.05 },
-    nearMissDramaOnRattleRate: 0.40,
-    nearMissMaxSeconds: 3,
     stripLabels: { plainMiss: 'MISSED', jawRattle: 'MISSED', inOff: 'IN-OFF',
                    wrongBallFirst: 'FOUL', snookered: 'SNOOKERED' },
+  },
+
+  // ---------------- POCKET-CAMERA CUT (must never reveal the result, RULES B.6) ----------------
+  // From step 2. To reveal nothing: P(cut | success) must equal P(cut | failure)
+  //   = rattleCutRate * failures.later.jawRattle = 0.40 * 0.25 = 0.10. A test checks this.
+  pocketCut: {
+    rattleCutRate: 0.40,         // share of jaw rattles that get the cut
+    successCutRate: 0.10,        // share of successful pots that get the same cut
+    secondsBeforeArrival: 0.5,   // cut happens this long before the ball reaches the pocket
+    maxSeconds: 3,
+  },
+
+  // ---------------- RE-RACK (last resort, RULES D.4) ----------------
+  reRack: {
+    stripText: 'RE-RACK · WON {amount} · x{multiplier}',
+    maxPerHundredThousandShots: 1, // soak test limit
   },
 
   // ---------------- BREAK-OFF LIBRARY ----------------
@@ -147,6 +161,9 @@ export const CONFIG = {
     optionsMin: 2,
     optionsMax: 3,
     alwaysOfferBlack: true,
+    // offered: black + every other colour with a ready pot, up to optionsMax, higher values first
+    offerOrder: ['pink', 'blue', 'brown', 'green', 'yellow'],
+    finalColoursUseShootButton: true,
     autoPickBeforeColourStage: 'black',
   },
 
@@ -155,7 +172,7 @@ export const CONFIG = {
     durationSeconds: 1.0,
     priority: ['MAXIMUM', 'TOTAL_CLEARANCE', 'OPPONENT_NEEDS_SNOOKERS', 'CENTURY', 'FIFTY_BREAK',
                'FRAME_BALL', 'MAXIMUM_IS_ON', 'LAST_RED', 'ON_THE_COLOURS', 'FLUKE'],
-    maximumIsOnFromRed: { reds6: 3, reds10: 5, reds15: 5 },
+    maximumIsOnFromRed: { reds6: 3, reds10: 4, reds15: 5 },
     flukeRate: 0.02,
     clearanceMessageMaxSeconds: 3,
   },
@@ -172,7 +189,7 @@ export const CONFIG = {
       bottomRight: { position: [ 0.6, -2.2, 0.35], lookAt: [ 0.889, -1.78, 0], fov: 35 },
     },
     slowMotionScale: 0.35,
-    cutOnlyWhenBallsStopped: false,  // OPEN QUESTION 1: near-miss cut happens mid-shot
+    clearanceFinale: 'replayAfterPot', // final pot plays from main camera, then pocket-camera slow-motion replay
   },
 
   // ---------------- UI TIMING ----------------
@@ -195,7 +212,7 @@ export const CONFIG = {
     voiceSlots: [                // optional, empty until the owner supplies files
       'MAXIMUM', 'TOTAL_CLEARANCE', 'OPPONENT_NEEDS_SNOOKERS', 'CENTURY', 'FIFTY_BREAK',
       'FRAME_BALL', 'MAXIMUM_IS_ON', 'LAST_RED', 'ON_THE_COLOURS', 'FLUKE',
-      'FOUL', 'SNOOKERED', 'IN_OFF', 'MISSED',
+      'FOUL', 'SNOOKERED', 'IN_OFF', 'MISSED', 'RE_RACK',
     ],
     crowd: { enabled: false },   // polish stage
   },
