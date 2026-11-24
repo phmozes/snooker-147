@@ -100,3 +100,7 @@ Phase 2 (6 and 15 reds, 60 rounds each, strict; files bench/results/night/r*.sum
   natural 87.6 / 88.9%, exhibition 1.6 / 1.4%. Mixed (6 reds worse). NOT kept. Two rounds without gain: phase stopped.
 - Targets not reached: natural 90% (87.9 / 87.8), exhibition under 2% reached (1.3 / 1.4), pace median 1.8 s reached
   (about 1.55 s), 90% within 2.5 s reached (97%), "no shot over 3.5 s" not reached (1 and 4 shots, see NIGHT-REPORT).
+- Soak on 4.8d (about 16-19k success shots per level): 10 RE-RACKs, only 2 different positions. 4.8e (doubles) fixed the
+  6-red one; 4.8f (`solver.lastResortCheck`: a last-resort shot must leave a ball pottable if exhibition, doubles or
+  spray can) fixed the 10-red one. 4.8f re-measured on 60 rounds per level: identical to 4.8d. Final soak on 4.8f in
+  bench/results/soak (stops 05:40); RTP of fixed cash-out strategies 94.5-97.4% on 2-3k rounds (noisy).
