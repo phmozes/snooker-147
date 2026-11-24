@@ -1,12 +1,12 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Check task 2.1 on the phone: replay.html (2D and 3D side by side, one Play button, 3 recorded shots).
+- Check task 2.1 on the phone: replay.html; choose camera A/B/C in "3D only (game layout)". Phone smoothness still open.
 
 ## Claude's turn
 - Next: task 2.2 (portrait layout from mockups A/C/D, static buttons), after the owner's approval and go.
 - Pace (provisional, owner 2026-11-24): solver picks the quickest valid shot, cloth friction 0.05. Shot ends when all balls stop.
-- Main camera moved back and up in task 2.1 (the old one cut off the table on a portrait phone); owner to judge the angle.
+- Main camera = preset (angle + lens) fitted to the screen; A 71°, B 57°, C 64° in config camera.presets; owner picks.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others

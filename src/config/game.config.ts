@@ -201,9 +201,18 @@ export const CONFIG = {
 
   // ---------------- CAMERAS (Three.js, all numbers here) ----------------
   camera: {
-    // task 2.1: moved back and up (was [0, -2.6, 4.2] -> [0, 0.15, 0]: it cut off the near end and both sides on a
-    // portrait phone). A test checks the whole table fits at 9:19.5 and 9:16.
-    main: { position: [0, -2.7, 7.4], lookAt: [0, -0.15, 0], fov: 38 },
+    // Main camera presets (owner chooses, task 2.1). A preset gives the viewing angle and the lens; the distance and
+    // aim point are fitted to the screen so the whole table (plus fitEdge) always shows, as large as possible.
+    // Angle = degrees above the cloth (90 = straight down). History: first config camera [0,-2.6,4.2] -> [0,0.15,0]
+    // was about 57 degrees but cut off the table on a portrait phone; task 2.1 used [0,-2.7,7.4] -> [0,-0.15,0] = 71.
+    main: 'A' as 'A' | 'B' | 'C',
+    presets: {
+      A: { label: 'A steep', elevationDeg: 71, fov: 38 },   // the task 2.1 angle
+      B: { label: 'B flat', elevationDeg: 57, fov: 38 },    // the first config camera's angle
+      C: { label: 'C middle', elevationDeg: 64, fov: 38 },
+    },
+    fitEdge: 0.16,               // metres beyond the cushion faces that must stay in view (corner pocket holes)
+    fitMargin: 0.02,             // share of the view kept free at the tightest edge
     pockets: {                   // six fixed cameras, used for near-miss and the final pot of a clearance
       topLeft:     { position: [-0.6,  2.2, 0.35], lookAt: [-0.889,  1.78, 0], fov: 35 },
       topRight:    { position: [ 0.6,  2.2, 0.35], lookAt: [ 0.889,  1.78, 0], fov: 35 },
@@ -223,8 +232,16 @@ export const CONFIG = {
     cushionHeight: 0.036,        // cushion nose height above the cloth (m), about 0.7 ball diameter
     cushionDepth: 0.05,          // how far the cushion boxes reach behind the face (m)
     jawPieces: 6,                // straight pieces per rounded jaw
-    fitAspect: 0.4615,           // narrowest screen (9:19.5) that shows the full table width; narrower views widen the lens
     ambientLight: 1.2, topLight: 1.6,
+  },
+
+  // Game screen layout from mockups A/C/D (share of the screen height, top to bottom). Used by the replay check page
+  // to draw placeholder boxes; task 2.2 builds the real layout.
+  layout: {
+    phoneAspect: 9 / 19.5,
+    sidePad: 0.04,               // share of the width
+    topBar: [0.0, 0.075], table: [0.075, 0.735], ladder: [0.74, 0.785], cashOut: [0.80, 0.855],
+    hint: [0.86, 0.89], shoot: [0.898, 0.98],
   },
 
   // ---------------- UI TIMING ----------------

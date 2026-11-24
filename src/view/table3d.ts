@@ -1,11 +1,13 @@
 // Gray-box 3D table (Three.js): flat green cloth, plain boxes for the cushions, black discs for the holes,
-// plain spheres for the balls. Fixed main camera from config (camera.main). No textures, no polish (stage 2).
+// plain spheres for the balls. Fixed main camera: a preset from config, fitted to the screen (camera.ts).
+// No textures, no polish (stage 2).
 // World axes are the physics axes: x across the table, y along it (+y = top cushion), z up; units are metres.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config/game.config';
 import { arcPoints, type TableGeometry } from '../core/table/geometry';
 import type { BallKind, Vec2 } from '../core/types';
+import { fitCamera, type CameraFit, type PresetId } from './camera';
 import { BALL_COLOURS } from './playback';
 
 const G = CONFIG.view3d;
@@ -15,11 +17,10 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(G.background);
-  const cam = CONFIG.camera.main;
-  const camera = new THREE.PerspectiveCamera(cam.fov, 1, 0.05, 50);
+  let preset: PresetId = CONFIG.camera.main;
+  let fit: CameraFit = fitCamera(table, preset, 1);
+  const camera = new THREE.PerspectiveCamera(fit.fov, 1, 0.05, 50);
   camera.up.set(0, 0, 1);
-  camera.position.set(...cam.position);
-  camera.lookAt(new THREE.Vector3(...cam.lookAt));
 
   scene.add(new THREE.AmbientLight(0xffffff, G.ambientLight));
   const sun = new THREE.DirectionalLight(0xffffff, G.topLight);
@@ -80,9 +81,10 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     const h = canvas.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    // a view narrower than fitAspect keeps the same width of table in view by widening the lens (camera stays put)
-    camera.fov = camera.aspect >= G.fitAspect ? cam.fov
-      : (2 * Math.atan(Math.tan((cam.fov * Math.PI) / 360) * (G.fitAspect / camera.aspect)) * 180) / Math.PI;
+    fit = fitCamera(table, preset, camera.aspect);
+    camera.fov = fit.fov;
+    camera.position.set(...fit.position);
+    camera.lookAt(new THREE.Vector3(...fit.lookAt));
     camera.updateProjectionMatrix();
   }
   function draw(positions: (Vec2 | null)[]) {
@@ -97,5 +99,6 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     renderer.dispose();
     scene.traverse((o) => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); } });
   }
-  return { resize, draw, dispose };
+  function setPreset(p: PresetId) { preset = p; resize(); }
+  return { resize, draw, dispose, setPreset, getFit: () => fit };
 }

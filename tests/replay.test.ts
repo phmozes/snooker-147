@@ -4,6 +4,7 @@ import { CONFIG } from '../src/config/game.config';
 import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { breakOffShot, potRedShot, type ShotSetup } from '../src/core/physics/testShots';
 import { buildTable } from '../src/core/table/geometry';
+import { fitCamera, type PresetId } from '../src/view/camera';
 import { positionsAt } from '../src/view/playback';
 
 const table = buildTable();
@@ -35,20 +36,29 @@ describe('task 2.1: recorded check shots and playback', () => {
     expect(end).toEqual(sim.balls.find((b) => b.id === 'cue')!.pos);
   });
 
-  it('the main camera from the config shows the whole table on a portrait phone screen', () => {
-    const c = CONFIG.camera.main;
-    for (const aspect of [9 / 19.5, 9 / 16]) {
-      const cam = new PerspectiveCamera(c.fov, aspect, 0.05, 50);
-      cam.up.set(0, 0, 1);
-      cam.position.set(...c.position);
-      cam.lookAt(new Vector3(...c.lookAt));
-      cam.updateMatrixWorld();
-      const hw = table.halfWidth;
-      const hl = table.halfLength;
-      for (const [x, y] of [[-hw, -hl], [hw, -hl], [-hw, hl], [hw, hl]] as const) {
-        const p = new Vector3(x, y, 0).project(cam);
-        expect(Math.abs(p.x)).toBeLessThan(1);
-        expect(Math.abs(p.y)).toBeLessThan(1);
+  it('every camera preset shows the whole table, centred and filling the view, on any portrait screen', () => {
+    const L = CONFIG.layout;
+    const tableArea = (L.phoneAspect * (1 - 2 * L.sidePad)) / (L.table[1] - L.table[0]); // the game's table area
+    for (const preset of Object.keys(CONFIG.camera.presets) as PresetId[]) {
+      for (const aspect of [9 / 19.5, 9 / 16, tableArea, 0.25]) {
+        const f = fitCamera(table, preset, aspect);
+        const cam = new PerspectiveCamera(f.fov, aspect, 0.05, 100);
+        cam.up.set(0, 0, 1);
+        cam.position.set(...f.position);
+        cam.lookAt(new Vector3(...f.lookAt));
+        cam.updateMatrixWorld();
+        const e = CONFIG.camera.fitEdge;
+        const hw = table.halfWidth + e;
+        const hl = table.halfLength + e;
+        const ps = ([[-hw, -hl], [hw, -hl], [-hw, hl], [hw, hl]] as const).map(([x, y]) => new Vector3(x, y, 0).project(cam));
+        const most = Math.max(...ps.map((p) => Math.max(Math.abs(p.x), Math.abs(p.y))));
+        expect(most).toBeLessThanOrEqual(1 - CONFIG.camera.fitMargin + 1e-3); // whole table inside
+        expect(most).toBeGreaterThan(1 - CONFIG.camera.fitMargin - 0.01); // and as large as it can be
+        const ys = ps.map((p) => p.y);
+        expect(Math.max(...ys) + Math.min(...ys)).toBeCloseTo(0, 2); // centred top to bottom
+        // the angle above the cloth is the preset's
+        const d = { y: f.lookAt[1] - f.position[1], z: f.position[2] };
+        expect((Math.atan2(d.z, d.y) * 180) / Math.PI).toBeCloseTo(CONFIG.camera.presets[preset].elevationDeg, 0);
       }
     }
   });

@@ -21,7 +21,22 @@
     .box { flex: 1; min-height: 0; position: relative; }
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; background: #0b0f0e; border-radius: 6px; display: block; }
     #status { font-variant-numeric: tabular-nums; opacity: .85; width: 100%; }
-    body.only3d #fig2d { display: none; }
+
+    /* "3D only": a phone-shaped screen with gray placeholder boxes where mockups A/C/D put the game controls */
+    #phone { display: none; }
+    body.only3d > header, body.only3d > main { display: none; }
+    body.only3d { padding: 0; align-items: center; }
+    body.only3d #phone { display: block; position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
+                         width: min(100vw, calc(100vh * var(--aspect)));
+                         background: #0f1513; outline: 1px solid #34403c; }
+    #phone .ph { position: absolute; box-sizing: border-box; border: 1px dashed #4a5753; border-radius: 10px;
+                 background: rgba(255,255,255,0.04); color: #8a9792; font-size: 12px;
+                 display: flex; align-items: center; justify-content: center; gap: 6px; }
+    #phone .ph button { min-height: 0; padding: 4px 8px; font-size: 12px; }
+    #phone .tableArea { border: none; background: none; }
+    #phone .shoot { cursor: pointer; font-weight: 700; font-size: 18px; color: #d8e0dc; }
+    #phone .ladder { justify-content: space-between; padding: 0 4px; }
+    #phone .ladder span { flex: 1; margin: 0 2px; height: 70%; border: 1px dashed #4a5753; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -29,13 +44,15 @@
     <span id="shots"></span>
     <button id="play">Play</button>
     <button id="slow">Slow 1/4</button>
-    <button id="layout">3D only</button>
+    <span id="cams"></span>
+    <button id="layout">3D only (game layout)</button>
     <span id="status"></span>
   </header>
   <main>
     <figure id="fig2d"><figcaption>2D top view (debug)</figcaption><div class="box"><canvas id="c2d"></canvas></div></figure>
-    <figure id="fig3d"><figcaption>3D main camera (gray-box)</figcaption><div class="box"><canvas id="c3d"></canvas></div></figure>
+    <figure id="fig3d"><figcaption>3D main camera (gray-box)</figcaption><div class="box" id="box3d"><canvas id="c3d"></canvas></div></figure>
   </main>
+  <div id="phone"></div>
   <script type="module" src="/src/replay/replayPage.ts"></script>
 </body>
 </html>
