@@ -251,8 +251,8 @@ export const CONFIG = {
     cushionDepth: 0.05,          // how far the cushion boxes reach behind the face (m)
     jawPieces: 6,                // straight pieces per rounded jaw
     // How big the balls are DRAWN (1 = true size). Visual only: physics, pockets and the solver keep the true radius.
-    ballScale: 1.3,              // owner's choice 2026-11-24, provisional until tested on a real phone
-    ballScaleOptions: [1, 1.3, 1.6, 2], // developer menu on the game page
+    ballScale: 1.4,              // owner's choice after the real-phone test (2026-11-24), provisional
+    ballScaleOptions: [1, 1.3, 1.4, 1.6, 2], // developer menu on the game page
     ambientLight: 1.2, topLight: 1.6,
   },
 

@@ -84,24 +84,41 @@ function renderTexts() {
 const DESIGN = { w: 390, h: 844 };
 const sizeParam = /^(\d+)x(\d+)$/.exec(params.get('size') ?? '');
 const forced = sizeParam ? { w: Number(sizeParam[1]), h: Number(sizeParam[2]) } : null;
+/** The part of the screen the player can really see: the visual viewport minus the safe-area insets (notch, bars). */
+function visibleArea() {
+  const vv = window.visualViewport;
+  const W = Math.min(vv ? vv.width : innerWidth, document.documentElement.clientWidth || innerWidth);
+  const H = vv ? vv.height : innerHeight;
+  const cs = getComputedStyle($('safe'));
+  const px = (v: string) => parseFloat(v) || 0;
+  const t = px(cs.paddingTop);
+  const r = px(cs.paddingRight);
+  const b = px(cs.paddingBottom);
+  const l = px(cs.paddingLeft);
+  return { x: l, y: t, w: Math.floor(W - l - r), h: Math.floor(H - t - b) };
+}
 function layout() {
   const screenEl = $('screen');
   const stage = $('stage');
   document.body.classList.toggle('compare', compare);
+  const A = visibleArea();
   let scale = 1;
+  let w: number;
+  let h: number;
   if (compare) {
-    Object.assign(screenEl.style, { width: `${DESIGN.w}px`, height: `${DESIGN.h}px` });
-    scale = Math.min(1, innerWidth / (2 * DESIGN.w + 16), innerHeight / DESIGN.h);
+    [w, h] = [DESIGN.w, DESIGN.h];
+    scale = Math.min(1, A.w / (2 * DESIGN.w + 16), A.h / DESIGN.h);
   } else if (forced) {
-    Object.assign(screenEl.style, { width: `${forced.w}px`, height: `${forced.h}px` });
-    scale = Math.min(1, innerWidth / forced.w, innerHeight / forced.h);
+    [w, h] = [forced.w, forced.h];
+    scale = Math.min(1, A.w / forced.w, A.h / forced.h);
   } else {
-    // a phone (portrait window) uses the full screen; a wide window (PC) shows a phone-shaped screen in the middle
-    const portrait = innerWidth / innerHeight < CONFIG.layout.portraitBelow;
-    const w = portrait ? innerWidth : Math.min(innerWidth, Math.round(innerHeight * CONFIG.layout.phoneAspect));
-    Object.assign(screenEl.style, { width: `${w}px`, height: `${innerHeight}px` });
+    // a phone (portrait window) uses the whole visible area; a wide window (PC) shows a phone-shaped screen
+    const portrait = A.w / A.h < CONFIG.layout.portraitBelow;
+    [w, h] = [portrait ? A.w : Math.min(A.w, Math.round(A.h * CONFIG.layout.phoneAspect)), A.h];
   }
-  stage.style.transform = `translateX(-50%) scale(${scale})`;
+  Object.assign(screenEl.style, { width: `${w}px`, height: `${h}px` });
+  const stageW = (compare ? 2 * w + 16 : w) * scale;
+  stage.style.transform = `translate(${A.x + Math.max(0, (A.w - stageW) / 2)}px, ${A.y}px) scale(${scale})`;
   ($('mockup') as HTMLImageElement).src = `/mockups/${screen}.png`;
   draw3d();
 }
@@ -149,4 +166,13 @@ $('menu').onclick = () => $('dev').classList.toggle('open');
 renderTexts();
 renderDev();
 window.addEventListener('resize', layout);
+// browser bars showing or hiding change the visible area without always firing a window resize
+window.visualViewport?.addEventListener('resize', layout);
+window.addEventListener('orientationchange', () => setTimeout(layout, 100));
+// no long-press menu, no text selection, no double-tap zoom, no pinch zoom (page is locked like an app)
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('selectstart', (e) => e.preventDefault());
+document.addEventListener('gesturestart', (e) => e.preventDefault()); // iOS pinch
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+// double-tap zoom is off through CSS touch-action (not by cancelling taps, so quick repeated taps on +/- still count)
 layout();

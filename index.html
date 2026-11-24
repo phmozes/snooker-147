@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>147</title>
   <style>
     /* Gray-box game page (task 2.2): layout, colours and sizes from mockups A/C/D, no polish. Buttons do nothing yet. */
     :root { color-scheme: dark; --bg: #0f1513; --panel: #172020; --line: #34403c; --text: #d8e0dc; --dim: #7f8c87;
             --yellow: #f2c94c; }
-    html, body { margin: 0; height: 100%; background: #0a0e0d; overflow: hidden; }
-    body { color: var(--text); font: 14px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    button { font: inherit; color: inherit; cursor: pointer; }
+    /* locked like an app: no scroll, no zoom, no sideways drag, no text zoom by the browser (task 2.2 phone fixes) */
+    html, body { margin: 0; height: 100%; background: #0a0e0d; overflow: hidden; overscroll-behavior: none;
+                 touch-action: none; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { position: fixed; inset: 0; color: var(--text); font: 14px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+           user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+    #safe { position: fixed; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top) env(safe-area-inset-right)
+            env(safe-area-inset-bottom) env(safe-area-inset-left); }
 
-    #stage { position: absolute; left: 50%; top: 0; transform-origin: top center; display: flex; gap: 16px; }
+    #stage { position: absolute; left: 0; top: 0; transform-origin: top left; display: flex; gap: 16px; }
     #screen { position: relative; background: var(--bg); display: flex; flex-direction: column;
               padding: 0 16px 18px; box-sizing: border-box; overflow: hidden; }
     #mockup { display: none; height: 844px; width: 390px; }
@@ -76,6 +81,7 @@
   </style>
 </head>
 <body>
+  <div id="safe"></div>
   <div id="stage">
     <div id="screen">
       <div class="top">
