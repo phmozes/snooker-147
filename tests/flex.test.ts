@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createSim, runUntilStill, strike } from '../src/core/physics/sim';
 import { judgeShot } from '../src/core/rules';
 import { mulberry32 } from '../src/core/rng';
-import { randomLayout, solveSuccessFlex } from '../src/core/solver';
+import { randomLayout, shotCaps, solveSuccessFlex } from '../src/core/solver';
 import { buildTable } from '../src/core/table/geometry';
 
 const table = buildTable();
@@ -15,6 +15,8 @@ describe('task 4.5: flex chain and fallback log (RULES D.3 / D.4)', () => {
       const L = randomLayout(rng, 15, i % 2 ? 'colour' : 'red', table);
       const target = i % 2 ? 'black' : 'red';
       const f = solveSuccessFlex(L, target, table, now, { roundCode: 'TEST', step: i + 1 });
+      expect(f.tried).toBeGreaterThan(0);
+      expect(f.tried).toBeLessThanOrEqual(shotCaps().success); // fixed cap per decision, the same on every device
       if (f.level === 'normal') expect(f.log).toBeNull();
       else {
         expect(f.log).toMatchObject({ roundCode: 'TEST', step: i + 1, target });

@@ -27,11 +27,44 @@ const fake = (opts: { reRack?: boolean } = {}): ShotProvider => ({
 });
 
 /** Play a round: SHOOT until `cashAt` successful steps (then CASH OUT), or until it ends. */
-function play(seed: number, cashAt: number | null, provider = fake(), colour?: 'pink' | 'blue'): Round {
-  let r = start(newRound(seed), provider, table);
+function play(seed: number, cashAt: number | null, provider = fake(), colour?: 'pink' | 'blue', bet?: number): Round {
+  let r = start(bet === undefined ? newRound(seed) : setBet(newRound(seed), bet), provider, table);
   while (r.phase === 'decide') r = cashAt !== null && r.step >= cashAt ? cashOut(r) : shoot(r, provider, table, colour);
   return r;
 }
+
+describe('Payouts are round(bet x multiplier of the step), never built from rounded parts', () => {
+  const dp = 10 ** CONFIG.money.currencyDecimals;
+  const exact = (bet: number, m: number) => Math.round(bet * m * dp) / dp;
+  it('CASH OUT at every step of every level, for every bet from the minimum to the maximum', () => {
+    for (const level of CONFIG.levels) {
+      const base = setLevel(newRound(1), level.id);
+      for (let bet = CONFIG.money.minBet; bet <= CONFIG.money.maxBet; bet += CONFIG.money.betStep) {
+        for (const step of base.ladder) {
+          const r: Round = { ...base, phase: 'decide', bet, step: step.step, balance: 0 };
+          const end = cashOut(r).end as { type: 'cashOut'; amount: number; multiplier: number };
+          expect(end).toEqual({ type: 'cashOut', amount: exact(bet, step.multiplier), multiplier: step.multiplier });
+          expect(cashOut(r).balance).toBe(end.amount); // the balance gets exactly the amount
+        }
+      }
+    }
+  });
+  it('RE-RACK pays round(bet x the NEW step multiplier); clearance pays round(bet x top multiplier)', () => {
+    for (let seed = 0; seed < 300; seed++) {
+      for (const bet of [1, 7, 33, 99]) {
+        const r = play(seed, null, fake({ reRack: true }), undefined, bet);
+        if (r.end?.type === 'reRack') expect(r.end.amount).toBe(exact(bet, r.ladder[r.step - 1]!.multiplier));
+      }
+    }
+    let cleared = 0;
+    for (let seed = 0; seed < 20000 && cleared < 3; seed++) {
+      const r = play(seed, null, fake(), undefined, 37);
+      if (r.end?.type !== 'clearance') continue;
+      cleared++;
+      expect(r.end.amount).toBe(exact(37, r.ladder[r.ladder.length - 1]!.multiplier));
+    }
+  });
+});
 
 describe('Bet and START (RULES A.1)', () => {
   it('a new round starts with the starting balance, the default bet and the default level', () => {

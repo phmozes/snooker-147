@@ -144,6 +144,7 @@ export const CONFIG = {
       softSpeeds: [0.4, 0.6, 0.9, 1.3], // RULES D.2 soft shot into a wrong ball (m/s)
       tapSpeed: 0.08,            // RULES D.2 gentle tap that hits nothing (m/s, rolls about 1 cm)
       tapDirections: 24,
+      softFoulMaxShots: 40,      // cap on the soft-foul attempts (fixed, whatever the number of balls)
     },
     powerSamples: 8,
     spinSamples: [-0.8, -0.3, 0, 0.4, 0.8],

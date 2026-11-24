@@ -198,6 +198,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   if (best && next && (opts.lookahead ?? Sv.lookahead > 0)) {
     const order = [...improving].sort((a, b) => a.score - b.score).slice(0, Sv.lookaheadCandidates);
     for (const c of order) {
+      tried++; // simulating where this candidate leaves the balls is one more shot
       const sim = createSim(state.balls, table, cfg);
       strike(sim, 'cue', c.dir, c.speed, c.spin);
       runUntilStill(sim);
@@ -249,7 +250,7 @@ export function randomLayout(rng: () => number, reds: number, due: 'red' | 'colo
  * cluster often pots a ball. The physics and the rules code decide. Quickest success wins (no position play).
  */
 export function solveSpray(state: FrameState, target: BallKind, table: TableGeometry, cfg: PhysicsConfig = CONFIG.physics,
-  shotBudget: number = Sv.spray.shotBudget): SolvedShot | null {
+  shotBudget: number = Sv.spray.shotBudget, info?: SolveInfo): SolvedShot | null {
   const r = table.ballRadius;
   const cue = state.balls.find((b) => b.kind === 'cue')!.pos;
   const X = table.halfWidth - r;
@@ -286,6 +287,7 @@ export function solveSpray(state: FrameState, target: BallKind, table: TableGeom
       }
     }
   }
+  if (info) info.tried = tried;
   return best && { ...best, tried };
 }
 
@@ -294,7 +296,24 @@ export function solveSpray(state: FrameState, target: BallKind, table: TableGeom
 /** Which step of the flex chain produced the success shot (RULES D.3), or RE-RACK (D.4). */
 export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'spray' | 'overLong' | 'reRack';
 export interface FallbackLogEntry { roundCode: string; step: number; target: BallKind; level: FlexLevel | 'noLookahead'; tried: number }
-export interface FlexResult { shot: SolvedShot | null; level: FlexLevel; log: FallbackLogEntry | null }
+/** tried: every shot simulated for this decision (search, lookahead checks, wide search, spray); never above
+ *  shotCaps().success. */
+export interface FlexResult { shot: SolvedShot | null; level: FlexLevel; log: FallbackLogEntry | null; tried: number }
+
+/**
+ * Fixed caps on the work per decision, counted in simulated shots (not ms), so every device does the same work and
+ * picks the same shot. A success solve: normal search + its lookahead checks (each candidate: 1 shot to see where it
+ * leaves the balls + a small search of the next step), then the same for the wide search, then the spray. A failure
+ * solve: the chosen type, a plain miss, the soft foul and the gentle tap. While the player decides, both are solved.
+ */
+export function shotCaps() {
+  const look = Sv.lookaheadCandidates * (1 + Sv.lookaheadShots);
+  const normal = Sv.shotBudget + look;
+  const wide = Sv.wide.shotBudget + look;
+  const success = normal + wide + Sv.spray.shotBudget;
+  const failure = 2 * Sv.shotBudget + CONFIG.solver.failure.softFoulMaxShots + CONFIG.solver.failure.tapDirections;
+  return { normal, wide, spray: Sv.spray.shotBudget, success, failure, decision: success + failure };
+}
 
 /**
  * A decided SUCCESS (the outcome never changes): normal search; a shot up to shot.maxDuration is 'normal', up to
@@ -310,21 +329,26 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
   const log = (level: FlexLevel | 'noLookahead', tried: number): FallbackLogEntry => ({ ...ctx, target, level, tried });
   // a shot whose lookahead failed (the next step looked unsolvable) is only used when nothing better exists
   const good = (s: SolvedShot | null) => !!s && s.lookahead !== 'failed';
-  const normal = solveSuccess(state, target, table, now, cfg, Sv.shotBudget);
-  if (good(normal) && normal!.duration <= CONFIG.shot.maxDuration) return { shot: normal, level: 'normal', log: null };
-  if (good(normal) && normal!.duration <= flex) return { shot: normal, level: 'longerDuration', log: log('longerDuration', normal!.tried) };
-  const wide = solveSuccess(state, target, table, now, cfg, Sv.wide.shotBudget, undefined, { wide: true });
-  const tried = Sv.shotBudget + (wide ? wide.tried : Sv.wide.shotBudget);
-  if (good(wide) && wide!.duration <= flex) return { shot: wide, level: 'wideSearch', log: log('wideSearch', tried) };
+  const iN: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+  const normal = solveSuccess(state, target, table, now, cfg, Sv.shotBudget, iN);
+  const out = (shot: SolvedShot | null, level: FlexLevel, logLevel: FlexLevel | 'noLookahead' | null, tried: number): FlexResult =>
+    ({ shot, level, log: logLevel ? log(logLevel, tried) : null, tried });
+  if (good(normal) && normal!.duration <= CONFIG.shot.maxDuration) return out(normal, 'normal', null, iN.tried);
+  if (good(normal) && normal!.duration <= flex) return out(normal, 'longerDuration', 'longerDuration', iN.tried);
+  const iW: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+  const wide = solveSuccess(state, target, table, now, cfg, Sv.wide.shotBudget, iW, { wide: true });
+  const tried = iN.tried + iW.tried;
+  if (good(wide) && wide!.duration <= flex) return out(wide, 'wideSearch', 'wideSearch', tried);
   const found = [normal, wide].filter((x): x is SolvedShot => x !== null);
   // prefer a shot that keeps the next step solvable, then the shortest
   found.sort((a, b) => Number(a.lookahead === 'failed') - Number(b.lookahead === 'failed') || a.duration - b.duration);
   const pick = found[0];
-  if (pick && pick.duration <= flex) return { shot: pick, level: pick === wide ? 'wideSearch' : 'longerDuration', log: log('noLookahead', tried) };
-  if (pick) return { shot: pick, level: 'overLong', log: log('overLong', tried) };
-  const spray = solveSpray(state, target, table, cfg);
-  if (spray) return { shot: spray, level: 'spray', log: log('spray', tried + spray.tried) };
-  return { shot: null, level: 'reRack', log: log('reRack', tried + Sv.spray.shotBudget) };
+  if (pick && pick.duration <= flex) return out(pick, pick === wide ? 'wideSearch' : 'longerDuration', 'noLookahead', tried);
+  if (pick) return out(pick, 'overLong', 'overLong', tried);
+  const iS: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+  const spray = solveSpray(state, target, table, cfg, Sv.spray.shotBudget, iS);
+  if (spray) return out(spray, 'spray', 'spray', tried + iS.tried);
+  return out(null, 'reRack', 'reRack', tried + iS.tried);
 }
 
 // ---------------- failure shots (task 4.2) ----------------
@@ -358,7 +382,7 @@ function firstHitOf(sim: ReturnType<typeof createSim>): string | null {
 
 /** The chosen failure type only (no fallback). */
 function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, table: TableGeometry, now: () => number,
-  cfg: PhysicsConfig, shotBudget: number): SolvedFailure | null {
+  cfg: PhysicsConfig, shotBudget: number, count: { tried: number }): SolvedFailure | null {
   const t0 = now();
   const r = table.ballRadius;
   const cue = state.balls.find((b) => b.kind === 'cue')!;
@@ -419,11 +443,12 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
     }
   }
   if (best) { best.computeMs = now() - t0; best.tried = tried; }
+  count.tried += tried;
   return best;
 }
 
 /** RULES D.2 step 2: a soft shot straight at a ball that is not a target, hitting it first, potting nothing. */
-function softFoul(state: FrameState, target: BallKind, table: TableGeometry, cfg: PhysicsConfig): SolvedFailure | null {
+function softFoul(state: FrameState, target: BallKind, table: TableGeometry, cfg: PhysicsConfig, count: { tried: number }): SolvedFailure | null {
   const cue = state.balls.find((b) => b.kind === 'cue')!;
   const away = (b: Ball) => Math.hypot(b.pos.x - cue.pos.x, b.pos.y - cue.pos.y);
   const wrong = state.balls.filter((b) => b.kind !== 'cue' && b.kind !== target).sort((a, b) => away(a) - away(b));
@@ -431,7 +456,9 @@ function softFoul(state: FrameState, target: BallKind, table: TableGeometry, cfg
   for (const w of wrong) {
     const dir = { x: w.pos.x - cue.pos.x, y: w.pos.y - cue.pos.y };
     for (const speed of FAIL.softSpeeds) {
+      if (tried >= FAIL.softFoulMaxShots) return null; // a fixed cap (config), whatever the number of balls
       tried++;
+      count.tried++;
       const sim = createSim(state.balls, table, cfg);
       strike(sim, 'cue', dir, speed, 0);
       runUntilStill(sim);
@@ -447,8 +474,9 @@ function softFoul(state: FrameState, target: BallKind, table: TableGeometry, cfg
 }
 
 /** RULES D.2 step 3: tap the cue ball gently so it hits no ball at all (many directions are tried). */
-function gentleTap(state: FrameState, target: BallKind, table: TableGeometry, cfg: PhysicsConfig): SolvedFailure | null {
+function gentleTap(state: FrameState, target: BallKind, table: TableGeometry, cfg: PhysicsConfig, count: { tried: number }): SolvedFailure | null {
   for (let k = 0; k < FAIL.tapDirections; k++) {
+    count.tried++;
     const a = (2 * Math.PI * k) / FAIL.tapDirections;
     const dir = { x: Math.cos(a), y: Math.sin(a) };
     const sim = createSim(state.balls, table, cfg);
@@ -469,13 +497,14 @@ function gentleTap(state: FrameState, target: BallKind, table: TableGeometry, cf
 export function solveFailure(state: FrameState, target: BallKind, kind: FailureKind, table: TableGeometry,
   now: () => number, cfg: PhysicsConfig = CONFIG.physics, shotBudget: number = Sv.shotBudget): SolvedFailure | null {
   const t0 = now();
+  const count = { tried: 0 }; // every shot simulated for this failure, all stages (never above shotCaps().failure)
   const done = (s: SolvedFailure | null, fallback: FailureFallback): SolvedFailure | null =>
-    s && { ...s, kind, fallback, computeMs: now() - t0 };
-  const found = searchFailure(state, target, kind, table, now, cfg, shotBudget);
+    s && { ...s, kind, fallback, computeMs: now() - t0, tried: count.tried };
+  const found = searchFailure(state, target, kind, table, now, cfg, shotBudget, count);
   if (found) return done(found, null);
   if (kind !== 'plainMiss') {
-    const miss = searchFailure(state, target, 'plainMiss', table, now, cfg, shotBudget);
+    const miss = searchFailure(state, target, 'plainMiss', table, now, cfg, shotBudget, count);
     if (miss) return done(miss, 'plainMiss');
   }
-  return done(softFoul(state, target, table, cfg), 'softFoul') ?? done(gentleTap(state, target, table, cfg), 'tap');
+  return done(softFoul(state, target, table, cfg, count), 'softFoul') ?? done(gentleTap(state, target, table, cfg, count), 'tap');
 }

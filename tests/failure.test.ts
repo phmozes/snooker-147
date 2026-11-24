@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createSim, runUntilStill, strike } from '../src/core/physics/sim';
 import { judgeShot } from '../src/core/rules';
 import { mulberry32 } from '../src/core/rng';
-import { randomLayout, solveFailure, type FailureKind } from '../src/core/solver';
+import { randomLayout, shotCaps, solveFailure, type FailureKind } from '../src/core/solver';
 import { buildTable } from '../src/core/table/geometry';
 
 const table = buildTable();
@@ -19,6 +19,7 @@ describe('task 4.2: failure shots', () => {
         const s = solveFailure(L, 'red', kind, table, now);
         if (!s) continue;
         found++;
+        expect(s.tried).toBeLessThanOrEqual(shotCaps().failure); // all stages counted, fixed cap
         const sim = createSim(L.balls, table);
         strike(sim, 'cue', s.dir, s.speed, s.spin);
         runUntilStill(sim);

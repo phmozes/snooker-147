@@ -9,7 +9,7 @@ import { paceStudy, speedBenchmark, withFriction } from '../core/physics/bench';
 import { type BreakEntry, type BreakKind } from '../core/breakLibrary';
 import { mulberry32 } from '../core/rng';
 import { applyShot, judgeShot, type FrameState } from '../core/rules';
-import { randomLayout, solveFailure, solveSuccess, type FailureKind, type SolvedShot, type SolveInfo } from '../core/solver';
+import { randomLayout, shotCaps, solveFailure, solveSuccess, type FailureKind, type SolvedShot, type SolveInfo } from '../core/solver';
 import { ballEnergy, checkSim, createSim, isMoving, naturalRollSpin, runUntilStill, stepSim, strike, type PhysicsConfig, type Sim } from '../core/physics/sim';
 import { breakAim, pocketRollStart, runPocketRoll, type PocketRoll, type RollOutcome } from '../core/physics/testShots';
 import { arcPoints, buildTable, type JawArc, type PocketId, type TableGeometry } from '../core/table/geometry';
@@ -689,12 +689,13 @@ function solveAndPlay(keep = false) {
   const verdict = judgeShot(L, target, { firstHit, potted: check.balls.filter((b) => b.potted).map((b) => b.id), after: [] });
   const ok = verdict.result === 'success';
   out.innerHTML = [
-    `Layout ${layoutNo} (${state.reds} reds level, ${L.redsLeft} reds on the table, ${solveDue} due)`,
+    `Layout ${layoutNo} (${state.reds} reds level, ${L.redsLeft} reds on the table, ${target} due)`,
     `Target: <b>${s.target}</b> into <b>${s.pocket}</b>`,
     `Power: ${s.speed.toFixed(2)} m/s (${Math.round((s.speed / CONFIG.physics.maxCueSpeed) * 100)}%) · spin: ${spinText(s.spin)}`,
     `Shot length: <b>${s.duration.toFixed(2)} s</b> until all balls stop ${s.duration <= CONFIG.shot.maxDuration ? '<span class="ok">within 1.5 s</span>' : '<span class="bad">over 1.5 s</span>'}`,
     `Position for the next shot (${s.nextCost === null ? 'not scored' : `cost ${s.nextCost.toFixed(2)}, lower = easier`})`,
-    `Compute time: <b>${s.computeMs.toFixed(0)} ms</b> (${s.tried} of ${CONFIG.solver.shotBudget} shots tried; guide ${CONFIG.solver.timeBudgetMs} ms)`,
+    `Compute time: <b>${s.computeMs.toFixed(0)} ms</b> for <b>${s.tried}</b> simulated shots (search up to ${CONFIG.solver.shotBudget}, then the next-step check of up to ${CONFIG.solver.lookaheadCandidates} candidates x ${1 + CONFIG.solver.lookaheadShots}; cap ${shotCaps().normal})`,
+    `Cap per decision (same on every device): ${shotCaps().decision} shots = success chain ${shotCaps().success} (normal ${shotCaps().normal} + wide ${shotCaps().wide} + spray ${shotCaps().spray}) + failure ${shotCaps().failure}`,
     `Rules check: ${ok ? '<span class="ok">success (exactly the target potted, cue ball on the table)</span>' : `<span class="bad">${verdict.result}</span>`}`,
   ].join('\n');
   shoot(s.dir, s.speed, s.spin);
@@ -739,7 +740,7 @@ function runTwenty() {
       `<b>Run 20</b>: layouts ${start}-${start + 19}, ${state.reds} reds level, ${solveDue} due`,
       `Solved: <b>${solved} of 20</b>`,
       `Shot length: median ${med(dur).toFixed(2)} s, longest ${max(dur).toFixed(2)} s, within 1.5 s: ${Math.round((dur.filter((d) => d <= CONFIG.shot.maxDuration).length / Math.max(1, dur.length)) * 100)}%`,
-      `Compute time: median ${med(ms).toFixed(0)} ms, longest ${max(ms).toFixed(0)} ms (budget ${CONFIG.solver.shotBudget} shots, guide ${CONFIG.solver.timeBudgetMs} ms)`,
+      `Compute time: median ${med(ms).toFixed(0)} ms, longest ${max(ms).toFixed(0)} ms (cap ${shotCaps().normal} simulated shots per search)`,
     ].join('\n');
   }, 30);
 }
@@ -779,7 +780,7 @@ function solveFailureAndPlay() {
     `Layout ${layoutNo}: <b>${FAIL_TEXT[failKind]}</b>${s.fallback ? ` <span class="bad">not found: fell back to ${FALLBACK_TEXT[s.fallback]} (RULES D.2)</span>` : ''}`,
     `Attempt at: <b>${s.target}</b> into <b>${s.pocket}</b>`,
     `Power: ${s.speed.toFixed(2)} m/s (${Math.round((s.speed / CONFIG.physics.maxCueSpeed) * 100)}%) · spin: ${spinText(s.spin)}`,
-    `Shot length: <b>${s.duration.toFixed(2)} s</b> · compute time: <b>${s.computeMs.toFixed(0)} ms</b> (${s.tried} shots tried)`,
+    `Shot length: <b>${s.duration.toFixed(2)} s</b> · compute time: <b>${s.computeMs.toFixed(0)} ms</b> for <b>${s.tried}</b> simulated shots (cap ${shotCaps().failure})`,
     `Rules check: ${ok ? `<span class="ok">failure (${v.result === 'failure' ? v.type : ''}), no object ball potted</span>` : `<span class="bad">${JSON.stringify(v)}</span>`}`,
   ].join('\n');
   shoot(s.dir, s.speed, s.spin);
