@@ -1,12 +1,13 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review task 1.2 (balls moving): `npm run dev`, open the printed address + `/debug.html`; click to shoot, Break, Reset. Approve before 1.3.
+- Review task 1.3 (pockets): `npm run dev`, printed address + `/debug.html`; Pocket test (Roll, Pot map). Approve before 1.3b.
+- Choose the corner jaw radius with the slider (old 35 mm, photo estimate 150 mm = config now).
 
 ## Claude's turn
-- Wait for approval of task 1.2. Do not start 1.3 until told.
-- Task 1.2 pot rule is temporary (capture circle or past the narrowest gap = potted); 1.3 replaces it with rattles.
-- Task 1.3: corner jaw radius 35 mm looks too tight; owner sees 2-3 ball widths in reference/pocket4. Compare to that photo first; add a to-scale ball to the zoomed pocket view.
+- Wait for approval of task 1.3. Next: 1.3b (simple follow/screw spin, split out of 1.3).
+- Task 1.4: friction slider on the debug page with marked "realistic cloth" and "game" positions; list other ways to keep
+  shots short (solver picks quick pots / short cue-ball travel, mild playback speed-up) with a recommendation.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others

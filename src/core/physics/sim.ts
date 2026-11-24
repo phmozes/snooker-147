@@ -5,7 +5,8 @@
 //   1. Velocities are constant during the step. We look for the EARLIEST contact (ball-ball, ball-cushion,
 //      ball-jaw) inside the step, move every ball exactly to that moment, bounce, and repeat.
 //      Because we stop at the exact moment of contact, balls never overlap or pass through anything.
-//   2. Balls that reach a pocket are marked potted (simple rule for now; rattles come in task 1.3).
+//   2. A ball whose centre is over the hole (capture circle) drops. The jaws keep going past the
+//      narrowest gap, so a ball that comes in at a bad angle bounces between them (rattle) and may come out.
 //   3. Friction lowers every speed a little. Friction can only slow a ball, never speed it up.
 
 import { CONFIG } from '../../config/game.config';
@@ -19,6 +20,7 @@ export interface PhysicsConfig {
   rollingFriction: number;
   ballBallRestitution: number;
   cushionRestitution: number;
+  jawRestitution: number;
   stopSpeed: number;
   maxEventsPerStep: number;
 }
@@ -33,8 +35,9 @@ export interface SimBall {
 
 export type SimEvent =
   | { t: number; type: 'ball'; a: string; b: string; speed: number }
-  | { t: number; type: 'cushion' | 'jaw'; a: string; speed: number }
-  | { t: number; type: 'pot'; a: string; pocket: PocketId };
+  | { t: number; type: 'cushion'; a: string; speed: number }
+  | { t: number; type: 'jaw'; a: string; pocket: PocketId; speed: number; contact: Vec2 } // contact = point on the jaw
+  | { t: number; type: 'pot'; a: string; pocket: PocketId; fallback: boolean };
 
 export interface Sim {
   table: TableGeometry;
@@ -193,29 +196,38 @@ function resolve(sim: Sim, hit: Hit, at: number) {
     sim.events.push({ t: at, type: 'cushion', a: b.id, speed });
   } else {
     const d = dist(b.pos, hit.jaw.centre);
-    const speed = bounceOff(b, (b.pos.x - hit.jaw.centre.x) / d, (b.pos.y - hit.jaw.centre.y) / d, sim.cfg.cushionRestitution);
-    sim.events.push({ t: at, type: 'jaw', a: b.id, speed });
+    const speed = bounceOff(b, (b.pos.x - hit.jaw.centre.x) / d, (b.pos.y - hit.jaw.centre.y) / d, sim.cfg.jawRestitution);
+    const k = hit.jaw.radius / d;
+    const contact = { x: hit.jaw.centre.x + (b.pos.x - hit.jaw.centre.x) * k, y: hit.jaw.centre.y + (b.pos.y - hit.jaw.centre.y) * k };
+    sim.events.push({ t: at, type: 'jaw', a: b.id, pocket: hit.jaw.pocket, speed, contact });
   }
 }
 
 /**
- * Simple pocket rule for task 1.2: a ball is potted when its centre is inside the capture circle, or has
- * passed the narrowest gap of the mouth. Task 1.3 replaces this with real capture and jaw rattles.
+ * Pockets. A ball drops when its centre is over the hole (capture circle). Safety net (`fallback`):
+ * a ball that is deeper in the pocket than the far edge of the hole, or far outside the table, also
+ * drops. The tests check that the safety net is never needed.
  */
 function checkPots(sim: Sim) {
+  const { halfWidth: hw, halfLength: hl } = sim.table;
   for (const b of sim.balls) {
     if (b.potted) continue;
     for (const p of sim.table.pockets) {
-      const mouth = dist(p.mouthA, p.mouthB);
-      const past = (b.pos.x - p.mouthMid.x) * p.inward.x + (b.pos.y - p.mouthMid.y) * p.inward.y > 0;
-      if (dist(b.pos, p.captureCentre) < p.captureRadius || (past && dist(b.pos, p.mouthMid) < mouth)) {
-        b.potted = p.id;
-        b.vel = { x: 0, y: 0 };
-        sim.events.push({ t: sim.time, type: 'pot', a: b.id, pocket: p.id });
-        break;
-      }
+      const depth = (b.pos.x - p.mouthMid.x) * p.inward.x + (b.pos.y - p.mouthMid.y) * p.inward.y;
+      const inHole = dist(b.pos, p.captureCentre) < p.captureRadius;
+      const tooDeep = depth > dist(p.mouthMid, p.captureCentre) + p.captureRadius && dist(b.pos, p.mouthMid) < 0.3;
+      if (inHole || tooDeep) { pot(sim, b, p.id, !inHole); break; }
+    }
+    if (!b.potted && (Math.abs(b.pos.x) > hw + 0.3 || Math.abs(b.pos.y) > hl + 0.3)) {
+      const near = sim.table.pockets.reduce((a, p) => (dist(b.pos, p.mouthMid) < dist(b.pos, a.mouthMid) ? p : a));
+      pot(sim, b, near.id, true);
     }
   }
+}
+function pot(sim: Sim, b: SimBall, pocket: PocketId, fallback: boolean) {
+  b.potted = pocket;
+  b.vel = { x: 0, y: 0 };
+  sim.events.push({ t: sim.time, type: 'pot', a: b.id, pocket, fallback });
 }
 
 function applyFriction(sim: Sim) {
@@ -294,4 +306,29 @@ export function checkSim(sim: Sim, tol = 1e-6): SimCheck {
     }
   }
   return { overlaps, insideCushion, minGap };
+}
+
+// ---------------- recording (for playback, replays and the pocket camera later) ----------------
+
+export interface Recording {
+  frameDt: number; // seconds between frames
+  ids: string[];
+  /** frames[f][2*i], frames[f][2*i+1] = x, y of ball i; NaN once the ball is potted */
+  frames: number[][];
+  events: SimEvent[];
+  duration: number;
+}
+
+const snapshot = (sim: Sim) => sim.balls.flatMap((b) => (b.potted ? [NaN, NaN] : [b.pos.x, b.pos.y]));
+
+/** Run a shot to the end and keep a frame every `stepsPerFrame` physics steps (8 -> 60 frames per second). */
+export function recordShot(sim: Sim, stepsPerFrame = 8): Recording {
+  const frames = [snapshot(sim)];
+  const firstEvent = sim.events.length;
+  let n = 0;
+  const duration = runUntilStill(sim, (s) => { if (++n % stepsPerFrame === 0 || !isMoving(s)) frames.push(snapshot(s)); });
+  return {
+    frameDt: stepsPerFrame * sim.cfg.timestep, ids: sim.balls.map((b) => b.id), frames,
+    events: sim.events.slice(firstEvent), duration,
+  };
 }

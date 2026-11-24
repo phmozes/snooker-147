@@ -1,14 +1,22 @@
 // Development-only 2D view of the table geometry, racks and ball physics. Plain canvas, no Three.js.
 // Click the table to strike the cue ball toward that point (power slider). Buttons: Break, Reset, Slow motion.
+// Pocket test: roll one ball at a chosen pocket (angle, aim offset, speed) and a full "pot map".
 
 import { CONFIG } from '../config/game.config';
 import { checkSim, createSim, isMoving, stepSim, strike, type Sim } from '../core/physics/sim';
-import { breakAim } from '../core/physics/testShots';
-import { arcPoints, buildTable, type JawArc, type PocketId } from '../core/table/geometry';
+import { breakAim, pocketRollStart, runPocketRoll, type PocketRoll, type RollOutcome } from '../core/physics/testShots';
+import { arcPoints, buildTable, type JawArc, type PocketId, type TableGeometry } from '../core/table/geometry';
 import { checkRack, rackBalls } from '../core/table/rack';
 import { dist, sub, type BallKind, type Vec2 } from '../core/types';
 
-const table = buildTable();
+// Jaw radii can be changed on the page to compare shapes (the config keeps the chosen values).
+const jawRadius = { corner: CONFIG.table.corner.jawRadius as number, middle: CONFIG.table.middle.jawRadius as number };
+const makeTable = (): TableGeometry => buildTable({
+  ...CONFIG.table,
+  corner: { ...CONFIG.table.corner, jawRadius: jawRadius.corner },
+  middle: { ...CONFIG.table.middle, jawRadius: jawRadius.middle },
+});
+let table = makeTable();
 const canvas = document.getElementById('c') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
@@ -28,6 +36,21 @@ const state = {
   slow: false, // play at 1/4 speed
 };
 
+// ---- pocket test ----
+const PT = CONFIG.dev.pocketTest;
+const roll: PocketRoll = { pocket: 'topRight', angleDeg: 0, offset: 0, speed: PT.speed, distance: PT.distance };
+let trail: Vec2[] = [];
+let rollMode = false; // true while the current sim is a pocket-test roll
+let lastOutcome: RollOutcome | null = null;
+let potMap: { angles: number[]; offsets: number[]; cells: RollOutcome[][] } | null = null;
+const OUTCOME_COLOURS: Record<RollOutcome, string> = {
+  clean: '#27ae60', rattleIn: '#f2c94c', rattleOut: '#eb5757', missed: '#4f5b57', offTable: '#151c1a',
+};
+const OUTCOME_TEXT: Record<RollOutcome, string> = {
+  clean: 'clean pot', rattleIn: 'rattled and dropped', rattleOut: 'rattled and came out', missed: 'missed the pocket',
+  offTable: 'start is off the table',
+};
+
 // ---- physics state for the interactive shots ----
 let sim: Sim = createSim(rackBalls(state.reds, table), table);
 let mouse: Vec2 | null = null;
@@ -41,11 +64,38 @@ const cueStart = (): Vec2 => ({ x: CONFIG.rack.cueStart[0], y: CONFIG.rack.cueSt
 function reset() {
   sim = createSim(rackBalls(state.reds, table), table);
   shot = freshShot();
+  rollMode = false;
+  trail = [];
+}
+
+function rollAtPocket() {
+  const start = pocketRollStart(table, roll);
+  state.view = roll.pocket;
+  trail = [];
+  lastOutcome = start ? null : 'offTable';
+  if (!start) { sim = createSim([], table); shot = freshShot(); return; }
+  sim = createSim([{ id: 'red1', kind: 'red', pos: start.pos }], table);
+  rollMode = true;
+  strike(sim, 'red1', start.dir, roll.speed);
+  shot = { ...freshShot(), running: true, start: sim.time, startSpeed: roll.speed };
+  speedsBefore = [roll.speed];
+  trail.push({ ...start.pos });
+}
+
+function buildPotMap() {
+  const angles: number[] = [];
+  const offsets: number[] = [];
+  for (let a = PT.angleMaxDeg; a >= -PT.angleMaxDeg; a -= PT.mapAngleStepDeg) angles.push(a);
+  for (let o = -PT.offsetMaxMm; o <= PT.offsetMaxMm; o += PT.mapOffsetStepMm) offsets.push(o);
+  const cells = angles.map((a) => offsets.map((o) =>
+    runPocketRoll(table, { ...roll, angleDeg: a, offset: o / 1000 }).outcome));
+  potMap = { angles, offsets, cells };
 }
 
 function shoot(direction: Vec2, speed: number) {
   if (isMoving(sim)) return;
-  const cue = sim.balls.find((b) => b.kind === 'cue')!;
+  const cue = sim.balls.find((b) => b.kind === 'cue');
+  if (!cue) return;
   if (cue.potted) {
     // cue ball was potted: put it back on its starting place in the D (if that place is free)
     const free = sim.balls.every((b) => b === cue || b.potted || dist(b.pos, cueStart()) >= 2 * table.ballRadius);
@@ -60,6 +110,7 @@ function shoot(direction: Vec2, speed: number) {
 
 function breakOff() {
   reset();
+  rollMode = false;
   shoot(breakAim(table, rackBalls(state.reds, table)), CONFIG.physics.maxCueSpeed);
 }
 
@@ -76,9 +127,17 @@ function advancePhysics(steps: number) {
       speedsBefore[i] = v;
     });
   }
+  if (rollMode) {
+    const b = sim.balls[0]!;
+    if (!b.potted) trail.push({ ...b.pos });
+  }
   if (shot.running && !isMoving(sim)) {
     shot.running = false;
     shot.settledAfter = sim.time - shot.start;
+    if (rollMode) {
+      const jaws = sim.events.filter((e) => e.type === 'jaw').length;
+      lastOutcome = sim.balls[0]!.potted ? (jaws ? 'rattleIn' : 'clean') : jaws ? 'rattleOut' : 'missed';
+    }
   }
 }
 
@@ -121,7 +180,7 @@ function setView() {
   if (state.view !== 'table') {
     const p = table.pockets.find((q) => q.id === state.view)!;
     centre = p.mouthMid;
-    w = h = 0.3;
+    w = h = 0.5;
   }
   scale = Math.min(canvas.width / w, canvas.height / h);
   origin = { x: canvas.width / 2 - centre.x * scale, y: canvas.height / 2 + centre.y * scale };
@@ -194,6 +253,27 @@ function draw() {
     if (state.view !== 'table') line(p.mouthA, p.mouthB, 'rgba(255,255,255,0.6)', 1); // the mouth width
   }
 
+  // zoomed pocket view: a ball drawn to scale in the mouth (dashed) and a 10 cm ruler in the corner of the view
+  if (state.view !== 'table') {
+    const p = table.pockets.find((q) => q.id === state.view)!;
+    circle(p.mouthMid, table.ballRadius, 'rgba(255,255,255,0.18)', 'rgba(255,255,255,0.8)', true);
+    const x0 = px(16);
+    const y0 = canvas.height - px(16);
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(x0 - px(6), y0 - px(36), 0.1 * scale + px(12), px(42));
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x0 + 0.1 * scale, y0);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = px(2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `${px(12)}px system-ui`;
+    ctx.textAlign = 'left';
+    ctx.fillText('10 cm', x0, y0 - px(8));
+    ctx.fillText('dashed ball in the mouth = real size', x0, y0 - px(22));
+  }
+
   // baulk line and D
   line({ x: -hw, y: table.baulkY }, { x: hw, y: table.baulkY }, 'rgba(255,255,255,0.45)', 1);
   ctx.beginPath();
@@ -217,11 +297,16 @@ function draw() {
   }
 
   // aim line while everything is still, then the balls (potted balls are not drawn)
-  const cue = sim.balls.find((b) => b.kind === 'cue')!;
-  if (mouse && !isMoving(sim) && state.view === 'table') {
+  const cue = sim.balls.find((b) => b.kind === 'cue');
+  if (cue && mouse && !isMoving(sim) && state.view === 'table') {
     ctx.setLineDash([px(6), px(6)]);
     line(cue.potted ? cueStart() : cue.pos, mouse, 'rgba(255,255,255,0.55)', 1);
     ctx.setLineDash([]);
+  }
+  // pocket test: path of the rolled ball and the points where it touched a jaw
+  if (rollMode || trail.length) {
+    for (let i = 1; i < trail.length; i++) line(trail[i - 1]!, trail[i]!, 'rgba(255,255,255,0.8)', 1.5);
+    for (const e of sim.events) if (e.type === 'jaw') circle(e.contact, 0.004, '#eb5757');
   }
   for (const b of sim.balls) {
     if (!b.potted) circle(b.pos, table.ballRadius, BALL_COLOURS[b.kind], 'rgba(0,0,0,0.6)');
@@ -254,7 +339,15 @@ function showInfo() {
     : shot.settledAfter !== null
       ? `All balls stopped after ${shot.settledAfter.toFixed(2)} s`
       : 'Click the table to shoot';
-  const lines = [
+  const lines = rollMode || lastOutcome ? [
+    `<b>Pocket test</b>`,
+    lastOutcome ? `Result: <b style="color:${OUTCOME_COLOURS[lastOutcome]}">${OUTCOME_TEXT[lastOutcome]}</b>` : status,
+    `Jaw contacts: ${sim.events.filter((e) => e.type === 'jaw').length}` +
+      (sim.events.some((e) => e.type === 'jaw') ? `  (speed into the jaw: ${sim.events.filter((e) => e.type === 'jaw').map((e) => (e as { speed: number }).speed.toFixed(2)).join(', ')} m/s)` : ''),
+    `Overlaps ${shot.overlaps} ${okText(shot.overlaps === 0)} · inside a cushion ${shot.insideCushion} ${okText(shot.insideCushion === 0)} · free speed ${shot.freeSpeed} ${okText(shot.freeSpeed === 0)}`,
+    ``,
+  ] : [];
+  lines.push(
     `<b>Shot</b>`,
     status,
     `Fastest ball now: ${fastest.toFixed(2)} m/s (hit at ${shot.startSpeed.toFixed(2)})`,
@@ -272,7 +365,7 @@ function showInfo() {
     `Start rack: overlaps ${c.overlaps} ${okText(c.overlaps === 0)}, off the cloth ${c.outside} ${okText(c.outside === 0)}, cue in D ${okText(c.cueInD)}`,
     ``,
     `Pocket       mouth     jaw radius`,
-  ];
+  );
   for (const p of table.pockets) {
     const [j1] = jawsOf(p.id);
     lines.push(`${p.id.padEnd(12)} ${mm(dist(p.mouthA, p.mouthB))}  ${mm(j1.radius)}`);
@@ -297,11 +390,11 @@ function buttons(containerId: string, items: { label: string; on: () => boolean;
 }
 const renderers = [
   buttons('levels', CONFIG.levels.map((l) => ({
-    label: `${l.reds} reds`, on: () => state.reds === l.reds, click: () => { state.reds = l.reds; reset(); },
+    label: `${l.reds} reds`, on: () => state.reds === l.reds, click: () => { state.reds = l.reds; reset(); lastOutcome = null; },
   }))),
   buttons('shots', [
-    { label: 'Break', on: () => false, click: breakOff },
-    { label: 'Reset', on: () => false, click: reset },
+    { label: 'Break', on: () => false, click: () => { lastOutcome = null; breakOff(); state.view = 'table'; } },
+    { label: 'Reset', on: () => false, click: () => { lastOutcome = null; reset(); } },
     { label: 'Slow motion', on: () => state.slow, click: () => { state.slow = !state.slow; } },
   ]),
   buttons('views', [
@@ -313,7 +406,78 @@ const renderers = [
     { label: 'Pocket names', on: () => state.labels, click: () => { state.labels = !state.labels; } },
   ]),
 ];
-function renderAll() { renderers.forEach((r) => r()); draw(); }
+renderers.push(buttons('ptPockets', table.pockets.map((p) => ({
+  label: p.id, on: () => roll.pocket === p.id, click: () => { roll.pocket = p.id; state.view = p.id; potMap = null; },
+}))));
+renderers.push(buttons('ptActions', [
+  { label: 'Roll', on: () => false, click: rollAtPocket },
+  { label: 'Pot map', on: () => false, click: buildPotMap },
+]));
+function renderAll() { renderers.forEach((r) => r()); draw(); drawPotMap(); }
+
+// ---- pocket-test sliders and the pot map ----
+function makeSlider(id: string, min: number, max: number, step: number, get: () => number, set: (v: number) => void,
+  text: (v: number) => string, marks: number[] = []) {
+  const el = document.getElementById(id) as HTMLInputElement;
+  const out = document.getElementById(`${id}Text`)!;
+  Object.assign(el, { min: String(min), max: String(max), step: String(step) });
+  if (marks.length) {
+    const list = document.createElement('datalist');
+    list.id = `${id}Marks`;
+    list.innerHTML = marks.map((m) => `<option value="${m}"></option>`).join('');
+    el.after(list);
+    el.setAttribute('list', list.id);
+  }
+  el.value = String(get());
+  const show = () => { out.textContent = text(get()); };
+  el.oninput = () => { set(Number(el.value)); show(); };
+  show();
+}
+makeSlider('ptAngle', -PT.angleMaxDeg, PT.angleMaxDeg, 1, () => roll.angleDeg, (v) => { roll.angleDeg = v; }, (v) => `${v}°`);
+makeSlider('ptOffset', -PT.offsetMaxMm, PT.offsetMaxMm, 1, () => Math.round(roll.offset * 1000), (v) => { roll.offset = v / 1000; }, (v) => `${v} mm`);
+makeSlider('ptSpeed', 0.3, 6, 0.1, () => roll.speed, (v) => { roll.speed = v; potMap = null; drawPotMap(); }, (v) => `${v.toFixed(1)} m/s`);
+const rebuildTable = () => { table = makeTable(); potMap = null; reset(); renderAll(); };
+const mm0 = (m: number) => `${Math.round(m * 1000)} mm`;
+makeSlider('jawCorner', 20, 250, 1, () => Math.round(jawRadius.corner * 1000), (v) => { jawRadius.corner = v / 1000; rebuildTable(); },
+  (v) => `${v} mm (old ${mm0(PT.oldCornerJawRadius)}, photo estimate ${mm0(PT.photoCornerJawRadius)}, config ${mm0(CONFIG.table.corner.jawRadius)})`,
+  [PT.oldCornerJawRadius * 1000, PT.photoCornerJawRadius * 1000]);
+makeSlider('jawMiddle', 20, 150, 1, () => Math.round(jawRadius.middle * 1000), (v) => { jawRadius.middle = v / 1000; rebuildTable(); },
+  (v) => `${v} mm (config ${mm0(CONFIG.table.middle.jawRadius)})`, [CONFIG.table.middle.jawRadius * 1000]);
+
+const mapCanvas = document.getElementById('potmap') as HTMLCanvasElement;
+const mapCtx = mapCanvas.getContext('2d')!;
+function drawPotMap() {
+  const box = document.getElementById('potmapBox')!;
+  box.style.display = potMap ? 'block' : 'none';
+  if (!potMap) return;
+  const { angles, offsets, cells } = potMap;
+  const cw = 6;
+  const ch = 8;
+  mapCanvas.width = offsets.length * cw;
+  mapCanvas.height = angles.length * ch;
+  cells.forEach((row, i) => row.forEach((c, j) => {
+    mapCtx.fillStyle = OUTCOME_COLOURS[c];
+    mapCtx.fillRect(j * cw, i * ch, cw - 1, ch - 1);
+  }));
+  const count = (o: RollOutcome) => cells.flat().filter((c) => c === o).length;
+  document.getElementById('potmapLegend')!.innerHTML = (['clean', 'rattleIn', 'rattleOut', 'missed'] as RollOutcome[])
+    .map((o) => `<span style="color:${OUTCOME_COLOURS[o]}">■</span> ${OUTCOME_TEXT[o]} (${count(o)})`).join('<br>') +
+    `<br>Across: aim offset ${offsets[0]} to ${offsets[offsets.length - 1]} mm. Down: angle ${angles[0]}° to ${angles[angles.length - 1]}°. Click a square to roll it.`;
+}
+mapCanvas.addEventListener('click', (e) => {
+  if (!potMap) return;
+  const rect = mapCanvas.getBoundingClientRect();
+  const j = Math.floor(((e.clientX - rect.left) / rect.width) * potMap.offsets.length);
+  const i = Math.floor(((e.clientY - rect.top) / rect.height) * potMap.angles.length);
+  roll.angleDeg = potMap.angles[i]!;
+  roll.offset = potMap.offsets[j]! / 1000;
+  (document.getElementById('ptAngle') as HTMLInputElement).value = String(roll.angleDeg);
+  (document.getElementById('ptOffset') as HTMLInputElement).value = String(potMap.offsets[j]);
+  document.getElementById('ptAngleText')!.textContent = `${roll.angleDeg}°`;
+  document.getElementById('ptOffsetText')!.textContent = `${potMap.offsets[j]} mm`;
+  rollAtPocket();
+  renderAll();
+});
 
 // ---- mouse: aim and shoot ----
 function toWorld(e: MouseEvent): Vec2 {
@@ -326,7 +490,8 @@ function toWorld(e: MouseEvent): Vec2 {
 canvas.addEventListener('mousemove', (e) => { mouse = toWorld(e); if (!isMoving(sim)) draw(); });
 canvas.addEventListener('mouseleave', () => { mouse = null; if (!isMoving(sim)) draw(); });
 canvas.addEventListener('click', (e) => {
-  if (state.view !== 'table') return;
+  if (state.view !== 'table' || isMoving(sim)) return;
+  if (rollMode || !sim.balls.some((b) => b.kind === 'cue')) { reset(); lastOutcome = null; } // back from a pocket test
   const cue = sim.balls.find((b) => b.kind === 'cue')!;
   const d = sub(toWorld(e), cue.potted ? cueStart() : cue.pos);
   if (Math.hypot(d.x, d.y) < 1e-6) return;

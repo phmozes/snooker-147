@@ -58,7 +58,7 @@ export const CONFIG = {
     // photos (official template sizes are not published); tuned in task 1.3.
     corner: {
       mouth: 0.086,              // narrowest gap between the two jaw arcs
-      jawRadius: 0.035,          // corner noses are tighter (photo pocket4)
+      jawRadius: 0.150,          // long gentle curve, estimated from photo pocket4 (owner to confirm on the debug page)
       jawSweepDeg: 90,           // how far the arc curves round from the cushion face (narrowest point is at 45)
       captureDepth: 0.060,       // capture circle centre, measured from the narrowest gap into the pocket
       captureRadius: 0.040,      // ball centre inside this circle = potted (tuned in task 1.3)
@@ -88,6 +88,7 @@ export const CONFIG = {
     slidingFriction: 0.2,        // used while spin converts to rolling
     ballBallRestitution: 0.95,
     cushionRestitution: 0.75,
+    jawRestitution: 0.6,         // pocket jaws are softer than the straight cushions (more rattles drop)
     stopSpeed: 0.005,            // below this a ball is "stopped"
     maxEventsPerStep: 64,        // safety limit for contacts inside one time step (should never be reached)
     maxCueSpeed: 6.0,            // m/s, hardest shot
@@ -236,8 +237,11 @@ export const CONFIG = {
   dev: {
     testPanel: true,             // ignored in production builds
     soak: { rounds: 5000, rtpRngOnlyRounds: 2_000_000 },
-    breakAimRow: 2,              // debug/test break: aim at the outer red of this triangle row (0 = front)
-    breakAimOffset: 1.4,         // ... this many ball radii outside it (picked by a scan, see testShots.ts)
+    breakAimRow: 1,              // debug/test break: aim at the outer red of this triangle row (0 = front)
+    breakAimOffset: 1.5,         // ... this many ball radii outside it (picked by a scan, see testShots.ts)
     debugPowerDefault: 0.5,      // debug page power slider start (share of maxCueSpeed)
+    // debug page "pocket test": roll one ball at a pocket
+    pocketTest: { distance: 0.2, speed: 1.5, angleMaxDeg: 70, offsetMaxMm: 60, mapAngleStepDeg: 5, mapOffsetStepMm: 3,
+                  oldCornerJawRadius: 0.035, photoCornerJawRadius: 0.150 },
   },
 } as const;

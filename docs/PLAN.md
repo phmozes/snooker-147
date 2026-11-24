@@ -20,7 +20,8 @@ Estimates are working time; total is about 60 hours (32 tasks) before stage 11.
 ## Stage 1 - Physics without graphics (4 tasks)
 | 1.1 | Table geometry: cushions, pocket mouths with angled jaws, spots, rack layouts for 6/10/15 reds | 2h | 2D debug drawing (plain canvas) |
 | 1.2 | Ball motion, fixed timestep, friction, cushions, ball-ball collisions; tests: no overlap, never off table, same input = same output | 2h | 2D debug: shots you can click |
-| 1.3 | Pockets (capture, jaw bounce = rattles), simple follow/screw spin, trajectory recording + events | 2h | 2D debug: rattles, in-offs |
+| 1.3 | Pockets (capture, jaw bounce = rattles), trajectory recording + events | 2h | 2D debug: pocket test, pot map |
+| 1.3b | Simple follow/screw spin (split out of 1.3 to review one thing at a time) | 1h | 2D debug: stun, follow, screw |
 | 1.4 | Speed benchmark (target < 1 ms per simulated shot) and friction tuning to 1.0-1.5 s shots | 2h | Benchmark numbers |
 
 ## Stage 2 - Gray-box table (2 tasks)

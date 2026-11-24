@@ -9,13 +9,15 @@
     body { margin: 0; background: #0f1513; color: #d8e0dc; font: 14px/1.4 system-ui, sans-serif;
            display: flex; gap: 16px; padding: 16px; box-sizing: border-box; height: 100vh; }
     canvas { cursor: crosshair; background: #0b0f0e; border-radius: 8px; height: calc(100vh - 32px); aspect-ratio: 0.56; }
-    aside { width: 300px; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
+    aside { width: 340px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; overflow-x: hidden; }
     h1 { font-size: 16px; margin: 0; }
     .row { display: flex; flex-wrap: wrap; gap: 6px; }
     button { background: #1c2422; color: inherit; border: 1px solid #34403c; border-radius: 6px;
              padding: 6px 10px; cursor: pointer; font: inherit; }
     button.on { background: #f2c94c; color: #111; border-color: #f2c94c; }
     pre { background: #151c1a; padding: 10px; border-radius: 6px; margin: 0; white-space: pre-wrap; }
+    label.sl { display: block; } label.sl input { width: 100%; }
+    #potmap { width: 100%; image-rendering: pixelated; cursor: pointer; margin-top: 6px; }
     .ok { color: #6fcf97; } .bad { color: #eb5757; }
     @media (max-width: 700px) { body { flex-direction: column; height: auto; }
       canvas { height: auto; width: 100%; } aside { width: auto; } }
@@ -24,11 +26,21 @@
 <body>
   <canvas id="c"></canvas>
   <aside>
-    <h1>Table debug (task 1.2: balls moving)</h1>
+    <h1>Table debug (task 1.3: pockets)</h1>
     <div><b>Level</b><div class="row" id="levels"></div></div>
     <div><b>Shot</b> <span style="opacity:.7">click the table: the cue ball is hit toward that point</span>
       <div class="row" id="shots"></div>
       <label>Power <input id="power" type="range" min="1" max="100" step="1" /> <span id="powerText"></span></label></div>
+    <div><b>Pocket test</b> <span style="opacity:.7">roll one red at a pocket</span>
+      <div class="row" id="ptPockets"></div>
+      <label class="sl">Angle <input id="ptAngle" type="range" /> <span id="ptAngleText"></span></label>
+      <label class="sl">Aim offset <input id="ptOffset" type="range" /> <span id="ptOffsetText"></span></label>
+      <label class="sl">Speed <input id="ptSpeed" type="range" /> <span id="ptSpeedText"></span></label>
+      <div class="row" id="ptActions"></div>
+      <div id="potmapBox" style="display:none"><canvas id="potmap"></canvas><div id="potmapLegend"></div></div></div>
+    <div><b>Jaw shape</b> <span style="opacity:.7">compare with the photo; resets the balls</span>
+      <label class="sl">Corner jaw radius <input id="jawCorner" type="range" /> <span id="jawCornerText"></span></label>
+      <label class="sl">Middle jaw radius <input id="jawMiddle" type="range" /> <span id="jawMiddleText"></span></label></div>
     <div><b>View</b><div class="row" id="views"></div></div>
     <div><b>Show</b><div class="row" id="toggles"></div></div>
     <pre id="info"></pre>
