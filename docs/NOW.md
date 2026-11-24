@@ -19,8 +19,7 @@
 - Measure the solver against its 150 ms budget on a real phone (1 ms per shot is a guide, not a limit).
 - Revisit friction and 1.2x playback once real solver shots are visible (at 0.05, 35% of quickest shots exceed 1.5 s).
 - Tune jaw bounce and pocket generosity once real shots are played (middle pockets generous on purpose for now).
-- Voice files for the 14 announcer slots (owner supplies, stage 9-10).
-- History strip, turbo mode, landscape/desktop layout, DEMO label (stage 11).
+- Voice files for 14 announcer slots (owner, stage 9-10). History strip, turbo, landscape layout, DEMO label (stage 11).
 
 ## Working rules
 - Owner decides: design, money (odds, bets, RTP), publishing. Claude decides: code details, tests, commits.
