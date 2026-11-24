@@ -8,7 +8,7 @@
 
 import { CONFIG } from '../config/game.config';
 import { createSim, isMoving, runUntilStill, stepSim, strike, type PhysicsConfig } from './physics/sim';
-import { judgeShot, type FrameState } from './rules';
+import { applyShot, judgeShot, type FrameState } from './rules';
 import type { PocketId, TableGeometry } from './table/geometry';
 import { type Ball, type BallKind, type Vec2 } from './types';
 
@@ -22,6 +22,7 @@ export interface SolvedShot {
   score: number; // what the search minimises: duration (+ position weight x next-shot cost, task 4.3)
   nextCost: number | null; // how hard the next shot looks from cueEnd (null = not scored)
   cueEnd: Vec2;
+  lookahead?: 'ok' | 'failed'; // was the next step found solvable from here? (undefined = not checked)
   computeMs: number;
   tried: number; // shots simulated
 }
@@ -83,6 +84,8 @@ export interface SolveOptions {
   overFrom?: number; // seconds above which a shot pays extra (measurements)
   wide?: boolean; // RULES D.3 wide search
   maxDuration?: number; // reject shots longer than this (seconds)
+  firstFound?: boolean; // stop at the first success (used by the lookahead check)
+  lookahead?: boolean; // verify that the next step stays solvable (default: config solver.lookahead > 0)
 }
 
 /** Why a search ended (for the debug page and the solver report). */
@@ -123,6 +126,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   pairs.sort((a, b) => a.score - b.score);
 
   let best: SolvedShot | null = null;
+  const improving: SolvedShot[] = []; // every new best in turn (the lookahead checks them, best first)
   let tried = 0;
   const half = (aimSamples - 1) / 2;
   search: for (const { ball, pocket } of pairs) {
@@ -174,16 +178,41 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
           // a shot over the pace target (shot.maxDuration) pays heavily per extra second, so position play chooses among
           // shots that are themselves short; the quickest shot still wins when none is short
           const over = Math.max(0, duration - (opts.overFrom ?? Sv.position.overFrom)) * Sv.position.overPenalty;
-          const score = duration + over + (opts.weight ?? Sv.position.weight) * cost;
+          // lookahead (config solver.lookahead): a pot that leaves no open pocket for the next ball always loses to one
+          // that does (it would make the next step a re-rack or a long fallback)
+          const dead = next && Sv.lookahead > 0 && cost >= Sv.position.noShotCost ? Sv.position.deadPenalty : 0;
+          const score = duration + over + dead + (opts.weight ?? Sv.position.weight) * cost;
           if (best && score >= best.score) continue;
           const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
           best = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed, spin,
             duration, computeMs: 0, tried: 0, score, nextCost: next ? cost : null, cueEnd: { ...cueEnd } };
+          improving.push(best);
+          if (opts.firstFound) break search;
         }
       }
     }
   }
-  if (best) { best.computeMs = now() - t0; best.tried = tried; }
+  // lookahead (config solver.lookahead, RULES D: avoid re-racks): the next step must stay solvable. The best
+  // candidates are checked in order by really solving the next shot from where they leave the balls (small budget,
+  // first success found). If none passes, the best shot is kept.
+  if (best && next && (opts.lookahead ?? Sv.lookahead > 0)) {
+    const order = [...improving].sort((a, b) => a.score - b.score).slice(0, Sv.lookaheadCandidates);
+    for (const c of order) {
+      const sim = createSim(state.balls, table, cfg);
+      strike(sim, 'cue', c.dir, c.speed, c.spin);
+      runUntilStill(sim);
+      const first = sim.events.find((e) => e.type === 'ball');
+      const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+      const nextState = applyShot(state, target, { firstHit, potted: sim.balls.filter((b) => b.potted).map((b) => b.id),
+        after: sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) }, table);
+      const ok = solveSuccess(nextState, next, table, now, cfg, Sv.lookaheadShots, undefined,
+        { position: false, lookahead: false, firstFound: true, maxDuration: CONFIG.shot.maxDurationFlex });
+      tried += ok ? ok.tried : Sv.lookaheadShots;
+      if (ok) { best = { ...c, lookahead: 'ok' }; break; }
+    }
+    if (best.lookahead !== 'ok') best = { ...best, lookahead: 'failed' };
+  }
+  if (best) best = { ...best, computeMs: now() - t0, tried };
   if (info) { info.pairs = pairs.length; info.tried = tried; }
   return best;
 }
@@ -216,7 +245,7 @@ export function randomLayout(rng: () => number, reds: number, due: 'red' | 'colo
 
 /** Which step of the flex chain produced the success shot (RULES D.3), or RE-RACK (D.4). */
 export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'overLong' | 'reRack';
-export interface FallbackLogEntry { roundCode: string; step: number; target: BallKind; level: FlexLevel; tried: number }
+export interface FallbackLogEntry { roundCode: string; step: number; target: BallKind; level: FlexLevel | 'noLookahead'; tried: number }
 export interface FlexResult { shot: SolvedShot | null; level: FlexLevel; log: FallbackLogEntry | null }
 
 /**
@@ -230,15 +259,21 @@ export interface FlexResult { shot: SolvedShot | null; level: FlexLevel; log: Fa
 export function solveSuccessFlex(state: FrameState, target: BallKind, table: TableGeometry, now: () => number,
   ctx: { roundCode: string; step: number }, cfg: PhysicsConfig = CONFIG.physics): FlexResult {
   const flex = CONFIG.shot.maxDurationFlex;
-  const log = (level: FlexLevel, tried: number): FallbackLogEntry => ({ ...ctx, target, level, tried });
+  const log = (level: FlexLevel | 'noLookahead', tried: number): FallbackLogEntry => ({ ...ctx, target, level, tried });
+  // a shot whose lookahead failed (the next step looked unsolvable) is only used when nothing better exists
+  const good = (s: SolvedShot | null) => !!s && s.lookahead !== 'failed';
   const normal = solveSuccess(state, target, table, now, cfg, Sv.shotBudget);
-  if (normal && normal.duration <= CONFIG.shot.maxDuration) return { shot: normal, level: 'normal', log: null };
-  if (normal && normal.duration <= flex) return { shot: normal, level: 'longerDuration', log: log('longerDuration', normal.tried) };
+  if (good(normal) && normal!.duration <= CONFIG.shot.maxDuration) return { shot: normal, level: 'normal', log: null };
+  if (good(normal) && normal!.duration <= flex) return { shot: normal, level: 'longerDuration', log: log('longerDuration', normal!.tried) };
   const wide = solveSuccess(state, target, table, now, cfg, Sv.wide.shotBudget, undefined, { wide: true });
   const tried = Sv.shotBudget + (wide ? wide.tried : Sv.wide.shotBudget);
-  if (wide && wide.duration <= flex) return { shot: wide, level: 'wideSearch', log: log('wideSearch', tried) };
-  const longest = [normal, wide].filter((x): x is SolvedShot => x !== null).sort((a, b) => a.duration - b.duration)[0];
-  if (longest) return { shot: longest, level: 'overLong', log: log('overLong', tried) };
+  if (good(wide) && wide!.duration <= flex) return { shot: wide, level: 'wideSearch', log: log('wideSearch', tried) };
+  const found = [normal, wide].filter((x): x is SolvedShot => x !== null);
+  // prefer a shot that keeps the next step solvable, then the shortest
+  found.sort((a, b) => Number(a.lookahead === 'failed') - Number(b.lookahead === 'failed') || a.duration - b.duration);
+  const pick = found[0];
+  if (pick && pick.duration <= flex) return { shot: pick, level: pick === wide ? 'wideSearch' : 'longerDuration', log: log('noLookahead', tried) };
+  if (pick) return { shot: pick, level: 'overLong', log: log('overLong', tried) };
   return { shot: null, level: 'reRack', log: log('reRack', tried) };
 }
 

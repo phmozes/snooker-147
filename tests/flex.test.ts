@@ -16,7 +16,10 @@ describe('task 4.5: flex chain and fallback log (RULES D.3 / D.4)', () => {
       const target = i % 2 ? 'black' : 'red';
       const f = solveSuccessFlex(L, target, table, now, { roundCode: 'TEST', step: i + 1 });
       if (f.level === 'normal') expect(f.log).toBeNull();
-      else expect(f.log).toMatchObject({ roundCode: 'TEST', step: i + 1, level: f.level, target });
+      else {
+        expect(f.log).toMatchObject({ roundCode: 'TEST', step: i + 1, target });
+        expect([f.level, 'noLookahead']).toContain(f.log!.level); // noLookahead: the next step looked unsolvable
+      }
       if (f.level === 'reRack') { expect(f.shot).toBeNull(); continue; }
       const s = f.shot!;
       const sim = createSim(L.balls, table);

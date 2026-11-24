@@ -127,7 +127,7 @@ export const CONFIG = {
             spinSamples: [-1, -0.6, -0.3, 0, 0.3, 0.6, 1] },
     // position play (task 4.3): the search minimises shot length + weight x how hard the next shot looks from where
     // the cue ball stops (cut/45 + mean distance in m; about 0.5 easy, 2-3 hard; noShotCost when no pocket is open)
-    position: { enabled: true, weight: 2, noShotCost: 4, overPenalty: 10, overFrom: 1.5 }, // overFrom: seconds; extra cost per second above it
+    position: { enabled: true, weight: 2, noShotCost: 4, overPenalty: 10, overFrom: 1.5, deadPenalty: 100 }, // overFrom: seconds; extra cost per second above it; deadPenalty: no open pocket for the next ball
     aimSamplesPerPocket: 9,      // aim points across the pocket mouth (centre first, then alternating sides)
     aimStep: 0.005,              // metres between aim points across the mouth
     minSpeed: 0.8,               // m/s, softest power tried (powers go up to physics.maxCueSpeed)
@@ -148,6 +148,8 @@ export const CONFIG = {
     powerSamples: 8,
     spinSamples: [-0.8, -0.3, 0, 0.4, 0.8],
     lookahead: 1,                // accept a pot only if the NEXT step stays solvable
+    lookaheadCandidates: 6,      // how many of the best shots are checked (best first)
+    lookaheadShots: 120,         // shot budget for solving the next step in that check
     requireBlackPottableAfterRed: true,
     requireExtraColoursPottable: 1,  // black + at least this many more
     // flex order when no shot is found (outcome never changes):
@@ -204,8 +206,12 @@ export const CONFIG = {
   // ---------------- BREAK-OFF LIBRARY ----------------
   breakLibrary: {
     perLevelPerKind: 200,        // kinds: 'redPottable', 'snookered'
-    files: { reds6: 'breaks/reds6.json', reds10: 'breaks/reds10.json', reds15: 'breaks/reds15.json' },
+    files: { reds6: 'breaks/reds6.json', reds10: 'breaks/reds10.json', reds15: 'breaks/reds15.json' }, // in public/
     minPottableRedsForRedPottable: 2,
+    seed: 147,
+    // the opponent's break-off: cue ball in the D, aimed this many ball radii outside the outer red of the pack
+    breakShot: { speedMin: 4.5, speedMax: 6.0, offsetMin: 0.6, offsetMax: 2.0, spins: [-0.3, 0, 0.3] },
+    escapeSpeeds: [1.5, 2.5, 3.5], // the failed escape from a snooker (step 1)
   },
 
   // ---------------- COLOUR CHOICE ----------------
