@@ -9,6 +9,7 @@
     "test": "vitest run tests/",
     "bench": "vitest run bench/",
     "rules-check": "node scripts/rules-check.mjs",
+    "breaks": "vitest run bench/gen-breaks.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

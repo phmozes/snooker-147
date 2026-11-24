@@ -6,6 +6,7 @@
 
 import { CONFIG } from '../config/game.config';
 import { paceStudy, speedBenchmark, withFriction } from '../core/physics/bench';
+import { type BreakEntry, type BreakKind } from '../core/breakLibrary';
 import { mulberry32 } from '../core/rng';
 import { applyShot, judgeShot, type FrameState } from '../core/rules';
 import { randomLayout, solveFailure, solveSuccess, type FailureKind, type SolvedShot, type SolveInfo } from '../core/solver';
@@ -813,6 +814,66 @@ renderers.push(buttons('failButtons', [
   { label: 'Solve failure', on: () => false, click: solveFailureAndPlay },
   { label: 'Run 20 (this type)', on: () => false, click: runTwentyFailures },
 ]));
+
+// ---- break-off library (task 4.6): browse the stored breaks, play the break and the tested step-1 shot ----
+let breakKind: BreakKind = 'redPottable';
+let breakIndex = 0;
+let library: Record<string, { redPottable: BreakEntry[]; snookered: BreakEntry[] }> = {};
+async function loadLibrary(): Promise<BreakEntry[] | null> {
+  const level = CONFIG.levels.find((l) => l.reds === state.reds)!;
+  if (!library[level.id]) {
+    try {
+      const res = await fetch(`/${CONFIG.breakLibrary.files[level.id]}`);
+      if (!res.ok) return null;
+      library[level.id] = await res.json();
+    } catch { return null; }
+  }
+  return library[level.id]![breakKind];
+}
+async function showBreak(play: 'break' | 'step1' | 'miss' | 'none') {
+  const out = document.getElementById('breakOut')!;
+  const list = await loadLibrary();
+  if (!list || !list.length) { out.textContent = 'No library file for this level. Run: npm run breaks'; return; }
+  breakIndex = (breakIndex + list.length) % list.length;
+  const e = list[breakIndex]!;
+  rollMode = false; lastOutcome = null; trail = []; spinTest = { active: false, contact: null, end: null };
+  state.view = 'table';
+  const step1 = e.step1Success ?? e.step1Escape;
+  if (play === 'step1' && step1) {
+    sim = createSim(e.after, table, physics);
+    shot = freshShot();
+    shoot(step1.dir, step1.speed, step1.spin);
+  } else if (play === 'miss' && e.step1Miss) {
+    sim = createSim(e.after, table, physics);
+    shot = freshShot();
+    shoot(e.step1Miss.dir, e.step1Miss.speed, e.step1Miss.spin);
+  } else {
+    const balls = rackBalls(state.reds, table).map((b) => (b.kind === 'cue' ? { ...b, pos: { ...e.cueStart } } : b));
+    sim = createSim(balls, table, physics);
+    shot = freshShot();
+    if (play === 'break') shoot(e.breakShot.dir, e.breakShot.speed, e.breakShot.spin);
+  }
+  out.innerHTML = [
+    `Break ${breakIndex + 1} of ${list.length} (${state.reds} reds, <b>${breakKind === 'redPottable' ? 'red pottable' : 'snookered'}</b>, seed ${e.seed})`,
+    `Break-off: ${e.breakShot.speed.toFixed(2)} m/s, spin ${e.breakShot.spin}, ${e.breakShot.duration.toFixed(2)} s`,
+    breakKind === 'redPottable'
+      ? `Reds with an open pocket after the break: ${e.pottableReds}<br>Step 1 success: ${e.step1Success!.duration.toFixed(2)} s · step 1 plain miss: ${e.step1Miss!.duration.toFixed(2)} s`
+      : `Step 1 failed escape (FOUL / SNOOKERED): ${e.step1Escape!.duration.toFixed(2)} s`,
+  ].join('\n');
+}
+renderers.push(buttons('breakKinds', [
+  { label: 'Red pottable', on: () => breakKind === 'redPottable', click: () => { breakKind = 'redPottable'; breakIndex = 0; void showBreak('none'); } },
+  { label: 'Snookered', on: () => breakKind === 'snookered', click: () => { breakKind = 'snookered'; breakIndex = 0; void showBreak('none'); } },
+]));
+renderers.push(buttons('breakButtons', [
+  { label: '◀', on: () => false, click: () => { breakIndex--; void showBreak('none'); } },
+  { label: '▶', on: () => false, click: () => { breakIndex++; void showBreak('none'); } },
+  { label: 'Play break', on: () => false, click: () => { void showBreak('break'); } },
+  { label: 'Play step 1', on: () => false, click: () => { void showBreak('step1'); } },
+  { label: 'Step 1 miss', on: () => false, click: () => { void showBreak('miss'); } },
+]));
+// address option for checks: debug.html?breaks=1 opens the first stored break of the level
+if (params.get('breaks')) void showBreak('none');
 
 window.addEventListener('resize', draw);
 renderAll();

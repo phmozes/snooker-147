@@ -26,7 +26,7 @@
 <body>
   <canvas id="c"></canvas>
   <aside>
-    <h1>Table debug (task 4.2: failure shots)</h1>
+    <h1>Table debug (tasks 4.1-4.6: solver and break library)</h1>
     <div><b>Level</b><div class="row" id="levels"></div></div>
     <div><b>Shot</b> <span style="opacity:.7">click the table: the cue ball is hit toward that point</span>
       <div class="row" id="shots"></div>
@@ -38,6 +38,10 @@
       <div class="row" id="failKinds"></div>
       <div class="row" id="failButtons"></div>
       <pre id="solveOut">Press Solve: a random layout and the quickest success shot the solver finds.</pre></div>
+    <div><b>Break-off library</b> <span style="opacity:.7">task 4.6 (level from the Level buttons)</span>
+      <div class="row" id="breakKinds"></div>
+      <div class="row" id="breakButtons"></div>
+      <pre id="breakOut">Choose a kind, then ◀ ▶ to browse. "Play break" plays the opponent's break-off; "Play step 1" plays the stored step-1 shot from the position after the break.</pre></div>
     <div><b>Cloth friction</b> <span style="opacity:.7">rolling friction for every shot on this page</span>
       <div class="row" id="frictionMarks"></div>
       <label class="sl">Friction <input id="friction" type="range" /> <span id="frictionText"></span></label>
