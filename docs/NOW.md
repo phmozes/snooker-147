@@ -9,8 +9,7 @@
 - 4.7 left: long red pots after a colour, hard cannons, cushion-first reds (last resort); 6 and 15 reds below 90%.
 - Pace (owner 2026-11-24, replaces 1-1.5 s): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort
   before RE-RACK; realism before speed. Now 1-4 shots per level over 3.5 s. docs/SPEED.md.
-- Strict naturalness (owner): plain/soft-cannon pot, <= 2.5 s, cue ball <= 1 cushion and <= 1.5 m after contact,
-  nothing else disturbed. Solver 4.7c. RE-RACK 0 in 1,124 success shots of real rounds.
+- Strict naturalness (owner): docs/SOLVER.md 4.7 third part. Solver 4.7c. RE-RACK 0 in 1,124 real-round shots.
 - Owner 2026-11-24: B.3 auto colour; breaks keep baulk colours + blue within 2 cm; caps fixed (shotCaps); camera C.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
