@@ -18,7 +18,8 @@
 3. From step 2: SHOOT / CASH OUT before every shot. On colour steps (while reds remain) the player picks a colour.
    Offered: BLACK always, plus every other colour with a ready pot, up to 3 buttons, higher values first.
    The choice changes only the snooker score. Until the colour-choice stage, the game picks the colour automatically
-   (owner, 2026-11-24): black whenever black has a natural shot, else pink, else blue (the first with a natural shot);
+   (owner, 2026-11-24, confirmed): black whenever black has a natural shot that also leaves a natural red (the black
+   counts as natural only then), else pink, else blue (the first with a natural shot);
    if none has one, the first with any shot in time, else black. The pick depends only on the layout, never on the
    decided outcome, and changes only the snooker score, never the odds or the money.
    In the final colours (yellow ... black) only one ball is legal, so SHOOT is shown and the label names the colour.

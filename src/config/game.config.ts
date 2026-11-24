@@ -183,7 +183,7 @@ export const CONFIG = {
       packCannonSpeed: 1.5,      // m/s: a pack cannon hitting the reds harder is not planned
       unnaturalPlayCost: 3.0,
       lookaheadNatural: false,   // the lookahead check accepts only a strictly natural next shot
-      autoColourNeedsNextRed: true, // RULES B.3 auto colour: black is 'natural' only if it also leaves a red (owner to confirm)
+      autoColourNeedsNextRed: true, // RULES B.3 auto colour: black is 'natural' only if it also leaves a red
       planColours: true,         // task 4.7: on a colour, solve the red after it for each candidate (two shots ahead)
       planCandidates: 8,         // ... colour shots checked (cap: 8 x (1 + lookaheadShots) stays below the lookahead cap)
       planMargin: 3.0,           // ... within this score of the best colour shot

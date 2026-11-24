@@ -2,7 +2,6 @@
 
 ## Owner's turn
 - Play rounds; flag weird shots (they land in docs/WEIRD-SHOTS.md). Read docs/REVIEW.md 5.
-- Confirm: auto colour treats black as natural only if it also leaves a red (config autoColourNeedsNextRed).
 - 4.7 strict: natural 85 / 91 / 84%, exhibition 3.2 / 1.3 / 2.8% (6/10/15 reds). Decide: go on or move to 5.3.
 
 ## Claude's turn (after the owner's review)
