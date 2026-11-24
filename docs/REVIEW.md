@@ -40,3 +40,15 @@ anyway, 60% of later failures in the config). Wider aim points raised it from ab
 (c) the soft foul and the tap are labelled FOUL (RULES D.2), the tap is "missed every ball" in the rules code.
 **Not finished:** the step-1 snookered escape (needs the break-off library, task 4.6). Failure shots are still long
 (median 1.8-3.4 s).
+
+## 2. Solver stops after a number of shots, not milliseconds
+**Built:** every solver search stops after `solver.shotBudget` simulated shots (250) instead of 150 ms. A slow phone
+and a fast PC now pick exactly the same shot. Compute time is still shown, only as information.
+**Check:** debug.html, Solver: "Solve" shows "N of 250 shots tried". Test `tests/solver.test.ts`: a normal clock and a
+clock 50x slower pick identical success and failure shots.
+**Numbers** (100 layouts, `npx vitest run bench/solver.test.ts`, this PC): solved 87 / 82 / 86 / 63 of 100 (6 reds red,
+6 reds black, 15 reds red, 15 reds black), about the same as with 150 ms. Compute time median 81-133 ms, longest
+261 ms on this PC. A phone is about 2-4x slower, so up to about 0.5-1 s there.
+**Decisions to confirm:** the budget of 250 shots (about 150 ms on this PC). The real-phone time is still to be
+measured (already in "Later").
+**Not finished:** nothing.

@@ -5,7 +5,7 @@ import { mulberry32 } from '../../src/core/rng';
 import { randomLayout, solveSuccess } from '../../src/core/solver';
 import { buildTable } from '../../src/core/table/geometry';
 
-export const LONG_MS = 2000;
+export const LONG_SHOTS = 3000; // about 12x the normal shot budget
 export function run(reds: number, due: 'red' | 'colour', n: number, outFile: string) {
   const table = buildTable();
   const now = () => performance.now();
@@ -15,7 +15,7 @@ export function run(reds: number, due: 'red' | 'colour', n: number, outFile: str
     const L = randomLayout(rng, reds, due, table);
     const target = due === 'red' ? 'red' : 'black';
     const short = solveSuccess(L, target, table, now);
-    const long = solveSuccess(L, target, table, now, undefined, LONG_MS);
+    const long = solveSuccess(L, target, table, now, undefined, LONG_SHOTS);
     let potT = null;
     if (long) {
       const sim = createSim(L.balls, table);

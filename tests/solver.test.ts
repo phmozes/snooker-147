@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createSim, runUntilStill, strike } from '../src/core/physics/sim';
 import { judgeShot } from '../src/core/rules';
 import { mulberry32 } from '../src/core/rng';
-import { randomLayout, solveSuccess } from '../src/core/solver';
+import { randomLayout, solveFailure, solveSuccess } from '../src/core/solver';
 import { buildTable } from '../src/core/table/geometry';
 
 const table = buildTable();
@@ -33,5 +33,22 @@ describe('task 4.1: solver, success shots', () => {
       }
     }
     expect(solved).toBeGreaterThan(40); // most layouts are solved (the flex chain for the rest comes in task 4.5)
+  }, 60_000);
+});
+
+describe('task 4.5 (done early): the solver stops after a number of shots, not milliseconds', () => {
+  it('a fast clock and a 50x slower clock pick exactly the same success and failure shots', () => {
+    let fake = 0;
+    const slow = () => (fake += 50); // every clock reading jumps 50 ms: a very slow device
+    const rng = mulberry32(99);
+    for (let i = 0; i < 4; i++) {
+      const L = randomLayout(rng, 15, 'red', table);
+      const a = solveSuccess(L, 'red', table, now);
+      const b = solveSuccess(L, 'red', table, slow);
+      expect(b && { ...b, computeMs: 0 }).toEqual(a && { ...a, computeMs: 0 });
+      const f = solveFailure(L, 'red', 'plainMiss', table, now);
+      const g = solveFailure(L, 'red', 'plainMiss', table, slow);
+      expect(g && { ...g, computeMs: 0 }).toEqual(f && { ...f, computeMs: 0 });
+    }
   }, 60_000);
 });

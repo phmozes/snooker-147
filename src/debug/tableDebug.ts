@@ -689,7 +689,7 @@ function solveAndPlay() {
     `Target: <b>${s.target}</b> into <b>${s.pocket}</b>`,
     `Power: ${s.speed.toFixed(2)} m/s (${Math.round((s.speed / CONFIG.physics.maxCueSpeed) * 100)}%) · spin: ${spinText(s.spin)}`,
     `Shot length: <b>${s.duration.toFixed(2)} s</b> until all balls stop ${s.duration <= CONFIG.shot.maxDuration ? '<span class="ok">within 1.5 s</span>' : '<span class="bad">over 1.5 s</span>'}`,
-    `Compute time: <b>${s.computeMs.toFixed(0)} ms</b> (budget ${CONFIG.solver.timeBudgetMs} ms, ${s.tried} shots tried)`,
+    `Compute time: <b>${s.computeMs.toFixed(0)} ms</b> (${s.tried} of ${CONFIG.solver.shotBudget} shots tried; guide ${CONFIG.solver.timeBudgetMs} ms)`,
     `Rules check: ${ok ? '<span class="ok">success (exactly the target potted, cue ball on the table)</span>' : `<span class="bad">${verdict.result}</span>`}`,
   ].join('\n');
   shoot(s.dir, s.speed, s.spin);
@@ -715,7 +715,7 @@ function runTwenty() {
       `<b>Run 20</b>: layouts ${start}-${start + 19}, ${state.reds} reds level, ${solveDue} due`,
       `Solved: <b>${solved} of 20</b>`,
       `Shot length: median ${med(dur).toFixed(2)} s, longest ${max(dur).toFixed(2)} s, within 1.5 s: ${Math.round((dur.filter((d) => d <= CONFIG.shot.maxDuration).length / Math.max(1, dur.length)) * 100)}%`,
-      `Compute time: median ${med(ms).toFixed(0)} ms, longest ${max(ms).toFixed(0)} ms (budget ${CONFIG.solver.timeBudgetMs} ms)`,
+      `Compute time: median ${med(ms).toFixed(0)} ms, longest ${max(ms).toFixed(0)} ms (budget ${CONFIG.solver.shotBudget} shots, guide ${CONFIG.solver.timeBudgetMs} ms)`,
     ].join('\n');
   }, 30);
 }
@@ -778,7 +778,7 @@ function runTwentyFailures() {
     out.innerHTML = [
       `<b>Run 20: ${FAIL_TEXT[failKind]}</b> (layouts ${start}-${start + 19}, ${state.reds} reds level, ${solveDue} due)`,
       `Found: <b>${found} of 20</b> · fallbacks (RULES D.2): plain miss ${fb.plainMiss}, soft foul ${fb.softFoul}, tap ${fb.tap} · nothing found: <b>${none}</b>`,
-      `Compute time: longest ${ms.length ? Math.max(...ms).toFixed(0) : '-'} ms (each search up to ${CONFIG.solver.timeBudgetMs} ms, a fallback adds one more)`,
+      `Compute time: longest ${ms.length ? Math.max(...ms).toFixed(0) : '-'} ms (each search up to ${CONFIG.solver.shotBudget} shots, a fallback adds one more search)`,
     ].join('\n');
   }, 30);
 }

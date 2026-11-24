@@ -41,15 +41,15 @@ describe('task 4.2: failure shots', () => {
       for (const [reds, due] of [[6, 'red'], [15, 'colour']] as const) {
         const L = randomLayout(rng, reds, due, table);
         for (const kind of ['plainMiss', 'inOff'] as const) {
-          if (!solveFailure(L, due === 'red' ? 'red' : 'black', kind, table, now, undefined, 40)) none++;
+          if (!solveFailure(L, due === 'red' ? 'red' : 'black', kind, table, now, undefined, 20)) none++;
         }
       }
     }
     expect(none).toBe(0);
   }, 120_000);
-  it('RULES D.2: with no time at all for the normal search, the gentle tap or soft foul is still found', () => {
+  it('RULES D.2: with no shots allowed for the normal search, the gentle tap or soft foul is still found', () => {
     const L = randomLayout(mulberry32(3), 15, 'red', table);
-    const s = solveFailure(L, 'red', 'jawRattle', table, now, undefined, -1);
+    const s = solveFailure(L, 'red', 'jawRattle', table, now, undefined, 0);
     expect(s).not.toBeNull();
     expect(['softFoul', 'tap']).toContain(s!.fallback);
   });

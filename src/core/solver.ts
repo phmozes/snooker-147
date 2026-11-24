@@ -1,5 +1,5 @@
 // Shot solver, success shots (task 4.1). For a decided SUCCESS, find a shot that pots exactly the target ball,
-// checked by simulation AND by the rules code (judgeShot). Of the shots found within the time budget, the quickest
+// checked by simulation AND by the rules code (judgeShot). Of the shots found within the shot budget (config solver.shotBudget), the quickest
 // (until every ball stops) is returned (owner's pace decision, task 1.4). Pure: the clock is passed in.
 //
 // Search: every target ball x every pocket, easiest first (small cut, short distance, clear path), ghost-ball aim at
@@ -45,7 +45,7 @@ function pathClear(a: Vec2, b: Vec2, balls: Ball[], skip: string[], r: number): 
 export interface SolveInfo { pairs: number; tried: number; timedOut: boolean }
 
 export function solveSuccess(state: FrameState, target: BallKind, table: TableGeometry, now: () => number,
-  cfg: PhysicsConfig = CONFIG.physics, budgetMs: number = Sv.timeBudgetMs, info?: SolveInfo): SolvedShot | null {
+  cfg: PhysicsConfig = CONFIG.physics, shotBudget: number = Sv.shotBudget, info?: SolveInfo): SolvedShot | null {
   const t0 = now();
   const r = table.ballRadius;
   const cue = state.balls.find((b) => b.kind === 'cue')!;
@@ -84,7 +84,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       const dir = { x: ball.pos.x - (toP.x / d) * 2 * r - cue.pos.x, y: ball.pos.y - (toP.y / d) * 2 * r - cue.pos.y };
       for (const speed of powers) {
         for (const spin of Sv.spinSamples) {
-          if (now() - t0 > budgetMs) { if (info) info.timedOut = true; break search; }
+          if (tried >= shotBudget) { if (info) info.timedOut = true; break search; } // a shot count: same on every device
           tried++;
           const sim = createSim(state.balls, table, cfg);
           strike(sim, 'cue', dir, speed, spin);
@@ -165,7 +165,7 @@ function firstHitOf(sim: ReturnType<typeof createSim>): string | null {
 
 /** The chosen failure type only (no fallback). */
 function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, table: TableGeometry, now: () => number,
-  cfg: PhysicsConfig, budgetMs: number): SolvedFailure | null {
+  cfg: PhysicsConfig, shotBudget: number): SolvedFailure | null {
   const t0 = now();
   const r = table.ballRadius;
   const cue = state.balls.find((b) => b.kind === 'cue')!;
@@ -197,7 +197,7 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
     const p = table.pockets.find((q) => q.id === pocket)!;
     for (const speed of powers) {
       for (const spin of Sv.spinSamples) {
-        if (now() - t0 > budgetMs) break search;
+        if (tried >= shotBudget) break search; // a shot count: same on every device
         tried++;
         const sim = createSim(state.balls, table, cfg);
         strike(sim, 'cue', dir, speed, spin);
@@ -272,14 +272,14 @@ function gentleTap(state: FrameState, target: BallKind, table: TableGeometry, cf
 
 /** A failure shot of the chosen kind, else the RULES D.2 fallbacks in order. null only if even the tap fails. */
 export function solveFailure(state: FrameState, target: BallKind, kind: FailureKind, table: TableGeometry,
-  now: () => number, cfg: PhysicsConfig = CONFIG.physics, budgetMs: number = Sv.timeBudgetMs): SolvedFailure | null {
+  now: () => number, cfg: PhysicsConfig = CONFIG.physics, shotBudget: number = Sv.shotBudget): SolvedFailure | null {
   const t0 = now();
   const done = (s: SolvedFailure | null, fallback: FailureFallback): SolvedFailure | null =>
     s && { ...s, kind, fallback, computeMs: now() - t0 };
-  const found = searchFailure(state, target, kind, table, now, cfg, budgetMs);
+  const found = searchFailure(state, target, kind, table, now, cfg, shotBudget);
   if (found) return done(found, null);
   if (kind !== 'plainMiss') {
-    const miss = searchFailure(state, target, 'plainMiss', table, now, cfg, budgetMs);
+    const miss = searchFailure(state, target, 'plainMiss', table, now, cfg, shotBudget);
     if (miss) return done(miss, 'plainMiss');
   }
   return done(softFoul(state, target, table, cfg), 'softFoul') ?? done(gentleTap(state, target, table, cfg), 'tap');

@@ -118,7 +118,10 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides
+    timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
+    // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
+    // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
+    shotBudget: 250,
     aimSamplesPerPocket: 9,      // aim points across the pocket mouth (centre first, then alternating sides)
     aimStep: 0.005,              // metres between aim points across the mouth
     minSpeed: 0.8,               // m/s, softest power tried (powers go up to physics.maxCueSpeed)
