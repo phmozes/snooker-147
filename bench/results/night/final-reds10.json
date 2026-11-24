@@ -1,0 +1,91 @@
+{
+ "reds10": {
+  "level": "reds10",
+  "position": {
+   "blackFromBehind": 6.4,
+   "redsBaulkCorner": 0.6,
+   "redsBaulkCornerFromBlackHalf": 0.6,
+   "cutMedian": 18,
+   "cutsOver50": 2.4
+  },
+  "rounds": 60,
+  "shots": 431,
+  "success": 377,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 91.8,
+  "naturalOld": 94.7,
+  "exhibition": 1.9,
+  "whyNot": {
+   "over # s": 4,
+   "not a natural pot type": 20,
+   "red# disturbed": 1,
+   "pink disturbed": 5,
+   "hard cannon into the pack": 1
+  },
+  "byTarget": {
+   "red:long:normal": 1,
+   "red:cushionFirst:exhibition": 7,
+   "red:cannon:normal": 2,
+   "red:cannon:longerDuration": 5,
+   "colour:long:normal": 4,
+   "colour:cannon:overLong": 1
+  },
+  "pace": {
+   "red": {
+    "n": 166,
+    "median": 1.44,
+    "p90": 1.92,
+    "maxNotLastResort": 2.61,
+    "over35": 0
+   },
+   "colour": {
+    "n": 211,
+    "median": 1.56,
+    "p90": 2.11,
+    "maxNotLastResort": 2.97,
+    "over35": 0
+   }
+  },
+  "types": {
+   "plain": 273,
+   "packCannon": 65,
+   "softCannon": 19,
+   "long": 5,
+   "cushionFirst": 7,
+   "cannon": 8
+  },
+  "fails": {
+   "plainMiss": 33,
+   "jawRattle": 15,
+   "jawRattle->softFoul": 1,
+   "jawRattle->plainMiss": 2,
+   "wrongBallFirst->plainMiss": 1,
+   "inOff->plainMiss": 2
+  },
+  "colours": {
+   "black": 124,
+   "pink": 76,
+   "blue": 22
+  },
+  "median": 1.4875000000000214,
+  "within15": 51,
+  "over22": 16,
+  "flex": {
+   "longerDuration": 155,
+   "overLong": 11,
+   "noLookahead": 3,
+   "wideSearch": 9,
+   "rescue": 5,
+   "exhibition": 7
+  },
+  "examples": "reds10-87:7,reds10-122:7,reds10-185:9,reds10-185:11,reds10-283:7,reds10-353:9,reds10-409:11",
+  "within25": 98.7,
+  "over35all": 0,
+  "blackMedian": 1.7687500000000353,
+  "fullPower": 12,
+  "solveMsMedian": 410,
+  "solveMsP90": 871,
+  "solveMsMax": 1614
+ }
+}
