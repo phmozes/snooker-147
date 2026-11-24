@@ -1,6 +1,6 @@
 # 147 (snooker-147)
 Read `docs/NOW.md` first. It holds the current task, the owner's turn and the working rules.
-Rules of the game: `docs/RULES.md`. Build plan: `docs/PLAN.md`. Every tunable number: the config file (draft: `docs/config.draft.ts`).
+Rules of the game: `docs/RULES.md`. Build plan: `docs/PLAN.md`. Every tunable number: `src/config/game.config.ts`. Pure core (no rendering): `src/core/`.
 Invoke the `project-discipline` skill at the start and end of every session.
 Reply to the owner in simple English (the owner is a programming beginner).
 Separate project from pingpong-crash: never touch files there.

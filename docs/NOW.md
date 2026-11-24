@@ -1,13 +1,11 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Answer the 6 open questions at the end of docs/PLAN.md (recommendations given in chat).
-- Approved so far: record-then-play-back; black look-ahead; RTP split; round code; 15-red break filter; postponements.
-- Review RULES.md section D (what happens when the solver finds no shot).
+- Review task 1.1: `npm run dev`, open http://localhost:5173/debug.html (levels, pocket zooms); `npm test`.
+- Decide: do the rest of task 0.1 (ladder calculator + ladder tests) next, or go on to 1.2?
 
 ## Claude's turn
-- Wait for approval. No game code before approval.
-- After approval: Task 0.1 (project setup + config file + ladder tests).
+- Wait for approval of task 1.1.
 
 ## Waiting on others
 - Nothing.

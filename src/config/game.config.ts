@@ -1,5 +1,5 @@
-// DRAFT of the single config file. After approval it moves to src/config/game.config.ts.
-// Every tunable number of the game lives here. Game code only reads it.
+// The single config file. Every tunable number of the game lives here. Game code only reads it.
+// Sections not used yet are still drafts; they get checked when their task is built.
 // Units: metres, seconds, radians. Origin = table centre, +y toward the black end, +x to the right
 // (portrait view, baulk at the bottom, as in the mockups).
 
@@ -51,17 +51,27 @@ export const CONFIG = {
     baulkLineFromBottom: 0.737,
     dRadius: 0.292,
     blackFromTop: 0.324,
-    pinkFromTop: 0.892,          // midway between centre and top cushion
-    cornerPocketMouth: 0.086,    // width between jaw points
-    middlePocketMouth: 0.105,
-    pocketCaptureRadius: 0.045,  // ball centre inside this = potted
-    jawAngleDeg: 45,             // jaw cushion angle (makes rattles possible)
-    redRackSpacing: 0.0001,      // gap between reds in the triangle
+    // pink spot = midway between blue (centre) and the top cushion, so it is computed, not set
+    // Pockets. Spots (yellow, green, brown, blue, pink, black) are computed from the numbers above.
+    corner: {
+      mouth: 0.086,              // distance between the two jaw points
+      jawLength: 0.055,          // length of each jaw cushion going into the pocket
+      jawNarrowingDeg: 4,        // 0 = jaws parallel; >0 = pocket gets narrower inside (more rattles)
+      captureDepth: 0.065,       // capture circle centre, measured from the mouth line into the pocket
+      captureRadius: 0.040,      // ball centre inside this circle = potted (tuned in task 1.3)
+    },
+    middle: {
+      mouth: 0.105,
+      jawLength: 0.040,
+      jawNarrowingDeg: 8,
+      captureDepth: 0.050,
+      captureRadius: 0.045,
+    },
   },
-  // spots, computed from table values, listed here for clarity (x, y)
-  spots: {
-    yellow: [ 0.292, -1.0475], green: [-0.292, -1.0475], brown: [0, -1.0475],
-    blue:   [ 0, 0 ],          pink:  [ 0, 0.8925 ],   black: [0, 1.4605],
+  rack: {
+    redGap: 0.0002,              // gap between touching reds in the triangle
+    pinkToApexGap: 0.002,        // gap between pink and the front red
+    cueStart: [0.12, -1.15],     // cue ball in the D before the break-off (x, y); break library may override
   },
   ballValues: { red: 1, yellow: 2, green: 3, brown: 4, blue: 5, pink: 6, black: 7 },
   respotPriority: ['black', 'pink', 'blue', 'brown', 'green', 'yellow'],
