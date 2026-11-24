@@ -14,7 +14,7 @@ import { newFrame, type FrameState } from '../core/rules';
 import { shotCaps, type FallbackLogEntry } from '../core/solver';
 import { buildTable } from '../core/table/geometry';
 import { rackBalls } from '../core/table/rack';
-import { COLOURS, type Ball, type Vec2 } from '../core/types';
+import { COLOURS, type Ball, type Colour, type Vec2 } from '../core/types';
 import { positionsAt } from '../view/playback';
 import { createTable3d } from '../view/table3d';
 import { createPresolver, solvedProvider } from './presolve';
@@ -48,12 +48,23 @@ let busy: null | 'rerack' | 'break' | 'step1' | 'shot' | 'solving' = null;
 let showBetArea = true; // after a round ends the bet area returns after ui.wonMessageSeconds
 let shownBalance = round.balance;
 let lastShot = '—';
+/** The last shot played, for "Mark this shot as weird" (task 4.7). */
+let lastInfo: { code: string; step: number; type: string; target: string; outcome: string; length: number } | null = null;
+const TYPE_TEXT: Record<string, string> = {
+  plain: 'plain pot', packCannon: 'pot with cannon into the pack', cannon: 'pot with cannon', long: 'long pot',
+  cushionFirst: 'cushion-first', plant: 'plant', double: 'double', kiss: 'kiss', farPocket: 'far pocket', fluke: 'fluke',
+  attempt: 'attempt that misses', softFoul: 'fallback: soft foul', tap: 'fallback: gentle tap', library: 'from the library',
+};
+// the weird-shot list: kept in this browser (localStorage) so a reload does not lose it
+const WEIRD_KEY = 'snooker147.weird';
+let weird: string[] = (() => { try { return JSON.parse(localStorage.getItem(WEIRD_KEY) ?? '[]') as string[]; } catch { return []; } })();
+const saveWeird = () => { try { localStorage.setItem(WEIRD_KEY, JSON.stringify(weird)); } catch { /* private window: list lives until reload */ } };
 const fallbacks: FallbackLogEntry[] = [];
 const library: BreakLibrary = {};
 const presolver = createPresolver((entries) => {
   fallbacks.push(...entries);
   for (const e of entries) console.info(`[fallback] ${e.roundCode} step ${e.step} ${e.target}: ${e.level} (${e.tried} shots)`);
-});
+}, () => { if (!busy && round.phase === 'decide') render(); }); // the picked colour is known: show it in the hint
 const level = () => CONFIG.levels.find((l) => l.id === round.levelId)!;
 const ladder = () => round.ladder;
 
@@ -141,15 +152,16 @@ async function onStart() {
   busy = 'step1';
   render();
   const len = await playShot(afterBreak!.balls, round.history[0]!.shot as Shot);
-  lastShot = `step 1: ${len.toFixed(2)} s long · from the break-off library (no solve)`;
+  lastShot = `step 1: red · ${round.history[0]!.outcome} · from the break-off library · ${len.toFixed(2)} s long`;
+  lastInfo = { code: round.roundCode, step: 1, type: 'library', target: 'red', outcome: round.history[0]!.outcome, length: len };
   afterShot();
 }
 
 async function onShoot() {
   if (busy || round.phase !== 'decide') return;
   const { step, outcome } = nextOutcome(round);
-  const target = nextTarget(round);
   const ctx = { roundCode: round.roundCode, step };
+  const colourStep = round.frame!.phase === 'colour';
   const kind = outcome === 'success' ? 'success' : 'failure';
   busy = presolver.ready(kind) ? 'shot' : 'solving';
   render();
@@ -157,18 +169,25 @@ async function onShoot() {
   const solved = await presolver.get(kind, ctx);
   const waited = performance.now() - t0;
   const before = round;
-  round = shoot(round, solvedProvider(createPhysicsProvider(table, library), solved.planned, { target, outcome }), table);
+  const target = solved.target; // on a colour step: the colour the game picked (RULES B.3)
+  round = shoot(round, solvedProvider(createPhysicsProvider(table, library), solved.planned, { target, outcome }), table,
+    colourStep ? (target as Colour) : undefined);
   presolveNext(); // the shot after this one starts solving during this shot's animation
   busy = 'shot';
   render();
   const h = round.history[round.history.length - 1]!;
-  const work = `solved in ${solved.ms.toFixed(0)} ms (${solved.planned.tried ?? '?'} of max ${shotCaps()[kind]} shots)` +
+  const caps = shotCaps();
+  const cap = kind === 'failure' ? caps.failure : caps.success + (colourStep ? caps.colourPick : 0);
+  const work = `solved in ${solved.ms.toFixed(0)} ms (${solved.planned.tried ?? '?'} of max ${cap} shots)` +
     (waited > 20 ? `, SHOOT waited ${waited.toFixed(0)} ms` : ', ready before SHOOT');
   if (h.outcome === 'reRack') {
     lastShot = `step ${step}: RE-RACK (no shot found) · ${work}`;
+    lastInfo = { code: round.roundCode, step, type: 'reRack', target: h.target, outcome: 'reRack', length: 0 };
   } else {
     const len = await playShot(before.frame!.balls, h.shot as Shot);
-    lastShot = `step ${step} (${h.outcome}): ${len.toFixed(2)} s long · ${work}`;
+    const type = (h.shot as { type?: string }).type ?? '?';
+    lastShot = `step ${step}: ${h.target} · ${h.outcome} · ${TYPE_TEXT[type] ?? type} · ${len.toFixed(2)} s long · ${work}`;
+    lastInfo = { code: round.roundCode, step, type, target: h.target, outcome: h.outcome, length: len };
   }
   afterShot();
 }
@@ -257,7 +276,7 @@ function render() {
   } else if (round.phase === 'decide') {
     const amount = (cashOut(round).end as { amount: number }).amount; // exactly what CASH OUT pays
     bottom.innerHTML = `<button class="cash" id="bCash">CASH OUT<b>${money(amount)}</b></button>` +
-      `<div class="hint">${hintText(round)}</div><button class="big" id="bShoot">SHOOT</button>`;
+      `<div class="hint">${hintText(round, presolver.target())}</div><button class="big" id="bShoot">SHOOT</button>`;
     $('bCash').onclick = onCashOut;
     $('bShoot').onclick = () => { void onShoot(); };
   } else if (!showBetArea) {
@@ -387,7 +406,8 @@ function renderDev() {
     '<h3>ROUND</h3><div class="info" id="devRound"></div>' +
     '<div class="opts"><input id="devSeed" placeholder="seed or reds6-12345" /><button id="devUseSeed">Use</button></div>' +
     '<div class="opts" id="devRoundBtns"></div>' +
-    '<h3>LAST SHOT</h3><div class="info" id="devShot"></div>' +
+    '<h3>LAST SHOT</h3><div class="info" id="devShot"></div><div class="opts" id="devWeird"></div>' +
+    '<div class="info" id="devWeirdList"></div>' +
     '<h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
@@ -418,6 +438,19 @@ function renderDev() {
     render();
   }, locked));
   $('devShot').textContent = lastShot;
+  // task 4.7: mark the last shot as weird; the list can be copied and sent to Claude (bench/replay-shot.test.ts)
+  $('devWeird').appendChild(opt('Mark this shot as weird', false, () => {
+    const i = lastInfo!;
+    const line = `${i.code} step ${i.step} · ${i.target} ${i.outcome} · ${i.type} · ${i.length.toFixed(2)} s · solver ${CONFIG.solver.version}`;
+    if (weird[weird.length - 1] !== line) { weird.push(line); saveWeird(); }
+    render();
+  }, !lastInfo || busy !== null));
+  $('devWeird').appendChild(opt(`Copy list (${weird.length})`, false, () => {
+    if (!navigator.clipboard) { showWeirdList(); return; }
+    navigator.clipboard.writeText(weird.join('\n')).then(() => { $('devWeirdList').textContent = `Copied ${weird.length} lines.`; },
+      () => { showWeirdList(); });
+  }, !weird.length));
+  $('devWeird').appendChild(opt('Clear list', false, () => { weird = []; saveWeird(); render(); }, !weird.length));
   for (const s of CONFIG.view3d.ballScaleOptions) {
     $('devScale').appendChild(opt(`${s}x`, ballScale === s, () => { ballScale = s; view3d?.setBallScale(s); render(); draw3d(); }));
   }
@@ -426,6 +459,16 @@ function renderDev() {
   }
   $('devCompare').appendChild(opt('Off', !compare, () => { compare = false; render(); layout(); }));
   $('devCompare').appendChild(opt('On', compare, () => { compare = true; render(); layout(); }));
+}
+/** When copying is not allowed (plain http on a phone): show the list in a box to select and copy by hand. */
+function showWeirdList() {
+  const box = document.createElement('textarea');
+  box.value = weird.join('\n');
+  box.rows = Math.min(8, weird.length + 1);
+  box.className = 'weird';
+  $('devWeirdList').replaceChildren(box);
+  box.focus();
+  box.select();
 }
 function changeLevel(id: LevelId) {
   if (busy || round.phase === 'decide') return;
@@ -447,7 +490,7 @@ window.visualViewport?.addEventListener('resize', layout);
 window.addEventListener('orientationchange', () => setTimeout(layout, 100));
 // no long-press menu, no text selection, no double-tap zoom, no pinch zoom (page is locked like an app)
 document.addEventListener('contextmenu', (e) => e.preventDefault());
-document.addEventListener('selectstart', (e) => { if (!(e.target instanceof HTMLInputElement)) e.preventDefault(); });
+document.addEventListener('selectstart', (e) => { if (!(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) e.preventDefault(); });
 document.addEventListener('gesturestart', (e) => e.preventDefault()); // iOS pinch
 document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 // double-tap zoom is off through CSS touch-action (not by cancelling taps, so quick repeated taps on +/- still count)

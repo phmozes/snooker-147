@@ -32,7 +32,8 @@ describe('task 5.2: texts (RULES B.4, D.4)', () => {
     const r = newRound(1);
     const red: Round = { ...r, phase: 'decide', step: 2, frame: { phase: 'red' } as Round['frame'] };
     expect(hintText(red)).toBe(`RED · NEXT x${r.ladder[2]!.multiplier.toFixed(2)}`);
-    expect(hintText({ ...red, frame: { phase: 'colour' } as Round['frame'] })).toMatch(/^BLACK · NEXT/);
+    expect(hintText({ ...red, frame: { phase: 'colour' } as Round['frame'] })).toMatch(/^COLOUR · NEXT/); // picked colour not known yet
+    expect(hintText({ ...red, frame: { phase: 'colour' } as Round['frame'] }, 'pink')).toMatch(/^PINK · NEXT/);
   });
 });
 

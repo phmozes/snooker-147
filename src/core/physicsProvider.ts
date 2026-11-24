@@ -6,9 +6,9 @@ import type { BreakEntry, StoredShot } from './breakLibrary';
 import { createSim, runUntilStill, strike, type PhysicsConfig } from './physics/sim';
 import type { FailureLabel, LevelId, PlannedShot, ShotProvider } from './round';
 import type { FrameState, ShotResult } from './rules';
-import { solveFailure, solveSuccessFlex, type FallbackLogEntry, type FailureKind } from './solver';
+import { chooseAutoColour, solveFailure, solveSuccessFlex, type FallbackLogEntry, type FailureKind, type SolvedShot } from './solver';
 import type { TableGeometry } from './table/geometry';
-import type { Ball, BallKind } from './types';
+import type { Ball, BallKind, Colour } from './types';
 import { CONFIG } from '../config/game.config';
 
 export type BreakLibrary = Partial<Record<LevelId, { redPottable: BreakEntry[]; snookered: BreakEntry[] }>>;
@@ -27,8 +27,14 @@ export function simulate(balls: Ball[], table: TableGeometry, s: PlayedShot, cfg
 
 export function createPhysicsProvider(table: TableGeometry, library: BreakLibrary, now: () => number = () => 0) {
   const log: FallbackLogEntry[] = [];
+  // the automatic colour pick (RULES B.3) already ran the chosen colour's normal search: reuse it for the success shot
+  let picked: { frame: FrameState; colour: Colour; normal: SolvedShot | null; tried: number } | null = null;
   const provider: ShotProvider & { log: FallbackLogEntry[] } = {
     log,
+    autoColour(frame) {
+      if (picked?.frame !== frame) picked = { frame, ...chooseAutoColour(frame, table, now) };
+      return picked.colour;
+    },
     breakAndStep1(levelId, outcome, pick, frame) {
       const lib = library[levelId];
       const list = lib ? (outcome === 'snookered' ? lib.snookered : lib.redPottable) : [];
@@ -40,7 +46,8 @@ export function createPhysicsProvider(table: TableGeometry, library: BreakLibrar
     },
     shot(frame: FrameState, target: BallKind, outcome: 'success' | FailureLabel, ctx): PlannedShot {
       if (outcome === 'success') {
-        const f = solveSuccessFlex(frame, target, table, now, ctx);
+        const pre = picked && picked.frame === frame && picked.colour === target ? { normal: picked.normal, tried: picked.tried } : undefined;
+        const f = solveSuccessFlex(frame, target, table, now, ctx, CONFIG.physics, pre);
         if (f.log) log.push(f.log);
         if (!f.shot) return { result: { firstHit: null, potted: [], after: frame.balls }, reRack: true, tried: f.tried };
         return { result: simulate(frame.balls, table, f.shot), shot: f.shot, tried: f.tried };

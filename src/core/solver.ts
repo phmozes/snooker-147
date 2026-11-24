@@ -10,7 +10,9 @@ import { CONFIG } from '../config/game.config';
 import { createSim, isMoving, runUntilStill, stepSim, strike, type PhysicsConfig } from './physics/sim';
 import { applyShot, judgeShot, type FrameState } from './rules';
 import type { PocketId, TableGeometry } from './table/geometry';
-import { type Ball, type BallKind, type Vec2 } from './types';
+import { angleCost, classifySuccess, cutAngle, isExhibition, NATURAL_TYPES, packLeftClosed, potCost, powerCost, typeCost,
+  type ShotType } from './shotType';
+import { type Ball, type BallKind, type Colour, type Vec2 } from './types';
 
 export interface SolvedShot {
   target: string; // id of the ball potted
@@ -25,12 +27,15 @@ export interface SolvedShot {
   lookahead?: 'ok' | 'failed'; // was the next step found solvable from here? (undefined = not checked)
   computeMs: number;
   tried: number; // shots simulated
+  type: ShotType; // what kind of shot it is (task 4.7)
+  natural: number; // naturalness cost (0 = what a professional would play)
 }
 
 const Sv = CONFIG.solver;
+const NAT = Sv.natural;
 
 /** Does the straight path of a ball from a to b pass clear of every other ball (ids in skip are ignored)? */
-function pathClear(a: Vec2, b: Vec2, balls: Ball[], skip: string[], r: number): boolean {
+export function pathClear(a: Vec2, b: Vec2, balls: Ball[], skip: string[], r: number, margin = 0): boolean {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len2 = dx * dx + dy * dy;
@@ -39,16 +44,23 @@ function pathClear(a: Vec2, b: Vec2, balls: Ball[], skip: string[], r: number): 
     const t = Math.max(0, Math.min(1, ((o.pos.x - a.x) * dx + (o.pos.y - a.y) * dy) / len2));
     const px = a.x + dx * t - o.pos.x;
     const py = a.y + dy * t - o.pos.y;
-    if (px * px + py * py < (2 * r) * (2 * r)) return false;
+    if (px * px + py * py < (2 * r + margin) * (2 * r + margin)) return false;
   }
   return true;
 }
 
-/** Find the quickest success shot at `target` (a kind from legalTargets), or null if none within the budget. */
 /**
- * Position play (task 4.3): how hard the NEXT shot looks with the cue ball at `cue` (same measure as the pair
- * ranking: cut angle and distances; lower = easier). No open pocket for the next ball = position.noShotCost.
+ * Position play (task 4.3, 4.7): how hard the NEXT shot looks with the cue ball at `cue` (lower = easier): the angle
+ * left on the next ball (an angle is better than dead straight, a thin cut is worse) and the distances. No open
+ * pocket for the next ball = position.noShotCost.
  */
+/** Can a ball at `from` go into pocket `p` at all? Middle pockets only take balls coming in fairly square (task 4.7). */
+export function entryOk(from: Vec2, p: TableGeometry['pockets'][number]): boolean {
+  const d = Math.hypot(p.mouthMid.x - from.x, p.mouthMid.y - from.y);
+  const cos = ((p.mouthMid.x - from.x) * p.inward.x + (p.mouthMid.y - from.y) * p.inward.y) / d;
+  return cos >= Math.cos(((p.kind === 'middle' ? NAT.maxEntryDeg.middle : NAT.maxEntryDeg.corner) * Math.PI) / 180);
+}
+
 export function nextShotCost(cue: Vec2, balls: Ball[], next: BallKind, table: TableGeometry): number {
   const r = table.ballRadius;
   let best: number = Sv.position.noShotCost;
@@ -57,70 +69,88 @@ export function nextShotCost(cue: Vec2, balls: Ball[], next: BallKind, table: Ta
       const toP = { x: p.mouthMid.x - ball.pos.x, y: p.mouthMid.y - ball.pos.y };
       const dP = Math.hypot(toP.x, toP.y);
       const ghost = { x: ball.pos.x - (toP.x / dP) * 2 * r, y: ball.pos.y - (toP.y / dP) * 2 * r };
-      const aim = { x: ghost.x - cue.x, y: ghost.y - cue.y };
-      const dA = Math.hypot(aim.x, aim.y);
+      const dA = Math.hypot(ghost.x - cue.x, ghost.y - cue.y);
       if (dA < 1e-6) continue;
-      const cut = (Math.acos(Math.max(-1, Math.min(1, (aim.x * toP.x + aim.y * toP.y) / (dA * dP)))) * 180) / Math.PI;
-      if (cut > Sv.maxCutDeg) continue;
+      const cut = cutAngle(cue, ball.pos, p.mouthMid, r);
+      if (cut > Sv.maxCutDeg || !entryOk(ball.pos, p)) continue;
       const others = balls.filter((b) => b.kind !== 'cue');
-      if (!pathClear(cue, ghost, others, [ball.id], r) || !pathClear(ball.pos, p.mouthMid, others, [ball.id], r)) continue;
-      best = Math.min(best, cut / 45 + (dA + dP) / 2);
+      // with a safety margin: a path that only just clears another ball is no real chance (task 4.7)
+      if (!pathClear(cue, ghost, others, [ball.id], r, NAT.pathMargin) || !pathClear(ball.pos, p.mouthMid, others, [ball.id], r, NAT.pathMargin)) continue;
+      // a ball touching another ball (a red in the pack) moves its neighbours when hit: not a real chance (task 4.7)
+      const touching = balls.some((o) => o.id !== ball.id && o.kind !== 'cue' &&
+        Math.hypot(o.pos.x - ball.pos.x, o.pos.y - ball.pos.y) < 2 * r + NAT.touchGap);
+      // a long pot next is what a break-builder avoids: keep the cue ball near the next ball
+      const long = dA + dP > NAT.longFrom ? NAT.longCost : 0;
+      best = Math.min(best, angleCost(cut) + (dA + dP) / 2 + (touching ? NAT.touchingCost : 0) + long);
     }
   }
   return best;
 }
 
-/** The kind of ball due after potting `target` in this state (the game picks black until the colour choice, B.3). */
+/** The kind of ball due after potting `target` (after a red: black, the auto colour's first choice, RULES B.3). */
 export function nextTargetAfter(state: FrameState, target: BallKind): BallKind | null {
-  if (state.phase === 'red') return 'black';
-  if (state.phase === 'colour') return state.redsLeft > 0 ? 'red' : CONFIG.finalColourOrder[0];
+  return nextTargetsAfter(state, target)[0]?.kind ?? null;
+}
+
+/** Every ball the next shot could be at, with its extra position cost (after a red: black, pink, blue; RULES B.3). */
+export function nextTargetsAfter(state: FrameState, target: BallKind): { kind: BallKind; extra: number }[] {
+  if (state.phase === 'red') return NAT.autoColours.map((c) => ({ kind: c, extra: NAT.nextColourCost[c] }));
+  if (state.phase === 'colour') return [{ kind: state.redsLeft > 0 ? 'red' : CONFIG.finalColourOrder[0], extra: 0 }];
   const i = CONFIG.finalColourOrder.indexOf(target as (typeof CONFIG.finalColourOrder)[number]);
-  return CONFIG.finalColourOrder[i + 1] ?? null;
+  const n = CONFIG.finalColourOrder[i + 1];
+  return n ? [{ kind: n, extra: 0 }] : [];
 }
 
 export interface SolveOptions {
   position?: boolean; // position play (default: config solver.position.enabled)
   weight?: number; // position weight override (measurements)
   overFrom?: number; // seconds above which a shot pays extra (measurements)
-  wide?: boolean; // RULES D.3 wide search
+  wide?: boolean; // RULES D.3 wide search: more aims, powers and spins (still natural shots only)
+  exhibition?: boolean; // last searches before RE-RACK: cushion-first, plants, blocked pairs; exhibition shots allowed
   maxDuration?: number; // reject shots longer than this (seconds)
   firstFound?: boolean; // stop at the first success (used by the lookahead check)
   lookahead?: boolean; // verify that the next step stays solvable (default: config solver.lookahead > 0)
+  naturalOnly?: boolean; // accept only natural shots (plain pot, planned pack cannon): the lookahead check
 }
 
 /** Why a search ended (for the debug page and the solver report). */
 export interface SolveInfo { pairs: number; tried: number; timedOut: boolean }
 
+/**
+ * Find the best success shot at `target` (a kind from legalTargets), or null if none within the shot budget.
+ * Best = lowest score: shot length + position + naturalness (task 4.7). Exhibition shots (cushion-first, plant,
+ * double, kiss, far pocket, fluke) are rejected unless opts.exhibition.
+ */
 export function solveSuccess(state: FrameState, target: BallKind, table: TableGeometry, now: () => number,
   cfg: PhysicsConfig = CONFIG.physics, shotBudget: number = Sv.shotBudget, info?: SolveInfo,
   opts: SolveOptions = {}): SolvedShot | null {
   const t0 = now();
-  const W = opts.wide ? Sv.wide : null; // RULES D.3 wide search: more aims, powers, spins, cushion-first, plants
+  const ex = !!opts.exhibition;
+  const W = opts.wide || ex ? Sv.wide : null;
   const position = opts.position ?? Sv.position.enabled;
-  const next = position ? nextTargetAfter(state, target) : null;
+  const nexts = position ? nextTargetsAfter(state, target) : [];
   const r = table.ballRadius;
   const cue = state.balls.find((b) => b.kind === 'cue')!;
   const nPow = W ? W.powerSamples : Sv.powerSamples;
-  const powers = Array.from({ length: nPow }, (_, i) =>
-    Sv.minSpeed * (CONFIG.physics.maxCueSpeed / Sv.minSpeed) ** (i / (nPow - 1))); // low to high
+  // medium power first (natural, and usually reaches the pocket), then softer and firmer in turn
+  const powers = Array.from({ length: nPow }, (_, i) => Sv.minSpeed * (CONFIG.physics.maxCueSpeed / Sv.minSpeed) ** (i / (nPow - 1)))
+    .map((v, i) => ({ v, d: Math.abs(i - (nPow - 1) * Sv.firstPowerAt) })).sort((a, b) => a.d - b.d).map((x) => x.v);
   const spins = W ? W.spinSamples : Sv.spinSamples;
   const aimSamples = W ? W.aimSamples : Sv.aimSamplesPerPocket;
   const aimStep = W ? W.aimStep : Sv.aimStep;
-  // candidate (ball, pocket) pairs, easiest first
+  // candidate (ball, pocket) pairs, most natural first
   const pairs: { ball: Ball; pocket: PocketId; score: number }[] = [];
   for (const ball of state.balls.filter((b) => b.kind === target)) {
     for (const p of table.pockets) {
       const toP = { x: p.mouthMid.x - ball.pos.x, y: p.mouthMid.y - ball.pos.y };
       const dP = Math.hypot(toP.x, toP.y);
       const ghost = { x: ball.pos.x - (toP.x / dP) * 2 * r, y: ball.pos.y - (toP.y / dP) * 2 * r };
-      const aim = { x: ghost.x - cue.pos.x, y: ghost.y - cue.pos.y };
-      const dA = Math.hypot(aim.x, aim.y);
-      const cut = (Math.acos(Math.max(-1, Math.min(1, (aim.x * toP.x + aim.y * toP.y) / (dA * dP)))) * 180) / Math.PI;
-      if (cut > Sv.maxCutDeg) continue;
-      // the wide search keeps blocked pairs too: a cushion-first shot or a plant may still pot the ball
-      if (!W && !pathClear(cue.pos, ghost, state.balls, ['cue', ball.id], r)) continue;
-      if (!W && !pathClear(ball.pos, p.mouthMid, state.balls, ['cue', ball.id], r)) continue;
-      pairs.push({ ball, pocket: p.id, score: cut / 45 + (dA + dP) / 2 });
+      if (cutAngle(cue.pos, ball.pos, p.mouthMid, r) > Sv.maxCutDeg) continue;
+      if (!ex && !entryOk(ball.pos, p)) continue; // a middle pocket from a steep angle: no chance
+      // only the exhibition search keeps blocked pairs: a cushion-first shot or a plant may still pot the ball
+      if (!ex && !pathClear(cue.pos, ghost, state.balls, ['cue', ball.id], r)) continue;
+      if (!ex && !pathClear(ball.pos, p.mouthMid, state.balls, ['cue', ball.id], r)) continue;
+      pairs.push({ ball, pocket: p.id, score: potCost(cue.pos, ball, p.mouthMid, state.balls, r) });
     }
   }
   pairs.sort((a, b) => a.score - b.score);
@@ -129,9 +159,67 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   const improving: SolvedShot[] = []; // every new best in turn (the lookahead checks them, best first)
   let tried = 0;
   const half = (aimSamples - 1) / 2;
-  search: for (const { ball, pocket } of pairs) {
+  // One simulated shot. 'miss' = it did not pot the target (the next aim point across the mouth may);
+  // 'done' = this power and spin are settled (a pot was judged, or the shot already runs too long to win).
+  const trySim = (dir: Vec2, speed: number, spin: number, pocket: PocketId, pairCost: number, ballId: string, mouth: Vec2):
+    'miss' | 'done' => {
+    tried++;
+    const sim = createSim(state.balls, table, cfg);
+    strike(sim, 'cue', dir, speed, spin);
+    // stop early once this shot is already longer than the best one's score (every cost is >= 0: it cannot win)
+    const limit = Math.ceil((best ? best.score : cfg.maxSimSeconds) / cfg.timestep);
+    const tb = sim.balls.find((b) => b.id === ballId)!;
+    let closest = Infinity; // how near the aimed ball came to the pocket mouth
+    for (let n = 0; n < limit && isMoving(sim); n++) {
+      stepSim(sim);
+      if (!tb.potted) closest = Math.min(closest, Math.hypot(tb.pos.x - mouth.x, tb.pos.y - mouth.y));
+    }
+    if (isMoving(sim)) return 'done';
+    const duration = sim.time;
+    const first = sim.events.find((e) => e.type === 'ball');
+    const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
+    const potted = sim.balls.filter((b) => b.potted).map((b) => b.id);
+    const v = judgeShot(state, target, { firstHit, potted, after: [] });
+    // not potted: another aim point helps only when the ball got near the pocket (else the power is wrong)
+    if (v.result !== 'success') return tb.potted || closest < Sv.aimRetryWithin ? 'miss' : 'done';
+    if (opts.maxDuration !== undefined && duration > opts.maxDuration) return 'done';
+    const type = classifySuccess({ state: state.balls, target, potted: v.potted, aimedPocket: pocket, events: sim.events, table });
+    if (!ex && isExhibition(type)) return 'miss'; // a player would not have meant it
+    if (opts.naturalOnly && !NATURAL_TYPES.includes(type)) return 'miss';
+    const cueEnd = sim.balls.find((b) => b.kind === 'cue')!.pos;
+    const after: Ball[] = sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: b.pos }));
+    // score = shot length + position weight x how hard the next shot looks from where the cue ball stopped
+    let cost = 0;
+    if (nexts.length) {
+      if (state.phase === 'colour' && state.redsLeft > 0) {
+        const c = target as (typeof CONFIG.finalColourOrder)[number];
+        after.push({ id: c, kind: c, pos: { ...table.spots[c] } }); // re-spotted (approximately: own spot)
+      }
+      cost = Math.min(...nexts.map((n) => nextShotCost(cueEnd, after, n.kind, table) + n.extra));
+    }
+    // a shot over the pace target (shot.maxDuration) pays heavily per extra second, so position play chooses among
+    // shots that are themselves short; the quickest shot still wins when none is short
+    const over = Math.max(0, duration - (opts.overFrom ?? Sv.position.overFrom)) * Sv.position.overPenalty;
+    // lookahead (config solver.lookahead): a pot that leaves no open pocket for the next ball always loses to one
+    // that does (it would make the next step a re-rack or a long fallback)
+    const dead = nexts.length && Sv.lookahead > 0 && cost >= Sv.position.noShotCost ? Sv.position.deadPenalty : 0;
+    // naturalness (task 4.7): the pot itself, medium power, the kind of shot, and opening the pack in time
+    const closed = target !== 'red' && state.redsLeft > 1 ? packLeftClosed(after, r) * NAT.packClosedCost : 0;
+    const natural = pairCost + powerCost(speed) + typeCost(type) + closed;
+    const score = duration + over + dead + (opts.weight ?? Sv.position.weight) * cost + NAT.weight * natural;
+    if (best && score >= best.score) return 'done';
+    const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
+    best = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed, spin,
+      duration, computeMs: 0, tried: 0, score, nextCost: nexts.length ? cost : null, cueEnd: { ...cueEnd }, type, natural };
+    improving.push(best);
+    return 'done';
+  };
+  // Order (task 4.7): for each pot, each power and spin, the aim points across the mouth are tried only until one
+  // pots. So the budget covers several pots (balls and pockets), not one pot at every aim point: real position play.
+  search: for (const { ball, pocket, score: pairCost } of pairs) {
     const p = table.pockets.find((q) => q.id === pocket)!;
     const left = { x: -p.inward.y, y: p.inward.x };
+    const aims: Vec2[][] = []; // aims[k][j]: aim point k across the mouth, direction j (0 = straight, 1-4 = off a cushion)
     for (let k = 0; k < aimSamples; k++) {
       const off = (k % 2 ? 1 : -1) * Math.ceil(k / 2) * aimStep; // 0, -1, +1, -2, +2 ... steps across the mouth
       if (Math.abs(off) > half * aimStep + 1e-9) continue;
@@ -140,62 +228,31 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       const d = Math.hypot(toP.x, toP.y);
       const ghost = { x: ball.pos.x - (toP.x / d) * 2 * r, y: ball.pos.y - (toP.y / d) * 2 * r };
       const dirs = [{ x: ghost.x - cue.pos.x, y: ghost.y - cue.pos.y }];
-      if (W) {
+      if (ex) {
         // cushion first: aim at the ghost ball's mirror image in each cushion line (the physics checks the real path)
         const X = table.halfWidth - r;
         const Y = table.halfLength - r;
         for (const m of [{ x: 2 * X - ghost.x, y: ghost.y }, { x: -2 * X - ghost.x, y: ghost.y },
           { x: ghost.x, y: 2 * Y - ghost.y }, { x: ghost.x, y: -2 * Y - ghost.y }]) dirs.push({ x: m.x - cue.pos.x, y: m.y - cue.pos.y });
       }
-      for (const dir of dirs) for (const speed of powers) {
+      aims.push(dirs);
+    }
+    for (let j = 0; j < aims[0]!.length; j++) {
+      for (const speed of powers) {
         for (const spin of spins) {
-          if (tried >= shotBudget) { if (info) info.timedOut = true; break search; } // a shot count: same on every device
-          tried++;
-          const sim = createSim(state.balls, table, cfg);
-          strike(sim, 'cue', dir, speed, spin);
-          // stop early once this shot is already longer than the best one found (it cannot win)
-          const limit = Math.ceil((best ? best.score : cfg.maxSimSeconds) / cfg.timestep);
-          for (let n = 0; n < limit && isMoving(sim); n++) stepSim(sim);
-          if (isMoving(sim)) continue;
-          const duration = sim.time;
-          const first = sim.events.find((e) => e.type === 'ball');
-          const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
-          const potted = sim.balls.filter((b) => b.potted).map((b) => b.id);
-          const v = judgeShot(state, target, { firstHit, potted, after: [] });
-          if (v.result !== 'success') continue;
-          if (opts.maxDuration !== undefined && duration > opts.maxDuration) continue;
-          // score = shot length + position weight x how hard the next shot looks from where the cue ball stopped
-          const cueEnd = sim.balls.find((b) => b.kind === 'cue')!.pos;
-          let cost = 0;
-          if (next) {
-            const after: Ball[] = sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: b.pos }));
-            if (state.phase === 'colour' && state.redsLeft > 0) {
-              const c = target as (typeof CONFIG.finalColourOrder)[number];
-              after.push({ id: c, kind: c, pos: { ...table.spots[c] } }); // re-spotted (approximately: own spot)
-            }
-            cost = nextShotCost(cueEnd, after, next, table);
+          for (const dirs of aims) {
+            if (tried >= shotBudget) { if (info) info.timedOut = true; break search; } // a shot count: same on every device
+            if (trySim(dirs[j]!, speed, spin, pocket, pairCost, ball.id, p.mouthMid) === 'done') break;
           }
-          // a shot over the pace target (shot.maxDuration) pays heavily per extra second, so position play chooses among
-          // shots that are themselves short; the quickest shot still wins when none is short
-          const over = Math.max(0, duration - (opts.overFrom ?? Sv.position.overFrom)) * Sv.position.overPenalty;
-          // lookahead (config solver.lookahead): a pot that leaves no open pocket for the next ball always loses to one
-          // that does (it would make the next step a re-rack or a long fallback)
-          const dead = next && Sv.lookahead > 0 && cost >= Sv.position.noShotCost ? Sv.position.deadPenalty : 0;
-          const score = duration + over + dead + (opts.weight ?? Sv.position.weight) * cost;
-          if (best && score >= best.score) continue;
-          const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
-          best = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed, spin,
-            duration, computeMs: 0, tried: 0, score, nextCost: next ? cost : null, cueEnd: { ...cueEnd } };
-          improving.push(best);
-          if (opts.firstFound) break search;
+          if (opts.firstFound && best) break search;
         }
       }
     }
   }
-  // lookahead (config solver.lookahead, RULES D: avoid re-racks): the next step must stay solvable. The best
-  // candidates are checked in order by really solving the next shot from where they leave the balls (small budget,
-  // first success found). If none passes, the best shot is kept.
-  if (best && next && (opts.lookahead ?? Sv.lookahead > 0)) {
+  // lookahead (config solver.lookahead, RULES D: avoid re-racks): the next step must stay solvable (no exhibition
+  // shot needed). The best candidates are checked in order by really solving the next shot from where they leave the balls
+  // (small budget, first success found; after a red: black, else pink, else blue). If none passes, the best is kept.
+  if (best && nexts.length && (opts.lookahead ?? Sv.lookahead > 0)) {
     const order = [...improving].sort((a, b) => a.score - b.score).slice(0, Sv.lookaheadCandidates);
     for (const c of order) {
       tried++; // simulating where this candidate leaves the balls is one more shot
@@ -206,9 +263,14 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
       const nextState = applyShot(state, target, { firstHit, potted: sim.balls.filter((b) => b.potted).map((b) => b.id),
         after: sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) }, table);
-      const ok = solveSuccess(nextState, next, table, now, cfg, Sv.lookaheadShots, undefined,
-        { position: false, lookahead: false, firstFound: true, maxDuration: CONFIG.shot.maxDurationFlex });
-      tried += ok ? ok.tried : Sv.lookaheadShots;
+      let ok = false;
+      for (const n of nexts) {
+        const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+        const s = solveSuccess(nextState, n.kind, table, now, cfg, Sv.lookaheadShots, i,
+          { position: false, lookahead: false, firstFound: true, maxDuration: CONFIG.shot.maxDurationFlex });
+        tried += i.tried;
+        if (s) { ok = true; break; }
+      }
       if (ok) { best = { ...c, lookahead: 'ok' }; break; }
     }
     if (best.lookahead !== 'ok') best = { ...best, lookahead: 'failed' };
@@ -216,6 +278,31 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   if (best) best = { ...best, computeMs: now() - t0, tried };
   if (info) { info.pairs = pairs.length; info.tried = tried; }
   return best;
+}
+
+/** Natural enough to be the automatic colour (RULES B.3): a plain pot or a planned cannon, within maxDurationFlex. */
+export const isNaturalShot = (s: SolvedShot | null): boolean =>
+  !!s && s.duration <= CONFIG.shot.maxDurationFlex && NATURAL_TYPES.includes(s.type);
+
+/**
+ * RULES B.3 (owner 2026-11-24): until the colour-choice stage the game picks the colour: black when it has a natural
+ * shot, else pink, else blue; if none has one, the first with any shot in time, else black (flex chain, RULES D.5). It depends only on the layout,
+ * never on the decided outcome, and changes only the snooker score. `normal` is the chosen colour's normal search.
+ */
+export function chooseAutoColour(state: FrameState, table: TableGeometry, now: () => number, cfg: PhysicsConfig = CONFIG.physics):
+  { colour: Colour; normal: SolvedShot | null; tried: number } {
+  let tried = 0;
+  const all: { colour: Colour; normal: SolvedShot | null }[] = [];
+  for (const c of NAT.autoColours) {
+    const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+    const s = solveSuccess(state, c, table, now, cfg, Sv.shotBudget, i);
+    tried += i.tried;
+    if (isNaturalShot(s)) return { colour: c, normal: s, tried };
+    all.push({ colour: c, normal: s });
+  }
+  // no natural shot on any of them: the first with a shot in time that keeps the next step solvable, else black
+  const ok = all.find((a) => a.normal && a.normal.lookahead !== 'failed' && a.normal.duration <= CONFIG.shot.maxDurationFlex);
+  return { ...(ok ?? all[0]!), tried };
 }
 
 // ---------------- random layouts for the debug page and the tests ----------------
@@ -279,9 +366,10 @@ export function solveSpray(state: FrameState, target: BallKind, table: TableGeom
             const v = judgeShot(state, target, { firstHit, potted: sim.balls.filter((b) => b.potted).map((b) => b.id), after: [] });
             if (v.result !== 'success') continue;
             const pot = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
+            const type = classifySuccess({ state: state.balls, target, potted: v.potted, aimedPocket: null, events: sim.events, table });
             best = { target: v.potted, pocket: pot && pot.type === 'pot' ? pot.pocket : table.pockets[0]!.id, dir, speed, spin,
               duration: sim.time, score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos },
-              computeMs: 0, tried: 0 };
+              computeMs: 0, tried: 0, type, natural: typeCost(type) };
           }
         }
       }
@@ -291,64 +379,78 @@ export function solveSpray(state: FrameState, target: BallKind, table: TableGeom
   return best && { ...best, tried };
 }
 
-// ---------------- flex chain and fallback log (task 4.5, RULES D.3 / D.4) ----------------
+// ---------------- flex chain and fallback log (task 4.5, 4.7, RULES D.3 / D.4) ----------------
 
-/** Which step of the flex chain produced the success shot (RULES D.3), or RE-RACK (D.4). */
-export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'spray' | 'overLong' | 'reRack';
+export type FlexLevel = 'normal' | 'longerDuration' | 'wideSearch' | 'overLong' | 'exhibition' | 'spray' | 'reRack';
 export interface FallbackLogEntry { roundCode: string; step: number; target: BallKind; level: FlexLevel | 'noLookahead'; tried: number }
-/** tried: every shot simulated for this decision (search, lookahead checks, wide search, spray); never above
- *  shotCaps().success. */
+/** tried: every shot simulated for this decision (search, lookahead checks, wide search, exhibition, spray); never
+ *  above shotCaps().success (plus shotCaps().colourPick when the colour was picked automatically). */
 export interface FlexResult { shot: SolvedShot | null; level: FlexLevel; log: FallbackLogEntry | null; tried: number }
 
 /**
  * Fixed caps on the work per decision, counted in simulated shots (not ms), so every device does the same work and
  * picks the same shot. A success solve: normal search + its lookahead checks (each candidate: 1 shot to see where it
- * leaves the balls + a small search of the next step), then the same for the wide search, then the spray. A failure
- * solve: the chosen type, a plain miss, the soft foul and the gentle tap. While the player decides, both are solved.
+ * leaves the balls + a small search of the next step, after a red for black, pink and blue), then the same for the
+ * wide search and the exhibition search, then the spray. On a colour step the automatic colour pick (RULES B.3) may
+ * first run the normal search for pink and blue too. A failure solve: the chosen type, a plain miss, the soft foul and
+ * the gentle tap. While the player decides, both outcomes are solved.
  */
 export function shotCaps() {
-  const look = Sv.lookaheadCandidates * (1 + Sv.lookaheadShots);
+  const look = Sv.lookaheadCandidates * (1 + Sv.lookaheadShots * NAT.autoColours.length);
   const normal = Sv.shotBudget + look;
   const wide = Sv.wide.shotBudget + look;
-  const success = normal + wide + Sv.spray.shotBudget;
+  const exhibition = Sv.exhibition.shotBudget + look;
+  const success = normal + wide + exhibition + Sv.spray.shotBudget;
+  const colourPick = (NAT.autoColours.length - 1) * normal;
   const failure = 2 * Sv.shotBudget + CONFIG.solver.failure.softFoulMaxShots + CONFIG.solver.failure.tapDirections;
-  return { normal, wide, spray: Sv.spray.shotBudget, success, failure, decision: success + failure };
+  return { normal, wide, exhibition, spray: Sv.spray.shotBudget, success, colourPick, failure, decision: success + colourPick + failure };
 }
 
 /**
- * A decided SUCCESS (the outcome never changes): normal search; a shot up to shot.maxDuration is 'normal', up to
- * shot.maxDurationFlex 'longerDuration'. Other pockets and other balls of the same kind are already part of the
- * normal search. Then the wide search (more aims, powers and spins, cushion-first, plants), within maxDurationFlex.
- * Then 'overLong' (OWNER TO CONFIRM): the shortest shot found that is longer than maxDurationFlex. RULES D.4 says
- * RE-RACK only when "no shot exists", and a long shot is still a shot. Nothing at all: RE-RACK. Every step other than
- * 'normal' returns a log entry (RULES D: logged with the round code and step).
+ * A decided SUCCESS (the outcome never changes), most natural first (task 4.7):
+ * 1. normal search: up to shot.maxDuration 'normal', up to shot.maxDurationFlex 'longerDuration';
+ * 2. wide search (more aims, powers, spins; still natural shots only), within maxDurationFlex;
+ * 3. 'overLong': the shortest natural shot found, longer than maxDurationFlex (owner: a long shot is still a shot);
+ * 4. 'exhibition': cushion-first, plants, doubles, kisses, far pockets, flukes (rare, last resort);
+ * 5. 'spray': many aim points across each ball, straight and off each cushion; 6. RE-RACK.
+ * Every step other than 'normal' returns a log entry (RULES D: logged with the round code and step).
+ * `pre`: the normal search already done (by the automatic colour pick).
  */
 export function solveSuccessFlex(state: FrameState, target: BallKind, table: TableGeometry, now: () => number,
-  ctx: { roundCode: string; step: number }, cfg: PhysicsConfig = CONFIG.physics): FlexResult {
+  ctx: { roundCode: string; step: number }, cfg: PhysicsConfig = CONFIG.physics,
+  pre?: { normal: SolvedShot | null; tried: number }): FlexResult {
   const flex = CONFIG.shot.maxDurationFlex;
   const log = (level: FlexLevel | 'noLookahead', tried: number): FallbackLogEntry => ({ ...ctx, target, level, tried });
   // a shot whose lookahead failed (the next step looked unsolvable) is only used when nothing better exists
   const good = (s: SolvedShot | null) => !!s && s.lookahead !== 'failed';
-  const iN: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
-  const normal = solveSuccess(state, target, table, now, cfg, Sv.shotBudget, iN);
-  const out = (shot: SolvedShot | null, level: FlexLevel, logLevel: FlexLevel | 'noLookahead' | null, tried: number): FlexResult =>
-    ({ shot, level, log: logLevel ? log(logLevel, tried) : null, tried });
-  if (good(normal) && normal!.duration <= CONFIG.shot.maxDuration) return out(normal, 'normal', null, iN.tried);
-  if (good(normal) && normal!.duration <= flex) return out(normal, 'longerDuration', 'longerDuration', iN.tried);
-  const iW: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
-  const wide = solveSuccess(state, target, table, now, cfg, Sv.wide.shotBudget, iW, { wide: true });
-  const tried = iN.tried + iW.tried;
-  if (good(wide) && wide!.duration <= flex) return out(wide, 'wideSearch', 'wideSearch', tried);
+  let tried = pre?.tried ?? 0;
+  const out = (shot: SolvedShot | null, level: FlexLevel, logLevel: FlexLevel | 'noLookahead' | null): FlexResult =>
+    ({ shot: shot && { ...shot, tried }, level, log: logLevel ? log(logLevel, tried) : null, tried });
+  const run = (budget: number, opts: SolveOptions) => {
+    const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+    const s = solveSuccess(state, target, table, now, cfg, budget, i, opts);
+    tried += i.tried;
+    return s;
+  };
+  const normal = pre ? pre.normal : run(Sv.shotBudget, {});
+  if (good(normal) && normal!.duration <= CONFIG.shot.maxDuration) return out(normal, 'normal', null);
+  if (good(normal) && normal!.duration <= flex) return out(normal, 'longerDuration', 'longerDuration');
+  const wide = run(Sv.wide.shotBudget, { wide: true });
+  if (good(wide) && wide!.duration <= flex) return out(wide, 'wideSearch', 'wideSearch');
   const found = [normal, wide].filter((x): x is SolvedShot => x !== null);
   // prefer a shot that keeps the next step solvable, then the shortest
   found.sort((a, b) => Number(a.lookahead === 'failed') - Number(b.lookahead === 'failed') || a.duration - b.duration);
   const pick = found[0];
-  if (pick && pick.duration <= flex) return out(pick, pick === wide ? 'wideSearch' : 'longerDuration', 'noLookahead', tried);
-  if (pick) return out(pick, 'overLong', 'overLong', tried);
-  const iS: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
-  const spray = solveSpray(state, target, table, cfg, Sv.spray.shotBudget, iS);
-  if (spray) return out(spray, 'spray', 'spray', tried + iS.tried);
-  return out(null, 'reRack', 'reRack', tried + iS.tried);
+  // realism first (owner, task 4.7): any natural shot, even long or with a doubtful next step, before an exhibition one
+  if (pick && pick.duration <= flex) return out(pick, pick === wide ? 'wideSearch' : 'longerDuration', 'noLookahead');
+  if (pick) return out(pick, 'overLong', 'overLong');
+  const exh = run(Sv.exhibition.shotBudget, { exhibition: true });
+  if (exh) return out(exh, 'exhibition', 'exhibition');
+  const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+  const spray = solveSpray(state, target, table, cfg, Sv.spray.shotBudget, i);
+  tried += i.tried;
+  if (spray) return out(spray, 'spray', 'spray');
+  return out(null, 'reRack', 'reRack');
 }
 
 // ---------------- failure shots (task 4.2) ----------------
@@ -399,20 +501,26 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
         const ghost = { x: ball.pos.x - (toP.x / d) * 2 * r, y: ball.pos.y - (toP.y / d) * 2 * r };
         const dir = { x: ghost.x - cue.pos.x, y: ghost.y - cue.pos.y };
         const dA = Math.hypot(dir.x, dir.y);
-        const cut = (Math.acos(Math.max(-1, Math.min(1, (dir.x * toP.x + dir.y * toP.y) / (dA * d)))) * 180) / Math.PI;
-        if (cut > Sv.maxCutDeg) continue;
+        if (dA < 1e-9) continue;
+        // task 4.7: a real attempt at a sensible pot: a comfortable cut, the ball's way to the pocket open
+        if (cutAngle(cue.pos, ball.pos, p.mouthMid, r) > FAIL.maxCutDeg) continue;
+        if (!pathClear(ball.pos, p.mouthMid, state.balls, ['cue', ball.id], r)) continue;
         const blocked = !pathClear(cue.pos, ghost, state.balls, ['cue', ball.id], r);
         if ((kind === 'wrongBallFirst') !== blocked) continue; // only wrongBallFirst wants a ball in the way
-        attempts.push({ ball, pocket: p.id, dir, score: cut / 45 + (dA + d) / 2 });
+        attempts.push({ ball, pocket: p.id, dir, score: potCost(cue.pos, ball, p.mouthMid, state.balls, r) });
       }
     }
   }
+  // the most natural pots first (stable sort: aim points keep their order); only pots close to the best one
   attempts.sort((a, b) => a.score - b.score);
+  const bestPot = attempts[0]?.score ?? 0;
+  if (kind !== 'wrongBallFirst') attempts.splice(0, attempts.length, ...attempts.filter((a) => a.score <= bestPot + FAIL.potMargin));
   let best: SolvedFailure | null = null;
   let tried = 0;
   search: for (const { ball, pocket, dir } of attempts) {
     const p = table.pockets.find((q) => q.id === pocket)!;
     for (const speed of powers) {
+      if (speed > FAIL.maxSpeed) continue; // medium power: a real attempt, not a smash
       for (const spin of Sv.spinSamples) {
         if (tried >= shotBudget) break search; // a shot count: same on every device
         tried++;
@@ -437,6 +545,7 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
           : v.type === 'wrongBallFirst';
         if (!ok) continue;
         best = { target: ball.id, pocket, dir, speed, spin, duration: sim.time, computeMs: 0, tried: 0, kind, fallback: null,
+          type: 'attempt', natural: 0,
           score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos } };
         if (best.duration <= CONFIG.shot.maxDurationFlex) break search; // good enough: a failure need not be the quickest
       }
@@ -466,7 +575,7 @@ function softFoul(state: FrameState, target: BallKind, table: TableGeometry, cfg
       const v = judgeShot(state, target, { firstHit: firstHitOf(sim), potted, after: [] });
       if (v.result === 'failure' && v.type === 'wrongBallFirst') {
         return { target: w.id, pocket: table.pockets[0]!.id, dir, speed, spin: 0, duration: sim.time, computeMs: 0, tried,
-          kind: 'wrongBallFirst', fallback: 'softFoul', score: sim.time, nextCost: null, cueEnd: { ...sim.balls[0]!.pos } };
+          kind: 'wrongBallFirst', fallback: 'softFoul', type: 'softFoul', natural: 0, score: sim.time, nextCost: null, cueEnd: { ...sim.balls[0]!.pos } };
       }
     }
   }
@@ -486,7 +595,7 @@ function gentleTap(state: FrameState, target: BallKind, table: TableGeometry, cf
     const v = judgeShot(state, target, { firstHit: firstHitOf(sim), potted, after: [] });
     if (v.result === 'failure' && v.type === 'missedAll') {
       return { target: 'cue', pocket: table.pockets[0]!.id, dir, speed: FAIL.tapSpeed, spin: 0, duration: sim.time,
-        computeMs: 0, tried: k + 1, kind: 'wrongBallFirst', fallback: 'tap', score: sim.time, nextCost: null,
+        computeMs: 0, tried: k + 1, kind: 'wrongBallFirst', fallback: 'tap', type: 'tap', natural: 0, score: sim.time, nextCost: null,
         cueEnd: { ...sim.balls[0]!.pos } };
     }
   }

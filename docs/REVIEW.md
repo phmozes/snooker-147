@@ -37,3 +37,16 @@ match the rules state after every shot. Test: pre-solved rounds equal rounds sol
 **Open problem (the solver task you postponed):** in my headless test on this PC, about half of the success shots
 needed the wide search, 2-4 s of work. When you press SHOOT quickly the game waits ("THINKING…" up to about 2.5 s here; slower on a phone). The
 developer menu shows it per shot. This is the same root cause as the RE-RACK rate.
+
+## 3. Task 4.7: natural shots (realism first) - partly reached
+**Built:** every shot gets a label (plain pot, pot with cannon into the pack, pot with cannon, long pot, cushion-first,
+plant, double, kiss, far pocket, fluke; failures: attempt that misses, soft foul, gentle tap; step 1: from the
+library) and a naturalness score; the solver prefers natural shots and plays exhibition shots only as a last resort
+before RE-RACK. RULES B.3 changed as you decided (black, else pink, else blue; RULES.md updated, tests show the
+pick never changes outcomes or money). Failures are attempts at a sensible pot at medium power.
+Developer menu: the last-shot line shows the label; "Mark this shot as weird", "Copy list" (if the phone does not
+allow copying, the list appears in a box to select), "Clear list". The list stays in the phone's browser.
+I replay listed shots with `SHOTS="reds6-123:4" npx vitest run bench/replay-shot.test.ts` (same solver version).
+**Numbers:** docs/SOLVER.md "Task 4.7". Natural 65% -> 71-73% (target 90%: NOT reached), exhibition 22-26% -> 7%
+(target 2%: not reached), RE-RACK 0.7-1.8% -> 0 in 338 success shots, solve time median about 1 s -> 0.14-0.19 s.
+**Open:** reds still packed after the black (step 3/5) and long pots after a colour. Next: a planned pack-cannon search.

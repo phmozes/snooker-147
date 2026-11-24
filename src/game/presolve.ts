@@ -8,10 +8,11 @@ import type { FallbackLogEntry } from '../core/solver';
 import type { BallKind } from '../core/types';
 
 export interface SolveRequest { id: number; frame: FrameState; target: BallKind; failure: FailureLabel; ctx: { roundCode: string; step: number } }
-export interface SolveAnswer { id: number; kind: 'success' | 'failure'; planned: PlannedShot; ms: number; log: FallbackLogEntry[] }
-export interface Solved { planned: PlannedShot; ms: number }
+export interface SolveAnswer { id: number; kind: 'success' | 'failure'; target: BallKind; planned: PlannedShot; ms: number; log: FallbackLogEntry[] }
+/** target: the ball the shot is at (on a colour step the colour the game picked, RULES B.3). */
+export interface Solved { planned: PlannedShot; ms: number; target: BallKind }
 
-export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void) {
+export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void, onAnswer: () => void = () => {}) {
   let worker: Worker | null = null;
   let nextId = 1;
   let current: { req: SolveRequest; answers: Partial<Record<'success' | 'failure', Solved>>; waiting: (() => void)[] } | null = null;
@@ -21,9 +22,10 @@ export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void) {
     worker.onmessage = (e: MessageEvent<SolveAnswer>) => {
       const a = e.data;
       if (!current || a.id !== current.req.id) return; // an old request
-      current.answers[a.kind] = { planned: a.planned, ms: a.ms };
+      current.answers[a.kind] = { planned: a.planned, ms: a.ms, target: a.target };
       if (a.log.length) onLog(a.log);
       for (const w of current.waiting.splice(0)) w();
+      onAnswer();
     };
   }
 
@@ -40,6 +42,8 @@ export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void) {
       current = null;
     },
     ready(kind: 'success' | 'failure') { return !!current?.answers[kind]; },
+    /** The ball the next shot is at, once known (the success answer comes first). */
+    target(): BallKind | null { return current?.answers.success?.target ?? null; },
     /** The answer for the decided outcome, as soon as it exists. */
     async get(kind: 'success' | 'failure', ctx: SolveRequest['ctx']): Promise<Solved> {
       const c = current;

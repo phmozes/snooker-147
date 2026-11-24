@@ -43,7 +43,7 @@ export interface SimBall {
 
 export type SimEvent =
   | { t: number; type: 'ball'; a: string; b: string; speed: number; at: Vec2 } // at = position of ball a
-  | { t: number; type: 'cushion'; a: string; speed: number }
+  | { t: number; type: 'cushion'; a: string; speed: number; at: Vec2 } // at = position of the ball
   | { t: number; type: 'jaw'; a: string; pocket: PocketId; speed: number; contact: Vec2 } // contact = point on the jaw
   | { t: number; type: 'pot'; a: string; pocket: PocketId; fallback: boolean };
 
@@ -227,7 +227,7 @@ function resolve(sim: Sim, hit: Hit, at: number) {
     sim.events.push({ t: at, type: 'jaw', a: b.id, pocket: hit.wall.seg.pocket, speed, contact });
   } else if (hit.kind === 'wall') {
     const speed = bounceOff(b, hit.wall.normal.x, hit.wall.normal.y, sim.cfg.cushionRestitution);
-    sim.events.push({ t: at, type: 'cushion', a: b.id, speed });
+    sim.events.push({ t: at, type: 'cushion', a: b.id, speed, at: { ...b.pos } });
   } else {
     const d = dist(b.pos, hit.jaw.centre);
     const speed = bounceOff(b, (b.pos.x - hit.jaw.centre.x) / d, (b.pos.y - hit.jaw.centre.y) / d, sim.cfg.jawRestitution);

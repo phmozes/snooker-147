@@ -161,6 +161,28 @@ describe('Outcome first (RULES A.5)', () => {
       expect(b.step).toBe(a.step);
     }
   });
+  it('RULES B.3: the automatic colour (black, else pink, else blue) never changes the outcomes or the money', () => {
+    // a provider whose layout "has no natural black": it picks pink on every colour step
+    const pinky: ShotProvider = { ...fake(), autoColour: () => 'pink' };
+    let colourSteps = 0;
+    for (let seed = 0; seed < 300; seed++) {
+      for (const cashAt of [null, 3]) {
+        const a = play(seed, cashAt, fake());
+        const b = play(seed, cashAt, pinky);
+        expect(b.history.map((h) => [h.step, h.outcome])).toEqual(a.history.map((h) => [h.step, h.outcome]));
+        expect([b.end, b.balance]).toEqual([a.end, a.balance]);
+        for (let i = 0; i < a.history.length; i++) {
+          const colourStep = a.history[i]!.step % 2 === 0 && a.history[i]!.step <= 2 * CONFIG.levels[0]!.reds; // reds remain
+          if (colourStep) { colourSteps++; expect([a.history[i]!.target, b.history[i]!.target]).toEqual(['black', 'pink']); }
+        }
+      }
+    }
+    expect(colourSteps).toBeGreaterThan(100);
+  });
+  it('without an automatic pick (no autoColour), the game picks black', () => {
+    const r = play(5, 2, fake());
+    for (const h of r.history) if (h.step % 2 === 0) expect(h.target).toBe('black');
+  });
   it('the return of "cash out after step k" matches the ladder RTP (0.97) over 20,000 rounds', () => {
     for (const k of [1, 3, 6]) {
       let paid = 0;

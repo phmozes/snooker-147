@@ -23,6 +23,9 @@ export interface ShotProvider {
     { afterBreak: FrameState; step1: PlannedShot; breakShot?: unknown };
   /** A later shot. For a success the provider may answer reRack (RULES D.4); a failure always exists (D.2). */
   shot(frame: FrameState, target: BallKind, outcome: 'success' | FailureLabel, ctx: { roundCode: string; step: number }): PlannedShot;
+  /** RULES B.3: on a colour step before the colour-choice stage, the colour the game picks (from the layout only,
+   *  never from the decided outcome). Without it the game picks black. */
+  autoColour?(frame: FrameState, ctx: { roundCode: string; step: number }): Colour;
 }
 
 export type RoundPhase = 'betting' | 'decide' | 'over';
@@ -127,8 +130,8 @@ function playShot(r: Round, target: BallKind, outcome: 'success' | FailureLabel,
   return { ...r, step: k, frame, history };
 }
 
-/** The target of the next shot: red, else the chosen colour (black until the colour-choice stage, B.3), else the
- *  next final colour. */
+/** The target of the next shot: red, else the chosen colour (until the colour-choice stage the game picks it, B.3:
+ *  black, or pink / blue when black has no natural shot; black when no colour is given), else the next final colour. */
 export function nextTarget(r: Round, colourChoice?: Colour): BallKind {
   const f = r.frame!;
   if (f.phase === 'red') return 'red';
@@ -148,7 +151,8 @@ export function nextOutcome(r: Round): { step: number; outcome: 'success' | Fail
 export function shoot(r: Round, provider: ShotProvider, table: TableGeometry, colourChoice?: Colour): Round {
   if (r.phase !== 'decide' || r.step < 1) throw new Error('SHOOT is only possible during a round, after step 1');
   const { step: k, outcome } = nextOutcome(r);
-  const target = nextTarget(r, colourChoice);
+  const auto = !colourChoice && r.frame!.phase === 'colour' && provider.autoColour; // RULES B.3
+  const target = nextTarget(r, auto ? provider.autoColour!(r.frame!, { roundCode: r.roundCode, step: k }) : colourChoice);
   const planned = provider.shot(r.frame!, target, outcome, { roundCode: r.roundCode, step: k });
   return playShot(r, target, outcome, planned, table);
 }

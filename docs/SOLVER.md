@@ -162,3 +162,43 @@ red out of a cluster (plants, splitting the pack) and position play that avoids 
 Spray search (last step before RE-RACK, config `solver.spray`, 2000 shots): aim at 9 points across each target ball,
 straight and off each cushion, firm powers. It rescued 5 + 2 shots in the runs above. The RE-RACKs left were the
 black boxed in by reds (RULES D.5 accepts RE-RACK when black has no shot). Still far from 1 per 100,000.
+
+## Task 4.7: natural shots (owner: realism first)
+Code: `src/core/shotType.ts` (labels and naturalness costs), `src/core/solver.ts`. Config `solver.natural`.
+Report: `N=30 LEVELS=reds6,reds15 npx vitest run bench/natural.test.ts` (real rounds, every success shot re-simulated
+and labelled). Results: `bench/results/natural-before.txt` (old solver, same labels) and `natural-after.txt`.
+Tools: `bench/replay-shot.test.ts` (replay shots from the weird list), `bench/diag-shot.test.ts` (what the searches see).
+
+**Labels.** Natural: plain pot, pack cannon (a colour pot where the cue ball runs on into reds). Not natural: cannon
+(other balls touched), long pot (cue-to-ball + ball-to-pocket over 2.6 m). Exhibition: cushion-first, plant, double
+(off a cushion more than 0.3 m from the pocket), kiss, far pocket, fluke (another pocket than aimed).
+**Naturalness cost:** cut over 30 degrees, distance, red from the pack while loose reds exist, power over 3.5 m/s,
+the label, leaving the pack closed. Added to the score (shot length + position).
+**What changed in the search:**
+- Exhibition shots are rejected in the normal and wide searches; they come only after every natural shot (even long
+  ones) in a new "exhibition" search, before the spray and RE-RACK.
+- Search order: for each pot, power and spin, the aim points are tried only until one pots, and only when the ball got
+  near the pocket. Medium power first. The budget now covers several pots instead of one (this was the big win for
+  position play and speed).
+- Position (next-ball cost): leave an angle (5-35 degrees); a next ball that touches another ball (in the pack), a path
+  that only just clears a ball (2 cm margin), a middle pocket entered at a steep angle (over 45 degrees; corner 50) or
+  a long pot counts as hard. This makes the black shot open the pack or bring the cue ball to a red that is really on.
+- After a red, position is played for black, else pink, else blue (RULES B.3, owner 2026-11-24).
+- Failures: an attempt at one of the most natural pots (cut at most 50 degrees, open path), at most 4.5 m/s.
+
+| Real rounds, 30 each (6 reds / 15 reds) | Before | After | Target |
+|---|---|---|---|
+| Natural (plain + pack cannon) | 65% / 65% | **71% / 73%** | 90% |
+| Exhibition | 22% / 26% | **7% / 7%** | under 2% |
+| Long pots / unplanned cannons | 9% / 1%, 4% / 8% | 13% / 11%, 9% / 9% | - |
+| RE-RACK per success shot | 0.7% / 1.8% | **0 of 150 / 0 of 188** | 1 per 100,000 |
+| Success shots within 1.5 s | 41% / 44% | 37% / 46% | - |
+| Over 2.2 s (count) | 47 / 41 | 19 / 17 | - |
+| Full-power shots | 36 / 26 | 9 / 5 | - |
+| Solve time per SHOOT, median / 90% (PC) | 1005 / 2290 ms, 1036 / 3265 ms | 136 / 582 ms, 193 / 657 ms | SHOOT at once |
+| Auto colour black / pink / blue | 100 / 0 / 0% | 63 / 21 / 16%, 67 / 19 / 14% | - |
+
+Solve times: two reports ran at the same time on this PC in both columns. Still open (next steps, not done): the
+remaining exhibition shots are mostly step 3 or 5 when the reds are still packed and the black could not open them
+(a planned pack cannon search with more screw/stun and side angles into the pack); long pots come after a colour
+whose cue ball ends far from every loose red. Cap per decision rose to 11,334 shots (worst case; typical 50-600).

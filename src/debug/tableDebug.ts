@@ -694,8 +694,9 @@ function solveAndPlay(keep = false) {
     `Power: ${s.speed.toFixed(2)} m/s (${Math.round((s.speed / CONFIG.physics.maxCueSpeed) * 100)}%) · spin: ${spinText(s.spin)}`,
     `Shot length: <b>${s.duration.toFixed(2)} s</b> until all balls stop ${s.duration <= CONFIG.shot.maxDuration ? '<span class="ok">within 1.5 s</span>' : '<span class="bad">over 1.5 s</span>'}`,
     `Position for the next shot (${s.nextCost === null ? 'not scored' : `cost ${s.nextCost.toFixed(2)}, lower = easier`})`,
-    `Compute time: <b>${s.computeMs.toFixed(0)} ms</b> for <b>${s.tried}</b> simulated shots (search up to ${CONFIG.solver.shotBudget}, then the next-step check of up to ${CONFIG.solver.lookaheadCandidates} candidates x ${1 + CONFIG.solver.lookaheadShots}; cap ${shotCaps().normal})`,
-    `Cap per decision (same on every device): ${shotCaps().decision} shots = success chain ${shotCaps().success} (normal ${shotCaps().normal} + wide ${shotCaps().wide} + spray ${shotCaps().spray}) + failure ${shotCaps().failure}`,
+    `Compute time: <b>${s.computeMs.toFixed(0)} ms</b> for <b>${s.tried}</b> simulated shots (search up to ${CONFIG.solver.shotBudget}, then the next-step check of up to ${CONFIG.solver.lookaheadCandidates} candidates x up to (1 + ${CONFIG.solver.natural.autoColours.length} x ${CONFIG.solver.lookaheadShots}); cap ${shotCaps().normal})`,
+    `Cap per decision (same on every device): ${shotCaps().decision} shots = success chain ${shotCaps().success} (normal ${shotCaps().normal} + wide ${shotCaps().wide} + exhibition ${shotCaps().exhibition} + spray ${shotCaps().spray}) + automatic colour pick ${shotCaps().colourPick} + failure ${shotCaps().failure}`,
+    `Shot type: <b>${s.type}</b> · naturalness cost ${s.natural.toFixed(2)} (0 = what a professional would play)`,
     `Rules check: ${ok ? '<span class="ok">success (exactly the target potted, cue ball on the table)</span>' : `<span class="bad">${verdict.result}</span>`}`,
   ].join('\n');
   shoot(s.dir, s.speed, s.spin);

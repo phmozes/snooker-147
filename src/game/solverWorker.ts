@@ -11,11 +11,15 @@ const table = buildTable();
 const post = (a: SolveAnswer) => (self as unknown as Worker).postMessage(a);
 
 self.onmessage = (e: MessageEvent<SolveRequest>) => {
-  const { id, frame, target, failure, ctx } = e.data;
+  const { id, frame, failure, ctx } = e.data;
+  const provider = createPhysicsProvider(table, {}, () => performance.now());
+  let t0 = performance.now();
+  // RULES B.3: on a colour step the game picks the colour first (from the layout only), both outcomes use it
+  const target = frame.phase === 'colour' ? provider.autoColour!(frame, ctx) : e.data.target;
   for (const kind of ['success', 'failure'] as const) {
-    const provider = createPhysicsProvider(table, {}, () => performance.now());
-    const t0 = performance.now();
+    const before = provider.log.length;
     const planned = provider.shot(frame, target, kind === 'success' ? 'success' : failure, ctx);
-    post({ id, kind, planned, ms: performance.now() - t0, log: provider.log });
+    post({ id, kind, target, planned, ms: performance.now() - t0, log: provider.log.slice(before) });
+    t0 = performance.now();
   }
 };

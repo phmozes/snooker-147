@@ -1,20 +1,20 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Play real rounds on the phone (task 5.2) and read docs/REVIEW.md: small fixes, 5.2, three small choices to confirm.
-- Then decide: approve 5.2, and when to start the RE-RACK / pace solver task (SHOOT can wait 1-3 s on hard layouts).
+- Play rounds on the phone; mark weird shots (developer menu) and send the copied list. Read docs/REVIEW.md 1-3.
+- Task 4.7 (natural shots) partly reached: natural 71-73% (target 90%), exhibition 7% (target 2%). Decide: go on.
 
 ## Claude's turn (after the owner's review)
-- Biggest open item: RE-RACK 1-3 per 100 success shots in real rounds (RULES D.6: 1 per 100,000). Cause: black boxed
-  in by reds, pots out of a cluster. Needs a solver task (position for the black, plants) before real play. docs/SOLVER.md. Waits for the owner.
-- Failure shots are long (median 1.8-3.4 s); success shots in real rounds: median 1.7 s, about 40% within 1.5 s.
-- Step-1 snookered escape: built in the library (failed escape stored with each snookered break).
-- Owner 2026-11-24: shot cap per decision fixed (shotCaps, 5,766); quickest valid shot, friction 0.05 (provisional), shot ends when all balls stop; camera C (A/B kept).
+- Task 4.7 next: planned pack-cannon search (reds packed after the black), fewer long pots. docs/SOLVER.md "Task 4.7".
+- RE-RACK: 0 in 338 success shots of real rounds now; soak test (5.5) will measure against 1 per 100,000.
+- Owner 2026-11-24: realism first; RULES B.3 auto colour black/pink/blue; cap per decision fixed (shotCaps, 11,334).
+- Owner 2026-11-24: quickest valid shot, friction 0.05 (provisional), shot ends when all balls stop; camera C (A/B kept).
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others: nothing.
 
 ## Later
+- Owner idea (not now): rare bonus for a 147 maximum. Must keep RTP 97%; colour choice or a blocked black must never change money by accident. Needs its own design + RTP calc.
 - Measure the solver on a real phone (250-shot budget: about 150 ms here; the wide search up to 1.8 s here).
 - Revisit friction and 1.2x playback once real rounds are visible on screen.
 - Tune jaw bounce and pocket generosity once real shots are played (middle pockets generous on purpose for now).

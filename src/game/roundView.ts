@@ -5,6 +5,7 @@ import { CONFIG } from '../config/game.config';
 import { isMaximum } from '../core/rules';
 import type { FailureLabel, LevelId, Round, RoundEnd } from '../core/round';
 import { nextTarget } from '../core/round';
+import type { BallKind } from '../core/types';
 
 export const formatMoney = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: CONFIG.money.currencyDecimals,
   maximumFractionDigits: CONFIG.money.currencyDecimals });
@@ -25,10 +26,12 @@ export function endLine(end: RoundEnd, bet: number): string {
   }
 }
 
-/** The hint above SHOOT: the ball due (black is picked by the game until the colour-choice stage) and the next step. */
-export function hintText(r: Round): string {
+/** The hint above SHOOT: the ball due and the next step. On a colour step the game picks the colour (RULES B.3:
+ *  black, or pink / blue when black has no natural shot); until it is known the hint says COLOUR. */
+export function hintText(r: Round, picked: BallKind | null = null): string {
   const next = r.ladder[r.step]; // multiplier after the next successful shot
-  return `${nextTarget(r).toUpperCase()} · NEXT ${next ? formatMult(next.multiplier) : ''}`;
+  const ball = r.frame?.phase === 'colour' ? picked ?? 'colour' : nextTarget(r);
+  return `${ball.toUpperCase()} · NEXT ${next ? formatMult(next.multiplier) : ''}`;
 }
 
 /** The big message on the empty cloth after a clearance (RULES B.4). */

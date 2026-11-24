@@ -118,18 +118,21 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
+    version: '4.7',             // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
     shotBudget: 250,
-    // RULES D.3 wide search (after the normal search found nothing within shot.maxDurationFlex)
-    wide: { shotBudget: 1500, aimSamples: 13, aimStep: 0.004, powerSamples: 10,
+    // RULES D.3 wide search (after the normal search found nothing within shot.maxDurationFlex): natural shots only
+    wide: { shotBudget: 1000, aimSamples: 13, aimStep: 0.004, powerSamples: 10,
             spinSamples: [-1, -0.6, -0.3, 0, 0.3, 0.6, 1] },
     // position play (task 4.3): the search minimises shot length + weight x how hard the next shot looks from where
     // the cue ball stops (cut/45 + mean distance in m; about 0.5 easy, 2-3 hard; noShotCost when no pocket is open)
     position: { enabled: true, weight: 2, noShotCost: 4, overPenalty: 10, overFrom: 1.5, deadPenalty: 100 }, // overFrom: seconds; extra cost per second above it; deadPenalty: no open pocket for the next ball
     aimSamplesPerPocket: 9,      // aim points across the pocket mouth (centre first, then alternating sides)
     aimStep: 0.005,              // metres between aim points across the mouth
+    aimRetryWithin: 0.12,        // m: a missed pot tries the next aim point only if the ball came this near the pocket
+    firstPowerAt: 0.45,          // the search starts at this share of the power range and works outwards
     minSpeed: 0.8,               // m/s, softest power tried (powers go up to physics.maxCueSpeed)
     maxCutDeg: 75,               // thinner cuts are not tried
     // failure shots (task 4.2): aim points across the pocket mouth (m, + = left of the approach) for each type
@@ -144,6 +147,9 @@ export const CONFIG = {
       softSpeeds: [0.4, 0.6, 0.9, 1.3], // RULES D.2 soft shot into a wrong ball (m/s)
       tapSpeed: 0.08,            // RULES D.2 gentle tap that hits nothing (m/s, rolls about 1 cm)
       tapDirections: 24,
+      maxCutDeg: 50,             // task 4.7: a failure is an attempt at a sensible pot: cut at most this
+      potMargin: 1.0,            // ... and a pot whose naturalness cost is within this of the most natural one
+      maxSpeed: 4.5,             // m/s: no smashes
       softFoulMaxShots: 40,      // cap on the soft-foul attempts (fixed, whatever the number of balls)
     },
     powerSamples: 8,
@@ -152,8 +158,39 @@ export const CONFIG = {
     // last search before RE-RACK: many aim points across each target ball, straight and off each cushion, firm
     spray: { shotBudget: 2000, offsets: [0, -0.3, 0.3, -0.55, 0.55, -0.75, 0.75, -0.9, 0.9],
              speeds: [2.5, 3.5, 4.5, 6.0], spins: [0, -0.6, 0.6] },
-    lookaheadCandidates: 6,      // how many of the best shots are checked (best first)
-    lookaheadShots: 120,         // shot budget for solving the next step in that check
+    // task 4.7: naturalness (how a professional builds a break). Cost 0 = natural; the solver adds weight x cost to
+    // its score and keeps exhibition shots for the last searches before RE-RACK. src/core/shotType.ts
+    natural: {
+      weight: 1.5,               // naturalness cost -> score (seconds-equivalent)
+      comfortableCutDeg: 30,     // cuts up to this are free
+      cutDegPerPoint: 15,        // then 1 point per 15 degrees
+      perMetre: 0.3,             // per metre of cue-to-ball + ball-to-pocket distance
+      redFromPackWhileLoose: 1.0, // taking a red out of the pack while loose reds exist
+      clusterGap: 0.02,          // m: reds closer than 2r + this touch "almost"
+      clusterNeighbours: 2,      // a red with this many near reds is in the pack
+      mediumSpeed: 3.5,          // m/s: powers above it cost powerPerSpeed2 x (excess)^2
+      powerPerSpeed2: 0.3,
+      longFrom: 2.6,             // m: cue-to-ball + ball-to-pocket above this is a long pot
+      farPocketFrom: 1.2,        // m: a pot this far into a pocket ...
+      farPocketMargin: 0.6,      // ... when another pocket was this much nearer at a comfortable angle = far pocket
+      doubleFrom: 0.3,           // m: a cushion touch further than this from the pocket it drops into = a double
+      cannonCost: 1.5, longCost: 2.0, exhibitionCost: 6,
+      touchGap: 0.01,            // m: balls closer than 2r + this touch (position: a touching red is a poor next ball)
+      touchingCost: 2.5,         // ... it costs this much more as the next ball (open the pack instead)
+      pathMargin: 0.02,          // m: position: the next ball's paths must clear other balls by this much
+      maxEntryDeg: { middle: 45, corner: 50 }, // a pot is tried only when the ball comes in within this of straight-in
+      minLooseReds: 1,           // after a colour, fewer loose reds than this with a pack left = pack left closed
+      packClosedCost: 1.0,
+      idealNextCutDeg: [5, 35],  // position: leave an angle on the next ball
+      straightCost: 0.3,         // dead straight next ball (no angle to play position)
+      // RULES B.3 (owner 2026-11-24): auto colour = the first of these with a natural shot; else black
+      autoColours: ['black', 'pink', 'blue'],
+      nextColourCost: { black: 0, pink: 0.5, blue: 1.0 }, // position after a red: black preferred
+    },
+    // task 4.7: exhibition search (cushion-first, plants, blocked pairs; wide grid), last resort before the spray
+    exhibition: { shotBudget: 1000 },
+    lookaheadCandidates: 4,      // how many of the best shots are checked (best first)
+    lookaheadShots: 100,         // shot budget for solving the next step in that check (per colour tried after a red)
     requireBlackPottableAfterRed: true,
     requireExtraColoursPottable: 1,  // black + at least this many more
     // flex order when no shot is found (outcome never changes):
