@@ -543,7 +543,7 @@ export function solveSuccessFlex(state: FrameState, target: BallKind, table: Tab
   let wideDone: SolvedShot | null | undefined; // the wide search runs at most once per decision (shot cap)
   // task 4.7: a colour pot that leaves a poor next red (long, in the pack): the wide search (more spins and powers,
   // cannons into the pack) looks for better position; the better score wins
-  if (good(normal) && target !== 'red' && state.redsLeft > 0 && (normal!.nextCost ?? 0) >= NAT.poorNextCost) {
+  if (good(normal) && (target !== 'red' ? state.redsLeft > 0 : NAT.wideForPoorColour) && (normal!.nextCost ?? 0) >= NAT.poorNextCost) {
     const w = (wideDone = run(Sv.wide.shotBudget, { wide: true }));
     if (good(w) && w!.duration <= flex && w!.score < normal!.score) normal = w;
   }

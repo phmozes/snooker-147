@@ -185,6 +185,7 @@ export const CONFIG = {
       lookaheadNatural: false,   // the lookahead check accepts only a strictly natural next shot
       autoColourNeedsNextRed: true, // RULES B.3 auto colour: black is 'natural' only if it also leaves a red
       planColours: true,         // task 4.7: on a colour, solve the red after it for each candidate (two shots ahead)
+      wideForPoorColour: false,  // night round 4: a red pot that leaves a poor colour also runs the wide search
       planReds: true,            // night round 2: plan a red two shots ahead too (solve black / pink / blue after it)
       planCandidates: 8,         // ... colour shots checked (cap: 8 x (1 + lookaheadShots) stays below the lookahead cap)
       planMargin: 3.0,           // ... within this score of the best colour shot

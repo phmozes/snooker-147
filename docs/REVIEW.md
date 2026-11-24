@@ -95,3 +95,8 @@ Phase 2 (6 and 15 reds, 60 rounds each, strict; files bench/results/night/r*.sum
   (Before the locked-reds fix the same change gave 2 RE-RACKs at 6 reds.)
 - Round 2, plan a red two shots ahead (solve black / pink / blue after each candidate red pot, `planReds`):
   natural 87.9 / 87.8%, exhibition 1.3 / 1.4%, cuts over 50 deg 2.5 / 2.5%, RE-RACK 0. KEPT (4.8c).
+- Round 3, unnaturalPlayCost 3 -> 5: natural 87.6 / 88.5%, exhibition 1.3 / 1.4%. Mixed (6 reds worse). NOT kept.
+- Round 4, wide search also after a red pot that leaves a poor colour (`wideForPoorColour`, left false):
+  natural 87.6 / 88.9%, exhibition 1.6 / 1.4%. Mixed (6 reds worse). NOT kept. Two rounds without gain: phase stopped.
+- Targets not reached: natural 90% (87.9 / 87.8), exhibition under 2% reached (1.3 / 1.4), pace median 1.8 s reached
+  (about 1.55 s), 90% within 2.5 s reached (97%), "no shot over 3.5 s" not reached (1 and 4 shots, see NIGHT-REPORT).
