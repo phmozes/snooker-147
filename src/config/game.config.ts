@@ -201,7 +201,9 @@ export const CONFIG = {
 
   // ---------------- CAMERAS (Three.js, all numbers here) ----------------
   camera: {
-    main: { position: [0, -2.6, 4.2], lookAt: [0, 0.15, 0], fov: 38 },
+    // task 2.1: moved back and up (was [0, -2.6, 4.2] -> [0, 0.15, 0]: it cut off the near end and both sides on a
+    // portrait phone). A test checks the whole table fits at 9:19.5 and 9:16.
+    main: { position: [0, -2.7, 7.4], lookAt: [0, -0.15, 0], fov: 38 },
     pockets: {                   // six fixed cameras, used for near-miss and the final pot of a clearance
       topLeft:     { position: [-0.6,  2.2, 0.35], lookAt: [-0.889,  1.78, 0], fov: 35 },
       topRight:    { position: [ 0.6,  2.2, 0.35], lookAt: [ 0.889,  1.78, 0], fov: 35 },
@@ -212,6 +214,17 @@ export const CONFIG = {
     },
     slowMotionScale: 0.35,
     clearanceFinale: 'replayAfterPot', // final pot plays from main camera, then pocket-camera slow-motion replay
+  },
+
+  // gray-box 3D view (task 2.1): plain shapes only
+  view3d: {
+    background: '#0b0f0e',
+    rim: 0.2,                    // wooden frame width outside the cushion faces (m), wide enough for the throats
+    cushionHeight: 0.036,        // cushion nose height above the cloth (m), about 0.7 ball diameter
+    cushionDepth: 0.05,          // how far the cushion boxes reach behind the face (m)
+    jawPieces: 6,                // straight pieces per rounded jaw
+    fitAspect: 0.4615,           // narrowest screen (9:19.5) that shows the full table width; narrower views widen the lens
+    ambientLight: 1.2, topLight: 1.6,
   },
 
   // ---------------- UI TIMING ----------------
@@ -250,7 +263,10 @@ export const CONFIG = {
     bench: { seed: 147, reds: 15, shots: 200, minSpeed: 1.0, maxSpeed: 6.0, targetMsPerShot: 1.0,
              paceLayouts: 30, paceMaxCutDeg: 45, paceMinSpeed: 0.3, paceSpeedStep: 0.1,
              paceFrictions: [0.015, 0.03, 0.05, 0.08, 0.12] },
-    spinTest: { gap: 0.3, cueY: -1.0 }, // debug "straight shot test": cue ball position and distance to the red
+    spinTest: { gap: 0.3, cueY: -1.0 },
+    // task 2.1 check page: a red potted into a corner (quickest valid shot is searched, see testShots.ts)
+    potRedShot: { cue: [0.25, 0.2], red: [0.55, 1.15], pocket: 'topRight', aimRange: 0.03, aimStep: 0.005,
+                  minSpeed: 0.3, speedStep: 0.1 }, // debug "straight shot test": cue ball position and distance to the red
     // debug page "pocket test": roll one ball at a pocket
     pocketTest: { distance: 0.2, speed: 1.5, angleMaxDeg: 70, offsetMaxMm: 60, mapAngleStepDeg: 5, mapOffsetStepMm: 3,
                   cornerJawMarks: [0.085, 0.110, 0.135], middleJawMarks: [0.070, 0.080, 0.095, 0.130] },

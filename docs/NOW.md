@@ -1,11 +1,12 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Say "go" for task 2.1 (Three.js gray-box table, playback of a recording). Tasks 1.1-1.4 are approved.
+- Check task 2.1 on the phone: replay.html (2D and 3D side by side, one Play button, 3 recorded shots).
 
 ## Claude's turn
-- Next: task 2.1, after the owner's go.
+- Next: task 2.2 (portrait layout from mockups A/C/D, static buttons), after the owner's approval and go.
 - Pace (provisional, owner 2026-11-24): solver picks the quickest valid shot, cloth friction 0.05. Shot ends when all balls stop.
+- Main camera moved back and up in task 2.1 (the old one cut off the table on a portrait phone); owner to judge the angle.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others
