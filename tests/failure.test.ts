@@ -28,9 +28,29 @@ describe('task 4.2: failure shots', () => {
         const v = judgeShot(L, 'red', { firstHit, potted, after: [] });
         expect(v.result).toBe('failure');
         expect(potted.filter((id) => id !== 'cue')).toEqual([]);
-        if (v.result === 'failure') expect(v.type).toBe(s.fallback ? 'noPot' : expected[kind]);
+        const byFallback = { plainMiss: 'noPot', softFoul: 'wrongBallFirst', tap: 'missedAll' } as const;
+        if (v.result === 'failure') expect(v.type).toBe(s.fallback ? byFallback[s.fallback] : expected[kind]);
       }
       expect(found).toBeGreaterThan(0);
     }, 60_000);
   }
+  it('RULES D.2: a failure shot ALWAYS exists (60 random layouts, every type, red and black due): nothing found = 0', () => {
+    const rng = mulberry32(7);
+    let none = 0;
+    for (let i = 0; i < 15; i++) {
+      for (const [reds, due] of [[6, 'red'], [15, 'colour']] as const) {
+        const L = randomLayout(rng, reds, due, table);
+        for (const kind of ['plainMiss', 'inOff'] as const) {
+          if (!solveFailure(L, due === 'red' ? 'red' : 'black', kind, table, now, undefined, 40)) none++;
+        }
+      }
+    }
+    expect(none).toBe(0);
+  }, 120_000);
+  it('RULES D.2: with no time at all for the normal search, the gentle tap or soft foul is still found', () => {
+    const L = randomLayout(mulberry32(3), 15, 'red', table);
+    const s = solveFailure(L, 'red', 'jawRattle', table, now, undefined, -1);
+    expect(s).not.toBeNull();
+    expect(['softFoul', 'tap']).toContain(s!.fallback);
+  });
 });

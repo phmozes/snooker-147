@@ -126,12 +126,15 @@ export const CONFIG = {
     // failure shots (task 4.2): aim points across the pocket mouth (m, + = left of the approach) for each type
     failure: {
       aimOffsets: {
-        plainMiss: [0.06, -0.06, 0.075, -0.075, 0.09, -0.09],   // just outside the jaws
+        plainMiss: [0.06, -0.06, 0.075, -0.075, 0.09, -0.09, 0.11, -0.11, 0.13, -0.13], // just outside the jaws
         jawRattle: [0.03, -0.03, 0.035, -0.035, 0.04, -0.04, 0.045, -0.045], // onto the jaw
-        inOff: [0, 0.02, -0.02, 0.04, -0.04, 0.06, -0.06],
+        inOff: [0, 0.02, -0.02, 0.04, -0.04, 0.06, -0.06, 0.08, -0.08, 0.1, -0.1],
         wrongBallFirst: [0, 0.02, -0.02],
       },
-      mustReach: 0.15,           // a missed target ball must come within this of the pocket mouth (a real attempt)
+      mustReach: 0.2,            // a missed target ball must come within this of the pocket mouth (a real attempt)
+      softSpeeds: [0.4, 0.6, 0.9, 1.3], // RULES D.2 soft shot into a wrong ball (m/s)
+      tapSpeed: 0.08,            // RULES D.2 gentle tap that hits nothing (m/s, rolls about 1 cm)
+      tapDirections: 24,
     },
     powerSamples: 8,
     spinSamples: [-0.8, -0.3, 0, 0.4, 0.8],

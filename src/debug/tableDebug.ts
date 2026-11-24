@@ -733,6 +733,8 @@ renderers.push(buttons('solveButtons', [
 let failKind: FailureKind = 'plainMiss';
 const FAIL_TEXT: Record<FailureKind, string> = { plainMiss: 'Plain miss', jawRattle: 'Jaw rattle', inOff: 'In-off', wrongBallFirst: 'Wrong ball first' };
 const RULE_TYPE: Record<FailureKind, string> = { plainMiss: 'noPot', jawRattle: 'noPot', inOff: 'inOff', wrongBallFirst: 'wrongBallFirst' };
+const FALLBACK_TYPE = { plainMiss: 'noPot', softFoul: 'wrongBallFirst', tap: 'missedAll' } as const;
+const FALLBACK_TEXT = { plainMiss: 'a plain miss', softFoul: 'a soft shot into a wrong ball (FOUL)', tap: 'a gentle tap that hits nothing (FOUL)' } as const;
 function solveFailureAndPlay() {
   showLayout();
   const L = layout!;
@@ -746,10 +748,10 @@ function solveFailureAndPlay() {
   const firstHit = first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
   const potted = check.balls.filter((b) => b.potted).map((b) => b.id);
   const v = judgeShot(L, solveTarget(), { firstHit, potted, after: [] });
-  const wanted = s.fallback ? 'noPot' : RULE_TYPE[failKind];
+  const wanted = s.fallback ? FALLBACK_TYPE[s.fallback] : RULE_TYPE[failKind];
   const ok = v.result === 'failure' && v.type === wanted && potted.every((id) => id === 'cue');
   out.innerHTML = [
-    `Layout ${layoutNo}: <b>${FAIL_TEXT[failKind]}</b>${s.fallback ? ' <span class="bad">not found: fell back to a plain miss (RULES D.2)</span>' : ''}`,
+    `Layout ${layoutNo}: <b>${FAIL_TEXT[failKind]}</b>${s.fallback ? ` <span class="bad">not found: fell back to ${FALLBACK_TEXT[s.fallback]} (RULES D.2)</span>` : ''}`,
     `Attempt at: <b>${s.target}</b> into <b>${s.pocket}</b>`,
     `Power: ${s.speed.toFixed(2)} m/s (${Math.round((s.speed / CONFIG.physics.maxCueSpeed) * 100)}%) · spin: ${spinText(s.spin)}`,
     `Shot length: <b>${s.duration.toFixed(2)} s</b> · compute time: <b>${s.computeMs.toFixed(0)} ms</b> (${s.tried} shots tried)`,
@@ -762,20 +764,20 @@ function runTwentyFailures() {
   out.textContent = `finding 20 ${FAIL_TEXT[failKind]} shots...`;
   setTimeout(() => {
     let found = 0;
-    let fallback = 0;
+    const fb = { plainMiss: 0, softFoul: 0, tap: 0 };
     let none = 0;
     const ms: number[] = [];
     const start = layoutNo;
     for (let i = 0; i < 20; i++) {
       layoutNo = start + i;
       const s = solveFailure(makeLayout(), solveTarget(), failKind, table, () => performance.now(), physics);
-      if (!s) none++; else if (s.fallback) fallback++; else found++;
+      if (!s) none++; else if (s.fallback) fb[s.fallback]++; else found++;
       if (s) ms.push(s.computeMs);
     }
     layoutNo = start;
     out.innerHTML = [
       `<b>Run 20: ${FAIL_TEXT[failKind]}</b> (layouts ${start}-${start + 19}, ${state.reds} reds level, ${solveDue} due)`,
-      `Found: <b>${found} of 20</b> · fell back to a plain miss: <b>${fallback}</b> · nothing found: ${none}`,
+      `Found: <b>${found} of 20</b> · fallbacks (RULES D.2): plain miss ${fb.plainMiss}, soft foul ${fb.softFoul}, tap ${fb.tap} · nothing found: <b>${none}</b>`,
       `Compute time: longest ${ms.length ? Math.max(...ms).toFixed(0) : '-'} ms (each search up to ${CONFIG.solver.timeBudgetMs} ms, a fallback adds one more)`,
     ].join('\n');
   }, 30);
