@@ -1,22 +1,23 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Play rounds; flag weird shots (they land in docs/WEIRD-SHOTS.md). Read docs/REVIEW.md 5.
-- 4.7 strict: natural 85 / 91 / 84%, exhibition 3.2 / 1.3 / 2.8% (6/10/15 reds). Decide: go on or move to 5.3.
+- Read docs/NIGHT-REPORT.md (40 lines) and confirm the decisions in its part 5.
+- On the phone: try the TEST PANEL (≡ menu, dev only) and play rounds; flag weird shots (docs/WEIRD-SHOTS.md).
+- Decide: more solver work (natural 87-88% at 6/15 reds, target 90%) or move on (5.4 replay by code, stage 6).
 
 ## Claude's turn (after the owner's review)
-- 4.7 left: long red pots after a colour, hard cannons, cushion-first reds (last resort); 6 and 15 reds below 90%.
-- Pace (owner 2026-11-24, replaces 1-1.5 s): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort
-  before RE-RACK; realism before speed. Now 1-4 shots per level over 3.5 s. docs/SPEED.md.
-- Strict naturalness (owner): docs/SOLVER.md 4.7 third part. Solver 4.7c. RE-RACK 0 in 1,124 real-round shots.
-- Owner 2026-11-24: B.3 auto colour; breaks keep baulk colours + blue within 2 cm; caps fixed (shotCaps); camera C.
+- Solver 4.8d. Strict natural 86.9 / 91.0 / 88.2%, exhibition 1.0 / 1.3 / 1.8% (6/10/15 reds), RE-RACK 0 in 60 rounds.
+- Soak (task 5.5): docs/SOAK-FAILURES.md, bench/results/soak/summary.txt. RULES D.6: at most 1 RE-RACK per 100k.
+- Left in 4.7/4.8: hard cannons and long colour pots, shots over 3.5 s, cuts over 50 deg (mostly fallback shots).
+- Pace (owner 2026-11-24): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort. docs/SPEED.md.
+- Measure: bench/results/night/run.sh <tag> (60 rounds x 3 levels, about 4 min), sum.mjs prints one line per level.
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others: nothing.
 
 ## Later
 - Owner idea (not now): rare bonus for a 147 maximum. Must keep RTP 97%; colour choice or a blocked black must never change money by accident. Needs its own design + RTP calc.
-- Measure the solver on a real phone (250-shot budget: about 150 ms here; the wide search up to 1.8 s here).
+- Measure the solver on a real phone (rescue and colour-pick rescue can cost a few thousand simulated shots).
 - Revisit friction and 1.2x playback once real rounds are visible on screen.
 - Tune jaw bounce and pocket generosity once real shots are played (middle pockets generous on purpose for now).
 - Voice files for 14 announcer slots (owner, stage 9-10). History strip, turbo, landscape layout, DEMO label (stage 11).

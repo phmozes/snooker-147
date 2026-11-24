@@ -3,55 +3,58 @@
  "shard": 1,
  "shards": 3,
  "solver": "4.8d",
- "rounds": 30,
- "shots": 179,
- "success": 151,
+ "rounds": 40,
+ "shots": 242,
+ "success": 205,
  "reRacks": 0,
  "problems": 0,
  "ends": {
-  "failure": 30
+  "failure": 40
  },
  "flex": {
-  "longerDuration": 70,
-  "overLong": 6,
+  "longerDuration": 97,
+  "overLong": 7,
   "wideSearch": 2,
-  "exhibition": 1
+  "exhibition": 2
  },
  "failureKinds": {
   "inOff->plainMiss": 4,
-  "plainMiss": 15,
-  "jawRattle": 5,
-  "inOff": 2,
+  "plainMiss": 20,
+  "jawRattle": 7,
+  "inOff": 3,
   "wrongBallFirst->plainMiss": 1,
-  "inOff->softFoul": 1
+  "inOff->softFoul": 1,
+  "plainMiss->softFoul": 1
  },
  "types": {
-  "plain": 110,
+  "plain": 152,
   "cannon": 4,
-  "packCannon": 23,
-  "long": 3,
-  "softCannon": 10,
-  "plant": 1
+  "packCannon": 31,
+  "long": 5,
+  "softCannon": 11,
+  "plant": 1,
+  "cushionFirst": 1
  },
  "colours": {
-  "black": 59,
-  "pink": 28,
-  "blue": 10
+  "black": 77,
+  "pink": 38,
+  "blue": 16
  },
  "lengths": {
-  "1.75": 24,
-  "0.50": 7,
-  "2.00": 15,
-  "1.25": 40,
-  "1.00": 17,
-  "1.50": 36,
-  "0.75": 8,
-  "2.75": 1,
-  "2.25": 3
+  "1.75": 32,
+  "0.50": 8,
+  "2.00": 21,
+  "1.25": 54,
+  "1.00": 21,
+  "1.50": 49,
+  "0.75": 12,
+  "2.75": 2,
+  "2.25": 4,
+  "0.25": 2
  },
  "over35": 0,
- "maxDuration": 2.8208333333333333,
- "maxTried": 2233,
+ "maxDuration": 2.954166666666659,
+ "maxTried": 2811,
  "cap": 36958,
  "strategies": [
   1,
@@ -64,26 +67,26 @@
   26
  ],
  "rtp": {
-  "1": 98,
+  "1": 97.12,
   "2": 91.2,
-  "3": 91.67,
-  "5": 60.8,
-  "8": 49.7,
-  "12": 60.67,
-  "13": 70.33,
+  "3": 93.75,
+  "5": 64.6,
+  "8": 53.25,
+  "12": 63.7,
+  "13": 63.3,
   "26": 0
  },
  "startedAt": "2026-11-24T21:51:23.356Z",
- "updatedAt": "2026-11-24T21:54:40.906Z",
+ "updatedAt": "2026-11-24T21:55:53.610Z",
  "done": false,
  "pay": {
-  "1": 29.400000000000013,
-  "2": 27.360000000000007,
-  "3": 27.5,
-  "5": 18.24,
-  "8": 14.909999999999997,
-  "12": 18.2,
-  "13": 21.099999999999998,
+  "1": 38.849999999999994,
+  "2": 36.48000000000001,
+  "3": 37.5,
+  "5": 25.839999999999996,
+  "8": 21.299999999999994,
+  "12": 25.48,
+  "13": 25.319999999999997,
   "26": 0
  }
 }
