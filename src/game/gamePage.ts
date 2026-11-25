@@ -20,7 +20,7 @@ import { rackBalls } from '../core/table/rack';
 import { COLOURS, type Ball, type Colour, type Vec2 } from '../core/types';
 import { positionsAt } from '../view/playback';
 import { createTable3d } from '../view/table3d';
-import { stepCost } from './stepCost';
+import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
 
@@ -110,10 +110,13 @@ async function markWeird() {
 }
 // Task P.1 (dev only): one line per shot to the PC (bench/results/phone-cost.jsonl), to measure THINKING on the phone
 let shootAvailableAt = 0; // when SHOOT last became pressable (performance.now)
+let costSent = 0; let costFailed = 0; // shown in the developer panel next to the PC link
 function sendCost(line: Record<string, unknown>) {
   if (!import.meta.env.DEV) return;
-  void fetch('/__dev/cost', { method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ...line, ua: navigator.userAgent, solver: CONFIG.solver.version, presolve: 'P.2' }) }).catch(() => { /* no PC link */ });
+  const body = costBody(line, navigator.userAgent, CONFIG.solver.version);
+  const post = () => fetch('/__dev/cost', { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true })
+    .then((r) => { if (!r.ok) throw new Error(String(r.status)); });
+  void post().catch(() => post()).then(() => { costSent++; }, () => { costFailed++; }); // one retry, then counted as failed
 }
 // PC link (2026-11-25): a dev server started before vite.config.ts existed has no /__dev/weird endpoint, so every mark
 // stayed on the phone. The panel now says so, and "Send list to PC" sends every stored line (the PC skips duplicates).
@@ -585,7 +588,8 @@ function renderDev() {
       () => { showWeirdList(); });
   }, !weird.length));
   $('devWeird').appendChild(opt(`Send list to PC (${weird.length})`, false, () => { void sendWeirdList(); }, !weird.length));
-  $('devWeirdList').textContent = `${pcLink}${weirdStatus ? ` · ${weirdStatus}` : ''}`;
+  $('devWeirdList').textContent = `${pcLink}${weirdStatus ? ` · ${weirdStatus}` : ''}` +
+    (import.meta.env.DEV ? ` · cost lines v${COST_LINE_VERSION}: ${costSent} sent${costFailed ? `, ${costFailed} FAILED` : ''}` : '');
   $('devWeird').appendChild(opt('Clear list', false, () => { weird = []; saveWeird(); renderFlag(); render(); }, !weird.length));
   if (import.meta.env.DEV) renderTestPanel(opt);
   for (const s of CONFIG.view3d.ballScaleOptions) {

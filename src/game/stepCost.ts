@@ -22,3 +22,10 @@ export function stepCost(r: Round, k: number, i: StepInfo): Record<string, unkno
     failureMs: a ? ms(a.failure) : null, failureTried: a?.failure?.planned.tried ?? null,
     pressAfterMs: i.pressAfterMs === null ? null : Math.round(i.pressAfterMs), thinkingMs: i.thinkingMs === null ? null : Math.round(i.thinkingMs) };
 }
+
+/** Version of the line the page sends. A line without it (or with a lower one) came from an older page that was
+ *  not reloaded (owner 2026-11-25: the phone sent no step-1 line from a page older than the step-1 change). */
+export const COST_LINE_VERSION = 2;
+/** The body the page posts to /__dev/cost. */
+export const costBody = (line: Record<string, unknown>, ua: string, solver: string) =>
+  JSON.stringify({ ...line, line: COST_LINE_VERSION, ua, solver, presolve: 'P.2' });

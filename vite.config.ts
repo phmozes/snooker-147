@@ -101,7 +101,8 @@ function weirdShots(): Plugin {
 
 // Task P.1: the game (dev build only) posts one line per shot with the solver cost and the THINKING wait; each line
 // is rebuilt here from plain numbers and short texts and appended to bench/results/phone-cost.jsonl.
-const COST_FILE = 'bench/results/phone-cost.jsonl';
+// PHONE_COST_FILE: tests write to a file of their own (tests/phoneCostPath.test.ts)
+const costFile = () => process.env.PHONE_COST_FILE ?? 'bench/results/phone-cost.jsonl';
 function phoneCost(): Plugin {
   return {
     name: 'phone-cost',
@@ -110,7 +111,7 @@ function phoneCost(): Plugin {
       server.middlewares.use('/__dev/cost', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
         readBody(req, res, 4000, (body) => {
-          appendFileSync(COST_FILE, costLine(JSON.parse(body) as Record<string, unknown>, String(req.headers['user-agent'] ?? ''), new Date().toISOString()) + '\n');
+          appendFileSync(costFile(), costLine(JSON.parse(body) as Record<string, unknown>, String(req.headers['user-agent'] ?? ''), new Date().toISOString()) + '\n');
           res.end('ok');
         });
       });
