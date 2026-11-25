@@ -59,6 +59,8 @@ let busy: null | 'rerack' | 'break' | 'step1' | 'shot' | 'solving' = null;
 let showBetArea = true; // after a round ends the bet area returns after ui.wonMessageSeconds
 let shownBalance = round.balance;
 let lastShot = '—';
+/** Dev only (owner 2026-11-25): solver cost of the last shot, to read on a real phone. */
+let lastCost = '—';
 /** The last shot played, for "Mark this shot as weird" (task 4.7). */
 let lastInfo: { code: string; step: number; type: string; target: string; outcome: string; length: number } | null = null;
 const TYPE_TEXT: Record<string, string> = {
@@ -228,6 +230,7 @@ async function onStart() {
   render();
   const len = await playShot(afterBreak!.balls, round.history[0]!.shot as Shot);
   lastShot = `step 1: red · ${round.history[0]!.outcome} · from the break-off library · ${len.toFixed(2)} s long`;
+  lastCost = 'step 1: from the break-off library, no solve';
   lastInfo = { code: round.roundCode, step: 1, type: 'library', target: 'red', outcome: round.history[0]!.outcome, length: len };
   afterShot();
 }
@@ -246,6 +249,7 @@ async function onShoot() {
   const t0 = performance.now();
   const solved = await presolver.get(kind, ctx);
   const waited = performance.now() - t0;
+  const thinking = busy === 'solving'; // the player saw THINKING… until the answer came
   const before = round;
   const target = solved.target; // on a colour step: the colour the game picked (RULES B.3)
   const prov = solvedProvider(createPhysicsProvider(table, library), solved.planned, { target, outcome });
@@ -260,6 +264,8 @@ async function onShoot() {
   const cap = kind === 'failure' ? caps.failure : caps.success + (colourStep ? caps.colourPick : 0);
   const work = `solved in ${solved.ms.toFixed(0)} ms (${solved.planned.tried ?? '?'} of max ${cap} shots)` +
     (waited > 20 ? `, SHOOT waited ${waited.toFixed(0)} ms` : ', ready before SHOOT');
+  lastCost = `step ${step} (${kind}): solve ${solved.ms.toFixed(0)} ms · ${solved.planned.tried ?? '?'} simulated shots · ` +
+    (thinking ? `THINKING… shown ${waited.toFixed(0)} ms` : 'no wait (ready before SHOOT)');
   if (h.outcome === 'reRack') {
     lastShot = `step ${step}: RE-RACK (no shot found) · ${work}`;
     lastInfo = { code: round.roundCode, step, type: 'reRack', target: h.target, outcome: 'reRack', length: 0 };
@@ -495,7 +501,8 @@ function renderDev() {
     '<h3>ROUND</h3><div class="info" id="devRound"></div>' +
     '<div class="opts"><input id="devSeed" placeholder="seed or reds6-12345" /><button id="devUseSeed">Use</button></div>' +
     '<div class="opts" id="devRoundBtns"></div>' +
-    '<h3>LAST SHOT</h3><div class="info" id="devShot"></div><div class="opts" id="devWeird"></div>' +
+    '<h3>LAST SHOT</h3><div class="info" id="devShot"></div>' +
+    (import.meta.env.DEV ? '<div class="info" id="devCost"></div>' : '') + '<div class="opts" id="devWeird"></div>' +
     '<div class="info" id="devWeirdList"></div>' +
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
@@ -530,6 +537,7 @@ function renderDev() {
     render();
   }, locked));
   $('devShot').textContent = lastShot;
+  if (import.meta.env.DEV) $('devCost').textContent = `SOLVER COST (dev only) · ${lastCost}`;
   // task 4.7: mark the last shot as weird; the list can be copied and sent to Claude (bench/replay-shot.test.ts)
   $('devWeird').appendChild(opt('Mark this shot as weird', false, () => { void markWeird().then(render); }, !lastInfo));
   $('devWeird').appendChild(opt(`Copy list (${weird.length})`, false, () => {

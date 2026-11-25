@@ -31,6 +31,9 @@ it('natural shots in real rounds', () => {
     let shots = 0; let success = 0; let reRacks = 0; let strict = 0;
     const whyNot: Record<string, number> = {};
     const byTarget: Record<string, number> = {};
+    // owner 2026-11-25: where in the round the non-natural shots are (step band -> 'target:type' counts, and natural / played)
+    const bySteps: Record<string, { played: number; natural: number; not: Record<string, number> }> = {};
+    const band = (st: number) => (st <= 3 ? '2-3' : st <= 6 ? '4-6' : st <= 12 ? '7-12' : '13+');
     const redDurs: { d: number; last: boolean }[] = []; const colDurs: { d: number; last: boolean }[] = [];
     // shots from the last-resort steps before RE-RACK (exhibition, spray): excluded from the 3.5 s pace limit
     const lastResort = new Set<string>();
@@ -113,6 +116,8 @@ it('natural shots in real rounds', () => {
         const lv = provider.log.find((e) => e.roundCode === r.roundCode && e.step === h.step)?.level ?? 'normal';
         if (!NATURAL_TYPES.includes(t)) { const k = `${h.target === 'red' ? 'red' : 'colour'}:${t}:${lv}`; byTarget[k] = (byTarget[k] ?? 0) + 1; }
         const why = naturalCheck(t, { ...facts, duration: pf.duration, cueTravel: pf.cueTravel, after: pf.after });
+        { const bb = (bySteps[band(h.step)] ??= { played: 0, natural: 0, not: {} }); bb.played++;
+          if (why === null) bb.natural++; else { const k = `${h.target === 'red' ? 'red' : 'colour'}:${t}`; bb.not[k] = (bb.not[k] ?? 0) + 1; } }
         if (why === null) strict++; else { const k = NATURAL_TYPES.includes(t) ? why.replace(/[\d.]+/g, '#') : 'not a natural pot type'; whyNot[k] = (whyNot[k] ?? 0) + 1; }
         durs.push(s.duration); speeds.push(s.speed);
         const last = lastResort.has(`${r.roundCode}:${h.step}`);
@@ -136,7 +141,7 @@ it('natural shots in real rounds', () => {
     const row = {
       level, position, rounds: n, shots, success, reRacks, reRackPct: Math.round((reRacks / Math.max(1, success)) * 1000) / 10,
       natural: Math.round((strict / Math.max(1, played)) * 1000) / 10, naturalOld: share((t) => NATURAL_TYPES.includes(t as ShotType)),
-      exhibition: share((t) => isExhibition(t as ShotType)), whyNot, byTarget,
+      exhibition: share((t) => isExhibition(t as ShotType)), whyNot, byTarget, bySteps,
       pace: Object.fromEntries((['red', 'colour'] as const).map((k) => { const a = k === 'red' ? redDurs : colDurs; const d = a.map((x) => x.d);
         return [k, { n: d.length, median: +med(d).toFixed(2), p90: +pct(d, 0.9).toFixed(2), maxNotLastResort: +Math.max(0, ...a.filter((x) => !x.last).map((x) => x.d)).toFixed(2),
           over35: a.filter((x) => !x.last && x.d > 3.5).length }]; })),

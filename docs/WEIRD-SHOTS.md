@@ -46,3 +46,9 @@ Task 4.10 (solver 4.10, 2026-11-25; replays on the old library, old p where mark
 | 2026-11-25 14:25 | reds10-165926990 | 14 | blue | success | long | 1.33 s | reds10 | 4.9 |
 | 2026-11-25 14:26 | reds15-912620600 | 6 | blue | success | long | 1.52 s | reds15 | 4.9 |
 | 2026-11-25 14:26 | reds15-912620600 | 9 | red | success | plant | 2.20 s | reds15 | 4.9 |
+| 2026-11-25 16:45 | reds6-1527464874 | 6 | blue | success | long | 1.31 s | reds6 | 4.10 |
+| 2026-11-25 16:46 | reds10-3813538593 | 8 | blue | plainMiss | attempt | 3.30 s | reds10 | 4.10 |
+| 2026-11-25 16:47 | reds10-483330344 | 3 | red | success | plain | 1.13 s | reds10 | 4.10 |
+| 2026-11-25 16:47 | reds10-483330344 | 6 | pink | success | plain | 1.23 s | reds10 | 4.10 |
+| 2026-11-25 16:48 | reds10-483330344 | 8 | pink | success | packCannon | 1.20 s | reds10 | 4.10 |
+| 2026-11-25 16:48 | reds10-483330344 | 10 | pink | success | plain | 1.38 s | reds10 | 4.10 |

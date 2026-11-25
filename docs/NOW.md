@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review solver 4.10 on the phone (long blue after a red; docs/SOLVER.md task 4.10). Keep marking weird shots.
+- Read the solver cost line in the ≡ panel (dev only) on the phone while playing. Keep marking weird shots.
 - Close the old dev servers on 5174 / 5180 (they started before vite.config.ts existed).
 ## Claude's turn (after the owner's review)
 - RTP 3c applied. Solver 4.10 done (2 of 4 long-blue marks fixed; the other 2 have one red only). Only owner-marked shots get fixed.

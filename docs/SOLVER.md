@@ -301,3 +301,9 @@ before = topColour.enabled false; bench/results/night/pre410-*, t410-*):
 | reds15 after | 90.2 | 2.0 | 0 | 1.56 | 4 (2) | 522 / 3613 | 16.7 / 3.4 | 0 of 7 | 0 of 8 |
 Kept: natural % up at every level, RE-RACK 0, pace the same (median within 0.01 s; shots over 3.5 s outside the last
 resort unchanged), max cost +6% / 0% / +8% (limit 30%); median cost about +20%.
+
+## Check 2026-11-25: why natural % at 6 reds fell to 82.5 with the new break library (report only)
+Same solver (4.10 off), same p, 60 rounds, only the library changed (bench/results/night/oldlib2-reds6 vs newlib2-reds6):
+natural 87.7 -> 82.5, so the library explains the whole drop. Natural by step: 2-3 95.6 -> 100, 4-6 87.4 -> 79.6,
+7-12 81.6 -> 70.9, 13+ 86.2 -> 79.3. In: long colours 16 -> 28 (blue picks 28 -> 37, pink 37 -> 30), red cannons /
+long reds / cushion-first reds at steps 7-12 (8 -> 13). Out: plain pots 258 -> 251, pack cannons 30 -> 20.
