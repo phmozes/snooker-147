@@ -1,0 +1,27 @@
+{
+ "reds6": {
+  "press": 0.4,
+  "p1": {
+   "shots": 378,
+   "thinking": 17,
+   "thinkingPct": 4.5,
+   "waitMedianMs": 769,
+   "waitMaxMs": 3321,
+   "worst": [
+    "step 8 blue: wait 3321 ms (solve 5359 ms)",
+    "step 10 black: wait 1753 ms (solve 4255 ms)",
+    "step 7 red: wait 1707 ms (solve 3647 ms)",
+    "step 5 red: wait 1097 ms (solve 2247 ms)",
+    "step 8 blue: wait 1046 ms (solve 3083 ms)"
+   ]
+  },
+  "p2": {
+   "shots": 378,
+   "thinking": 0,
+   "thinkingPct": 0,
+   "waitMedianMs": 0,
+   "waitMaxMs": 0,
+   "worst": []
+  }
+ }
+}

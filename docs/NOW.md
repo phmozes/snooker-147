@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- P.1: play about 10 rounds on the phone (dev build); each shot's cost lands in bench/results/phone-cost.jsonl. Then Claude summarises.
+- P.2: play about 10 rounds on the phone (dev build). New lines in bench/results/phone-cost.jsonl carry presolve "P.2"; then Claude summarises.
 - Read the solver cost line in the ≡ panel (dev only) on the phone while playing. Keep marking weird shots.
 - Close the old dev servers on 5174 / 5180 (they started before vite.config.ts existed).
 ## Claude's turn (after the owner's review)
