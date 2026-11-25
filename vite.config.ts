@@ -6,6 +6,7 @@
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { defineConfig, type Plugin } from 'vite';
+import { costLine } from './src/game/costLine';
 
 const FILE = 'docs/WEIRD-SHOTS.md';
 const HEADER = '# Weird shots (marked on the phone with the flag button)\n\n' +
@@ -101,16 +102,6 @@ function weirdShots(): Plugin {
 // Task P.1: the game (dev build only) posts one line per shot with the solver cost and the THINKING wait; each line
 // is rebuilt here from plain numbers and short texts and appended to bench/results/phone-cost.jsonl.
 const COST_FILE = 'bench/results/phone-cost.jsonl';
-const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
-export function costLine(m: Record<string, unknown>, uaHeader: string, time: string) {
-  const code = String(m.code);
-  if (!/^reds\d+-\d+$/.test(code)) throw new Error('bad round code');
-  return JSON.stringify({ time, code, step: num(m.step), target: clean(m.target, 10), outcome: clean(m.outcome, 16),
-    forced: m.forced === true, auto: m.auto === true,
-    successMs: num(m.successMs), successTried: num(m.successTried), failureMs: num(m.failureMs), failureTried: num(m.failureTried),
-    pressAfterMs: num(m.pressAfterMs), thinkingMs: num(m.thinkingMs), solver: clean(m.solver, 8),
-    ua: String(m.ua ?? uaHeader).replace(/[^\w.:;,()/\- ]/g, '').slice(0, 200) });
-}
 function phoneCost(): Plugin {
   return {
     name: 'phone-cost',
