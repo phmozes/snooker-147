@@ -20,7 +20,7 @@
 ## 3. Soak (details: bench/results/soak*/summary.txt, docs/SOAK-FAILURES.md)
 - Run on 4.8d: 18,648 / 16,232 / 15,142 success shots (6 / 10 / 15 reds). Far below your 100k: the PC was too slow.
 - RE-RACK: 8 / 2 / 0 there, but only 2 different positions (the same break repeats); both fixed and replayed (4.8e, 4.8f).
-- Run on 4.8f (newest code) started 01:35 and stops by itself at 05:40: `node bench/soak-merge.mjs bench/results/soak`.
+- Run on 4.8f (newest code), at 03:38: 22,401 / 19,404 / 18,101 success shots, 0 RE-RACK, 0 problems. It stops by itself at 05:40; final numbers: `node bench/soak-merge.mjs bench/results/soak`.
 - No crash, no invalid shot, no ball off the cloth, no overlap, no shot over its cap. Over 3.5 s: 0.5-1.1% of shots.
 - Types: plain 66-80%, cannons 13-29%, long 3-6%, cushion-first/double/plant about 1-2%. RTP for "cash out after step k": 94.5-97.4% (only about 2-3k rounds: still noisy; your ladders were not touched).
 ## 4. Check first on your phone

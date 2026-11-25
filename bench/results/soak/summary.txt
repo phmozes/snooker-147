@@ -1,12 +1,12 @@
-reds10: 1730 rounds, 12202 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 68, longest 5.04 s, most simulated 6433 (cap 47161)
-  flex {"longerDuration":5638,"overLong":528,"wideSearch":288,"exhibition":113,"rescue":67,"noLookahead":14,"doubles":4} | failures {"jawRattle":364,"wrongBallFirst->plainMiss":62,"plainMiss":908,"jawRattle->plainMiss":25,"inOff->plainMiss":118,"inOff":37,"plainMiss->softFoul":17,"wrongBallFirst":9,"jawRattle->softFoul":8,"inOff->softFoul":3,"plainMiss->tap":1,"wrongBallFirst->softFoul":1,"jawRattle->tap":2}
-  types % {"plain":71.25,"packCannon":16.3,"softCannon":5.88,"long":3.03,"cannon":2.58,"cushionFirst":0.58,"double":0.17,"plant":0.16,"farPocket":0.02,"kiss":0.02}
-  RTP % by cash-out step {"1":96.2,"2":94.7,"3":94.7,"5":95.8,"8":94.7,"12":97,"13":99.3,"26":86.7}
-reds15: 1430 rounds, 11626 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 54, longest 5.50 s, most simulated 5899 (cap 47161)
-  flex {"longerDuration":5586,"overLong":401,"wideSearch":300,"exhibition":125,"rescue":46,"doubles":1,"noLookahead":3} | failures {"jawRattle":311,"inOff->plainMiss":122,"wrongBallFirst->plainMiss":55,"plainMiss":720,"jawRattle->softFoul":6,"jawRattle->plainMiss":25,"inOff":25,"inOff->softFoul":2,"wrongBallFirst":7,"plainMiss->softFoul":19,"plainMiss->tap":2}
-  types % {"plain":65.62,"packCannon":18.09,"softCannon":7.11,"long":4.62,"cannon":3.48,"cushionFirst":0.58,"double":0.31,"plant":0.18}
-  RTP % by cash-out step {"1":95.8,"2":94,"3":94.5,"5":95.6,"8":95.2,"12":93.5,"18":89.9,"36":76.9}
-reds6: 2490 rounds, 14106 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 169, longest 5.36 s, most simulated 8777 (cap 47161)
-  flex {"longerDuration":6403,"overLong":826,"wideSearch":411,"rescue":242,"exhibition":196,"noLookahead":32,"spray":7,"doubles":8} | failures {"plainMiss":1278,"wrongBallFirst->plainMiss":86,"jawRattle":499,"inOff":81,"inOff->plainMiss":156,"jawRattle->plainMiss":27,"plainMiss->softFoul":36,"jawRattle->softFoul":17,"wrongBallFirst":7,"inOff->softFoul":4}
-  types % {"plain":80.09,"packCannon":8.49,"long":5.73,"cannon":2.29,"softCannon":1.91,"cushionFirst":1.04,"double":0.36,"kiss":0.08,"farPocket":0.01}
-  RTP % by cash-out step {"1":96.6,"2":95,"3":95,"5":94.5,"8":96,"9":96.8,"12":95.2,"18":99.4}
+reds10: 2740 rounds, 19404 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 105, longest 5.04 s, most simulated 6433 (cap 47161)
+  flex {"longerDuration":9044,"overLong":829,"wideSearch":469,"exhibition":170,"rescue":108,"noLookahead":24,"doubles":7} | failures {"jawRattle":577,"wrongBallFirst->plainMiss":98,"plainMiss":1461,"jawRattle->plainMiss":31,"inOff->plainMiss":199,"inOff":54,"plainMiss->softFoul":25,"wrongBallFirst":12,"jawRattle->softFoul":9,"inOff->softFoul":6,"plainMiss->tap":1,"wrongBallFirst->softFoul":2,"jawRattle->tap":2}
+  types % {"plain":71.83,"packCannon":16.18,"softCannon":5.64,"long":2.98,"cannon":2.46,"cushionFirst":0.55,"double":0.18,"plant":0.14,"farPocket":0.03,"kiss":0.02}
+  RTP % by cash-out step {"1":96.8,"2":96.1,"3":95.6,"5":95.5,"8":95.4,"12":95.8,"13":96.6,"26":89.4}
+reds15: 2220 rounds, 18101 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 98, longest 5.50 s, most simulated 5899 (cap 47161)
+  flex {"longerDuration":8605,"overLong":660,"wideSearch":476,"exhibition":202,"rescue":63,"doubles":2,"noLookahead":5} | failures {"jawRattle":472,"inOff->plainMiss":176,"wrongBallFirst->plainMiss":82,"plainMiss":1145,"jawRattle->softFoul":14,"jawRattle->plainMiss":35,"inOff":43,"inOff->softFoul":5,"wrongBallFirst":8,"plainMiss->softFoul":41,"plainMiss->tap":2,"wrongBallFirst->softFoul":1}
+  types % {"plain":65.79,"packCannon":17.93,"softCannon":7.2,"long":4.61,"cannon":3.35,"cushionFirst":0.59,"double":0.35,"plant":0.18}
+  RTP % by cash-out step {"1":96.5,"2":94.8,"3":95,"5":94.9,"8":94.1,"12":93.3,"18":93.5,"36":76.6}
+reds6: 3920 rounds, 22401 success shots, RE-RACK 0 (0.0 per 100k; D.6 limit 1), problems 0, over 3.5 s 263, longest 5.36 s, most simulated 8777 (cap 47161)
+  flex {"longerDuration":10159,"overLong":1308,"wideSearch":613,"rescue":375,"exhibition":333,"noLookahead":46,"spray":11,"doubles":9} | failures {"plainMiss":2001,"wrongBallFirst->plainMiss":137,"jawRattle":812,"inOff":118,"inOff->plainMiss":239,"jawRattle->plainMiss":42,"plainMiss->softFoul":61,"jawRattle->softFoul":29,"wrongBallFirst":14,"inOff->softFoul":6,"wrongBallFirst->softFoul":1}
+  types % {"plain":80.02,"packCannon":8.34,"long":5.74,"cannon":2.37,"softCannon":1.96,"cushionFirst":1.09,"double":0.37,"kiss":0.08,"farPocket":0.03}
+  RTP % by cash-out step {"1":96.7,"2":95.6,"3":95.3,"5":95.1,"8":97.3,"9":98.3,"12":96.8,"18":95.7}
