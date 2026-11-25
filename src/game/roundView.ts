@@ -39,13 +39,5 @@ export function clearanceText(r: Round): string {
   return r.frame && isMaximum(r.frame) ? `MAXIMUM ${r.frame.score}` : `TOTAL CLEARANCE ${r.frame?.score ?? ''}`;
 }
 
-/** "reds6-12345" or "12345" (then the level stays as it is). null if it is not a round code. */
-export function parseRoundCode(text: string): { levelId: LevelId | null; seed: number } | null {
-  const m = /^\s*(?:(reds\d+)\s*-\s*)?(\d{1,10})\s*$/.exec(text);
-  if (!m) return null;
-  const seed = Number(m[2]);
-  if (seed > 0xffffffff) return null;
-  const levelId = m[1] ? CONFIG.levels.find((l) => l.id === m[1])?.id ?? null : null;
-  if (m[1] && !levelId) return null;
-  return { levelId, seed };
-}
+/** Round codes (task 5.4) live in the core: `reds6-12345`, `12345`, `reds6-12345-BKP-C7`. */
+export { parseRoundCode, roundCodeOf } from '../core/roundCode';

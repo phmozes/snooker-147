@@ -11,8 +11,10 @@ export function solveJob(table: TableGeometry, req: SolveRequest, kinds: readonl
   const { id, frame, failure, ctx } = req;
   const provider = createPhysicsProvider(table, {}, now);
   let t0 = now();
-  // RULES B.3: on a colour step the game picks the colour first (from the layout only), both outcomes use it
-  const target = frame.phase === 'colour' ? provider.autoColour!(frame, ctx) : req.target;
+  // RULES B.3: on a colour step the game picks the colour first (from the layout only), both outcomes use it. A replay
+  // by round code (task 5.4) may ask for another colour; the pick still runs first, exactly as replayRound() does.
+  const auto = frame.phase === 'colour' ? provider.autoColour!(frame, ctx) : null;
+  const target = auto ? (req.colour ?? auto) : req.target;
   for (const kind of kinds) {
     const before = provider.log.length;
     const planned = provider.shot(frame, target, kind === 'success' ? 'success' : failure, ctx);

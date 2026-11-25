@@ -23,6 +23,7 @@ import { createTable3d } from '../view/table3d';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
+import { codeColour, colourSteps, roundCodeOf, type RoundCode } from '../core/roundCode';
 
 type ScreenId = 'D' | 'A' | 'C';
 type Mode = 'live' | ScreenId;
@@ -48,6 +49,10 @@ let pendingSeed: number | null = null; // developer menu: the next START uses th
 const seedParam = parseRoundCode(params.get('seed') ?? '');
 if (seedParam) { pendingSeed = seedParam.seed; if (seedParam.levelId) round = setLevel(round, seedParam.levelId); }
 let seedText = '';
+// task 5.4: a round being replayed from its round code (the shots, colours and cash-out step come from the code)
+let replay: RoundCode | null = null;
+/** The colour the replayed code asks for on this round's next colour step (undefined: the automatic pick). */
+const replayColour = (r: Round) => (replay && r.frame?.phase === 'colour' ? codeColour(replay, colourSteps(r).length) : undefined);
 // ---- developer test panel (task 5.3). Only a dev build (import.meta.env.DEV) can set these; the real game never does.
 let force: ForcedOutcome | null = null; // the NEXT shot's outcome, forced (then back to null)
 let auto: null | { mode: 'round' | 'jump' | 'clearance'; to: number } = null; // play shots by itself
@@ -209,7 +214,7 @@ function presolveNext() {
   const { step, failure } = nextOutcome(round);
   const f = forcedNow(); // developer panel: a forced failure type is solved instead of the decided one
   const fail = f && f !== 'success' && f !== 'reRack' ? f : failure;
-  presolver.request(round.frame!, nextTarget(round), fail, { roundCode: round.roundCode, step });
+  presolver.request(round.frame!, nextTarget(round), fail, { roundCode: round.roundCode, step }, replayColour(round));
 }
 
 /**
@@ -224,7 +229,7 @@ function presolveAhead(req: SolveRequest, success: Solved) {
   const { step, failure } = nextOutcome(after);
   const f = forcedNow(); // developer panel, as in presolveNext()
   const fail = f && f !== 'success' && f !== 'reRack' ? f : failure;
-  presolver.ahead(after.frame!, nextTarget(after), fail, { roundCode: after.roundCode, step });
+  presolver.ahead(after.frame!, nextTarget(after), fail, { roundCode: after.roundCode, step }, replayColour(after));
 }
 
 async function onStart() {
@@ -332,6 +337,14 @@ function afterShot() {
   shootAvailableAt = performance.now();
   if (round.frame) showBalls(round.frame.balls);
   if (round.phase === 'over') endRound(); else render();
+  // task 5.4: a replay by round code plays itself and cashes out where the code says
+  if (replay && round.phase === 'decide') {
+    const r = replay;
+    setTimeout(() => {
+      if (replay !== r || busy || round.phase !== 'decide') return;
+      if (r.cashOutAfter !== null && round.step >= r.cashOutAfter) onCashOut(); else void onShoot();
+    }, 600);
+  }
   // developer panel: auto play goes on by itself
   if (import.meta.env.DEV && auto && round.phase === 'decide') {
     if (auto.mode === 'jump' && round.step >= auto.to) { auto = null; render(); return; }
@@ -342,6 +355,7 @@ function afterShot() {
 async function endRound() {
   busy = null;
   auto = null;
+  replay = null;
   showBetArea = false;
   render();
   countUpBalance(round.balance);
@@ -537,10 +551,11 @@ function renderDev() {
     return b;
   };
   const locked = busy !== null || round.phase === 'decide';
-  const code = round.roundCode || '—';
+  // task 5.4: the full round code (seed, colour letters, cash-out step); at the end of a round it replays the whole round
+  const code = round.roundCode ? roundCodeOf(round) : '—';
   dev.innerHTML = '<h3>DEVELOPER · SCREEN</h3><div class="opts" id="devScreens"></div>' +
     '<h3>ROUND</h3><div class="info" id="devRound"></div>' +
-    '<div class="opts"><input id="devSeed" placeholder="seed or reds6-12345" /><button id="devUseSeed">Use</button></div>' +
+    '<div class="opts"><input id="devSeed" placeholder="seed or round code" /><button id="devUseSeed">Use seed</button><button id="devReplay">Replay code</button></div>' +
     '<div class="opts" id="devRoundBtns"></div>' +
     '<h3>LAST SHOT</h3><div class="info" id="devShot"></div>' +
     (import.meta.env.DEV ? '<div class="info" id="devDraw"></div><div class="info" id="devCost"></div>' : '') + '<div class="opts" id="devWeird"></div>' +
@@ -555,7 +570,8 @@ function renderDev() {
   for (const id of ['D', 'A', 'C'] as const) {
     $('devScreens').appendChild(opt(`${id}: ${{ D: 'start', A: 'shoot', C: 'colour' }[id]}`, mode === id, () => setMode(id), busy !== null));
   }
-  $('devRound').innerHTML = `Round code: <b>${code}</b>${round.phase === 'decide' ? ` · step ${round.step}` : ''}<br>` +
+  $('devRound').innerHTML = `Round code: <b>${code}</b>${round.phase === 'decide' ? ` · step ${round.step}` : round.phase === 'over' ? ' · replays this whole round' : ''}<br>` +
+    (replay ? `Replaying code <b>${seedText || code}</b><br>` : '') +
     `${pendingSeed !== null ? `Next START uses seed <b>${pendingSeed}</b>` : 'Next START: new random seed'}<br>` +
     `Fallbacks this session: ${fallbacks.length}${fallbacks.length ? ' (details in the browser console)' : ''}`;
   const input = $('devSeed') as HTMLInputElement;
@@ -569,8 +585,21 @@ function renderDev() {
     render();
   };
   ($('devUseSeed') as HTMLButtonElement).disabled = locked;
+  const startReplay = (p: RoundCode) => {
+    if (p.levelId && p.levelId !== round.levelId) changeLevel(p.levelId);
+    replay = p; pendingSeed = p.seed;
+    $('dev').classList.remove('open');
+    void onStart();
+  };
+  $('devReplay').onclick = () => {
+    const p = parseRoundCode(seedText);
+    if (!p) { $('devRound').innerHTML += '<br><span class="bad">Not a round code</span>'; return; }
+    if (!locked && round.balance >= round.bet) startReplay(p);
+  };
+  ($('devReplay') as HTMLButtonElement).disabled = locked || mode !== 'live' || round.balance < round.bet;
   if (round.roundCode) {
-    $('devRoundBtns').appendChild(opt('Replay this round', false, () => { pendingSeed = round.seed; render(); }, locked));
+    $('devRoundBtns').appendChild(opt('Replay this round', false, () => { seedText = roundCodeOf(round); startReplay(parseRoundCode(seedText)!); },
+      locked || round.phase !== 'over' || round.balance < round.bet));
   }
   $('devRoundBtns').appendChild(opt(`Balance back to ${CONFIG.money.startingBalance}`, false, () => {
     round = { ...round, balance: CONFIG.money.startingBalance };

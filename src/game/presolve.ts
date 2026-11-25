@@ -8,11 +8,12 @@
 import type { FailureLabel, PlannedShot, ShotProvider } from '../core/round';
 import type { FrameState } from '../core/rules';
 import type { FallbackLogEntry } from '../core/solver';
-import type { BallKind } from '../core/types';
+import type { BallKind, Colour } from '../core/types';
 
 export type SolveKind = 'success' | 'failure';
 /** only: the outcome this worker solves (task P.1); without it the worker solves both, success first. */
-export interface SolveRequest { only?: SolveKind; id: number; frame: FrameState; target: BallKind; failure: FailureLabel; ctx: { roundCode: string; step: number } }
+/** colour (task 5.4, replay by round code): on a colour step, the colour from the code instead of the automatic pick. */
+export interface SolveRequest { only?: SolveKind; id: number; frame: FrameState; target: BallKind; failure: FailureLabel; ctx: { roundCode: string; step: number }; colour?: Colour }
 export interface SolveAnswer { id: number; kind: SolveKind; target: BallKind; planned: PlannedShot; ms: number; log: FallbackLogEntry[] }
 /** target: the ball the shot is at (on a colour step the colour the game picked, RULES B.3). */
 export interface Solved { planned: PlannedShot; ms: number; target: BallKind }
@@ -22,7 +23,7 @@ export interface SolverWorker { postMessage(req: SolveRequest): void; terminate(
 const newWorker = (): SolverWorker => new Worker(new URL('./solverWorker.ts', import.meta.url), { type: 'module' });
 
 type Job = { req: SolveRequest; key: string; answers: Partial<Record<SolveKind, Solved>>; waiting: (() => void)[] };
-const keyOf = (r: Omit<SolveRequest, 'id'>) => JSON.stringify([r.ctx.roundCode, r.ctx.step, r.target, r.failure, r.frame]);
+const keyOf = (r: Omit<SolveRequest, 'id'>) => JSON.stringify([r.ctx.roundCode, r.ctx.step, r.target, r.failure, r.colour ?? null, r.frame]);
 
 /**
  * onBoth (task P.2): called once both answers of the shot being decided exist, with its success answer. The page then
@@ -37,8 +38,8 @@ export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void, on
   let next: Job | null = null; // task P.2: the shot after it, solved from the success end of `current`
   let promoted = false; // the current job was started ahead (developer cost line)
   const both = (c: Job) => !!(c.answers.success && c.answers.failure);
-  const job = (frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx']): Job => {
-    const req: SolveRequest = { id: nextId++, frame, target, failure, ctx };
+  const job = (frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx'], colour?: Colour): Job => {
+    const req: SolveRequest = { id: nextId++, frame, target, failure, ctx, ...(colour ? { colour } : {}) };
     return { req, key: keyOf(req), answers: {}, waiting: [] };
   };
   const post = (j: Job) => { for (const k of ['success', 'failure'] as const) (workers[k] ?? start(k)).postMessage({ ...j.req, only: k }); };
@@ -70,8 +71,8 @@ export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void, on
 
   return {
     /** The next shot (both outcomes, one worker each). If it was already started ahead (task P.2), that is kept. */
-    request(frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx']) {
-      const j = job(frame, target, failure, ctx);
+    request(frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx'], colour?: Colour) {
+      const j = job(frame, target, failure, ctx, colour);
       if (next && next.key === j.key) {
         drop(current);
         current = next; next = null; promoted = true;
@@ -84,10 +85,10 @@ export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void, on
       post(j);
     },
     /** Task P.2: start the shot after the current one (asked from onBoth, so both workers are free). */
-    ahead(frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx']) {
+    ahead(frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx'], colour?: Colour) {
       if (!current || !both(current)) return;
       drop(next);
-      next = job(frame, target, failure, ctx);
+      next = job(frame, target, failure, ctx, colour);
       post(next);
     },
     /** Drop every request (only a worker still busy with one is restarted). */
