@@ -1,0 +1,6 @@
+solver 4.10, 100 rounds per level
+reds6: 100/100 rounds identical (830 trajectories); ends {"reRack":5,"failure":70,"cashOut":21,"clearance":4}; codes with colour letters 87; rounds with a non-automatic colour 33
+solver 4.10, 100 rounds per level
+reds10: 100/100 rounds identical (935 trajectories); ends {"failure":80,"cashOut":16,"reRack":3,"clearance":1}; codes with colour letters 88; rounds with a non-automatic colour 45
+solver 4.10, 100 rounds per level
+reds15: 100/100 rounds identical (1032 trajectories); ends {"failure":82,"cashOut":11,"reRack":7}; codes with colour letters 90; rounds with a non-automatic colour 45
