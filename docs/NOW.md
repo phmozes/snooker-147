@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review F.1 fairness proof (docs/FAIRNESS.md). Decide RTP: keep rounded-down multipliers, or option 3 (docs/RTP-OPTION3.md).
+- Review F.1 fairness proof (docs/FAIRNESS.md). Decide RTP: keep rounded-down multipliers, option 3 or option 3b (docs/RTP-OPTION3.md).
 - On the phone, task 4.9: ?seed=reds6-136, reds10-80, reds6-297 (SHOOT every time; watch steps 2-3).
 - On the phone: try the TEST PANEL (≡ menu, dev only) and play rounds; flag weird shots (docs/WEIRD-SHOTS.md).
 - Decide: more solver work (natural 87-88% at 6/15 reds, target 90%) or move on (5.4 replay by code, stage 6).
@@ -17,6 +17,7 @@
 ## Waiting on others: nothing.
 
 ## Later
+- LAUNCH BLOCKER: Before real money: outcomes decided on a server (seed never in the browser), and a way for players to verify fairness afterwards.
 - Owner idea (not now): rare bonus for a 147 maximum. Must keep RTP 97%; colour choice or a blocked black must never change money by accident. Needs its own design + RTP calc.
 - Measure the solver on a real phone (rescue and colour-pick rescue can cost a few thousand simulated shots).
 - Revisit friction and 1.2x playback once real rounds are visible on screen.
