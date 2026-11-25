@@ -18,10 +18,12 @@
 3. From step 2: SHOOT / CASH OUT before every shot. On colour steps (while reds remain) the player picks a colour.
    Offered: BLACK always, plus every other colour with a ready pot, up to 3 buttons, higher values first.
    The choice changes only the snooker score. Until the colour-choice stage, the game picks the colour automatically
-   (owner, 2026-11-24, confirmed): black whenever black has a natural shot that also leaves a natural red (the black
-   counts as natural only then), else pink, else blue (the first with a natural shot);
-   if none has one, the first with any shot in time, else black. The pick depends only on the layout, never on the
-   decided outcome, and changes only the snooker score, never the odds or the money.
+   (owner, 2026-11-24, confirmed; 2026-11-25 approved): black, else pink, else blue: the first whose shot is natural
+   AND leaves a natural red (the same test for all three). If none passes: the first with a shot in time that keeps
+   the next red reachable; else a rescue search for each colour (the first that leaves a red pottable by any shot;
+   a natural one first, then one in time); else the first natural colour shot; else any colour shot; else black.
+   The pick depends only on the layout, never on the decided outcome, and changes only the snooker score, never the
+   odds or the money.
    In the final colours (yellow ... black) only one ball is legal, so SHOOT is shown and the label names the colour.
 4. End: cash out ("WON <amount> · x<mult>"), failure (MISSED / IN-OFF / FOUL / SNOOKERED), RE-RACK (see D.4), or
    clearance (big message on the empty cloth, max 3 s, tap to skip). No modal, no separate screen. Balls stay until
@@ -65,9 +67,13 @@ known before SHOOT is pressed. Every fallback is logged with the round code and 
 2. **Failure outcomes** are always possible. If the chosen failure type cannot be found, use a plain miss.
    If no plain miss is found, play a soft shot that hits the wrong ball first (FOUL). If even that fails, tap the
    cue ball gently so it hits no ball at all (FOUL). A gentle tap can always be played.
-3. **Success outcomes** go through the flex chain in this order: longer shot time (up to `maxDurationFlex`), other
-   pocket, other ball of the same type (another red), then a wide search (more angles, powers, spins and
-   cushion-first shots, longer compute time).
+3. **Success outcomes** go through the flex chain in this order (every pocket and every ball of the right type are
+   searched at each step; updated 2026-11-25, owner approved): normal search; longer shot time (up to
+   `maxDurationFlex`); wide search (more angles, powers and spins, natural shots only); **rescue** (only when every
+   shot found leaves the next ball unpottable: a search for a shot that keeps the next ball pottable); any natural
+   shot found anyway (even longer than `maxDurationFlex`); exhibition (cushion-first, plants, kisses, far pockets);
+   **doubles**; spray. A last-resort shot (exhibition, doubles, spray) must leave a pottable ball for the next step
+   if any of them can (`solver.lastResortCheck`); if none can, the first one is played anyway.
 4. **Last resort: RE-RACK.** This happens only if a success is decided and still no shot exists. The pot counts and
    no shot is played. The ladder strip advances one step and shows "RE-RACK · WON <amount> · x<multiplier>" at the NEW
    multiplier. The balance counts up and the bet area returns, just like after a normal cash out. An optional
