@@ -56,3 +56,4 @@ Task 4.10 (solver 4.10, 2026-11-25; replays on the old library, old p where mark
 | 2026-11-25 20:13 | reds15-942643257 | 15 | red | plainMiss | attempt | 2.34 s | reds15 | 4.10 |
 | 2026-11-25 20:13 | reds15-3132621162 | 17 | red | success | cushionFirst | 2.91 s | reds15 | 4.10 |
 | 2026-11-25 20:13 | reds15-3132621162 | 19 | red | success | cannon | 2.95 s | reds15 | 4.10 |
+| 2026-11-25 23:23 | reds15-2764519739 | 2 | black | success | packCannon | 1.60 s | reds15 | 4.10 |
