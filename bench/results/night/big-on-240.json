@@ -1,0 +1,100 @@
+{
+ "reds15": {
+  "level": "reds15",
+  "position": {
+   "blackFromBehind": 6.9,
+   "redsBaulkCorner": 4,
+   "redsBaulkCornerFromBlackHalf": 3.6,
+   "cutMedian": 18.5,
+   "cutsOver50": 0.6,
+   "redCutMedian": 16.5,
+   "redCutsOver35": 9.4,
+   "redsFarFromBlackHalf": 20.8,
+   "redsNearSideCushion": 4.5,
+   "colourAfterRedComfy": 81.9,
+   "triedMedian": 420,
+   "triedMax": 2636
+  },
+  "rounds": 60,
+  "shots": 534,
+  "success": 479,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 90.2,
+  "naturalOld": 92.7,
+  "exhibition": 0.2,
+  "whyNot": {
+   "not a natural pot type": 35,
+   "red# disturbed": 5,
+   "pink disturbed": 3,
+   "over # s": 4
+  },
+  "byTarget": {
+   "colour:long:longerDuration": 8,
+   "red:cannon:normal": 3,
+   "red:long:longerDuration": 3,
+   "colour:long:normal": 7,
+   "red:cannon:longerDuration": 6,
+   "red:long:normal": 5,
+   "red:plant:exhibition": 1,
+   "red:cannon:rescue": 1,
+   "red:cannon:wideSearch": 1
+  },
+  "pace": {
+   "red": {
+    "n": 223,
+    "median": 1.48,
+    "p90": 1.97,
+    "maxNotLastResort": 3.83,
+    "over35": 1
+   },
+   "colour": {
+    "n": 256,
+    "median": 1.71,
+    "p90": 2.16,
+    "maxNotLastResort": 3.53,
+    "over35": 1
+   }
+  },
+  "types": {
+   "packCannon": 84,
+   "plain": 323,
+   "long": 23,
+   "cannon": 11,
+   "softCannon": 37,
+   "plant": 1
+  },
+  "fails": {
+   "jawRattle": 11,
+   "plainMiss": 35,
+   "jawRattle->plainMiss": 1,
+   "inOff->plainMiss": 4,
+   "jawRattle->softFoul": 1,
+   "wrongBallFirst->plainMiss": 2,
+   "inOff": 1
+  },
+  "colours": {
+   "black": 179,
+   "blue": 42,
+   "pink": 58
+  },
+  "median": 1.6062500000000273,
+  "within15": 41,
+  "over22": 22,
+  "flex": {
+   "longerDuration": 245,
+   "overLong": 20,
+   "wideSearch": 15,
+   "exhibition": 1,
+   "rescue": 1
+  },
+  "examples": "reds15-1823:7",
+  "within25": 98.7,
+  "over35all": 2,
+  "blackMedian": 1.8562500000000397,
+  "fullPower": 12,
+  "solveMsMedian": 878,
+  "solveMsP90": 1866,
+  "solveMsMax": 5355
+ }
+}

@@ -222,6 +222,21 @@ export const CONFIG = {
         zoneBelowBlue: 0.1,        // <= y <= black.y) while reds remain in the black half ...
         zoneCostPerM: 1.5,         // ... cost per metre outside that zone
       },
+      // Task 4.9 (owner 2026-11-25): position on the next RED after a colour (solver redPlayCost); position costs
+      redPlay: {
+        enabled: true,
+        cutDeg: [5, 35],           // a small, comfortable angle on the red (not dead straight, not thin) ...
+        cutDegPerPoint: 15,        // ... above it 1 point per this many degrees
+        farPocketCost: 1.5,        // a red in the black half into a pocket that is not one of its two nearest
+        sideCushionM: 0.25,        // m: cue ball this near a side cushion for the red ...
+        sideCushionCost: 1.0,      // ... costs this much
+        returnBelowBlack: 0.35,    // m: the goal for the cue ball after the red: this far below the black (pink side)
+        returnMaxDeg: 45,          // the goal within this of the cue ball's natural line (tangent or follow) ...
+        returnNearM: 0.4,          // ... unless the red is already this near the goal
+        returnCost: 1.0,           // ... else this cost
+        maxCost: 1.0,              // cap on far pocket + side cushion + return (x position weight 3 = a long pot's cost)
+        inRedLookahead: false,     // also in a red's look-ahead (the colour after it)? false: there the colour comes first
+      },
       // RULES B.3 (owner 2026-11-24): auto colour = the first of these with a natural shot; else black
       autoColours: ['black', 'pink', 'blue'],
       nextColourCost: { black: 0, pink: 0.5, blue: 1.0 }, // position after a red: black preferred

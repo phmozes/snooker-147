@@ -64,7 +64,7 @@ export function entryOk(from: Vec2, p: TableGeometry['pockets'][number]): boolea
   return cos >= Math.cos(((p.kind === 'middle' ? NAT.maxEntryDeg.middle : NAT.maxEntryDeg.corner) * Math.PI) / 180);
 }
 
-export function nextShotCost(cue: Vec2, balls: Ball[], next: BallKind, table: TableGeometry): number {
+export function nextShotCost(cue: Vec2, balls: Ball[], next: BallKind, table: TableGeometry, redPlay = true): number {
   const r = table.ballRadius;
   let best: number = Sv.position.noShotCost;
   for (const ball of balls.filter((b) => b.kind === next)) {
@@ -88,16 +88,51 @@ export function nextShotCost(cue: Vec2, balls: Ball[], next: BallKind, table: Ta
       const old = angleCost(cut) + rest;
       // Phase 1 costs only rank the playable next pots: they never turn one into 'no shot' (>= noShotCost = dead)
       best = Math.min(best, !BP.enabled || old >= Sv.position.noShotCost ? old
-        : Math.min(Sv.position.noShotCost - 0.01, blackPlayCost(cue, ball, p, ghost, cut, dA, balls, r) + rest));
+        : Math.min(Sv.position.noShotCost - 0.01, blackPlayCost(cue, ball, p, ghost, cut, dA, balls, r, table, redPlay) + rest));
     }
   }
   return best;
 }
 
 const BP = NAT.blackPlay;
+const RP = NAT.redPlay;
+/**
+ * Task 4.9 (owner 2026-11-25): how good the next RED looks from `cue` (after a colour). A small, comfortable angle into a
+ * near pocket (black-end corner first, then middle), the cue ball not on a side cushion, and the cue ball's natural
+ * line after the red (the tangent line) heading back toward the pink side of the black, so the next colour is easy.
+ */
+function redPlayCost(cue: Vec2, ball: Ball, p: TableGeometry['pockets'][number], ghost: Vec2, cut: number, table: TableGeometry): number {
+  const [lo, hi] = RP.cutDeg;
+  const base = cut < lo ? ((lo - cut) / lo) * NAT.straightCost : cut > hi ? (cut - hi) / RP.cutDegPerPoint : 0;
+  let c = 0; // the extras below are capped at RP.maxCost, so a nicer red never outweighs a natural colour pot
+  if (table.halfWidth - Math.abs(cue.x) <= RP.sideCushionM) c += RP.sideCushionCost;
+  if (ball.pos.y > 0) {
+    const d = (q: TableGeometry['pockets'][number]) => Math.hypot(q.mouthMid.x - ball.pos.x, q.mouthMid.y - ball.pos.y);
+    const near = [...table.pockets].sort((a, b) => d(a) - d(b)).slice(0, 2);
+    if (!near.includes(p)) c += RP.farPocketCost;
+  }
+  if (cut > 3) {
+    // cue ball after a stun: along the tangent line, away from the pocket side
+    const a = { x: ghost.x - cue.x, y: ghost.y - cue.y };
+    const o = { x: p.mouthMid.x - ball.pos.x, y: p.mouthMid.y - ball.pos.y };
+    const ol = Math.hypot(o.x, o.y); o.x /= ol; o.y /= ol;
+    const k = a.x * o.x + a.y * o.y;
+    const t = { x: a.x - k * o.x, y: a.y - k * o.y };
+    const black = table.spots.black;
+    const goal = { x: black.x, y: black.y - RP.returnBelowBlack }; // pink side of the black
+    // the cue ball may also roll on (follow) or stop (stun): accept the goal within returnMaxDeg of the tangent line
+    // or straight ahead (a follow shot carries it forward along the aim)
+    const v = { x: goal.x - ghost.x, y: goal.y - ghost.y };
+    const vl = Math.hypot(v.x, v.y);
+    const cosT = (v.x * t.x + v.y * t.y) / (vl * Math.hypot(t.x, t.y) + 1e-9);
+    const cosF = (v.x * a.x + v.y * a.y) / (vl * Math.hypot(a.x, a.y) + 1e-9);
+    if (vl > RP.returnNearM && Math.max(cosT, cosF) < Math.cos((RP.returnMaxDeg * Math.PI) / 180)) c += RP.returnCost;
+  }
+  return base + Math.min(c, RP.maxCost);
+}
 /** Phase 1 (owner, night 2026-11-24): how good the next pot looks for position play around the black (replaces angleCost). */
 function blackPlayCost(cue: Vec2, ball: Ball, p: TableGeometry['pockets'][number], ghost: Vec2, cut: number, dA: number,
-  balls: Ball[], r: number): number {
+  balls: Ball[], r: number, table: TableGeometry, redPlay: boolean): number {
   let c = 0;
   if (ball.kind === 'black') {
     const [lo, hi] = BP.blackCutDeg;
@@ -105,7 +140,8 @@ function blackPlayCost(cue: Vec2, ball: Ball, p: TableGeometry['pockets'][number
     if (cue.y > ball.pos.y) c += BP.behindBlackCost;
     const [d0, d1] = BP.blackDist;
     c += (dA < d0 ? d0 - dA : dA > d1 ? dA - d1 : 0) * BP.blackDistCostPerM;
-  } else c += angleCost(cut);
+  } else if (ball.kind === 'red' && RP.enabled && redPlay) c += redPlayCost(cue, ball, p, ghost, cut, table);
+  else c += angleCost(cut);
   if (cut > BP.thinCutFrom) c += BP.thinCutCost;
   c += pocketPrefCost(ball.kind, ball.pos, p.id);
   // right side: a colour while reds remain; after the pot the cue ball leaves along the tangent line
@@ -154,6 +190,7 @@ export interface SolveOptions {
   lookahead?: boolean; // verify that the next step stays solvable (default: config solver.lookahead > 0)
   naturalOnly?: boolean; // accept only natural shots (plain pot, planned pack cannon): the lookahead check
   rescue?: boolean; // config solver.rescue: the lookahead accepts any next shot (exhibition allowed), more candidates
+  redPlay?: boolean; // task 4.9: score the next red with redPlayCost (default true; off in a red's own look-ahead)
 }
 
 /** Why a search ended (for the debug page and the solver report). */
@@ -254,7 +291,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
         const c = target as (typeof CONFIG.finalColourOrder)[number];
         after.push({ id: c, kind: c, pos: { ...table.spots[c] } }); // re-spotted (approximately: own spot)
       }
-      cost = Math.min(...nexts.map((n) => nextShotCost(cueEnd, after, n.kind, table) + n.extra)) + zoneCost(cueEnd, after, table);
+      cost = Math.min(...nexts.map((n) => nextShotCost(cueEnd, after, n.kind, table, opts.redPlay ?? true) + n.extra)) + zoneCost(cueEnd, after, table);
     }
     // a shot over the pace target (shot.maxDuration) pays heavily per extra second, so position play chooses among
     // shots that are themselves short; the quickest shot still wins when none is short
@@ -356,7 +393,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
         for (const n of planRed ? nexts : [{ kind: 'red' as BallKind, extra: 0 }]) {
           const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
           const s = solveSuccess(nextState, n.kind, table, now, cfg, Sv.lookaheadShots, i,
-            { lookahead: false, maxDuration: CONFIG.shot.maxDurationFlex });
+            { lookahead: false, maxDuration: CONFIG.shot.maxDurationFlex, redPlay: !planRed || RP.inRedLookahead });
           tried += i.tried;
           if (!s) continue;
           const total = c.score + NAT.planWeight * (s.score + n.extra + (s.whyNot === null ? 0 : NAT.unnaturalPlayCost));

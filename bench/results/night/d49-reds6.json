@@ -1,0 +1,98 @@
+{
+ "reds6": {
+  "level": "reds6",
+  "position": {
+   "blackFromBehind": 10.4,
+   "redsBaulkCorner": 1.6,
+   "redsBaulkCornerFromBlackHalf": 0.8,
+   "cutMedian": 16.7,
+   "cutsOver50": 2.5,
+   "redCutMedian": 15.1,
+   "redCutsOver35": 15.9,
+   "redsFarFromBlackHalf": 9.6,
+   "redsNearSideCushion": 7.1,
+   "colourAfterRedComfy": 78.6,
+   "triedMedian": 405,
+   "triedMax": 2899
+  },
+  "rounds": 60,
+  "shots": 367,
+  "success": 314,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 87.9,
+  "naturalOld": 91.4,
+  "exhibition": 0.3,
+  "whyNot": {
+   "not a natural pot type": 27,
+   "pink disturbed": 8,
+   "over # s": 3
+  },
+  "byTarget": {
+   "colour:long:normal": 6,
+   "red:cannon:longerDuration": 4,
+   "colour:long:longerDuration": 8,
+   "red:cannon:wideSearch": 1,
+   "colour:cannon:wideSearch": 3,
+   "colour:cannon:overLong": 1,
+   "red:cushionFirst:exhibition": 1,
+   "red:cannon:overLong": 2,
+   "colour:long:overLong": 1
+  },
+  "pace": {
+   "red": {
+    "n": 126,
+    "median": 1.43,
+    "p90": 1.91,
+    "maxNotLastResort": 2.85,
+    "over35": 0
+   },
+   "colour": {
+    "n": 188,
+    "median": 1.62,
+    "p90": 2.09,
+    "maxNotLastResort": 4.48,
+    "over35": 2
+   }
+  },
+  "types": {
+   "plain": 250,
+   "packCannon": 28,
+   "long": 15,
+   "softCannon": 9,
+   "cannon": 11,
+   "cushionFirst": 1
+  },
+  "fails": {
+   "plainMiss": 32,
+   "jawRattle": 16,
+   "plainMiss->tap": 1,
+   "jawRattle->softFoul": 1,
+   "plainMiss->softFoul": 1,
+   "inOff->plainMiss": 2
+  },
+  "colours": {
+   "black": 118,
+   "pink": 37,
+   "blue": 27
+  },
+  "median": 1.5416666666666907,
+  "within15": 44,
+  "over22": 17,
+  "flex": {
+   "longerDuration": 149,
+   "wideSearch": 10,
+   "rescue": 1,
+   "overLong": 16,
+   "exhibition": 1
+  },
+  "examples": "reds6-185:9",
+  "within25": 97.8,
+  "over35all": 2,
+  "blackMedian": 1.6187500000000279,
+  "fullPower": 5,
+  "solveMsMedian": 444,
+  "solveMsP90": 960,
+  "solveMsMax": 3290
+ }
+}

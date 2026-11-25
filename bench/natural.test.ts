@@ -44,7 +44,8 @@ it('natural shots in real rounds', () => {
     const RP = { sideCushionM: 0.25, comfyCutDeg: 35, comfyDistM: 1.2 };
     const redCuts: number[] = []; let redsTop = 0; let farFromTop = 0; let nearSide = 0; let colAfterRed = 0; let comfy = 0;
     const triedPerStep: number[] = [];
-    for (let seed = 1; seed <= n; seed++) {
+    const from = Number(process.env.SEED_FROM ?? 0); // more rounds in parallel chunks: SEED_FROM=60 N=60 ...
+    for (let seed = from + 1; seed <= from + n; seed++) {
       let r = start(setLevel(newRound(seed * 7 + 3), level), provider, table);
       while (r.phase === 'decide') {
         const before = r.frame!;
