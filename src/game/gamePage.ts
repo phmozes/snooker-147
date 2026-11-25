@@ -244,7 +244,7 @@ async function onShoot() {
   const ctx = { roundCode: round.roundCode, step };
   const colourStep = round.frame!.phase === 'colour';
   const kind = outcome === 'success' ? 'success' : 'failure';
-  busy = presolver.ready(kind) ? 'shot' : 'solving';
+  busy = presolver.ready() ? 'shot' : 'solving';
   render();
   const t0 = performance.now();
   const solved = await presolver.get(kind, ctx);
