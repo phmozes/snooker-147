@@ -37,7 +37,11 @@ it('soak', () => {
     level, shard, shards, solver: CONFIG.solver.version, rounds: 0, shots: 0, success: 0, reRacks: 0, problems: 0,
     ends: {} as Record<string, number>, flex: {} as Record<string, number>, failureKinds: {} as Record<string, number>,
     types: {} as Record<string, number>, colours: {} as Record<string, number>, lengths: {} as Record<string, number>,
-    over35: 0, maxDuration: 0, maxTried: 0, cap, strategies: ks, rtp: {} as Record<number, number>, startedAt: new Date().toISOString(),
+    over35: 0, maxDuration: 0, maxTried: 0, cap,
+    // night 3: stuck solver, fallback share, per-step success against p, pace per kind
+    slowSolves: 0, maxSolveMs: 0, overCap: 0, flexShots: 0, failShots: 0, failFallbacks: 0,
+    steps: {} as Record<number, { n: number; ok: number; p: number }>, durs: { red: [] as number[], colour: [] as number[] },
+    lastResort: { red: [] as number[], colour: [] as number[] }, strategies: ks, rtp: {} as Record<number, number>, startedAt: new Date().toISOString(),
     updatedAt: '', done: false,
   };
   const bump = (m: Record<string, number>, k: string) => { m[k] = (m[k] ?? 0) + 1; };
@@ -50,26 +54,42 @@ it('soak', () => {
     s.updatedAt = new Date().toISOString();
     writeFileSync(`${file}.json`, JSON.stringify({ ...s, pay }, null, 1));
   };
+  const STUCK_MS = Number(process.env.STUCK_MS ?? 10_000);
+  const stepCount = (round: Round, k: number) => {
+    const e = (s.steps[k] ??= { n: 0, ok: 0, p: round.ladder[k - 1]!.p });
+    e.n++;
+    const h = round.history[round.history.length - 1];
+    if (h && h.step === k && (h.outcome === 'success' || h.outcome === 'reRack')) e.ok++;
+  };
   let seen = 0;
-  for (let i = 0; s.success < target && Date.now() < until; i++) {
+  const maxRounds = Number(process.env.ROUNDS ?? Infinity); // stop after this many rounds (night 3: 3,000 per level)
+  for (let i = 0; s.success < target && s.rounds < maxRounds && Date.now() < until; i++) {
     const seed = 5_000_000 + shard + i * shards; // never the bench seeds (seed * 7 + 3, small)
     let rd: Round = setLevel(newRound(seed), level);
     const code = `${level}-${seed}`;
     try {
       rd = start(rd, provider, table);
+      stepCount(rd, 1);
       while (rd.phase === 'decide') {
         const before = rd.frame!;
+        const t0 = performance.now();
         rd = shoot(rd, provider, table);
+        const ms = performance.now() - t0;
+        s.maxSolveMs = Math.max(s.maxSolveMs, Math.round(ms));
         s.shots++;
-        for (; seen < provider.log.length; seen++) bump(s.flex, provider.log[seen]!.level);
+        let flexLevel: string | null = null;
+        for (; seen < provider.log.length; seen++) { flexLevel = provider.log[seen]!.level; bump(s.flex, flexLevel); }
         const h = rd.history[rd.history.length - 1]!;
-        if ((h.tried ?? 0) > cap) problem(code, h.step, `simulated ${h.tried} shots, cap ${cap}`);
+        stepCount(rd, h.step);
+        if (ms > STUCK_MS) { s.slowSolves++; problem(code, h.step, `solver took ${Math.round(ms)} ms (stuck limit ${STUCK_MS})`); }
+        if ((h.tried ?? 0) > cap) { s.overCap++; problem(code, h.step, `simulated ${h.tried} shots, cap ${cap}`); }
         s.maxTried = Math.max(s.maxTried, h.tried ?? 0);
         if (before.phase === 'colour') bump(s.colours, h.target);
         if (h.outcome === 'reRack') { s.reRacks++; s.success++; problem(code, h.step, `RE-RACK (target ${h.target})`); continue; }
         const shot = h.shot as { dir: { x: number; y: number }; speed: number; spin: number; duration: number; fallback?: string | null };
-        if (h.outcome !== 'success') { bump(s.failureKinds, `${h.outcome}${shot.fallback ? `->${shot.fallback}` : ''}`); continue; }
+        if (h.outcome !== 'success') { s.failShots++; if (shot.fallback) s.failFallbacks++; bump(s.failureKinds, `${h.outcome}${shot.fallback ? `->${shot.fallback}` : ''}`); continue; }
         s.success++;
+        if (flexLevel) s.flexShots++;
         // re-simulate the played shot: it must pot a legal ball, leave every ball on the cloth and apart
         const pf = playFacts(before.balls, shot, table);
         const v = judgeShot(before, h.target, { firstHit: firstHit(pf.events), potted: pf.potted, after: [] });
@@ -88,6 +108,9 @@ it('soak', () => {
         const d = shot.duration;
         bump(s.lengths, (Math.min(6, Math.floor(d / 0.25) * 0.25)).toFixed(2));
         if (d > 3.5) s.over35++;
+        const kind = h.target === 'red' ? 'red' : 'colour';
+        s.durs[kind].push(Math.round(d * 100) / 100);
+        if (flexLevel === 'exhibition') s.lastResort[kind].push(Math.round(d * 100) / 100);
         s.maxDuration = Math.max(s.maxDuration, d);
       }
     } catch (e) {
@@ -106,7 +129,7 @@ it('soak', () => {
     }
     if (s.rounds % 10 === 0) save();
   }
-  s.done = s.success >= target;
+  s.done = s.success >= target || s.rounds >= maxRounds;
   save();
 }, 24 * 3_600_000);
 
