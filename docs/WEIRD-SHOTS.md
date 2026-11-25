@@ -35,3 +35,6 @@ Review 2026-11-25 (solver 4.9, old p, OLDP=1; details bench/results/marks-diag.t
 | sent 2026-11-25 13:58 | reds15-2927609577 | 8 | blue | success | long | 1.83 s | reds15 | 4.9 |
 | sent 2026-11-25 13:58 | reds15-2927609577 | 15 | red | success | cannon | 2.01 s | reds15 | 4.9 |
 | sent 2026-11-25 13:58 | reds6-362783338 | 5 | red | jawRattle | attempt | 2.26 s | reds6 | 4.9 |
+| 2026-11-25 14:25 | reds10-165926990 | 14 | blue | success | long | 1.33 s | reds10 | 4.9 |
+| 2026-11-25 14:26 | reds15-912620600 | 6 | blue | success | long | 1.52 s | reds15 | 4.9 |
+| 2026-11-25 14:26 | reds15-912620600 | 9 | red | success | plant | 2.20 s | reds15 | 4.9 |

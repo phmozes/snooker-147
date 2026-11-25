@@ -98,4 +98,6 @@ function weirdShots(): Plugin {
   };
 }
 
-export default defineConfig({ plugins: [weirdShots()] });
+// Fixed port (owner 2026-11-25): the phone keeps its weird-shot list per address, so the port must never change.
+// strictPort: if 5181 is busy, the server stops with an error instead of moving to another port.
+export default defineConfig({ plugins: [weirdShots()], server: { host: true, port: 5181, strictPort: true } });
