@@ -19,3 +19,7 @@ No crash, no invalid shot, no ball off the cloth, no overlap, no shot over its c
 4.8d run stopped at 01:45 to restart on 4.8f: 18,648 / 16,232 / 15,142 success shots (6 / 10 / 15 reds), results in bench/results/soak-4.8d-partial. No crash, no invalid shot, no ball off the cloth, no overlap, no shot over its cap.
 
 ## Solver 4.8f (final soak run, bench/results/soak)
+Finished 05:40 (2026-11-25). 45,487 / 39,459 / 37,240 success shots (6 / 10 / 15 reds), 7,920 / 5,541 / 4,418 rounds.
+RE-RACK 0 (D.6 limit 1 per 100k). Problems 0: no crash, no invalid shot, no ball off the cloth, no overlap, no shot over its cap.
+Over 3.5 s: 572 / 186 / 212; longest 5.36 / 5.04 / 5.50 s (left for later, see NOW.md). Full numbers: bench/results/soak/summary.txt.
+No new failures, so no new fix rows.
