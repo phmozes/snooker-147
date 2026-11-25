@@ -1,4 +1,4 @@
-// Vite settings. Only one addition to the defaults: a developer-only endpoint (dev server, never in a build) that
+// Vite settings. Additions to the defaults: developer-only endpoints (phone-cost below, task P.1) and an endpoint (dev server, never in a build) that
 // receives "weird shot" marks from the phone and appends them to docs/WEIRD-SHOTS.md (owner, task 4.7).
 // NOTE (2026-11-25): a dev server started before this file existed never loads it (Vite does not pick up a config
 // file created later), so marks got 404. The game's developer panel now checks GET /__dev/weird/ping and says
@@ -98,6 +98,35 @@ function weirdShots(): Plugin {
   };
 }
 
+// Task P.1: the game (dev build only) posts one line per shot with the solver cost and the THINKING wait; each line
+// is rebuilt here from plain numbers and short texts and appended to bench/results/phone-cost.jsonl.
+const COST_FILE = 'bench/results/phone-cost.jsonl';
+const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
+export function costLine(m: Record<string, unknown>, uaHeader: string, time: string) {
+  const code = String(m.code);
+  if (!/^reds\d+-\d+$/.test(code)) throw new Error('bad round code');
+  return JSON.stringify({ time, code, step: num(m.step), target: clean(m.target, 10), outcome: clean(m.outcome, 16),
+    forced: m.forced === true, auto: m.auto === true,
+    successMs: num(m.successMs), successTried: num(m.successTried), failureMs: num(m.failureMs), failureTried: num(m.failureTried),
+    pressAfterMs: num(m.pressAfterMs), thinkingMs: num(m.thinkingMs), solver: clean(m.solver, 8),
+    ua: String(m.ua ?? uaHeader).replace(/[^\w.:;,()/\- ]/g, '').slice(0, 200) });
+}
+function phoneCost(): Plugin {
+  return {
+    name: 'phone-cost',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__dev/cost', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
+        readBody(req, res, 4000, (body) => {
+          appendFileSync(COST_FILE, costLine(JSON.parse(body) as Record<string, unknown>, String(req.headers['user-agent'] ?? ''), new Date().toISOString()) + '\n');
+          res.end('ok');
+        });
+      });
+    },
+  };
+}
+
 // Fixed port (owner 2026-11-25): the phone keeps its weird-shot list per address, so the port must never change.
 // strictPort: if 5181 is busy, the server stops with an error instead of moving to another port.
-export default defineConfig({ plugins: [weirdShots()], server: { host: true, port: 5181, strictPort: true } });
+export default defineConfig({ plugins: [weirdShots(), phoneCost()], server: { host: true, port: 5181, strictPort: true } });

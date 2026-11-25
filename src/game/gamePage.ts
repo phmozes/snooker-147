@@ -102,6 +102,13 @@ async function markWeird() {
   } catch { /* no dev server: kept on the phone */ }
   toast(sent ? `marked: step ${i.step} (${weird.length})` : `marked on the phone only (${weird.length})`);
 }
+// Task P.1 (dev only): one line per shot to the PC (bench/results/phone-cost.jsonl), to measure THINKING on the phone
+let shootAvailableAt = 0; // when SHOOT last became pressable (performance.now)
+function sendCost(line: Record<string, unknown>) {
+  if (!import.meta.env.DEV) return;
+  void fetch('/__dev/cost', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ...line, ua: navigator.userAgent, solver: CONFIG.solver.version }) }).catch(() => { /* no PC link */ });
+}
 // PC link (2026-11-25): a dev server started before vite.config.ts existed has no /__dev/weird endpoint, so every mark
 // stayed on the phone. The panel now says so, and "Send list to PC" sends every stored line (the PC skips duplicates).
 let pcLink = 'PC link: checking…';
@@ -250,6 +257,11 @@ async function onShoot() {
   const solved = await presolver.get(kind, ctx);
   const waited = performance.now() - t0;
   const thinking = busy === 'solving'; // the player saw THINKING… until the answer came
+  const both = presolver.answers();
+  sendCost({ code: round.roundCode, step, target: solved.target, outcome, forced: !!forced, auto: !!auto,
+    successMs: Math.round(both.success?.ms ?? -1), successTried: both.success?.planned.tried ?? null,
+    failureMs: Math.round(both.failure?.ms ?? -1), failureTried: both.failure?.planned.tried ?? null,
+    pressAfterMs: Math.round(t0 - shootAvailableAt), thinkingMs: thinking ? Math.round(waited) : 0 });
   const before = round;
   const target = solved.target; // on a colour step: the colour the game picked (RULES B.3)
   const prov = solvedProvider(createPhysicsProvider(table, library), solved.planned, { target, outcome });
@@ -289,6 +301,7 @@ function onCashOut() {
 /** After a shot has played: balls settle where the rules put them (a potted colour back on its spot). */
 function afterShot() {
   busy = null;
+  shootAvailableAt = performance.now();
   if (round.frame) showBalls(round.frame.balls);
   if (round.phase === 'over') endRound(); else render();
   // developer panel: auto play goes on by itself

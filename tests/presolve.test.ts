@@ -131,3 +131,18 @@ describe('task P.1: two workers, one per outcome', () => {
   }, 600_000);
 });
 
+describe('task P.1: phone cost lines (dev only)', () => {
+  it('the PC keeps only plain numbers and short texts', async () => {
+    const { costLine } = await import('../vite.config');
+    const j = JSON.parse(costLine({ code: 'reds15-12', step: 4, target: 'black', outcome: 'success', successMs: 812.6, successTried: 900,
+      failureMs: 'x', failureTried: 40, pressAfterMs: 1500, thinkingMs: 0, ua: 'Mozilla/5.0 (Linux; Android 14) <script>', solver: '4.10' }, '', 't'));
+    expect(j).toMatchObject({ code: 'reds15-12', step: 4, target: 'black', successMs: 813, failureMs: null, thinkingMs: 0 });
+    expect(j.ua).not.toContain('<');
+    expect(() => costLine({ code: '../x' }, '', 't')).toThrow();
+  });
+  it('the game sends them only in the dev build', async () => {
+    const src = (await import('node:fs')).readFileSync('src/game/gamePage.ts', 'utf8');
+    const fn = src.slice(src.indexOf('function sendCost('), src.indexOf('// PC link (2026-11-25)'));
+    expect(fn).toContain('if (!import.meta.env.DEV) return;');
+  });
+});
