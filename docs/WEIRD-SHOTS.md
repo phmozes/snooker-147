@@ -1,6 +1,8 @@
 # Weird shots (marked on the phone with the flag button)
 
 Replay: `SHOTS="<round code>:<step>" npx vitest run bench/replay-shot.test.ts` (needs the same solver version).
+RTP option 3c (2026-11-25) changed p, so outcomes of old seeds changed slightly: marks made before 2026-11-25 14:00
+replay on the old p with `OLDP=1` added to the command.
 
 Night review 2026-11-24 (solver 4.8a, positional play around the black; details in docs/REVIEW.md "Night"):
 - reds10-983480511:7 (long red to a baulk-end corner): broke rule 1/5 (the pink before left the cue ball 1 m away).

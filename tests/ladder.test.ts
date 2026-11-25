@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { buildLadder, ladderForLevel } from '../src/core/ladder';
+import { buildLadder, ladderForLevel, rtpText } from '../src/core/ladder';
+import RULES_MD from '../docs/RULES.md?raw';
 
 // Fixtures: the expected multipliers, worked out once with a separate script from the formula in the config.
 // If someone changes the config numbers, these tests fail on purpose: the owner must approve new ladders.
@@ -42,7 +43,6 @@ describe.each(CONFIG.levels.map((l) => [l.id, l] as const))('ladder %s', (id, le
       expect(ladder[i]!.p).toBeLessThan(1);
       if (i > 0) expect(ladder[i]!.p).toBeLessThan(ladder[i - 1]!.p);
     }
-    expect(ladder[ladder.length - 1]!.p).toBeCloseTo(level.pLast, 12);
   });
 
   it('multipliers strictly increase', () => {
@@ -54,6 +54,37 @@ describe.each(CONFIG.levels.map((l) => [l.id, l] as const))('ladder %s', (id, le
       expect(s.rtp, `step ${s.step}`).toBeGreaterThanOrEqual(rtpTestMin - EPS);
       expect(s.rtp, `step ${s.step}`).toBeLessThanOrEqual(rtpTestMax + EPS);
     }
+  });
+});
+
+// RTP option 3c (owner 2026-11-25): exact cash-out RTP of every step, from the config p table and multipliers.
+// Steps below 97.00% and the lowest RTP per level, worked out independently by the owner from docs/RTP-OPTION3.md.
+const OPTION_3C: Record<string, { below: number[]; lowest: number }> = {
+  reds6: { below: [], lowest: 97.0 },
+  reds10: { below: [4], lowest: 96.95 },
+  reds15: { below: [2, 4, 9, 16], lowest: 96.43 },
+};
+
+describe.each(CONFIG.levels.map((l) => [l.id] as const))('RTP option 3c %s', (id) => {
+  const ladder = ladderForLevel(id);
+  let reach = 1;
+  const rtp = ladder.map((s) => { reach *= s.p; return reach * s.multiplier * 100; }); // computed here, not taken from ladder.rtp
+
+  it('no step pays back more than 97.00%', () => {
+    for (const [i, r] of rtp.entries()) expect(r, `step ${i + 1}`).toBeLessThanOrEqual(97 + 1e-9);
+  });
+
+  it('p strictly decreasing', () => {
+    for (let i = 1; i < ladder.length; i++) expect(ladder[i]!.p, `step ${i + 1}`).toBeLessThan(ladder[i - 1]!.p);
+  });
+
+  it('steps below 97.00% and the lowest RTP are as listed', () => {
+    expect(rtp.map((r, i) => (r < 97 - 1e-6 ? i + 1 : 0)).filter(Boolean)).toEqual(OPTION_3C[id]!.below);
+    expect(Math.min(...rtp)).toBeCloseTo(OPTION_3C[id]!.lowest, 1);
+  });
+
+  it('docs/RULES.md states the true RTP text from the config', () => {
+    expect(RULES_MD).toContain(rtpText(id));
   });
 });
 

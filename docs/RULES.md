@@ -9,6 +9,12 @@
    p depends only on the step number, never on the ball or colour picked. Then the solver finds a
    physically valid shot that matches the outcome. Nothing visual (ball, pocket, difficulty, failure type,
    variety, fluke) ever changes the odds.
+6. **RTP (option 3c, owner 2026-11-25).** p(step) is the config table; it falls strictly from step to step and the
+   cash-out RTP is 97.00% or a little below at every step, never above. Shown to the player (computed by code,
+   src/core/ladder.ts rtpText; tests/ladder.test.ts checks these lines against the config):
+   - 6 reds: RTP 97% at every cash-out step
+   - 10 reds: RTP 97% (between 96.94% and 97%, depending on the cash-out step)
+   - 15 reds: RTP 97% (between 96.42% and 97%, depending on the cash-out step)
 
 ## B. Round flow
 1. START -> balls re-rack quickly -> the OPPONENT plays the break-off (taken from the pre-computed library).

@@ -1,10 +1,12 @@
 // Task 4.7: replay shots from the owner's "weird shot" list and print everything about them.
 // Run: SHOTS="reds6-12345:4,reds15-777:9" npx vitest run bench/replay-shot.test.ts
-// (round code : step; the same solver version is needed, see config solver.version). The round is replayed from its
+// (round code : step; the same solver version is needed, see config solver.version). Marks made before RTP option 3c
+// (2026-11-25) replay on the old chance: add OLDP=1. The round is replayed from its
 // seed with the real provider; the player's cash-out choices do not matter (shots depend only on seed and step).
 import { readFileSync } from 'node:fs';
 import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
+import { linearLadderForLevel } from '../src/core/ladder';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
 import { newRound, setLevel, shoot, start, type LevelId } from '../src/core/round';
 import { buildTable } from '../src/core/table/geometry';
@@ -12,7 +14,7 @@ import { classifySuccess, cutAngle, naturalCheck, playFacts } from '../src/core/
 
 it('replay marked shots', () => {
   const table = buildTable();
-  const out: string[] = [`solver ${CONFIG.solver.version}`];
+  const out: string[] = [`solver ${CONFIG.solver.version}${process.env.OLDP ? ' (old p, before RTP option 3c)' : ''}`];
   for (const item of (process.env.SHOTS ?? '').split(',').filter(Boolean)) {
     const m = /^(reds\d+)-(\d+):(\d+)$/.exec(item.trim());
     if (!m) { out.push(`? ${item}`); continue; }
@@ -20,7 +22,8 @@ it('replay marked shots', () => {
     const step = Number(m[3]);
     const lib = JSON.parse(readFileSync(`public/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
     const provider = createPhysicsProvider(table, { [level]: lib });
-    let r = start({ ...setLevel(newRound(Number(m[2])), level) }, provider, table);
+    const r0 = setLevel(newRound(Number(m[2])), level);
+    let r = start(process.env.OLDP ? { ...r0, ladder: linearLadderForLevel(level) } : r0, provider, table);
     while (r.phase === 'decide' && r.step + 1 < step) r = shoot(r, provider, table);
     if (step === 1) { out.push(`${item}: step 1 comes from the break-off library`); continue; }
     if (r.phase !== 'decide') { out.push(`${item}: the round ended at step ${r.history.length}`); continue; }

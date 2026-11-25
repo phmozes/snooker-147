@@ -1,0 +1,3 @@
+reds6: RTP 97% at every cash-out step
+reds10: RTP 97% (between 96.94% and 97%, depending on the cash-out step)
+reds15: RTP 97% (between 96.42% and 97%, depending on the cash-out step)

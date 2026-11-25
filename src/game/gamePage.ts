@@ -13,6 +13,7 @@ import { createPhysicsProvider, type BreakLibrary } from '../core/physicsProvide
 import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
+import { rtpText } from '../core/ladder';
 import { shotCaps, type FallbackLogEntry } from '../core/solver';
 import { buildTable } from '../core/table/geometry';
 import { rackBalls } from '../core/table/rack';
@@ -347,7 +348,8 @@ function render() {
     bottom.innerHTML = `
       <div class="row"><button class="sq" id="bMinus">−</button><div class="bet">BET<b>${money(bet)}</b></div><button class="sq" id="bPlus">+</button></div>
       <div class="row">${CONFIG.money.quickBets.map((q) => `<button class="quick${q === bet ? ' on' : ''}" data-q="${q}">${q}</button>`).join('')}</div>
-      <button class="big" id="bStart" ${can ? '' : 'disabled'}>${can ? `START · ${money(bet)}` : 'BALANCE TOO LOW'}</button>`;
+      <button class="big" id="bStart" ${can ? '' : 'disabled'}>${can ? `START · ${money(bet)}` : 'BALANCE TOO LOW'}</button>
+      <div class="hint rtp">${rtpText(level().id)}</div>`;
     const setB = (b: number) => { round = setBet(round, b); render(); };
     $('bMinus').onclick = () => setB(round.bet - CONFIG.money.betStep);
     $('bPlus').onclick = () => setB(round.bet + CONFIG.money.betStep);
