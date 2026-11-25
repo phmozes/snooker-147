@@ -11,7 +11,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
-import { newRound, nextTarget, setLevel, shoot, start, stepSucceeds, type LevelId, type Round, type ShotProvider } from '../src/core/round';
+import { newRound, nextTarget, setLevel, shoot, start, stepSucceeds, streamValue, type LevelId, type Round, type ShotProvider } from '../src/core/round';
 import type { FrameState } from '../src/core/rules';
 import { cutAngle } from '../src/core/shotType';
 import { entryOk, pathClear } from '../src/core/solver';
@@ -54,6 +54,7 @@ it('fairness: position before a shot vs its outcome', () => {
   // a failure ends the round: answer it with a plain miss (target hit, nothing potted) instead of solving it
   const provider: ShotProvider = { ...real, shot: (frame, target, outcome, ctx) => outcome === 'success' ? real.shot(frame, target, outcome, ctx)
     : { result: { firstHit: frame.balls.find((b) => b.kind === target)!.id, potted: [], after: frame.balls } } };
+  let mismatches = 0;
   for (let i = from; i < from + n; i++) {
     const seed = 7_000_000 + i; // never the bench (seed * 7 + 3) or soak (5,000,000+) seeds
     let r: Round = start(setLevel(newRound(seed), level), provider, table);
@@ -70,6 +71,12 @@ it('fairness: position before a shot vs its outcome', () => {
       r = shoot(r, provider, table, colour);
     }
     appendFileSync(file, lines.join('\n') + (lines.length ? '\n' : ''));
-    writeFileSync(`${dir}/${level}.done`, `${i + 1} ${CONFIG.solver.version}\n`); // rounds done: resume with SEED_FROM=<this>
+    // F.1 part 1: the played outcomes must equal the ones from the seed alone: success while streamValue(seed,
+    // 'outcome', k) < p(k), up to the first failure (a RE-RACK may end the round early, paid)
+    const played = r.history.map((h) => (h.outcome === 'success' || h.outcome === 'reRack' ? 1 : 0));
+    const ok = played.every((x, j) => x === (streamValue(seed, 'outcome', j + 1) < r.ladder[j]!.p ? 1 : 0)) &&
+      (r.end?.type === 'reRack' || played.length === r.ladder.length || played.at(-1) === 0);
+    if (!ok) { mismatches++; appendFileSync(`${dir}/${level}-mismatch.txt`, `${r.roundCode}\n`); }
+    writeFileSync(`${dir}/${level}.done`, `${i + 1} ${CONFIG.solver.version} mismatches ${mismatches}\n`); // resume: SEED_FROM=<first number>
   }
 }, 86_400_000);
