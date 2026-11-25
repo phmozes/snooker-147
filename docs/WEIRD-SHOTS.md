@@ -20,3 +20,8 @@ Night review 2026-11-24 (solver 4.8a, positional play around the black; details 
 | 2026-11-24 22:14 | reds10-983480511 | 10 | black | success | packCannon | 4.50 s | reds10 | 4.7c |
 | 2026-11-24 22:14 | reds10-983480511 | 15 | red | success | cannon | 4.07 s | reds10 | 4.7c |
 | 2026-11-24 22:15 | reds15-1877393965 | 11 | red | success | long | 1.61 s | reds15 | 4.7c |
+| sent 2026-11-25 13:58 | reds15-3634511757 | 10 | blue | success | long | 1.68 s | reds15 | 4.9 |
+| sent 2026-11-25 13:58 | reds15-3634511757 | 11 | red | success | cannon | 2.48 s | reds15 | 4.9 |
+| sent 2026-11-25 13:58 | reds15-2927609577 | 8 | blue | success | long | 1.83 s | reds15 | 4.9 |
+| sent 2026-11-25 13:58 | reds15-2927609577 | 15 | red | success | cannon | 2.01 s | reds15 | 4.9 |
+| sent 2026-11-25 13:58 | reds6-362783338 | 5 | red | jawRattle | attempt | 2.26 s | reds6 | 4.9 |

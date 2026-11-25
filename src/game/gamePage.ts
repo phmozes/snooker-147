@@ -100,7 +100,33 @@ async function markWeird() {
   } catch { /* no dev server: kept on the phone */ }
   toast(sent ? `marked: step ${i.step} (${weird.length})` : `marked on the phone only (${weird.length})`);
 }
+// PC link (2026-11-25): a dev server started before vite.config.ts existed has no /__dev/weird endpoint, so every mark
+// stayed on the phone. The panel now says so, and "Send list to PC" sends every stored line (the PC skips duplicates).
+let pcLink = 'PC link: checking…';
+let weirdStatus = '';
+async function checkPcLink() {
+  let ok = false;
+  try { const res = await fetch('/__dev/weird/ping'); ok = res.ok && (await res.text()) === 'ok'; } catch { /* no server */ }
+  pcLink = ok ? 'PC link: OK' : 'PC link: NOT CONNECTED (restart the dev server on the PC)';
+  renderDev();
+}
+async function sendWeirdList() {
+  weirdStatus = 'sending…';
+  renderDev();
+  try {
+    const res = await fetch('/__dev/weird/list', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ lines: weird }) });
+    if (!res.ok) throw new Error(String(res.status));
+    const r = (await res.json()) as { added: number; known: number; unreadable: number };
+    weirdStatus = `sent: ${r.added} new, ${r.known} already on the PC${r.unreadable ? `, ${r.unreadable} unreadable` : ''}`;
+  } catch {
+    weirdStatus = 'NOT sent (PC link down)';
+  }
+  toast(weirdStatus);
+  renderDev();
+}
 if (import.meta.env.DEV) {
+  void checkPcLink();
   $('flag').style.display = 'flex';
   $('flag').onclick = () => { void markWeird(); };
   $('devVer').textContent = `solver ${CONFIG.solver.version}`; // F.1: the version a video was recorded on
@@ -511,6 +537,8 @@ function renderDev() {
     navigator.clipboard.writeText(weird.join('\n')).then(() => { $('devWeirdList').textContent = `Copied ${weird.length} lines.`; },
       () => { showWeirdList(); });
   }, !weird.length));
+  $('devWeird').appendChild(opt(`Send list to PC (${weird.length})`, false, () => { void sendWeirdList(); }, !weird.length));
+  $('devWeirdList').textContent = `${pcLink}${weirdStatus ? ` · ${weirdStatus}` : ''}`;
   $('devWeird').appendChild(opt('Clear list', false, () => { weird = []; saveWeird(); renderFlag(); render(); }, !weird.length));
   if (import.meta.env.DEV) renderTestPanel(opt);
   for (const s of CONFIG.view3d.ballScaleOptions) {

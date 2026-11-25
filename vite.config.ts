@@ -1,6 +1,10 @@
 // Vite settings. Only one addition to the defaults: a developer-only endpoint (dev server, never in a build) that
 // receives "weird shot" marks from the phone and appends them to docs/WEIRD-SHOTS.md (owner, task 4.7).
-import { appendFileSync, existsSync, writeFileSync } from 'node:fs';
+// NOTE (2026-11-25): a dev server started before this file existed never loads it (Vite does not pick up a config
+// file created later), so marks got 404. The game's developer panel now checks GET /__dev/weird/ping and says
+// "PC link: not connected - restart the dev server" when the endpoint is missing.
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { defineConfig, type Plugin } from 'vite';
 
 const FILE = 'docs/WEIRD-SHOTS.md';
@@ -11,30 +15,83 @@ const HEADER = '# Weird shots (marked on the phone with the flag button)\n\n' +
 /** Only short plain values get into the file (letters, digits, - . : and spaces). */
 const clean = (v: unknown, max = 40) => String(v ?? '').replace(/[^\w.:\- ]/g, '').slice(0, max);
 
+interface Mark { code: string; step: string; ball: string; outcome: string; type: string; length: string; solver: string }
+
+const nowText = () => {
+  const d = new Date();
+  const z = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
+};
+const cleanMark = (m: Record<string, unknown>): Mark => {
+  const code = String(m.code);
+  if (!/^reds\d+-\d+$/.test(code)) throw new Error('bad round code');
+  return { code, step: clean(m.step, 4), ball: clean(m.ball), outcome: clean(m.outcome), type: clean(m.type),
+    length: clean(m.length, 8), solver: clean(m.solver, 8) };
+};
+/** Same mark = same round, step, ball, outcome, shot type and solver (time and length are not compared). */
+const keyOf = (m: Mark) => [m.code, m.step, m.ball, m.outcome, m.type, m.solver].join('|');
+const existingKeys = (): Set<string> => {
+  const keys = new Set<string>();
+  if (!existsSync(FILE)) return keys;
+  for (const line of readFileSync(FILE, 'utf8').split('\n')) {
+    const c = line.split('|').map((s) => s.trim());
+    // | time | code | step | ball | outcome | type | length | level | solver |
+    if (c.length >= 10 && /^reds\d+-\d+$/.test(c[2]!)) keys.add([c[2], c[3], c[4], c[5], c[6], c[9]].join('|'));
+  }
+  return keys;
+};
+/** Appends the marks not in the file yet; returns how many were added. */
+function addMarks(marks: Mark[], time: string): number {
+  if (!existsSync(FILE)) writeFileSync(FILE, HEADER);
+  const keys = existingKeys();
+  let added = 0;
+  for (const m of marks) {
+    if (keys.has(keyOf(m))) continue;
+    keys.add(keyOf(m));
+    appendFileSync(FILE, `| ${clean(time)} | ${m.code} | ${m.step} | ${m.ball} | ${m.outcome} | ${m.type} | ${m.length} s | ` +
+      `${m.code.split('-')[0]} | ${m.solver} |\n`);
+    added++;
+  }
+  return added;
+}
+/** A line of the phone's list: "reds15-123 step 10 · blue success · long · 1.68 s · solver 4.9". */
+export function parseListLine(line: string): Mark | null {
+  const m = /^(reds\d+-\d+) step (\d+) · (\w+) (\w+) · (\w+) · ([\d.]+) s · solver (\S+)$/.exec(line.trim());
+  if (!m) return null;
+  return cleanMark({ code: m[1], step: m[2], ball: m[3], outcome: m[4], type: m[5], length: m[6], solver: m[7] });
+}
+
+function readBody(req: IncomingMessage, res: ServerResponse, max: number, then: (body: string) => void) {
+  let body = '';
+  req.on('data', (c) => { body += c; if (body.length > max) req.destroy(); });
+  req.on('end', () => {
+    try { then(body); } catch { res.statusCode = 400; res.end('bad mark'); }
+  });
+}
+
 function weirdShots(): Plugin {
   return {
     name: 'weird-shots',
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use('/__dev/weird', (req, res) => {
+        const path = (req.url ?? '/').split('?')[0];
+        if (req.method === 'GET' && path === '/ping') { res.end('ok'); return; }
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
-        let body = '';
-        req.on('data', (c) => { body += c; if (body.length > 2000) req.destroy(); });
-        req.on('end', () => {
-          try {
-            const m = JSON.parse(body) as Record<string, unknown>;
-            if (!/^reds\d+-\d+$/.test(String(m.code))) throw new Error('bad round code');
-            if (!existsSync(FILE)) writeFileSync(FILE, HEADER);
-            const d = new Date();
-            const z = (n: number) => String(n).padStart(2, '0');
-            const time = `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
-            appendFileSync(FILE, `| ${clean(time)} | ${clean(m.code)} | ${clean(m.step, 4)} | ${clean(m.ball)} | ${clean(m.outcome)} | ` +
-              `${clean(m.type)} | ${clean(m.length, 8)} s | ${clean(m.level)} | ${clean(m.solver, 8)} |\n`);
-            res.end('ok');
-          } catch {
-            res.statusCode = 400;
-            res.end('bad mark');
-          }
+        if (path === '/list') { // "Send list to PC": every line stored on the phone, duplicates skipped
+          readBody(req, res, 100_000, (body) => {
+            const lines = (JSON.parse(body) as { lines: unknown }).lines;
+            if (!Array.isArray(lines)) throw new Error('no lines');
+            const marks = lines.map((l) => parseListLine(String(l))).filter((m): m is Mark => m !== null);
+            const added = addMarks(marks, `sent ${nowText()}`);
+            res.setHeader('content-type', 'application/json');
+            res.end(JSON.stringify({ added, known: marks.length - added, unreadable: lines.length - marks.length }));
+          });
+          return;
+        }
+        readBody(req, res, 2000, (body) => {
+          addMarks([cleanMark(JSON.parse(body) as Record<string, unknown>)], nowText());
+          res.end('ok');
         });
       });
     },
