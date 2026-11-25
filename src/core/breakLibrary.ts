@@ -59,7 +59,8 @@ function breakAttempt(seed: number, reds: number, table: TableGeometry, cfg: Phy
   const firstHit = sim.events.find((e) => e.type === 'ball');
   const hitRedFirst = !!firstHit && firstHit.type === 'ball' && [firstHit.a, firstHit.b].some((id) => id.startsWith('red'));
   // a real break-off leaves the baulk colours and the blue (almost) where they were
-  const quiet = coloursMovedByBreak(after, table) <= L.maxColourMove;
+  // owner 2026-11-25 (RULES B.1): the pink and the black stay near their spots too
+  const quiet = coloursMovedByBreak(after, table) <= L.maxColourMove && topColoursMovedByBreak(after, table) <= L.maxTopColourMove;
   return { cueStart: { x: cue.pos.x, y: cue.pos.y }, breakShot: shotOf({ dir, speed, spin, duration }), after,
     valid: !pottedAny && hitRedFirst && quiet };
 }
@@ -122,12 +123,20 @@ function failedEscape(state: FrameState, table: TableGeometry, cfg: PhysicsConfi
   return null;
 }
 
+/** The largest distance (m) the break moved the pink or the black from its spot (a potted one: Infinity). */
+export function topColoursMovedByBreak(after: Ball[], table: TableGeometry): number {
+  return Math.max(...L.topColours.map((c) => {
+    const b = after.find((x) => x.id === c);
+    return b ? Math.hypot(b.pos.x - table.spots[c].x, b.pos.y - table.spots[c].y) : Infinity;
+  }));
+}
+
 /**
  * Build `count` breaks of one kind for a level. Breaks that pot a ball, or that do not hit a red first, are skipped;
  * so are breaks whose step-1 shots cannot be found (D.1: step 1 must never need a fallback).
  */
 export function buildBreaks(reds: number, kind: BreakKind, count: number, table: TableGeometry, baseSeed: number,
-  cfg: PhysicsConfig = CONFIG.physics, maxAttempts = count * 200): { entries: BreakEntry[]; attempts: number } {
+  cfg: PhysicsConfig = CONFIG.physics, maxAttempts = count * 1000): { entries: BreakEntry[]; attempts: number } {
   const now = () => 0; // the solver stops on a shot count, so no clock is needed
   const entries: BreakEntry[] = [];
   let attempts = 0;

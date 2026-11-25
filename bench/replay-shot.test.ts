@@ -20,7 +20,7 @@ it('replay marked shots', () => {
     if (!m) { out.push(`? ${item}`); continue; }
     const level = m[1] as LevelId;
     const step = Number(m[3]);
-    const lib = JSON.parse(readFileSync(`public/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
+    const lib = JSON.parse(readFileSync(`${process.env.LIB_DIR ?? 'public'}/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
     const provider = createPhysicsProvider(table, { [level]: lib });
     const r0 = setLevel(newRound(Number(m[2])), level);
     let r = start(process.env.OLDP ? { ...r0, ladder: linearLadderForLevel(level) } : r0, provider, table);

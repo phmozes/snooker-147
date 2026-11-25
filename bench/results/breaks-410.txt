@@ -1,0 +1,8 @@
+Break library rebuilt 2026-11-25 (pink and black at most 30 cm from their spots after the break-off; all older rules kept).
+Breaks breaking the new rule in the old library (bench/results/pink-black.txt): reds6 243 of 400, reds10 57 of 400, reds15 16 of 400. New library: 0 (tests/breakLibraryFiles.test.ts).
+Breaks tried to find 200 each (old -> new):
+reds6  redPottable 25892 -> 69126 (x2.7), snookered 8774 -> 21674 (x2.5)
+reds10 redPottable 15663 -> 27378 (x1.7), snookered 8807 -> 9008
+reds15 redPottable 31401 -> 36043 (x1.15), snookered 11333 -> 11390
+Build time with 3 levels in parallel: reds6 752 s, reds10 873 s, reds15 1100 s. Attempt cap raised from 200 to 1000 per break (reds6 needed 346 per break).
+Old library kept in bench/results/breaks-pre410/ (marks made before this replay with LIB_DIR=bench/results/breaks-pre410).

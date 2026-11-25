@@ -18,6 +18,9 @@
 
 ## B. Round flow
 1. START -> balls re-rack quickly -> the OPPONENT plays the break-off (taken from the pre-computed library).
+   Every break in the library: pots no ball, hits a red first, opens the pack; it moves the yellow, green, brown
+   and blue at most 2 cm from their spots (owner 2026-11-24) and the pink and the black each at most 30 cm
+   (owner 2026-11-25; config breakLibrary.maxColourMove / maxTopColourMove). Later shots (e.g. a missed black) are not limited.
 2. Step 1 (our first red) plays automatically, no button.
    - Success: break was of kind "red pottable"; we pot a red.
    - Failure: 80% plain miss after the break, 20% "snookered" (break leaves us snookered, our escape fails = foul).

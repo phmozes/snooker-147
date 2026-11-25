@@ -324,6 +324,9 @@ export const CONFIG = {
     // owner 2026-11-24: a break may move these colours at most this far (m) from their spots
     stillColours: ['yellow', 'green', 'brown', 'blue'] as const,
     maxColourMove: 0.02,
+    // owner 2026-11-25: the break-off may move the pink and the black each at most this far (m) from their spots
+    topColours: ['pink', 'black'] as const,
+    maxTopColourMove: 0.30,
     requireNaturalChain: true,
     maxPackedShare: { reds6: 0.5, reds10: 0.5, reds15: 0.6 }, // at most this share of the reds still packed after the break   // task 4.7: step-1 red, the black after it and the next red all natural
   },
