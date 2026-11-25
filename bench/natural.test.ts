@@ -38,6 +38,12 @@ it('natural shots in real rounds', () => {
     let seen = 0;
     // positional measures (owner, night 2026-11-24): black shots from behind the black, reds into baulk-end corners, cuts
     let blackShots = 0; let blackBehind = 0; let redPots = 0; let redBaulkCorner = 0; let redBaulkCornerFromTop = 0; const cuts: number[] = [];
+    // task 4.9 (owner 2026-11-25): position on the red. redCuts: cut on each red pot; farFromTop: reds in the black half
+    // potted into a baulk-end corner or a pocket that is not one of the two nearest; nearSide: cue ball within
+    // redPosition.sideCushionM of a side cushion; comfy: a colour after a red with an easy cut, near, pink side of the black
+    const RP = { sideCushionM: 0.25, comfyCutDeg: 35, comfyDistM: 1.2 };
+    const redCuts: number[] = []; let redsTop = 0; let farFromTop = 0; let nearSide = 0; let colAfterRed = 0; let comfy = 0;
+    const triedPerStep: number[] = [];
     for (let seed = 1; seed <= n; seed++) {
       let r = start(setLevel(newRound(seed * 7 + 3), level), provider, table);
       while (r.phase === 'decide') {
@@ -48,6 +54,7 @@ it('natural shots in real rounds', () => {
         for (; seen < logLen(); seen++) { const e = provider.log[seen]!; if (e.level === 'exhibition' || e.level === 'spray') lastResort.add(`${e.roundCode}:${e.step}`); }
         shots++;
         const h = r.history[r.history.length - 1]!;
+        if (h.tried !== undefined) triedPerStep.push(h.tried);
         if (before.phase === 'colour') colours[h.target] = (colours[h.target] ?? 0) + 1;
         if (h.outcome === 'reRack') { reRacks++; success++; continue; }
         const s = h.shot as { dir: { x: number; y: number }; speed: number; spin: number; duration: number; fallback?: string | null; type?: string };
@@ -64,6 +71,22 @@ it('natural shots in real rounds', () => {
           const pk = pe && pe.type === 'pot' ? table.pockets.find((q) => q.id === pe.pocket)! : null;
           if (pk) cuts.push(cutAngle(cueB, ball.pos, pk.mouthMid, table.ballRadius));
           if (h.target === 'black') { blackShots++; if (cueB.y > ball.pos.y) blackBehind++; }
+          if (h.target === 'red' && pk) {
+            redCuts.push(cutAngle(cueB, ball.pos, pk.mouthMid, table.ballRadius));
+            if (table.halfWidth - Math.abs(cueB.x) <= RP.sideCushionM) nearSide++;
+            if (ball.pos.y > 0) {
+              redsTop++;
+              const near = [...table.pockets].sort((a, b) => Math.hypot(a.mouthMid.x - ball.pos.x, a.mouthMid.y - ball.pos.y) -
+                Math.hypot(b.mouthMid.x - ball.pos.x, b.mouthMid.y - ball.pos.y)).slice(0, 2).map((q) => q.id);
+              if (pk.id === 'bottomLeft' || pk.id === 'bottomRight' || !near.includes(pk.id)) farFromTop++;
+            }
+          }
+          if (h.target !== 'red' && before.phase === 'colour' && pk) {
+            colAfterRed++;
+            const cut = cutAngle(cueB, ball.pos, pk.mouthMid, table.ballRadius);
+            const d = Math.hypot(cueB.x - ball.pos.x, cueB.y - ball.pos.y);
+            if (cut <= RP.comfyCutDeg && d <= RP.comfyDistM && (h.target !== 'black' || cueB.y < ball.pos.y)) comfy++;
+          }
           if (h.target === 'red' && pk) { redPots++; if (pk.id === 'bottomLeft' || pk.id === 'bottomRight') { redBaulkCorner++; if (ball.pos.y > 0) redBaulkCornerFromTop++; } }
         }
         types[t] = (types[t] ?? 0) + 1;
@@ -84,7 +107,10 @@ it('natural shots in real rounds', () => {
     const within = (a: number[]) => Math.round((a.filter((d) => d <= 1.5).length / Math.max(1, a.length)) * 100);
     const pc = (a: number, b: number) => Math.round((a / Math.max(1, b)) * 1000) / 10;
     const position = { blackFromBehind: pc(blackBehind, blackShots), redsBaulkCorner: pc(redBaulkCorner, redPots),
-      redsBaulkCornerFromBlackHalf: pc(redBaulkCornerFromTop, redPots), cutMedian: +med(cuts).toFixed(1), cutsOver50: pc(cuts.filter((c) => c > 50).length, cuts.length) };
+      redsBaulkCornerFromBlackHalf: pc(redBaulkCornerFromTop, redPots), cutMedian: +med(cuts).toFixed(1), cutsOver50: pc(cuts.filter((c) => c > 50).length, cuts.length),
+      redCutMedian: +med(redCuts).toFixed(1), redCutsOver35: pc(redCuts.filter((c) => c > 35).length, redCuts.length),
+      redsFarFromBlackHalf: pc(farFromTop, redsTop), redsNearSideCushion: pc(nearSide, redPots), colourAfterRedComfy: pc(comfy, colAfterRed),
+      triedMedian: med(triedPerStep), triedMax: Math.max(0, ...triedPerStep) };
     const row = {
       level, position, rounds: n, shots, success, reRacks, reRackPct: Math.round((reRacks / Math.max(1, success)) * 1000) / 10,
       natural: Math.round((strict / Math.max(1, played)) * 1000) / 10, naturalOld: share((t) => NATURAL_TYPES.includes(t as ShotType)),
