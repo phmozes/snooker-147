@@ -31,6 +31,35 @@ Task 4.10 (solver 4.10, 2026-11-25; replays on the old library, old p where mark
 - reds10-165926990:14: FIXED. Step 13 a different red; step 14 a plain black (no long blue, the yellow stays); step 15 a plain red.
 - reds15-912620600:6 and :9: NOT CHANGED. Step 5: all checked finishes are the same red, none leaves a natural black or pink; step 9 (plant) follows a black at step 8, not the blue.
 
+Night 3 review (2026-11-26, solver 4.10, current p and library; every mark replays exactly: same type and length.
+Details: bench/results/n3-marks-replay.txt, n3-marks-diag.txt, n3-diag.txt). No code change in this part.
+- reds6-1527464874:6 blue long (2.0 m pot to a baulk corner): the step-5 red (stun, 0.14 m) left the cue ball at the top-left,
+  level with the black: black only 3.7 s (over 2.5 s), pink no shot, so the pick fell to the blue. One red open only.
+  Breaks: long colour (4.10 colourLong) caused by the red's position. Cause: step-5 position with a single red.
+- reds10-3813538593:8 blue plain miss, 3.3 s: step-7 red left the cue ball at the top-left (0 reds with an open pot);
+  black natural but no red after it, blue long, also no red after it; the pick took the blue. The miss is a long blue
+  (spot to baulk corner, 2 cushions, ends 0.30 m from the pocket) at 2.5 m/s. Breaks: pace (over 2.5 s) and a long
+  colour attempt. Cause: the step-7 position; the miss search found nothing shorter than 3.3 s on that one pot.
+- reds10-483330344:3 / 6 / 8 / 10: every shot is "natural" by the checks; the pattern is the problem. Reds 5, 7 and 9 go
+  into the top-left corner and leave the cue ball level with the black on the left (y 1.1-1.4): the black is then a
+  pack cannon (6), 2.5 s (8) or leaves no red (10), so the pink goes into the middle-right pocket three times. Step 3
+  is a red into the same middle pocket. Breaks no coded rule; looks repetitive. Cause: red position after the black.
+- reds15-640290895:10 pink pack cannon into a middle pocket: step-9 red ran 1.2 m off a cushion to (0.53, 1.11), right of
+  the black: black plain but leaves no natural red, so pink, whose cue ball then runs into the pack. Cause: step-9 position.
+- reds15-942643257:15 red plain miss, 2.3 s: after the step-14 blue (cue ball mid-table left) only one red was open, a
+  41 deg cut along the left cushion. The red runs up the cushion and stops 0.14 m short of the corner (soft, 1.9 m/s):
+  a believable under-hit by the numbers. No rule broken; it looks feeble rather than wrong.
+- reds15-3132621162:17 red cushion-first 56 deg (last resort, 2.9 s) and :19 red cannon 65 deg (2.9 s): the step-16
+  blue (cue ball next to the blue after the step-15 red) screwed back to (0.09, -0.45), far from the reds, 0 reds
+  open -> step 17 only by the exhibition search. Step 18 (not marked) is a black cannon of 4.4 s with the cue ball
+  running 6.5 m over 4 cushions, which left :19 a 65 deg cannon. Breaks: pace (over 3.5 s at 18) and rule 1/5 (a
+  colour leaving the cue ball far from every red). Cause: step-16 blue position.
+- reds15-2764519739:2 black pack cannon, 1.6 s: the library step-1 red left the cue ball beside the black (0.59, 1.43);
+  pink no shot, blue long; the black into the top-left is struck at 4.5 m/s (top of the allowed range) with heavy screw
+  and the cue ball comes back into the pack. It passes the "hard cannon into the pack" check because the cue ball has
+  slowed down by the time it reaches the pack. Breaks: owner's "no full-power pack cannon on a colour" (as the night
+  review of reds10-983480511:10). Cause: strike power is not looked at for a colour pack cannon.
+
 | Time | Round code | Step | Ball | Outcome | Shot type | Length | Level | Solver |
 |---|---|---|---|---|---|---|---|---|
 | 2026-11-24 21:29 | reds15-3804251161 | 10 | black | success | plain | 5.22 s | reds15 | 4.7b |

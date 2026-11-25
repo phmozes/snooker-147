@@ -1,0 +1,36 @@
+reds6-1527464874:6: phase colour, cue (-0.48,1.26), reds with an open pot 1
+  black: plain into topRight, cut 3 deg, 3.73 s, whyNot over 2.5 s, next red: lookahead ok, natural true, locked false; cue ends (-0.69,0.70) (1 pairs)
+  pink: no shot (0 pairs, 0 tried)
+  blue: long into bottomRight, cut 6 deg, 1.31 s, whyNot long, next red: lookahead ok, natural true, locked false; cue ends (-0.31,0.03) (3 pairs)
+reds10-3813538593:8: phase colour, cue (-0.49,1.16), reds with an open pot 0
+  black: plain into topRight, cut 13 deg, 0.99 s, whyNot none, next red: lookahead failed, natural undefined, locked false; cue ends (-0.07,1.59) (1 pairs)
+  pink: no shot (0 pairs, 0 tried)
+  blue: long into bottomRight, cut 4 deg, 1.52 s, whyNot long, next red: lookahead failed, natural undefined, locked false; cue ends (-0.03,-0.29) (3 pairs)
+reds10-483330344:3: phase red, cue (-0.32,1.36), reds with an open pot 2
+  red: plain into middleRight, cut 14 deg, 1.13 s, whyNot none, next red: lookahead ok, natural true, locked false; cue ends (-0.11,0.78) (5 pairs)
+reds10-483330344:6: phase colour, cue (-0.49,1.44), reds with an open pot 1
+  black: packCannon into topRight, cut 20 deg, 1.46 s, whyNot none, next red: lookahead ok, natural false, locked false; cue ends (-0.10,1.05) (1 pairs)
+  pink: plain into middleRight, cut 6 deg, 1.23 s, whyNot none, next red: lookahead ok, natural true, locked false; cue ends (-0.00,0.69) (2 pairs)
+  blue: long into bottomRight, cut 8 deg, 1.21 s, whyNot long, next red: lookahead ok, natural true, locked false; cue ends (-0.17,-0.07) (3 pairs)
+reds10-483330344:8: phase colour, cue (-0.38,1.11), reds with an open pot 0
+  black: plain into topRight, cut 26 deg, 2.51 s, whyNot over 2.5 s, next red: lookahead ok, natural true, locked false; cue ends (-0.46,0.60) (1 pairs)
+  pink: packCannon into middleRight, cut 15 deg, 1.20 s, whyNot none, next red: lookahead ok, natural true, locked false; cue ends (0.14,0.97) (2 pairs)
+  blue: long into bottomRight, cut 8 deg, 1.51 s, whyNot long, next red: lookahead ok, natural true, locked false; cue ends (-0.27,0.17) (3 pairs)
+reds10-483330344:10: phase colour, cue (-0.26,1.37), reds with an open pot 0
+  black: plain into topRight, cut 1 deg, 1.64 s, whyNot none, next red: lookahead failed, natural undefined, locked false; cue ends (0.45,1.57) (1 pairs)
+  pink: plain into middleRight, cut 20 deg, 1.38 s, whyNot none, next red: lookahead ok, natural true, locked false; cue ends (-0.25,0.65) (2 pairs)
+  blue: long into bottomRight, cut 16 deg, 1.74 s, whyNot long, next red: lookahead ok, natural true, locked false; cue ends (-0.38,0.04) (2 pairs)
+reds15-640290895:10: phase colour, cue (0.53,1.11), reds with an open pot 0
+  black: plain into topLeft, cut 15 deg, 2.25 s, whyNot none, next red: lookahead ok, natural false, locked false; cue ends (0.85,1.20) (1 pairs)
+  pink: packCannon into middleLeft, cut 22 deg, 1.51 s, whyNot none, next red: lookahead ok, natural true, locked false; cue ends (-0.22,0.98) (1 pairs)
+  blue: long into bottomLeft, cut 1 deg, 1.51 s, whyNot long, next red: lookahead ok, natural true, locked false; cue ends (0.12,0.19) (3 pairs)
+reds15-942643257:15: phase red, cue (-0.43,0.23), reds with an open pot 1
+  red: plain into topLeft, cut 41 deg, 1.90 s, whyNot none, next red: lookahead ok, natural true, locked false; cue ends (-0.20,0.41) (2 pairs)
+reds15-3132621162:17: phase red, cue (0.09,-0.45), reds with an open pot 0
+  red: no shot (0 pairs, 0 tried)
+reds15-3132621162:19: phase red, cue (-0.42,-0.09), reds with an open pot 1
+  red: cannon into topLeft, cut 65 deg, 2.98 s, whyNot cannon, next red: lookahead ok, natural true, locked false; cue ends (-0.47,0.60) (1 pairs)
+reds15-2764519739:2: phase colour, cue (0.59,1.43), reds with an open pot 2
+  black: packCannon into topLeft, cut 18 deg, 1.60 s, whyNot none, next red: lookahead ok, natural true, locked false; cue ends (0.25,1.08) (1 pairs)
+  pink: no shot (0 pairs, 0 tried)
+  blue: long into bottomLeft, cut 4 deg, 1.07 s, whyNot long, next red: lookahead ok, natural true, locked false; cue ends (0.18,0.04) (2 pairs)
