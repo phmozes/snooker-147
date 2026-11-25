@@ -79,8 +79,11 @@ export function setBet(r: Round, bet: number): Round {
   return { ...r, bet: b };
 }
 
+/** The draw that decides step k: u from the seed, p from the ladder; success when u < p (RULES A.5). The developer
+ *  panel shows it after each shot (owner 2026-11-25: the position plays no part). */
+export const outcomeDraw = (r: Round, k: number): { u: number; p: number } => ({ u: streamValue(r.seed, 'outcome', k), p: r.ladder[k - 1]!.p });
 /** Did step k succeed? Only the seed and k decide (RULES A.5). */
-export const stepSucceeds = (r: Round, k: number): boolean => streamValue(r.seed, 'outcome', k) < r.ladder[k - 1]!.p;
+export const stepSucceeds = (r: Round, k: number): boolean => { const d = outcomeDraw(r, k); return d.u < d.p; };
 
 function pickFailure(r: Round, k: number): FailureLabel {
   const u = streamValue(r.seed, 'failureType', k);

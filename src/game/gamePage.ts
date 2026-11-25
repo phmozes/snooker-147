@@ -10,7 +10,7 @@
 import { CONFIG } from '../config/game.config';
 import { createSim, recordShot, strike } from '../core/physics/sim';
 import { createPhysicsProvider, type BreakLibrary } from '../core/physicsProvider';
-import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, type ForcedOutcome,
+import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
 import { rtpText } from '../core/ladder';
@@ -61,6 +61,11 @@ let shownBalance = round.balance;
 let lastShot = '—';
 /** Dev only (owner 2026-11-25): solver cost of the last shot, to read on a real phone. */
 let lastCost = '—';
+/** Dev only: how the last outcome was decided (u from the seed vs p of the step). */
+let lastDraw = '';
+const drawText = (d: { u: number; p: number }, forcedWhat: string | null) =>
+  `outcome from seed: u = ${d.u.toFixed(4)} vs p = ${d.p.toFixed(4)} → ${d.u < d.p ? 'hit' : 'miss'}` +
+  (forcedWhat ? ` (not used: forced ${forcedWhat})` : '');
 /** The last shot played, for "Mark this shot as weird" (task 4.7). */
 let lastInfo: { code: string; step: number; type: string; target: string; outcome: string; length: number } | null = null;
 const TYPE_TEXT: Record<string, string> = {
@@ -254,6 +259,7 @@ async function onStart() {
   const len = await playShot(afterBreak!.balls, round.history[0]!.shot as Shot);
   lastShot = `step 1: red · ${round.history[0]!.outcome} · from the break-off library · ${len.toFixed(2)} s long`;
   lastCost = 'step 1: from the break-off library, no solve';
+  if (import.meta.env.DEV) lastDraw = `step 1 ${drawText(outcomeDraw(round, 1), null)}`;
   lastInfo = { code: round.roundCode, step: 1, type: 'library', target: 'red', outcome: round.history[0]!.outcome, length: len };
   afterShot();
 }
@@ -274,7 +280,9 @@ async function onShoot() {
   const waited = performance.now() - t0;
   const thinking = busy === 'solving'; // the player saw THINKING… until the answer came
   const both = presolver.answers();
-  sendCost({ code: round.roundCode, step, target: solved.target, outcome, forced: !!forced, auto: !!auto, ahead: both.ahead,
+  const draw = import.meta.env.DEV ? outcomeDraw(round, step) : { u: -1, p: -1 };
+  if (import.meta.env.DEV) lastDraw = `step ${step} ${drawText(draw, forced ? FORCE_TEXT[forced] : null)}`;
+  sendCost({ u: +draw.u.toFixed(6), p: +draw.p.toFixed(6), code: round.roundCode, step, target: solved.target, outcome, forced: !!forced, auto: !!auto, ahead: both.ahead,
     successMs: Math.round(both.success?.ms ?? -1), successTried: both.success?.planned.tried ?? null,
     failureMs: Math.round(both.failure?.ms ?? -1), failureTried: both.failure?.planned.tried ?? null,
     pressAfterMs: Math.round(t0 - shootAvailableAt), thinkingMs: thinking ? Math.round(waited) : 0 });
@@ -531,7 +539,7 @@ function renderDev() {
     '<div class="opts"><input id="devSeed" placeholder="seed or reds6-12345" /><button id="devUseSeed">Use</button></div>' +
     '<div class="opts" id="devRoundBtns"></div>' +
     '<h3>LAST SHOT</h3><div class="info" id="devShot"></div>' +
-    (import.meta.env.DEV ? '<div class="info" id="devCost"></div>' : '') + '<div class="opts" id="devWeird"></div>' +
+    (import.meta.env.DEV ? '<div class="info" id="devDraw"></div><div class="info" id="devCost"></div>' : '') + '<div class="opts" id="devWeird"></div>' +
     '<div class="info" id="devWeirdList"></div>' +
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
@@ -566,6 +574,7 @@ function renderDev() {
     render();
   }, locked));
   $('devShot').textContent = lastShot;
+  if (import.meta.env.DEV) $('devDraw').textContent = lastDraw ? `DECIDED (dev only) · ${lastDraw}` : '';
   if (import.meta.env.DEV) $('devCost').textContent = `SOLVER COST (dev only) · ${lastCost}`;
   // task 4.7: mark the last shot as weird; the list can be copied and sent to Claude (bench/replay-shot.test.ts)
   $('devWeird').appendChild(opt('Mark this shot as weird', false, () => { void markWeird().then(render); }, !lastInfo));

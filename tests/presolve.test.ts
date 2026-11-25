@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildBreaks } from '../src/core/breakLibrary';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
-import { newRound, nextOutcome, nextTarget, setLevel, shoot, start, successEnd, type Round } from '../src/core/round';
+import { newRound, nextOutcome, nextTarget, outcomeDraw, setLevel, shoot, start, successEnd, type Round } from '../src/core/round';
 import { buildTable } from '../src/core/table/geometry';
 import { solveJob } from '../src/game/solveJob';
 import type { PlannedShot } from '../src/core/round';
@@ -135,8 +135,8 @@ describe('task P.1: phone cost lines (dev only)', () => {
   it('the PC keeps only plain numbers and short texts', async () => {
     const { costLine } = await import('../src/game/costLine');
     const j = JSON.parse(costLine({ code: 'reds15-12', step: 4, target: 'black', outcome: 'success', successMs: 812.6, successTried: 900,
-      failureMs: 'x', failureTried: 40, pressAfterMs: 1500, thinkingMs: 0, ua: 'Mozilla/5.0 (Linux; Android 14) <script>', solver: '4.10' }, '', 't'));
-    expect(j).toMatchObject({ code: 'reds15-12', step: 4, target: 'black', successMs: 813, failureMs: null, thinkingMs: 0 });
+      failureMs: 'x', failureTried: 40, pressAfterMs: 1500, thinkingMs: 0, u: 0.97341234567, p: 'x', ua: 'Mozilla/5.0 (Linux; Android 14) <script>', solver: '4.10' }, '', 't'));
+    expect(j).toMatchObject({ code: 'reds15-12', step: 4, target: 'black', successMs: 813, failureMs: null, thinkingMs: 0, u: 0.973412, p: null });
     expect(j.ua).not.toContain('<');
     expect(() => costLine({ code: '../x' }, '', 't')).toThrow();
   });
@@ -221,4 +221,18 @@ describe('task P.2: the step after next is solved ahead, from the success end', 
     expect(compared).toBeGreaterThan(5);
     expect(colour).toBeGreaterThan(0);
   }, 600_000);
+});
+
+describe('owner 2026-11-25: the developer line "outcome from seed" uses the values round.ts decides with', () => {
+  it('u < p exactly when the decided outcome is a success', () => {
+    let hits = 0; let misses = 0;
+    for (let seed = 1; seed <= 300; seed++) {
+      const r = { ...setLevel(newRound(seed), 'reds15'), step: 3 } as Round;
+      const d = outcomeDraw(r, 4);
+      const ok = nextOutcome(r).outcome === 'success';
+      expect(d.u < d.p).toBe(ok);
+      if (ok) hits++; else misses++;
+    }
+    expect(hits > 0 && misses > 0).toBe(true);
+  });
 });
