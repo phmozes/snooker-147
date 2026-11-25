@@ -7,7 +7,6 @@
 - Decide: more solver work (natural 87-88% at 6/15 reds, target 90%) or move on (5.4 replay by code, stage 6).
 
 ## Claude's turn (after the owner's review)
-- F.1 statistical run (bench/results/fairness-run.sh, about 11 h, one level at a time): then refresh docs/FAIRNESS.md.
 - Solver 4.9 (red position, config solver.natural.redPlay) paused until F.1 is reviewed. Open: larger 6/10-red check.
 - Left in 4.7/4.8: hard cannons and long colour pots, shots over 3.5 s, cuts over 50 deg (mostly fallback shots).
 - Pace (owner 2026-11-24): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort. docs/SPEED.md.

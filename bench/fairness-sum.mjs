@@ -30,12 +30,13 @@ const fit = (groups) => {
 const add = (g, row) => { g.n++; g.f += row[2]; g.e += 1 - row[1]; };
 const cell = (g) => `${g.n} | ${g.f} vs ${g.e.toFixed(1)} (${g.n ? ((100 * g.f) / g.n).toFixed(1) : '-'}% vs ${g.n ? ((100 * g.e) / g.n).toFixed(1) : '-'}%)`;
 
-console.log('| Level | rounds | Good: shots, failures seen vs expected | Bad: same | Bad share | chi2 p (good/bad) | p by step bucket |');
+console.log('| Level | rounds (outcomes = seed alone) | Good: shots, failures seen vs expected | Bad: same | Bad share | chi2 p (good/bad) | p by step bucket |');
 console.log('|---|---|---|---|---|---|---|');
 for (const level of ['reds6', 'reds10', 'reds15']) {
   const f = `${dir}/${level}.jsonl`;
   if (!existsSync(f)) continue;
   const rows = readFileSync(f, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const mm = existsSync(`${dir}/${level}-mismatch.txt`) ? readFileSync(`${dir}/${level}-mismatch.txt`, 'utf8').trim().split(/\r?\n/).filter(Boolean).length : 0;
   const done = existsSync(`${dir}/${level}.done`) ? readFileSync(`${dir}/${level}.done`, 'utf8').trim() : '?';
   const G = { good: { n: 0, f: 0, e: 0 }, bad: { n: 0, f: 0, e: 0 } };
   const byBucket = BUCKETS.map(() => ({ good: { n: 0, f: 0, e: 0 }, bad: { n: 0, f: 0, e: 0 } }));
@@ -54,5 +55,5 @@ for (const level of ['reds6', 'reds10', 'reds15']) {
     for (const r of rows) add(test(r) ? b : a, r);
     return `${name} ${fit([a, b]).p.toFixed(2)}`;
   }).join(', ');
-  console.log(`| ${level} | ${done.split(' ')[0]} | ${cell(G.good)} | ${cell(G.bad)} | ${((100 * G.bad.n) / rows.length).toFixed(0)}% | ${all.p.toFixed(2)} (chi2 ${all.x2.toFixed(1)}, df ${all.df}) | ${strat.p.toFixed(2)} (df ${strat.df}); alone: ${singles} |`);
+  console.log(`| ${level} | ${done.split(' ')[0]} (${mm} mismatches) | ${cell(G.good)} | ${cell(G.bad)} | ${((100 * G.bad.n) / rows.length).toFixed(0)}% | ${all.p.toFixed(2)} (chi2 ${all.x2.toFixed(1)}, df ${all.df}) | ${strat.p.toFixed(2)} (df ${strat.df}); alone: ${singles} |`);
 }
