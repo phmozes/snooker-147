@@ -1,0 +1,151 @@
+{
+ "reds6": {
+  "rounds": 60,
+  "shots": 378,
+  "mismatches": 0,
+  "overall": {
+   "oneMed": 847,
+   "oneMax": 7845,
+   "twoMed": 768,
+   "twoMax": 7393
+  },
+  "rows": [
+   {
+    "step": 2,
+    "n": 56,
+    "oneMed": 369,
+    "oneMax": 1465,
+    "twoMed": 358,
+    "twoMax": 890
+   },
+   {
+    "step": 3,
+    "n": 49,
+    "oneMed": 963,
+    "oneMax": 2201,
+    "twoMed": 903,
+    "twoMax": 1743
+   },
+   {
+    "step": 4,
+    "n": 41,
+    "oneMed": 487,
+    "oneMax": 2070,
+    "twoMed": 559,
+    "twoMax": 1805
+   },
+   {
+    "step": 5,
+    "n": 38,
+    "oneMed": 1234,
+    "oneMax": 2410,
+    "twoMed": 1127,
+    "twoMax": 2263
+   },
+   {
+    "step": 6,
+    "n": 35,
+    "oneMed": 924,
+    "oneMax": 2454,
+    "twoMed": 884,
+    "twoMax": 2147
+   },
+   {
+    "step": 7,
+    "n": 30,
+    "oneMed": 1501,
+    "oneMax": 2926,
+    "twoMed": 1274,
+    "twoMax": 2608
+   },
+   {
+    "step": 8,
+    "n": 28,
+    "oneMed": 979,
+    "oneMax": 5200,
+    "twoMed": 874,
+    "twoMax": 5661
+   },
+   {
+    "step": 9,
+    "n": 23,
+    "oneMed": 1425,
+    "oneMax": 3312,
+    "twoMed": 1268,
+    "twoMax": 2874
+   },
+   {
+    "step": 10,
+    "n": 15,
+    "oneMed": 650,
+    "oneMax": 7845,
+    "twoMed": 614,
+    "twoMax": 7393
+   },
+   {
+    "step": 11,
+    "n": 14,
+    "oneMed": 1311,
+    "oneMax": 3093,
+    "twoMed": 1210,
+    "twoMax": 3759
+   },
+   {
+    "step": 12,
+    "n": 12,
+    "oneMed": 488,
+    "oneMax": 1935,
+    "twoMed": 505,
+    "twoMax": 1978
+   },
+   {
+    "step": 13,
+    "n": 11,
+    "oneMed": 245,
+    "oneMax": 728,
+    "twoMed": 235,
+    "twoMax": 453
+   },
+   {
+    "step": 14,
+    "n": 7,
+    "oneMed": 396,
+    "oneMax": 2176,
+    "twoMed": 207,
+    "twoMax": 1948
+   },
+   {
+    "step": 15,
+    "n": 6,
+    "oneMed": 363,
+    "oneMax": 1170,
+    "twoMed": 185,
+    "twoMax": 673
+   },
+   {
+    "step": 16,
+    "n": 5,
+    "oneMed": 240,
+    "oneMax": 288,
+    "twoMed": 152,
+    "twoMax": 204
+   },
+   {
+    "step": 17,
+    "n": 5,
+    "oneMed": 203,
+    "oneMax": 1461,
+    "twoMed": 137,
+    "twoMax": 1520
+   },
+   {
+    "step": 18,
+    "n": 3,
+    "oneMed": 59,
+    "oneMax": 158,
+    "twoMed": 28,
+    "twoMax": 144
+   }
+  ]
+ }
+}

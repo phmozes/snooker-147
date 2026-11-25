@@ -1,0 +1,215 @@
+{
+ "reds10": {
+  "rounds": 60,
+  "shots": 435,
+  "mismatches": 0,
+  "overall": {
+   "oneMed": 887,
+   "oneMax": 4448,
+   "twoMed": 833,
+   "twoMax": 4480
+  },
+  "rows": [
+   {
+    "step": 2,
+    "n": 56,
+    "oneMed": 470,
+    "oneMax": 1048,
+    "twoMed": 484,
+    "twoMax": 1044
+   },
+   {
+    "step": 3,
+    "n": 49,
+    "oneMed": 1322,
+    "oneMax": 3244,
+    "twoMed": 1207,
+    "twoMax": 3028
+   },
+   {
+    "step": 4,
+    "n": 41,
+    "oneMed": 723,
+    "oneMax": 1909,
+    "twoMed": 739,
+    "twoMax": 1900
+   },
+   {
+    "step": 5,
+    "n": 38,
+    "oneMed": 1404,
+    "oneMax": 2420,
+    "twoMed": 1389,
+    "twoMax": 2602
+   },
+   {
+    "step": 6,
+    "n": 35,
+    "oneMed": 835,
+    "oneMax": 1515,
+    "twoMed": 792,
+    "twoMax": 1412
+   },
+   {
+    "step": 7,
+    "n": 31,
+    "oneMed": 1129,
+    "oneMax": 3021,
+    "twoMed": 1049,
+    "twoMax": 2653
+   },
+   {
+    "step": 8,
+    "n": 29,
+    "oneMed": 849,
+    "oneMax": 2945,
+    "twoMed": 844,
+    "twoMax": 2183
+   },
+   {
+    "step": 9,
+    "n": 24,
+    "oneMed": 1136,
+    "oneMax": 2813,
+    "twoMed": 1028,
+    "twoMax": 2503
+   },
+   {
+    "step": 10,
+    "n": 18,
+    "oneMed": 628,
+    "oneMax": 2518,
+    "twoMed": 632,
+    "twoMax": 1816
+   },
+   {
+    "step": 11,
+    "n": 16,
+    "oneMed": 1208,
+    "oneMax": 4448,
+    "twoMed": 1071,
+    "twoMax": 4480
+   },
+   {
+    "step": 12,
+    "n": 14,
+    "oneMed": 596,
+    "oneMax": 1622,
+    "twoMed": 610,
+    "twoMax": 1197
+   },
+   {
+    "step": 13,
+    "n": 14,
+    "oneMed": 1002,
+    "oneMax": 1813,
+    "twoMed": 978,
+    "twoMax": 1561
+   },
+   {
+    "step": 14,
+    "n": 11,
+    "oneMed": 559,
+    "oneMax": 874,
+    "twoMed": 521,
+    "twoMax": 945
+   },
+   {
+    "step": 15,
+    "n": 9,
+    "oneMed": 1201,
+    "oneMax": 2404,
+    "twoMed": 1036,
+    "twoMax": 2273
+   },
+   {
+    "step": 16,
+    "n": 8,
+    "oneMed": 909,
+    "oneMax": 2650,
+    "twoMed": 910,
+    "twoMax": 2778
+   },
+   {
+    "step": 17,
+    "n": 8,
+    "oneMed": 1678,
+    "oneMax": 3780,
+    "twoMed": 1329,
+    "twoMax": 3187
+   },
+   {
+    "step": 18,
+    "n": 7,
+    "oneMed": 593,
+    "oneMax": 4135,
+    "twoMed": 539,
+    "twoMax": 4019
+   },
+   {
+    "step": 19,
+    "n": 6,
+    "oneMed": 1769,
+    "oneMax": 2509,
+    "twoMed": 1845,
+    "twoMax": 2179
+   },
+   {
+    "step": 20,
+    "n": 5,
+    "oneMed": 310,
+    "oneMax": 548,
+    "twoMed": 365,
+    "twoMax": 582
+   },
+   {
+    "step": 21,
+    "n": 4,
+    "oneMed": 413,
+    "oneMax": 538,
+    "twoMed": 213,
+    "twoMax": 362
+   },
+   {
+    "step": 22,
+    "n": 3,
+    "oneMed": 354,
+    "oneMax": 1606,
+    "twoMed": 207,
+    "twoMax": 1582
+   },
+   {
+    "step": 23,
+    "n": 3,
+    "oneMed": 217,
+    "oneMax": 1009,
+    "twoMed": 159,
+    "twoMax": 580
+   },
+   {
+    "step": 24,
+    "n": 2,
+    "oneMed": 296,
+    "oneMax": 296,
+    "twoMed": 179,
+    "twoMax": 179
+   },
+   {
+    "step": 25,
+    "n": 2,
+    "oneMed": 133,
+    "oneMax": 133,
+    "twoMed": 135,
+    "twoMax": 135
+   },
+   {
+    "step": 26,
+    "n": 2,
+    "oneMed": 178,
+    "oneMax": 178,
+    "twoMed": 161,
+    "twoMax": 161
+   }
+  ]
+ }
+}
