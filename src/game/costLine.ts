@@ -8,7 +8,7 @@ export function costLine(m: Record<string, unknown>, uaHeader: string, time: str
   const code = String(m.code);
   if (!/^reds\d+-\d+$/.test(code)) throw new Error('bad round code');
   return JSON.stringify({ time, code, step: num(m.step), target: clean(m.target, 10), outcome: clean(m.outcome, 16),
-    forced: m.forced === true, auto: m.auto === true,
+    forced: m.forced === true, auto: m.auto === true, ahead: m.ahead === true, presolve: clean(m.presolve, 8),
     successMs: num(m.successMs), successTried: num(m.successTried), failureMs: num(m.failureMs), failureTried: num(m.failureTried),
     pressAfterMs: num(m.pressAfterMs), thinkingMs: num(m.thinkingMs), solver: clean(m.solver, 8),
     ua: String(m.ua ?? uaHeader).replace(/[^\w.:;,()/\- ]/g, '').slice(0, 200) });

@@ -21,43 +21,77 @@ export interface SolverWorker { postMessage(req: SolveRequest): void; terminate(
 
 const newWorker = (): SolverWorker => new Worker(new URL('./solverWorker.ts', import.meta.url), { type: 'module' });
 
+type Job = { req: SolveRequest; key: string; answers: Partial<Record<SolveKind, Solved>>; waiting: (() => void)[] };
+const keyOf = (r: Omit<SolveRequest, 'id'>) => JSON.stringify([r.ctx.roundCode, r.ctx.step, r.target, r.failure, r.frame]);
+
+/**
+ * onBoth (task P.2): called once both answers of the shot being decided exist, with its success answer. The page then
+ * asks for the step after it with ahead(), from the frame that success leaves. That always happens, whatever the
+ * decided outcome; if the step fails or the player cashes out, the step after is simply dropped.
+ */
 export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void, onAnswer: () => void = () => {},
-  makeWorker: () => SolverWorker = newWorker) {
+  makeWorker: () => SolverWorker = newWorker, onBoth: (req: SolveRequest, success: Solved) => void = () => {}) {
   const workers: Record<SolveKind, SolverWorker | null> = { success: null, failure: null };
   let nextId = 1;
-  let current: { req: SolveRequest; answers: Partial<Record<SolveKind, Solved>>; waiting: (() => void)[] } | null = null;
-  const both = (c: NonNullable<typeof current>) => !!(c.answers.success && c.answers.failure);
+  let current: Job | null = null; // the shot SHOOT plays next
+  let next: Job | null = null; // task P.2: the shot after it, solved from the success end of `current`
+  let promoted = false; // the current job was started ahead (developer cost line)
+  const both = (c: Job) => !!(c.answers.success && c.answers.failure);
+  const job = (frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx']): Job => {
+    const req: SolveRequest = { id: nextId++, frame, target, failure, ctx };
+    return { req, key: keyOf(req), answers: {}, waiting: [] };
+  };
+  const post = (j: Job) => { for (const k of ['success', 'failure'] as const) (workers[k] ?? start(k)).postMessage({ ...j.req, only: k }); };
 
   function start(kind: SolveKind) {
     const w = makeWorker();
     w.onmessage = (e: MessageEvent<SolveAnswer>) => {
       const a = e.data;
-      if (!current || a.id !== current.req.id) return; // an old request
-      current.answers[a.kind] = { planned: a.planned, ms: a.ms, target: a.target };
+      const j = current?.req.id === a.id ? current : next?.req.id === a.id ? next : null;
+      if (!j) return; // an old request
+      j.answers[a.kind] = { planned: a.planned, ms: a.ms, target: a.target };
       if (a.log.length) onLog(a.log);
-      if (both(current)) for (const res of current.waiting.splice(0)) res();
-      onAnswer();
+      if (j === current && both(j)) {
+        for (const res of j.waiting.splice(0)) res();
+        onBoth(j.req, j.answers.success!);
+      }
+      if (j === current) onAnswer();
     };
     workers[kind] = w;
     return w;
   }
-  /** Restart every worker still busy with the current request. */
-  function drop() {
-    if (!current) return;
-    for (const k of ['success', 'failure'] as const) if (!current.answers[k]) { workers[k]?.terminate(); workers[k] = null; }
-    current = null;
+  /** Restart every worker still busy with a request that is dropped. */
+  function drop(...jobs: (Job | null)[]) {
+    for (const j of jobs) {
+      if (!j) continue;
+      for (const k of ['success', 'failure'] as const) if (!j.answers[k]) { workers[k]?.terminate(); workers[k] = null; }
+    }
   }
 
   return {
-    /** Start solving the next shot (both outcomes, one worker each). */
+    /** The next shot (both outcomes, one worker each). If it was already started ahead (task P.2), that is kept. */
     request(frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx']) {
-      drop();
-      const req: SolveRequest = { id: nextId++, frame, target, failure, ctx };
-      current = { req, answers: {}, waiting: [] };
-      for (const k of ['success', 'failure'] as const) (workers[k] ?? start(k)).postMessage({ ...req, only: k });
+      const j = job(frame, target, failure, ctx);
+      if (next && next.key === j.key) {
+        drop(current);
+        current = next; next = null; promoted = true;
+        if (both(current)) onBoth(current.req, current.answers.success!);
+        return;
+      }
+      drop(current, next);
+      next = null; promoted = false;
+      current = j;
+      post(j);
     },
-    /** Drop the current request (only a worker still busy with it is restarted). */
-    cancel() { drop(); },
+    /** Task P.2: start the shot after the current one (asked from onBoth, so both workers are free). */
+    ahead(frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx']) {
+      if (!current || !both(current)) return;
+      drop(next);
+      next = job(frame, target, failure, ctx);
+      post(next);
+    },
+    /** Drop every request (only a worker still busy with one is restarted). */
+    cancel() { drop(current, next); current = null; next = null; promoted = false; },
     /** Both answers exist (SHOOT can play at once, whatever the outcome). */
     ready() { return !!current && both(current); },
     /** The ball the next shot is at, once known (both answers carry it). */
@@ -69,8 +103,8 @@ export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void, on
       while (!both(c)) await new Promise<void>((res) => c.waiting.push(res));
       return c.answers[kind]!;
     },
-    /** Developer panel (task P.1): the cost of both answers of the current request. */
-    answers(): Partial<Record<SolveKind, Solved>> { return { ...(current?.answers ?? {}) }; },
+    /** Developer panel (task P.1): the cost of both answers of the current request; ahead: it was started a step early. */
+    answers(): Partial<Record<SolveKind, Solved>> & { ahead: boolean } { return { ...(current?.answers ?? {}), ahead: promoted }; },
   };
 }
 

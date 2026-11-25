@@ -158,6 +158,13 @@ export function shoot(r: Round, provider: ShotProvider, table: TableGeometry, co
   return playShot(r, target, outcome, planned, table);
 }
 
+/** Task P.2: the round as it would be if the next shot succeeds with this solved shot (the decided outcome is not
+ *  looked at). The game page uses it to start solving the step after next while the player decides. */
+export function successEnd(r: Round, target: BallKind, planned: PlannedShot, table: TableGeometry): Round {
+  if (r.phase !== 'decide') throw new Error('no next shot');
+  return playShot(r, target, 'success', planned, table);
+}
+
 /** RULES A.3: CASH OUT pays bet x current multiplier and ends the round (B.5: the next shot is never shown). */
 export function cashOut(r: Round): Round {
   if (r.phase !== 'decide' || r.step < 1) throw new Error('CASH OUT is only possible after a successful step');

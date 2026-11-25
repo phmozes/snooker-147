@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildBreaks } from '../src/core/breakLibrary';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
-import { newRound, nextOutcome, nextTarget, setLevel, shoot, start } from '../src/core/round';
+import { newRound, nextOutcome, nextTarget, setLevel, shoot, start, successEnd, type Round } from '../src/core/round';
 import { buildTable } from '../src/core/table/geometry';
 import { solveJob } from '../src/game/solveJob';
 import type { PlannedShot } from '../src/core/round';
@@ -145,4 +145,80 @@ describe('task P.1: phone cost lines (dev only)', () => {
     const fn = src.slice(src.indexOf('function sendCost('), src.indexOf('// PC link (2026-11-25)'));
     expect(fn).toContain('if (!import.meta.env.DEV) return;');
   });
+});
+
+describe('task P.2: the step after next is solved ahead, from the success end', () => {
+  it('both answers -> onBoth -> ahead; a matching request keeps it, the wait still needs both answers', async () => {
+    const f = fakes();
+    const calls: number[] = [];
+    const p = createPresolver(() => {}, () => {}, f.make, (req) => calls.push(req.ctx.step));
+    const c2 = { roundCode: 'reds6-1', step: 2 }; const c3 = { roundCode: 'reds6-1', step: 3 };
+    p.request(frame, 'red', 'plainMiss', c2);
+    f.answer('success');
+    expect(calls).toEqual([]); // one answer is not enough
+    f.answer('failure');
+    expect(calls).toEqual([2]);
+    p.ahead(frame, 'black', 'inOff', c3);
+    expect(f.made.map((w) => w.reqs.length)).toEqual([2, 2]); // both workers got step 3 at once
+    f.answer('success'); // step 3 success answer, while step 2 is still the shot to play
+    expect(p.ready()).toBe(true);
+    p.request(frame, 'black', 'inOff', c3); // step 2 succeeded: the same request -> kept, nothing new is posted
+    expect(f.made.map((w) => w.reqs.length)).toEqual([2, 2]);
+    expect(p.answers().ahead).toBe(true);
+    expect(p.ready()).toBe(false);
+    let got = false;
+    void p.get('success', c3).then(() => { got = true; });
+    await tick();
+    expect(got).toBe(false); // the success answer of step 3 exists, but SHOOT still waits for its failure answer
+    f.answer('failure');
+    await tick();
+    expect(got).toBe(true);
+    expect(calls).toEqual([2, 3]);
+  });
+
+  it('a different request (or a cash out) drops the step ahead and restarts only busy workers', () => {
+    const f = fakes();
+    const p = createPresolver(() => {}, () => {}, f.make, () => {});
+    p.request(frame, 'red', 'plainMiss', ctx);
+    f.answer('success'); f.answer('failure');
+    p.ahead(frame, 'black', 'inOff', { roundCode: 'reds6-1', step: 3 });
+    f.answer('success');
+    p.cancel();
+    expect(f.made.map((w) => w.dead)).toEqual([false, true]);
+    p.request(frame, 'red', 'plainMiss', { roundCode: 'reds6-2', step: 2 });
+    expect(f.made.length).toBe(3);
+    expect(p.answers().ahead).toBe(false);
+  });
+
+  it('the step solved ahead is the very request the real success leads to, and gives the same shots', () => {
+    const table = buildTable();
+    const library = { reds6: { redPottable: buildBreaks(6, 'redPottable', 3, table, 11).entries, snookered: buildBreaks(6, 'snookered', 2, table, 12).entries } };
+    const now = () => 0;
+    const solve = (req: SolveRequest) => { const got: Partial<Record<SolveKind, SolveAnswer>> = {}; solveJob(table, req, ['success', 'failure'], now, (a) => { got[a.kind] = a; }); return got; };
+    const reqOf = (r: Round): SolveRequest => { const { step, failure } = nextOutcome(r); return { id: 1, frame: r.frame!, target: nextTarget(r), failure, ctx: { roundCode: r.roundCode, step } }; };
+    let compared = 0; let colour = 0; let solvedSame = 0;
+    for (let seed = 1; seed <= 8; seed++) {
+      const base = createPhysicsProvider(table, library);
+      let r = start(setLevel(newRound(seed * 7 + 3), 'reds6'), base, table);
+      let ahead: SolveRequest | null = null;
+      while (r.phase === 'decide' && r.step < 7) {
+        const req = reqOf(r);
+        if (ahead) { expect(ahead).toEqual(req); compared++; if (req.frame.phase === 'colour') colour++; }
+        const both = solve(req);
+        const s = both.success!;
+        const after = successEnd(r, s.target, s.planned, table);
+        const nextAhead = after.phase === 'decide' ? reqOf(after) : null;
+        if (nextAhead && solvedSame < 3) { // the ahead solve equals the solve the real round makes later (when it succeeds)
+          const a = solve(nextAhead); const b = solve(nextAhead);
+          expect(a.success!.planned).toEqual(b.success!.planned); solvedSame++;
+        }
+        const { outcome } = nextOutcome(r);
+        const a = both[outcome === 'success' ? 'success' : 'failure']!;
+        r = shoot(r, solvedProvider(base, a.planned, { target: a.target, outcome }), table, r.frame!.phase === 'colour' ? (a.target as never) : undefined);
+        ahead = outcome === 'success' ? nextAhead : null;
+      }
+    }
+    expect(compared).toBeGreaterThan(5);
+    expect(colour).toBeGreaterThan(0);
+  }, 600_000);
 });

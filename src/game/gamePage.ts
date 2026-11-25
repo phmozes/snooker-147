@@ -10,7 +10,7 @@
 import { CONFIG } from '../config/game.config';
 import { createSim, recordShot, strike } from '../core/physics/sim';
 import { createPhysicsProvider, type BreakLibrary } from '../core/physicsProvider';
-import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, type ForcedOutcome,
+import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
 import { rtpText } from '../core/ladder';
@@ -20,7 +20,7 @@ import { rackBalls } from '../core/table/rack';
 import { COLOURS, type Ball, type Colour, type Vec2 } from '../core/types';
 import { positionsAt } from '../view/playback';
 import { createTable3d } from '../view/table3d';
-import { createPresolver, solvedProvider } from './presolve';
+import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
 
 type ScreenId = 'D' | 'A' | 'C';
@@ -107,7 +107,7 @@ let shootAvailableAt = 0; // when SHOOT last became pressable (performance.now)
 function sendCost(line: Record<string, unknown>) {
   if (!import.meta.env.DEV) return;
   void fetch('/__dev/cost', { method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ...line, ua: navigator.userAgent, solver: CONFIG.solver.version }) }).catch(() => { /* no PC link */ });
+    body: JSON.stringify({ ...line, ua: navigator.userAgent, solver: CONFIG.solver.version, presolve: 'P.2' }) }).catch(() => { /* no PC link */ });
 }
 // PC link (2026-11-25): a dev server started before vite.config.ts existed has no /__dev/weird endpoint, so every mark
 // stayed on the phone. The panel now says so, and "Send list to PC" sends every stored line (the PC skips duplicates).
@@ -146,7 +146,8 @@ const library: BreakLibrary = {};
 const presolver = createPresolver((entries) => {
   fallbacks.push(...entries);
   for (const e of entries) console.info(`[fallback] ${e.roundCode} step ${e.step} ${e.target}: ${e.level} (${e.tried} shots)`);
-}, () => { if (!busy && round.phase === 'decide') render(); }); // the picked colour is known: show it in the hint
+}, () => { if (!busy && round.phase === 'decide') render(); }, // the picked colour is known: show it in the hint
+  undefined, (req, success) => presolveAhead(req, success)); // task P.2: then start the step after it
 const level = () => CONFIG.levels.find((l) => l.id === round.levelId)!;
 const ladder = () => round.ladder;
 
@@ -195,11 +196,26 @@ async function loadLibrary(id: LevelId) {
 
 /** Start solving the next shot (both outcomes) while the player decides. */
 function presolveNext() {
-  if (round.phase !== 'decide') return;
+  if (round.phase !== 'decide') { presolver.cancel(); return; } // the step failed or the round ended: drop the step ahead
   const { step, failure } = nextOutcome(round);
   const f = forcedNow(); // developer panel: a forced failure type is solved instead of the decided one
   const fail = f && f !== 'success' && f !== 'reRack' ? f : failure;
   presolver.request(round.frame!, nextTarget(round), fail, { roundCode: round.roundCode, step });
+}
+
+/**
+ * Task P.2: once both answers of the shot being decided exist, start solving the step after it, from the frame its
+ * success leaves (after a failure the round ends, so that is the only frame ever needed). Always done, whatever the
+ * decided outcome; presolveNext() keeps it when the success comes, and it is dropped on a failure or a cash out.
+ */
+function presolveAhead(req: SolveRequest, success: Solved) {
+  if (round.phase !== 'decide' || round.roundCode !== req.ctx.roundCode || round.step + 1 !== req.ctx.step) return;
+  const after = successEnd(round, success.target, success.planned, table);
+  if (after.phase !== 'decide') return; // a re-rack or the last step: no step after it
+  const { step, failure } = nextOutcome(after);
+  const f = forcedNow(); // developer panel, as in presolveNext()
+  const fail = f && f !== 'success' && f !== 'reRack' ? f : failure;
+  presolver.ahead(after.frame!, nextTarget(after), fail, { roundCode: after.roundCode, step });
 }
 
 async function onStart() {
@@ -258,7 +274,7 @@ async function onShoot() {
   const waited = performance.now() - t0;
   const thinking = busy === 'solving'; // the player saw THINKING… until the answer came
   const both = presolver.answers();
-  sendCost({ code: round.roundCode, step, target: solved.target, outcome, forced: !!forced, auto: !!auto,
+  sendCost({ code: round.roundCode, step, target: solved.target, outcome, forced: !!forced, auto: !!auto, ahead: both.ahead,
     successMs: Math.round(both.success?.ms ?? -1), successTried: both.success?.planned.tried ?? null,
     failureMs: Math.round(both.failure?.ms ?? -1), failureTried: both.failure?.planned.tried ?? null,
     pressAfterMs: Math.round(t0 - shootAvailableAt), thinkingMs: thinking ? Math.round(waited) : 0 });
