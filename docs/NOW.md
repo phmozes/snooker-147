@@ -1,14 +1,14 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Decide: early cash-out RTP is 96.2-97.0% (multipliers rounded DOWN to 0.01); keep, or round to nearest? (report 2026-11-25)
+- Review F.1 fairness proof (docs/FAIRNESS.md). Decide RTP: keep rounded-down multipliers, or option 3 (docs/RTP-OPTION3.md).
 - On the phone, task 4.9: ?seed=reds6-136, reds10-80, reds6-297 (SHOOT every time; watch steps 2-3).
 - On the phone: try the TEST PANEL (≡ menu, dev only) and play rounds; flag weird shots (docs/WEIRD-SHOTS.md).
 - Decide: more solver work (natural 87-88% at 6/15 reds, target 90%) or move on (5.4 replay by code, stage 6).
 
 ## Claude's turn (after the owner's review)
-- Solver 4.8f. Strict natural 86.9 / 91.0 / 88.2%, exhibition 1.0 / 1.3 / 1.8% (6/10/15 reds), RE-RACK 0 in 60 rounds.
-- Solver 4.9 (red position after a colour, config solver.natural.redPlay) waits for review. Open: larger 6/10-red check (stopped: low memory).
+- F.1 statistical run (bench/results/fairness-run.sh, about 11 h, one level at a time): then refresh docs/FAIRNESS.md.
+- Solver 4.9 (red position, config solver.natural.redPlay) paused until F.1 is reviewed. Open: larger 6/10-red check.
 - Left in 4.7/4.8: hard cannons and long colour pots, shots over 3.5 s, cuts over 50 deg (mostly fallback shots).
 - Pace (owner 2026-11-24): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort. docs/SPEED.md.
 - Measure: bench/results/night/run.sh <tag> (60 rounds x 3 levels, about 4 min), sum.mjs prints one line per level.
