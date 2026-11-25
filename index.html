@@ -70,6 +70,9 @@
     #devTag { display: none; position: absolute; top: 0; right: 0; z-index: 3; padding: 4px 8px; border-radius: 8px;
               background: #b3261e; color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
     #devTag.show { display: block; }
+    /* F.1: solver version in small text (dev build only), so a screen video shows which version it was recorded on */
+    #devVer { display: none; position: absolute; bottom: 2px; left: 4px; z-index: 3; font-size: 10px; color: var(--text);
+              opacity: .6; pointer-events: none; }
     #message div { font-size: 34px; font-weight: 800; color: var(--yellow); }
     #message small { font-size: 15px; color: var(--text); }
     .cash { height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
@@ -121,7 +124,7 @@
         <button class="menu" id="menu" aria-label="Menu">≡</button>
       </div>
       <div class="table"><canvas id="c3d"></canvas><div id="message"></div>
-        <button id="flag" aria-label="Mark the last shot as weird">⚑<span id="flagCount"></span></button><div id="toast"></div><div id="devTag"></div></div>
+        <button id="flag" aria-label="Mark the last shot as weird">⚑<span id="flagCount"></span></button><div id="toast"></div><div id="devTag"></div><div id="devVer"></div></div>
       <div class="ladder" id="ladder"></div>
       <div class="bottom" id="bottom"></div>
       <div id="dev"></div>

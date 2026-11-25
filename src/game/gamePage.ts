@@ -102,6 +102,8 @@ async function markWeird() {
 if (import.meta.env.DEV) {
   $('flag').style.display = 'flex';
   $('flag').onclick = () => { void markWeird(); };
+  $('devVer').textContent = `solver ${CONFIG.solver.version}`; // F.1: the version a video was recorded on
+  $('devVer').style.display = 'block';
 }
 const fallbacks: FallbackLogEntry[] = [];
 const library: BreakLibrary = {};
