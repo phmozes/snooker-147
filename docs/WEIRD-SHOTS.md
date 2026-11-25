@@ -27,9 +27,9 @@ Review 2026-11-25 (solver 4.9, old p, OLDP=1; details bench/results/marks-diag.t
 
 Task 4.10 (solver 4.10, 2026-11-25; replays on the old library, old p where marked):
 - reds15-3634511757:10-11: FIXED. Step 9 red now to a middle pocket; step 10 a plain blue to a middle pocket; step 11 a plain red.
-- reds15-2927609577:8 and :15: NOT CHANGED. Step 7 has one usable red only (every finish leaves the black as a pink-moving pack cannon).
+- reds15-2927609577:8 and :15: NOT CHANGED. Step 7: all checked finishes are the same red, none leaves a natural black or pink.
 - reds10-165926990:14: FIXED. Step 13 a different red; step 14 a plain black (no long blue, the yellow stays); step 15 a plain red.
-- reds15-912620600:6 and :9: NOT CHANGED. Step 5 has one usable red only; step 9 (plant) follows a black at step 8, not the blue.
+- reds15-912620600:6 and :9: NOT CHANGED. Step 5: all checked finishes are the same red, none leaves a natural black or pink; step 9 (plant) follows a black at step 8, not the blue.
 
 | Time | Round code | Step | Ball | Outcome | Shot type | Length | Level | Solver |
 |---|---|---|---|---|---|---|---|---|
