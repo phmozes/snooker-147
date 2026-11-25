@@ -20,6 +20,7 @@ import { rackBalls } from '../core/table/rack';
 import { COLOURS, type Ball, type Colour, type Vec2 } from '../core/types';
 import { positionsAt } from '../view/playback';
 import { createTable3d } from '../view/table3d';
+import { stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
 
@@ -260,6 +261,9 @@ async function onStart() {
   lastShot = `step 1: red · ${round.history[0]!.outcome} · from the break-off library · ${len.toFixed(2)} s long`;
   lastCost = 'step 1: from the break-off library, no solve';
   if (import.meta.env.DEV) lastDraw = `step 1 ${drawText(outcomeDraw(round, 1), null)}`;
+  // step 1 comes from the break-off library: no solve and no SHOOT press, so its cost fields are null
+  sendCost(stepCost(round, 1, { target: 'red', outcome: round.history[0]!.outcome, forced: false, auto: !!auto, ahead: false,
+    answers: null, pressAfterMs: null, thinkingMs: null }));
   lastInfo = { code: round.roundCode, step: 1, type: 'library', target: 'red', outcome: round.history[0]!.outcome, length: len };
   afterShot();
 }
@@ -280,12 +284,9 @@ async function onShoot() {
   const waited = performance.now() - t0;
   const thinking = busy === 'solving'; // the player saw THINKING… until the answer came
   const both = presolver.answers();
-  const draw = import.meta.env.DEV ? outcomeDraw(round, step) : { u: -1, p: -1 };
-  if (import.meta.env.DEV) lastDraw = `step ${step} ${drawText(draw, forced ? FORCE_TEXT[forced] : null)}`;
-  sendCost({ u: +draw.u.toFixed(6), p: +draw.p.toFixed(6), code: round.roundCode, step, target: solved.target, outcome, forced: !!forced, auto: !!auto, ahead: both.ahead,
-    successMs: Math.round(both.success?.ms ?? -1), successTried: both.success?.planned.tried ?? null,
-    failureMs: Math.round(both.failure?.ms ?? -1), failureTried: both.failure?.planned.tried ?? null,
-    pressAfterMs: Math.round(t0 - shootAvailableAt), thinkingMs: thinking ? Math.round(waited) : 0 });
+  if (import.meta.env.DEV) lastDraw = `step ${step} ${drawText(outcomeDraw(round, step), forced ? FORCE_TEXT[forced] : null)}`;
+  sendCost(stepCost(round, step, { target: solved.target, outcome, forced: !!forced, auto: !!auto, ahead: both.ahead,
+    answers: both, pressAfterMs: t0 - shootAvailableAt, thinkingMs: thinking ? waited : 0 }));
   const before = round;
   const target = solved.target; // on a colour step: the colour the game picked (RULES B.3)
   const prov = solvedProvider(createPhysicsProvider(table, library), solved.planned, { target, outcome });

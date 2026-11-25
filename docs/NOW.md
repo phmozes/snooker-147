@@ -1,10 +1,10 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- P.2: play about 10 rounds on the phone (dev build). New lines in bench/results/phone-cost.jsonl carry presolve "P.2"; then Claude summarises.
-- Read the solver cost line in the ≡ panel (dev only) on the phone while playing. Keep marking weird shots.
-- Close the old dev servers on 5174 / 5180 (they started before vite.config.ts existed).
+- Decide the next stage: 5.4 replay by code, then stage 6 real look.
+- Keep marking weird shots.
 ## Claude's turn (after the owner's review)
+- THINKING done (P.1 two workers + P.2 one step ahead): 0 of 71 shots on the phone. phone-cost.jsonl: one line per step from step 1.
 - RTP 3c applied. Solver 4.10 done (2 of 4 long-blue marks fixed; the other 2 have one red only). Only owner-marked shots get fixed.
 - Left in 4.7/4.8: hard cannons and long colour pots, shots over 3.5 s, cuts over 50 deg (mostly fallback shots).
 - Pace (owner 2026-11-24): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort. docs/SPEED.md.

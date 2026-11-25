@@ -236,3 +236,48 @@ describe('owner 2026-11-25: the developer line "outcome from seed" uses the valu
     expect(hits > 0 && misses > 0).toBe(true);
   });
 });
+
+describe('owner 2026-11-25: phone-cost.jsonl has one line per step, starting at step 1', () => {
+  it('a full round gives lines for steps 1, 2, 3 ... (step 1 cost fields null, u and p on every line)', async () => {
+    const { stepCost } = await import('../src/game/stepCost');
+    const { costLine } = await import('../src/game/costLine');
+    const table = buildTable();
+    const library = { reds6: { redPottable: buildBreaks(6, 'redPottable', 3, table, 11).entries, snookered: buildBreaks(6, 'snookered', 2, table, 12).entries } };
+    let longest = 0;
+    for (let seed = 1; seed <= 12 && longest < 3; seed++) {
+      const base = createPhysicsProvider(table, library);
+      const lines: Record<string, unknown>[] = [];
+      let r = start(setLevel(newRound(seed * 7 + 3), 'reds6'), base, table);
+      // what onStart sends after step 1
+      lines.push(JSON.parse(costLine(stepCost(r, 1, { target: 'red', outcome: r.history[0]!.outcome, forced: false, auto: false, ahead: false,
+        answers: null, pressAfterMs: null, thinkingMs: null }), '', 't')));
+      // what onShoot sends for every SHOOT (here up to step 4)
+      while (r.phase === 'decide' && r.step < 4) {
+        const { step, outcome, failure } = nextOutcome(r);
+        const req: SolveRequest = { id: 1, frame: r.frame!, target: nextTarget(r), failure, ctx: { roundCode: r.roundCode, step } };
+        const got: Partial<Record<SolveKind, SolveAnswer>> = {};
+        solveJob(table, req, ['success', 'failure'], () => 0, (a) => { got[a.kind] = a; });
+        const a = got[outcome === 'success' ? 'success' : 'failure']!;
+        lines.push(JSON.parse(costLine(stepCost(r, step, { target: a.target, outcome, forced: false, auto: false, ahead: false,
+          answers: { success: got.success, failure: got.failure }, pressAfterMs: 400, thinkingMs: 0 }), '', 't')));
+        r = shoot(r, solvedProvider(base, a.planned, { target: a.target, outcome }), table, r.frame!.phase === 'colour' ? (a.target as never) : undefined);
+      }
+      const played = r.history.length;
+      expect(lines.map((l) => l.step)).toEqual(Array.from({ length: played }, (_, i) => i + 1));
+      expect(lines.map((l) => l.outcome)).toEqual(r.history.map((h) => h.outcome === 'reRack' ? 'success' : h.outcome));
+      expect(lines[0]).toMatchObject({ step: 1, successMs: null, successTried: null, failureMs: null, failureTried: null, pressAfterMs: null, thinkingMs: null });
+      for (const l of lines) { expect(typeof l.u).toBe('number'); expect(typeof l.p).toBe('number'); }
+      for (const l of lines.slice(1)) expect(typeof l.successTried).toBe('number');
+      longest = Math.max(longest, played);
+    }
+    expect(longest).toBeGreaterThanOrEqual(3);
+  }, 600_000);
+
+  it('the game page sends a line after step 1 and after every SHOOT', async () => {
+    const src = (await import('../src/game/gamePage.ts?raw')).default;
+    const onStart = src.slice(src.indexOf('async function onStart()'), src.indexOf('async function onShoot()'));
+    const onShoot = src.slice(src.indexOf('async function onShoot()'), src.indexOf('function onCashOut()'));
+    expect(onStart).toMatch(/sendCost\(stepCost\(round, 1, \{[^}]*answers: null/);
+    expect(onShoot).toContain('sendCost(stepCost(round, step,');
+  });
+});
