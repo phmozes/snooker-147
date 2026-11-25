@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Look Options</title>
+<!-- Night 3, task 4: four looks for the real table, at the fixed game camera C with balls drawn at 1.4x.
+     Open from the dev server: http://192.168.1.111:5181/docs/look-options.html (it uses the game's own table
+     geometry and camera code). Nothing here is used by the game. Every texture is drawn in code (no image files);
+     the only library is Three.js (MIT), see docs/ASSETS.md. -->
+<style>
+  :root { --bg: #0f1513; --panel: #18211e; --line: #2b3a35; --text: #e8efe9; --muted: #9db0a7; --on: #e7c35a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.35 system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 10px 16px 6px; }
+  h1 { font-size: 16px; margin: 0 0 6px; letter-spacing: .04em; }
+  .tabs { display: flex; gap: 8px; }
+  .tabs button { flex: 1; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel);
+    color: var(--text); font-size: 18px; font-weight: 700; }
+  .tabs button.on { border-color: var(--on); color: var(--on); }
+  #desc { min-height: 2.7em; margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+  #desc b { color: var(--text); }
+  main { flex: 1; position: relative; min-height: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>147 · LOOK OPTIONS (camera C, balls 1.4x)</h1>
+  <div class="tabs" id="tabs"></div>
+  <p id="desc"></p>
+</header>
+<main><canvas id="c"></canvas></main>
+<script>window.onerror = (m) => { document.getElementById("desc").textContent = "Error: " + m; };</script>
+<script type="module">
+import * as THREE from 'three';
+import { buildTable, arcPoints } from '/src/core/table/geometry.ts';
+import { newFrame } from '/src/core/rules.ts';
+import { fitCamera } from '/src/view/camera.ts';
+import { CONFIG } from '/src/config/game.config.ts';
+
+const table = buildTable();
+const hw = table.halfWidth, hl = table.halfLength, R = table.ballRadius, S = 1.4; // balls drawn at 1.4x
+const V = CONFIG.view3d;
+
+// a mid-round layout: 15-red pack opened a little, colours on their spots, cue ball in the baulk half
+const balls = newFrame(15, table).balls.map((b, i) => {
+  if (b.kind === 'red' && i % 4 === 1) return { ...b, pos: { x: b.pos.x + (i % 8 < 4 ? -0.18 : 0.21), y: b.pos.y - 0.25 - (i % 3) * 0.12 } };
+  if (b.kind === 'cue') return { ...b, pos: { x: 0.22, y: -0.62 } };
+  return b;
+});
+
+const OPTIONS = {
+  A: { name: 'Classic club', line: 'Deep green wool cloth, dark mahogany rails, leather pockets, one warm lamp over the table (soft vignette).',
+    bg: '#0b0907', cloth: '#1c6a37', clothNoise: 0.07, cushion: '#1a6133', wood: '#4a2412', woodGrain: true, pocket: 'leather',
+    lights: 'lamp', ball: 'gloss', fog: true },
+  B: { name: 'TV tournament', line: 'Bright tournament green, black walnut rails, black net pockets, even canopy light from above, crisp shadows.',
+    bg: '#05070a', cloth: '#2a8f45', clothNoise: 0.035, cushion: '#278541', wood: '#2a1a12', woodGrain: true, pocket: 'net',
+    lights: 'canopy', ball: 'gloss', fog: false },
+  C: { name: 'Modern slate', line: 'Blue-grey cloth, matt graphite rails with a thin light edge, chrome pocket rims, cool soft light.',
+    bg: '#0d1117', cloth: '#2f5d7c', clothNoise: 0.045, cushion: '#2b5672', wood: '#30343a', woodGrain: false, pocket: 'chrome',
+    lights: 'cool', ball: 'satin', fog: false },
+  D: { name: 'Flat casual', line: 'Flat cartoon look: bright cloth, light oak rails, bold ball colours with outlines, no shadows, very light to draw.',
+    bg: '#16301f', cloth: '#35a85a', clothNoise: 0, cushion: '#2e9650', wood: '#c48a4e', woodGrain: false, pocket: 'flat',
+    lights: 'flat', ball: 'toon', fog: false },
+};
+const BALL = { cue: '#f6f3e8', red: '#c8161d', yellow: '#f4c430', green: '#14804a', brown: '#7a4a24', blue: '#1f5fcf', pink: '#f58fb0', black: '#0d0d0d' };
+
+// ---------- procedural textures (drawn in code, no image files) ----------
+function noiseTexture(base, amount, size = 256, grain = false) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, size, size);
+  const img = g.getImageData(0, 0, size, size); const d = img.data;
+  let seed = 12345; const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const i = (y * size + x) * 4;
+    let n = (rnd() - 0.5) * amount * 255;
+    if (grain) n += Math.sin(y * 0.11 + Math.sin(x * 0.02) * 3) * 14 + Math.sin(y * 0.53) * 5;
+    d[i] += n; d[i + 1] += n * 0.8; d[i + 2] += n * 0.6;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+function vignette(strength) { // a soft dark ring on the cloth, as under a single lamp
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'); const gr = g.createRadialGradient(128, 128, 40, 128, 128, 180);
+  gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, `rgba(0,0,0,${strength})`);
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+  return new THREE.CanvasTexture(c);
+}
+
+// ---------- scene ----------
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+let scene = null, camera = null, current = 'A';
+
+function build(id) {
+  const O = OPTIONS[id];
+  const sc = new THREE.Scene();
+  sc.background = new THREE.Color(O.bg);
+  renderer.shadowMap.enabled = O.lights !== 'flat';
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMappingExposure = O.lights === 'lamp' ? 1.05 : O.lights === 'flat' ? 1.0 : 1.15;
+  const flat = O.ball === 'toon';
+  const M = (color, extra = {}) => flat ? new THREE.MeshToonMaterial({ color, ...extra }) : new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...extra });
+
+  // cloth
+  const clothTex = O.clothNoise ? noiseTexture(O.cloth, O.clothNoise, 256) : null;
+  if (clothTex) clothTex.repeat.set(6, 12);
+  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(2 * hw + 0.1, 2 * hl + 0.1), M(clothTex ? '#ffffff' : O.cloth, clothTex ? { map: clothTex, roughness: 0.95 } : { roughness: 0.95 }));
+  cloth.receiveShadow = true; sc.add(cloth);
+  if (O.fog) { const v = new THREE.Mesh(new THREE.PlaneGeometry(2 * hw, 2 * hl), new THREE.MeshBasicMaterial({ map: vignette(0.45), transparent: true, depthWrite: false })); v.position.z = 0.0005; sc.add(v); }
+
+  // wooden frame (outer body) and top rails
+  const woodTex = O.woodGrain ? noiseTexture(O.wood, 0.05, 256, true) : null;
+  const woodMat = M(woodTex ? '#ffffff' : O.wood, woodTex ? { map: woodTex, roughness: 0.45, metalness: 0.0 } : { roughness: O.pocket === 'chrome' ? 0.6 : 0.5 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2 * (hw + V.rim), 2 * (hl + V.rim), 0.06), woodMat);
+  body.position.z = -0.031; body.receiveShadow = true; sc.add(body);
+  const railH = 0.045;
+  const rail = (x, y, w, h) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, railH), woodMat); m.position.set(x, y, railH / 2 - 0.004); m.castShadow = m.receiveShadow = true; sc.add(m); };
+  const inner = 0.05, outer = V.rim; // rails sit behind the cushions, leaving the pocket corners open
+  const gapC = 0.11, gapM = 0.08;
+  for (const sx of [-1, 1]) { // long sides, two pieces each (middle pockets)
+    const len = hl - gapC - gapM;
+    for (const sy of [-1, 1]) rail(sx * (hw + inner + (outer - inner) / 2), sy * (gapM + len / 2), outer - inner, len);
+  }
+  for (const sy of [-1, 1]) rail(0, sy * (hl + inner + (outer - inner) / 2), 2 * (hw - gapC), outer - inner);
+  if (O.pocket === 'chrome') { // thin light edge along the rails
+    const edge = new THREE.MeshStandardMaterial({ color: '#cfd6de', metalness: 0.9, roughness: 0.25 });
+    for (const sx of [-1, 1]) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.006, 2 * hl - 0.3, 0.004), edge); m.position.set(sx * (hw + outer - 0.01), 0, railH); sc.add(m); }
+  }
+
+  // cushions: the real faces from the physics table, covered in cloth (slightly darker than the bed)
+  const cushMat = M(O.cushion, { roughness: 0.9 });
+  const wall = (a, b, n) => {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(dx, dy), V.cushionDepth, V.cushionHeight), cushMat);
+    m.position.set((a.x + b.x) / 2 - n.x * V.cushionDepth / 2, (a.y + b.y) / 2 - n.y * V.cushionDepth / 2, V.cushionHeight / 2);
+    m.rotation.z = Math.atan2(dy, dx); m.castShadow = m.receiveShadow = true; sc.add(m);
+  };
+  for (const s of [...table.cushions, ...table.throatWalls]) wall(s.a, s.b, s.normal);
+  for (const j of table.jaws) {
+    const pts = arcPoints(j, j.start, j.start + j.sweep, V.jawPieces);
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i]; const mid = { x: (a.x + b.x) / 2 - j.centre.x, y: (a.y + b.y) / 2 - j.centre.y }; const l = Math.hypot(mid.x, mid.y);
+      wall(a, b, { x: mid.x / l, y: mid.y / l });
+    }
+  }
+
+  // pockets
+  for (const p of table.pockets) {
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(p.captureRadius, 40), new THREE.MeshBasicMaterial({ color: O.pocket === 'net' ? '#000000' : '#060504' }));
+    hole.position.set(p.captureCentre.x, p.captureCentre.y, 0.0012); sc.add(hole);
+    const rimMat = O.pocket === 'leather' ? new THREE.MeshStandardMaterial({ color: '#2a1609', roughness: 0.55 })
+      : O.pocket === 'net' ? new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.7 })
+      : O.pocket === 'chrome' ? new THREE.MeshStandardMaterial({ color: '#d9dee5', metalness: 1, roughness: 0.18 })
+      : new THREE.MeshToonMaterial({ color: '#1b1b1b' });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(p.captureRadius + 0.006, O.pocket === 'chrome' ? 0.006 : 0.011, 10, 40), rimMat);
+    ring.position.set(p.captureCentre.x, p.captureCentre.y, 0.004); ring.castShadow = true; sc.add(ring);
+    if (O.pocket === 'net') { // a hint of net: a dark grid inside the hole
+      const g = new THREE.Mesh(new THREE.RingGeometry(0.01, p.captureRadius * 0.95, 24, 3), new THREE.MeshBasicMaterial({ color: '#1d1d1d', wireframe: true }));
+      g.position.set(p.captureCentre.x, p.captureCentre.y, 0.0015); sc.add(g);
+    }
+  }
+
+  // balls
+  const geo = new THREE.SphereGeometry(R, 40, 28);
+  for (const b of balls) {
+    const c = BALL[b.kind];
+    const mat = O.ball === 'gloss' ? new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05 })
+      : O.ball === 'satin' ? new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.3, clearcoat: 0.5, clearcoatRoughness: 0.25 })
+      : new THREE.MeshToonMaterial({ color: c });
+    const m = new THREE.Mesh(geo, mat);
+    m.scale.setScalar(S); m.position.set(b.pos.x, b.pos.y, R * S); m.castShadow = true; sc.add(m);
+    if (flat) { // outline: a slightly bigger dark back-face sphere
+      const o = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: '#0b1a10', side: THREE.BackSide }));
+      o.scale.setScalar(S * 1.09); o.position.copy(m.position); sc.add(o);
+      const blob = new THREE.Mesh(new THREE.CircleGeometry(R * S * 0.95, 20), new THREE.MeshBasicMaterial({ color: '#000', transparent: true, opacity: 0.22 }));
+      blob.position.set(b.pos.x + 0.006, b.pos.y - 0.008, 0.001); sc.add(blob);
+    }
+  }
+
+  // lighting
+  const shadowLight = (light, size) => {
+    light.castShadow = true; light.shadow.mapSize.set(1024, 2048); light.shadow.bias = -0.0005;
+    const cam = light.shadow.camera; if (cam.isOrthographicCamera) { cam.left = -size; cam.right = size; cam.top = size * 2; cam.bottom = -size * 2; }
+    cam.near = 0.5; cam.far = 6;
+  };
+  if (O.lights === 'lamp') {
+    sc.add(new THREE.HemisphereLight('#ffe7c2', '#1a0f08', 0.35));
+    const lamp = new THREE.SpotLight('#ffd9a0', 22, 6, 0.66, 0.7, 1.2); lamp.position.set(0, 0, 2.6); lamp.target.position.set(0, 0, 0);
+    shadowLight(lamp); lamp.shadow.radius = 4; sc.add(lamp, lamp.target);
+  } else if (O.lights === 'canopy') {
+    sc.add(new THREE.AmbientLight('#ffffff', 0.35));
+    for (const y of [-1.2, 0, 1.2]) { const d = new THREE.DirectionalLight('#ffffff', 0.9); d.position.set(0, y, 3); d.target.position.set(0, y, 0); if (y === 0) shadowLight(d, 1.1); sc.add(d, d.target); }
+  } else if (O.lights === 'cool') {
+    sc.add(new THREE.HemisphereLight('#cfe4ff', '#20262e', 0.9));
+    const d = new THREE.DirectionalLight('#e6f0ff', 1.5); d.position.set(0.6, -0.8, 3); shadowLight(d, 1.1); d.shadow.radius = 6; sc.add(d);
+  } else {
+    sc.add(new THREE.AmbientLight('#ffffff', 1.4));
+    const d = new THREE.DirectionalLight('#ffffff', 1.4); d.position.set(0.5, -0.5, 3); sc.add(d);
+  }
+  return sc;
+}
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  const fit = fitCamera(table, 'C', w / h); // the game's fixed camera C, fitted to this screen
+  camera = new THREE.PerspectiveCamera(fit.fov, w / h, 0.05, 50);
+  camera.up.set(0, 0, 1); camera.position.set(...fit.position); camera.lookAt(new THREE.Vector3(...fit.lookAt));
+  draw();
+}
+function draw() { if (scene && camera) renderer.render(scene, camera); }
+function show(id) {
+  current = id;
+  if (scene) scene.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.map?.dispose(); o.material.dispose(); } });
+  scene = build(id);
+  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
+  document.getElementById('desc').innerHTML = `<b>${id} · ${OPTIONS[id].name}</b> — ${OPTIONS[id].line}`;
+  draw();
+}
+const tabs = document.getElementById('tabs');
+for (const id of Object.keys(OPTIONS)) { const b = document.createElement('button'); b.textContent = id; b.dataset.id = id; b.onclick = () => show(id); tabs.appendChild(b); }
+window.addEventListener('resize', resize);
+show(OPTIONS[location.hash.slice(1)] ? location.hash.slice(1) : 'A'); resize();
+</script>
+</body>
+</html>
