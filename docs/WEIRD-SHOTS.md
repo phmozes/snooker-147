@@ -25,6 +25,12 @@ Review 2026-11-25 (solver 4.9, old p, OLDP=1; details bench/results/marks-diag.t
 - reds6-362783338:5 red jaw rattle: 16 deg cut, 1.25 m to the red, 0.48 m to the middle pocket, slow (1.9 m/s): a believable
   near-pot by the numbers. The step-4 black left the cue ball behind the black, so the only natural success was a 39 deg red.
 
+Task 4.10 (solver 4.10, 2026-11-25; replays on the old library, old p where marked):
+- reds15-3634511757:10-11: FIXED. Step 9 red now to a middle pocket; step 10 a plain blue to a middle pocket; step 11 a plain red.
+- reds15-2927609577:8 and :15: NOT CHANGED. Step 7 has one usable red only (every finish leaves the black as a pink-moving pack cannon).
+- reds10-165926990:14: FIXED. Step 13 a different red; step 14 a plain black (no long blue, the yellow stays); step 15 a plain red.
+- reds15-912620600:6 and :9: NOT CHANGED. Step 5 has one usable red only; step 9 (plant) follows a black at step 8, not the blue.
+
 | Time | Round code | Step | Ball | Outcome | Shot type | Length | Level | Solver |
 |---|---|---|---|---|---|---|---|---|
 | 2026-11-24 21:29 | reds15-3804251161 | 10 | black | success | plain | 5.22 s | reds15 | 4.7b |

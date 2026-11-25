@@ -1,11 +1,10 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Decide a limit for pink/black movement after the break (bench/results/pink-black.txt: 316 of 1200 breaks move one > 30 cm, mostly 6 reds).
-- Decide on the long-blue pattern (WEIRD-SHOTS.md review 2026-11-25): fix the red before it (position for black/pink) or accept.
+- Review solver 4.10 on the phone (long blue after a red; docs/SOLVER.md task 4.10). Keep marking weird shots.
 - Close the old dev servers on 5174 / 5180 (they started before vite.config.ts existed).
 ## Claude's turn (after the owner's review)
-- RTP option 3c applied (docs/RTP-OPTION3.md). Solver 4.9 approved; only owner-marked shots get fixed now.
+- RTP 3c applied. Solver 4.10 done (2 of 4 long-blue marks fixed; the other 2 have one red only). Only owner-marked shots get fixed.
 - Left in 4.7/4.8: hard cannons and long colour pots, shots over 3.5 s, cuts over 50 deg (mostly fallback shots).
 - Pace (owner 2026-11-24): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort. docs/SPEED.md.
 - Measure: bench/results/night/run.sh <tag> (60 rounds x 3 levels, about 4 min), sum.mjs prints one line per level.
