@@ -1,0 +1,21 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+solver 4.11
+reds15-2764519739:2: black success; {"target":"black","pocket":"topLeft","dir":{"x":-0.542165491619939,"y":0.016246386843202343},"speed":2.450389559155243,"spin":-0.3,"duration":1.2979166666666786,"computeMs":0,"tried":758,"score":5.34558174768932,"nextCost":1.1182758035788112,"cueEnd":{"x":-0.1006664718867893,"y":1.2052588486473315},"type":"plain","natural":0.4618917801908058,"whyNot":null,"lookahead":"ok","nextNatural":false}
+  flex log: []
+  position: pocket topLeft cut 18 deg, cue->ball 0.59 m, ball->pocket 0.95 m; cue not behind the black; cue ends (-0.10,1.21)
+  strict check: plain -> NATURAL (cue ball rolls 0.28 m after contact, 0 cushions)
+  before: cue(0.591,1.426) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(-0.000,0.878) black(0.000,1.460) red1(-0.004,0.931) red2(-0.055,0.974) red3(0.044,0.976) red4(-0.052,1.034) red5(0.001,1.037) red6(0.096,1.009) red7(-0.098,1.071) red8(-0.026,1.083) red9(0.047,1.090) red10(0.442,0.886) red11(-0.409,0.650) red12(-0.067,1.127) red13(0.107,1.215) red14(0.131,1.107)
+reds15-2764519739:3: red plainMiss; {"target":"red11","pocket":"middleLeft","dir":{"x":-0.27582758855805894,"y":-0.5143623064267734},"speed":1.8972136591515114,"spin":-0.8,"duration":2.139583333333372,"computeMs":0,"tried":1,"kind":"plainMiss","fallback":null,"type":"attempt","natural":0,"whyNot":null,"score":2.139583333333372,"nextCost":null,"cueEnd":{"x":-0.3579210598403961,"y":0.673168748211145}}
+  flex log: []
+  before: cue(-0.101,1.205) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(-0.000,0.878) red1(-0.004,0.931) red2(-0.055,0.974) red3(0.044,0.976) red4(-0.052,1.034) red5(0.001,1.037) red6(0.096,1.009) red7(-0.098,1.071) red8(-0.026,1.083) red9(0.047,1.090) red10(0.442,0.886) red11(-0.409,0.650) red12(-0.067,1.127) red13(0.107,1.215) red14(0.131,1.107) black(0.000,1.460)
+reds15-942643257:15: red plainMiss; {"target":"black","pocket":"topLeft","dir":{"x":0.050143131633780154,"y":0.022304373909692643},"speed":0.4,"spin":0,"duration":0.6062499999999985,"computeMs":0,"tried":1,"kind":"plainMiss","fallback":"softFoul","type":"softFoul","natural":0,"whyNot":"fallback","score":0.6062499999999985,"nextCost":null,"cueEnd":{"x":-0.04784979352062976,"y":1.4392157353078696}}
+  flex log: []
+  before: cue(-0.050,1.438) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red1(0.008,0.893) red2(-0.075,0.992) red3(0.025,0.979) red5(-0.007,1.036) red6(0.052,1.038) red8(-0.040,1.085) red9(0.024,1.083) red15(0.094,1.072) pink(0.000,1.130) blue(0.000,0.000) black(0.000,1.460)
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  00:33:55
+   Duration  15.90s (tests 99%, transform 1%)
+

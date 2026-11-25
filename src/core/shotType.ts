@@ -152,6 +152,7 @@ export interface PlayFacts extends ShotFacts {
   duration: number; // seconds until every ball stopped
   cueTravel: number; // metres the cue ball rolled after its first contact with a ball
   after: Ball[]; // balls on the table at the end
+  strikeSpeed?: number; // m/s the cue ball was struck at (solver 4.11; unknown in some reports)
 }
 
 /**
@@ -170,6 +171,7 @@ export function naturalCheck(type: ShotType, f: PlayFacts): string | null {
   if (f.cueTravel > N.maxCueTravel) return `cue ball runs ${f.cueTravel.toFixed(1)} m`;
   if (type === 'packCannon' && f.events.some((e) => e.type === 'ball' && e.t > t0 && (e.a === 'cue' || e.b === 'cue') &&
     (e.a === 'cue' ? e.b : e.a) !== f.potted && e.speed > N.packCannonSpeed)) return 'hard cannon into the pack';
+  if (type === 'packCannon' && f.target !== 'red' && f.strikeSpeed !== undefined && f.strikeSpeed > N.packCannonColourStrikeMax) return 'colour struck hard into the pack';
   for (const b of f.state) {
     if (b.kind === 'cue' || b.id === f.potted) continue;
     const a = f.after.find((x) => x.id === b.id);
