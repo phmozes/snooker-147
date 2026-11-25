@@ -13,6 +13,16 @@ Night review 2026-11-24 (solver 4.8a, positional play around the black; details 
 - reds15-1877393965:11 (long red to a baulk-end corner from behind the black): broke rules 1 and 2 (the black before left
   the cue ball behind the black). Now the cue ball stays in front and the red goes in a middle pocket. FIXED.
 
+Review 2026-11-25 (solver 4.9, old p, OLDP=1; details bench/results/marks-diag.txt; no solver change yet):
+- reds15-3634511757:10 blue long: after the step-9 red (plain) the cue ball sat near the black; black only by a hard pack
+  cannon that leaves no red, pink had no path at all, so the pick fell to the blue (in time, red reachable). Cause: step-9 position.
+- reds15-3634511757:11 red cannon 53 deg: yes, the long blue left the cue ball mid-table with no red open (the blue's lookahead
+  already said "next red not natural"; it was the only colour that kept a red at all).
+- reds15-2927609577:8 blue long: black only by a pack cannon that disturbs the pink (not natural), pink no path; blue long, next red natural.
+- reds15-2927609577:15 red cannon 49 deg: follows a natural pink at step 14 (not the blue) that left no red open.
+- reds6-362783338:5 red jaw rattle: 16 deg cut, 1.25 m to the red, 0.48 m to the middle pocket, slow (1.9 m/s): a believable
+  near-pot by the numbers. The step-4 black left the cue ball behind the black, so the only natural success was a 39 deg red.
+
 | Time | Round code | Step | Ball | Outcome | Shot type | Length | Level | Solver |
 |---|---|---|---|---|---|---|---|---|
 | 2026-11-24 21:29 | reds15-3804251161 | 10 | black | success | plain | 5.22 s | reds15 | 4.7b |

@@ -1,0 +1,14 @@
+reds15-3634511757:10: phase colour, cue (0.29,1.26), reds with an open pot 0
+  black: packCannon into topLeft, cut 17 deg, 2.31 s, whyNot hard cannon into the pack, next red: lookahead failed, natural undefined, locked false; cue ends (-0.30,0.72) (1 pairs)
+  pink: no shot (0 pairs, 0 tried)
+  blue: long into bottomLeft, cut 14 deg, 1.68 s, whyNot long, next red: lookahead ok, natural false, locked false; cue ends (0.26,-0.26) (2 pairs)
+reds15-3634511757:11: phase red, cue (0.26,-0.26), reds with an open pot 0
+  red: cannon into topRight, cut 53 deg, 2.68 s, whyNot cannon, next red: lookahead ok, natural true, locked false; cue ends (-0.15,1.43) (1 pairs)
+reds15-2927609577:8: phase colour, cue (-0.22,1.43), reds with an open pot 0
+  black: packCannon into topRight, cut 16 deg, 2.29 s, whyNot pink disturbed, next red: lookahead ok, natural true, locked false; cue ends (-0.31,0.75) (1 pairs)
+  pink: no shot (0 pairs, 0 tried)
+  blue: long into bottomRight, cut 18 deg, 1.83 s, whyNot long, next red: lookahead ok, natural true, locked false; cue ends (-0.42,0.01) (2 pairs)
+reds15-2927609577:15: phase red, cue (0.12,0.25), reds with an open pot 0
+  red: cannon into topRight, cut 49 deg, 2.01 s, whyNot cannon, next red: lookahead ok, natural true, locked false; cue ends (-0.11,1.36) (1 pairs)
+reds6-362783338:5: phase red, cue (-0.10,1.52), reds with an open pot 1
+  red: plain into topLeft, cut 39 deg, 1.46 s, whyNot none, next red: lookahead ok, natural true, locked false; cue ends (0.17,1.46) (4 pairs)
