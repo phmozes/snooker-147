@@ -14,7 +14,6 @@
 - Always give the owner the dev address printed in the terminal (port 5173 is used by another project).
 
 ## Waiting on others: nothing.
-
 ## Later
 - LAUNCH BLOCKER: Before real money: outcomes decided on a server (seed never in the browser), and a way for players to verify fairness afterwards.
 - Owner idea (not now): rare bonus for a 147 maximum. Must keep RTP 97%; colour choice or a blocked black must never change money by accident. Needs its own design + RTP calc.
