@@ -1,13 +1,12 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Review F.1 fairness proof (docs/FAIRNESS.md). Decide RTP: keep rounded-down multipliers, option 3 or option 3b (docs/RTP-OPTION3.md).
-- On the phone, task 4.9: ?seed=reds6-136, reds10-80, reds6-297 (SHOOT every time; watch steps 2-3).
-- On the phone: try the TEST PANEL (≡ menu, dev only) and play rounds; flag weird shots (docs/WEIRD-SHOTS.md).
-- Decide: more solver work (natural 87-88% at 6/15 reds, target 90%) or move on (5.4 replay by code, stage 6).
-
+- Phone: open http://192.168.1.111:5181 (new server; 5180 has no mark receiver). ≡ panel -> "Send list to PC" (sends all 11 marks).
+- Decide a limit for pink/black movement after the break (bench/results/pink-black.txt: 316 of 1200 breaks move one > 30 cm, mostly 6 reds).
+- Decide on the long-blue pattern (WEIRD-SHOTS.md review 2026-11-25): fix the red before it (position for black/pink) or accept.
+- Restart or close the old dev servers on 5174 / 5180 (they started before vite.config.ts existed).
 ## Claude's turn (after the owner's review)
-- Solver 4.9 (red position, config solver.natural.redPlay) paused until F.1 is reviewed. Open: larger 6/10-red check.
+- RTP option 3c applied (docs/RTP-OPTION3.md). Solver 4.9 approved; only owner-marked shots get fixed now.
 - Left in 4.7/4.8: hard cannons and long colour pots, shots over 3.5 s, cuts over 50 deg (mostly fallback shots).
 - Pace (owner 2026-11-24): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort. docs/SPEED.md.
 - Measure: bench/results/night/run.sh <tag> (60 rounds x 3 levels, about 4 min), sum.mjs prints one line per level.
