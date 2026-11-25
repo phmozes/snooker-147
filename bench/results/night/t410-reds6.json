@@ -1,0 +1,107 @@
+{
+ "reds6": {
+  "level": "reds6",
+  "position": {
+   "blackFromBehind": 3.6,
+   "redsBaulkCorner": 3.1,
+   "redsBaulkCornerFromBlackHalf": 2.3,
+   "cutMedian": 16.6,
+   "cutsOver50": 1.5,
+   "redCutMedian": 18.8,
+   "redCutsOver35": 19.8,
+   "redsFarFromBlackHalf": 11.5,
+   "redsNearSideCushion": 3.8,
+   "colourAfterRedComfy": 84.2,
+   "triedMedian": 502,
+   "triedMax": 6089,
+   "colourBlue": 20.6,
+   "colourLong": 11.5,
+   "longColourMoves": "0/19",
+   "redUnnaturalAfterLong": "2/13"
+  },
+  "rounds": 60,
+  "shots": 378,
+  "success": 325,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 85.5,
+  "naturalOld": 87.4,
+  "exhibition": 0.9,
+  "whyNot": {
+   "not a natural pot type": 41,
+   "pink disturbed": 5,
+   "over # s": 1
+  },
+  "byTarget": {
+   "colour:long:longerDuration": 10,
+   "red:long:normal": 1,
+   "red:long:longerDuration": 2,
+   "colour:long:normal": 11,
+   "red:long:rescue": 2,
+   "colour:cannon:rescue": 1,
+   "red:cannon:rescue": 1,
+   "colour:cannon:overLong": 2,
+   "red:cannon:normal": 2,
+   "red:cushionFirst:exhibition": 3,
+   "colour:cannon:longerDuration": 2,
+   "red:cannon:longerDuration": 2,
+   "colour:long:overLong": 1,
+   "red:cannon:overLong": 1
+  },
+  "pace": {
+   "red": {
+    "n": 131,
+    "median": 1.5,
+    "p90": 2.16,
+    "maxNotLastResort": 3.33,
+    "over35": 0
+   },
+   "colour": {
+    "n": 194,
+    "median": 1.58,
+    "p90": 2.14,
+    "maxNotLastResort": 4.83,
+    "over35": 2
+   }
+  },
+  "types": {
+   "plain": 257,
+   "softCannon": 5,
+   "packCannon": 22,
+   "long": 27,
+   "cannon": 11,
+   "cushionFirst": 3
+  },
+  "fails": {
+   "plainMiss": 33,
+   "jawRattle": 15,
+   "jawRattle->softFoul": 2,
+   "plainMiss->softFoul": 1,
+   "inOff->plainMiss": 2
+  },
+  "colours": {
+   "black": 123,
+   "pink": 26,
+   "blue": 38
+  },
+  "median": 1.562500000000025,
+  "within15": 44,
+  "over22": 22,
+  "flex": {
+   "longerDuration": 150,
+   "overLong": 17,
+   "rescue": 8,
+   "wideSearch": 7,
+   "noLookahead": 1,
+   "exhibition": 3
+  },
+  "examples": "reds6-276:9,reds6-353:7,reds6-395:9",
+  "within25": 97.8,
+  "over35all": 2,
+  "blackMedian": 1.5687500000000254,
+  "fullPower": 17,
+  "solveMsMedian": 594,
+  "solveMsP90": 1526,
+  "solveMsMax": 6278
+ }
+}

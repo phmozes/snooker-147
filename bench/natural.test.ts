@@ -44,9 +44,14 @@ it('natural shots in real rounds', () => {
     const RP = { sideCushionM: 0.25, comfyCutDeg: 35, comfyDistM: 1.2 };
     const redCuts: number[] = []; let redsTop = 0; let farFromTop = 0; let nearSide = 0; let colAfterRed = 0; let comfy = 0;
     const triedPerStep: number[] = [];
+    // task 4.10 (owner 2026-11-25): colour shots that are blue / long, the red right after a long colour, long colours
+    // that move another ball (more than disturbFrom; the potted ball and the cue ball not counted)
+    let colShots = 0; let colBlue = 0; let colLong = 0; let colLongMoves = 0; let afterLong = 0; let afterLongUnnatural = 0;
+    let prevLongColour = false;
     const from = Number(process.env.SEED_FROM ?? 0); // more rounds in parallel chunks: SEED_FROM=60 N=60 ...
     for (let seed = from + 1; seed <= from + n; seed++) {
       let r = start(setLevel(newRound(seed * 7 + 3), level), provider, table);
+      prevLongColour = false;
       while (r.phase === 'decide') {
         const before = r.frame!;
         const t0 = performance.now();
@@ -59,7 +64,7 @@ it('natural shots in real rounds', () => {
         if (before.phase === 'colour') colours[h.target] = (colours[h.target] ?? 0) + 1;
         if (h.outcome === 'reRack') { reRacks++; success++; continue; }
         const s = h.shot as { dir: { x: number; y: number }; speed: number; spin: number; duration: number; fallback?: string | null; type?: string };
-        if (h.outcome !== 'success') { const k = `${h.outcome}${s.fallback ? `->${s.fallback}` : ''}`; fails[k] = (fails[k] ?? 0) + 1; continue; }
+        if (h.outcome !== 'success') { prevLongColour = false; const k = `${h.outcome}${s.fallback ? `->${s.fallback}` : ''}`; fails[k] = (fails[k] ?? 0) + 1; continue; }
         success++;
         const pf = playFacts(before.balls, s, table);
         const potted = pf.potted[0]!;
@@ -91,6 +96,20 @@ it('natural shots in real rounds', () => {
           if (h.target === 'red' && pk) { redPots++; if (pk.id === 'bottomLeft' || pk.id === 'bottomRight') { redBaulkCorner++; if (ball.pos.y > 0) redBaulkCornerFromTop++; } }
         }
         types[t] = (types[t] ?? 0) + 1;
+        const why410 = naturalCheck(t, { ...facts, duration: pf.duration, cueTravel: pf.cueTravel, after: pf.after });
+        if (h.target === 'red' && prevLongColour) { afterLong++; if (why410 !== null) afterLongUnnatural++; }
+        prevLongColour = false;
+        if (h.target !== 'red' && before.phase === 'colour') {
+          colShots++;
+          if (h.target === 'blue') colBlue++;
+          if (t === 'long') {
+            colLong++; prevLongColour = true;
+            const moves = before.balls.some((b) => b.id !== potted && b.kind !== 'cue' && (() => {
+              const a = pf.after.find((x) => x.id === b.id);
+              return !a || Math.hypot(a.pos.x - b.pos.x, a.pos.y - b.pos.y) > CONFIG.solver.natural.disturbFrom; })());
+            if (moves) colLongMoves++;
+          }
+        }
         const lv = provider.log.find((e) => e.roundCode === r.roundCode && e.step === h.step)?.level ?? 'normal';
         if (!NATURAL_TYPES.includes(t)) { const k = `${h.target === 'red' ? 'red' : 'colour'}:${t}:${lv}`; byTarget[k] = (byTarget[k] ?? 0) + 1; }
         const why = naturalCheck(t, { ...facts, duration: pf.duration, cueTravel: pf.cueTravel, after: pf.after });
@@ -111,7 +130,9 @@ it('natural shots in real rounds', () => {
       redsBaulkCornerFromBlackHalf: pc(redBaulkCornerFromTop, redPots), cutMedian: +med(cuts).toFixed(1), cutsOver50: pc(cuts.filter((c) => c > 50).length, cuts.length),
       redCutMedian: +med(redCuts).toFixed(1), redCutsOver35: pc(redCuts.filter((c) => c > 35).length, redCuts.length),
       redsFarFromBlackHalf: pc(farFromTop, redsTop), redsNearSideCushion: pc(nearSide, redPots), colourAfterRedComfy: pc(comfy, colAfterRed),
-      triedMedian: med(triedPerStep), triedMax: Math.max(0, ...triedPerStep) };
+      triedMedian: med(triedPerStep), triedMax: Math.max(0, ...triedPerStep),
+      colourBlue: pc(colBlue, colShots), colourLong: pc(colLong, colShots), longColourMoves: `${colLongMoves}/${colLong}`,
+      redUnnaturalAfterLong: `${afterLongUnnatural}/${afterLong}` };
     const row = {
       level, position, rounds: n, shots, success, reRacks, reRackPct: Math.round((reRacks / Math.max(1, success)) * 1000) / 10,
       natural: Math.round((strict / Math.max(1, played)) * 1000) / 10, naturalOld: share((t) => NATURAL_TYPES.includes(t as ShotType)),

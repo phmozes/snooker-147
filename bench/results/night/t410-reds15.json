@@ -1,0 +1,109 @@
+{
+ "reds15": {
+  "level": "reds15",
+  "position": {
+   "blackFromBehind": 1.4,
+   "redsBaulkCorner": 2.5,
+   "redsBaulkCornerFromBlackHalf": 2.5,
+   "cutMedian": 17.2,
+   "cutsOver50": 2,
+   "redCutMedian": 18,
+   "redCutsOver35": 17,
+   "redsFarFromBlackHalf": 20.5,
+   "redsNearSideCushion": 6.5,
+   "colourAfterRedComfy": 89.3,
+   "triedMedian": 522,
+   "triedMax": 3613,
+   "colourBlue": 16.7,
+   "colourLong": 3.4,
+   "longColourMoves": "0/8",
+   "redUnnaturalAfterLong": "0/7"
+  },
+  "rounds": 60,
+  "shots": 496,
+  "success": 441,
+  "reRacks": 0,
+  "reRackPct": 0,
+  "natural": 90.2,
+  "naturalOld": 91.2,
+  "exhibition": 2,
+  "whyNot": {
+   "not a natural pot type": 39,
+   "pink disturbed": 2,
+   "hard cannon into the pack": 1,
+   "over # s": 1
+  },
+  "byTarget": {
+   "red:cannon:longerDuration": 11,
+   "red:cushionFirst:exhibition": 5,
+   "colour:long:longerDuration": 6,
+   "red:plant:exhibition": 2,
+   "red:cannon:normal": 2,
+   "colour:cannon:overLong": 1,
+   "red:long:normal": 2,
+   "red:long:longerDuration": 2,
+   "red:long:overLong": 1,
+   "red:double:exhibition": 2,
+   "colour:long:normal": 3,
+   "colour:long:wideSearch": 1,
+   "red:long:wideSearch": 1
+  },
+  "pace": {
+   "red": {
+    "n": 200,
+    "median": 1.54,
+    "p90": 2.13,
+    "maxNotLastResort": 5.51,
+    "over35": 1
+   },
+   "colour": {
+    "n": 241,
+    "median": 1.62,
+    "p90": 2.13,
+    "maxNotLastResort": 3.96,
+    "over35": 1
+   }
+  },
+  "types": {
+   "packCannon": 88,
+   "plain": 283,
+   "softCannon": 31,
+   "cannon": 14,
+   "cushionFirst": 5,
+   "long": 16,
+   "plant": 2,
+   "double": 2
+  },
+  "fails": {
+   "plainMiss": 32,
+   "jawRattle": 16,
+   "wrongBallFirst->plainMiss": 1,
+   "jawRattle->plainMiss": 2,
+   "inOff->plainMiss": 2,
+   "jawRattle->softFoul": 1,
+   "inOff": 1
+  },
+  "colours": {
+   "black": 162,
+   "pink": 52,
+   "blue": 42
+  },
+  "median": 1.562500000000025,
+  "within15": 42,
+  "over22": 20,
+  "flex": {
+   "longerDuration": 223,
+   "exhibition": 9,
+   "wideSearch": 13,
+   "overLong": 13
+  },
+  "examples": "reds15-87:9,reds15-115:9,reds15-185:9,reds15-269:9,reds15-269:11,reds15-283:9,reds15-283:25,reds15-318:17,reds15-409:15",
+  "within25": 98,
+  "over35all": 4,
+  "blackMedian": 1.7041666666666988,
+  "fullPower": 26,
+  "solveMsMedian": 575,
+  "solveMsP90": 1314,
+  "solveMsMax": 5019
+ }
+}

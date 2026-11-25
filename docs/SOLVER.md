@@ -284,3 +284,20 @@ corners, median cut, cuts over 50 deg. Results: docs/REVIEW.md "Night".
   shot leaves no ball pottable for the next step (its lookahead failed), doubles and spray are tried too, and the first
   that leaves a ball pottable by any shot wins; if none does, the first found is played anyway. Shot cap: success
   includes 3 checks (one shot plus one search per next ball each).
+
+## Task 4.10 (2026-11-25): red leaves a natural black or pink; long colours do not disturb other balls
+Config solver.natural.topColour. Red planning: a red whose finish leaves neither a natural black nor a natural pink
+(natural pot AND a natural red after it, as the auto pick checks) costs noNaturalCost 3.0 more; red candidates are kept
+up to that much further from the best; if no checked red leaves one, up to 4 more are checked. A long colour pot that
+moves another ball costs longDisturbCost 3.0 more. Benchmark (60 rounds per level, new break library, new p;
+before = topColour.enabled false; bench/results/night/pre410-*, t410-*):
+| level | natural % | exhibition % | RE-RACK | median s | >3.5 s (not last resort) | tried median / max | colour shots blue / long % | unnatural red after a long colour | long colours that move a ball |
+|---|---|---|---|---|---|---|---|---|---|
+| reds6 before | 82.5 | 1.2 | 0 | 1.57 | 2 (2) | 413 / 5748 | 20.0 / 13.9 | 6 of 16 | 1 of 23 |
+| reds6 after | 85.5 | 0.9 | 0 | 1.56 | 2 (2) | 502 / 6089 | 20.6 / 11.5 | 2 of 13 | 0 of 19 |
+| reds10 before | 89.8 | 0.8 | 0 | 1.54 | 1 (1) | 468 / 3496 | 16.1 / 7.0 | 2 of 10 | 0 of 14 |
+| reds10 after | 91.9 | 0.8 | 0 | 1.54 | 0 (0) | 548 / 3496 | 12.1 / 3.5 | 1 of 6 | 0 of 7 |
+| reds15 before | 87.5 | 1.6 | 0 | 1.55 | 3 (2) | 425 / 3332 | 18.0 / 5.6 | 4 of 10 | 1 of 13 |
+| reds15 after | 90.2 | 2.0 | 0 | 1.56 | 4 (2) | 522 / 3613 | 16.7 / 3.4 | 0 of 7 | 0 of 8 |
+Kept: natural % up at every level, RE-RACK 0, pace the same (median within 0.01 s; shots over 3.5 s outside the last
+resort unchanged), max cost +6% / 0% / +8% (limit 30%); median cost about +20%.

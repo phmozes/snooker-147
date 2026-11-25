@@ -96,6 +96,7 @@ export function nextShotCost(cue: Vec2, balls: Ball[], next: BallKind, table: Ta
 
 const BP = NAT.blackPlay;
 const RP = NAT.redPlay;
+const TC = NAT.topColour;
 /**
  * Task 4.9 (owner 2026-11-25): how good the next RED looks from `cue` (after a colour). A small, comfortable angle into a
  * near pocket (black-end corner first, then middle), the cue ball not on a side cushion, and the cue ball's natural
@@ -243,7 +244,8 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
   // a colour while reds remain: plan two shots ahead (more candidates, a wider margin; every candidate is checked)
   const planRed = state.phase === 'red' && NAT.planReds; // night round 2: a red is planned two shots ahead too
   const plan = ((state.phase === 'colour' && state.redsLeft > 0 && NAT.planColours) || planRed) && nexts.length > 0 && (opts.lookahead ?? Sv.lookahead > 0);
-  const M = opts.rescue ? Sv.rescue.margin : plan ? NAT.planMargin : Sv.lookaheadMargin; // rescue: keep far more candidates
+  // task 4.10: a red keeps candidates up to noNaturalCost further, so a red that leaves a natural black / pink can win
+  const M = opts.rescue ? Sv.rescue.margin : plan ? NAT.planMargin + (planRed && NAT.topColour.enabled ? NAT.topColour.noNaturalCost : 0) : Sv.lookaheadMargin;
   let tried = 0;
   const half = (aimSamples - 1) / 2;
   // One simulated shot. 'miss' = it did not pot the target (the next aim point across the mouth may);
@@ -306,7 +308,13 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     const whyNot = naturalCheck(type, { state: state.balls, target, potted: v.potted, aimedPocket: pocket, events: sim.events, table,
       duration, cueTravel: travel, after });
     if (opts.naturalOnly && whyNot !== null) return 'done';
-    const natural = pairCost + powerCost(speed) + typeCost(type) + closed + (whyNot && NATURAL_TYPES.includes(type) ? NAT.unnaturalPlayCost : 0);
+    // task 4.10: a long colour pot must not send the cue ball into another ball (like a yellow off its spot)
+    const longMoves = TC.enabled && target !== 'red' && type === 'long' && state.balls.some((b) => {
+      if (b.kind === 'cue' || b.id === v.potted) return false;
+      const a = after.find((x) => x.id === b.id);
+      return !a || Math.hypot(a.pos.x - b.pos.x, a.pos.y - b.pos.y) > NAT.disturbFrom;
+    }) ? TC.longDisturbCost : 0;
+    const natural = pairCost + powerCost(speed) + typeCost(type) + closed + longMoves + (whyNot && NATURAL_TYPES.includes(type) ? NAT.unnaturalPlayCost : 0);
     const score = duration + over + dead + (opts.weight ?? Sv.position.weight) * (cost + locked) + NAT.weight * natural;
     if (best && score >= best.score + M) return 'done';
     const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
@@ -364,7 +372,12 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       if (order.every((o) => Math.hypot(o.cueEnd.x - c.cueEnd.x, o.cueEnd.y - c.cueEnd.y) >= Sv.lookaheadSpread)) order.push(c);
     }
     let planned: { shot: SolvedShot; total: number; natural: boolean } | null = null;
-    for (const c of order) {
+    // task 4.10: in red planning, is the black or the pink natural after the best planned red? If no checked red leaves
+    // one, a few more reds are checked (cue ball stopping elsewhere)
+    let plannedTop = false;
+    const extra = planRed && TC.enabled ? cands.filter((x) => x.score < best!.score + M && !order.includes(x)).sort((a, b) => a.score - b.score) : [];
+    for (let oi = 0; oi < order.length; oi++) {
+      const c = order[oi]!;
       tried++; // simulating where this candidate leaves the balls is one more shot
       const sim = createSim(state.balls, table, cfg);
       strike(sim, 'cue', c.dir, c.speed, c.spin);
@@ -390,14 +403,41 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
       if (plan) {
         // two shots ahead (task 4.7): really solve the red after this colour, with position play, and score the pair
         // (after a red: each auto colour, black / pink / blue, with its extra position cost)
+        let mine: { total: number; natural: boolean } | null = null;
+        let top = false; // black or pink natural after this red (task 4.10)
         for (const n of planRed ? nexts : [{ kind: 'red' as BallKind, extra: 0 }]) {
           const i: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
           const s = solveSuccess(nextState, n.kind, table, now, cfg, Sv.lookaheadShots, i,
             { lookahead: false, maxDuration: CONFIG.shot.maxDurationFlex, redPlay: !planRed || RP.inRedLookahead });
           tried += i.tried;
           if (!s) continue;
+          // the auto pick (RULES B.3) takes the black or pink only if it is natural AND leaves a natural red: check that
+          if (planRed && TC.enabled && !top && s.whyNot === null && (n.kind === 'black' || n.kind === 'pink')) {
+            const sim2 = createSim(nextState.balls, table, cfg);
+            strike(sim2, 'cue', s.dir, s.speed, s.spin);
+            runUntilStill(sim2);
+            tried++;
+            const f2 = sim2.events.find((e) => e.type === 'ball');
+            const fh2 = f2 && f2.type === 'ball' ? (f2.a === 'cue' ? f2.b : f2.a) : null;
+            const s3 = applyShot(nextState, n.kind, { firstHit: fh2, potted: sim2.balls.filter((b) => b.potted).map((b) => b.id),
+              after: sim2.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: { ...b.pos } })) }, table);
+            const i3: SolveInfo = { pairs: 0, tried: 0, timedOut: false };
+            const red = solveSuccess(s3, 'red', table, now, cfg, TC.redCheckShots, i3,
+              { position: false, lookahead: false, firstFound: true, maxDuration: CONFIG.shot.maxDurationFlex, naturalOnly: true });
+            tried += i3.tried;
+            if (red) top = true;
+          }
           const total = c.score + NAT.planWeight * (s.score + n.extra + (s.whyNot === null ? 0 : NAT.unnaturalPlayCost));
-          if (!planned || total < planned.total) planned = { shot: c, total, natural: s.whyNot === null };
+          if (!mine || total < mine.total) mine = { total, natural: s.whyNot === null };
+        }
+        if (mine) {
+          const total = mine.total + (planRed && TC.enabled && !top ? TC.noNaturalCost : 0);
+          if (!planned || total < planned.total) { planned = { shot: c, total, natural: mine.natural }; plannedTop = top; }
+        }
+        // no checked red leaves a natural black or pink yet: check a few more (spread apart like the first ones)
+        if (oi === order.length - 1 && planRed && TC.enabled && !plannedTop && order.length < Sv.lookaheadCandidates + TC.extraCandidates) {
+          const more = extra.find((x) => !order.includes(x) && order.every((o) => Math.hypot(o.cueEnd.x - x.cueEnd.x, o.cueEnd.y - x.cueEnd.y) >= Sv.lookaheadSpread));
+          if (more) order.push(more);
         }
         continue;
       }

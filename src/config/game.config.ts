@@ -125,7 +125,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.9',            // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.10',           // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -243,6 +243,14 @@ export const CONFIG = {
         returnCost: 1.0,           // ... else this cost
         maxCost: 1.0,              // cap on far pocket + side cushion + return (x position weight 3 = a long pot's cost)
         inRedLookahead: false,     // also in a red's look-ahead (the colour after it)? false: there the colour comes first
+      },
+      // task 4.10 (owner 2026-11-25): a red that leaves no natural black or pink (the auto pick then plays a long blue)
+      topColour: {
+        enabled: true,
+        noNaturalCost: 3.0,        // red planning: added when neither the black nor the pink is natural after this red
+        extraCandidates: 4,        // ... and if none of the checked reds leaves one, this many more reds are checked
+        redCheckShots: 60,         // ... natural means: natural pot AND a natural red after it (like the auto pick); budget of that check
+        longDisturbCost: 3.0,      // a long colour pot that moves another ball (more than disturbFrom) costs this much more
       },
       // RULES B.3 (owner 2026-11-24): auto colour = the first of these with a natural shot; else black
       autoColours: ['black', 'pink', 'blue'],
