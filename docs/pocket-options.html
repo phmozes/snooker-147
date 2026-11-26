@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Pocket Options</title>
+<!-- Pocket drawing options for look A (classic club), camera C, balls 1.4x. Mockup only: nothing here is used by
+     the game and the physics is not changed. Every drawn pocket edge is built from the game's own physics table
+     (buildTable: jaw arcs, throat walls, slate-cut circle), so the drawn opening is the physics opening.
+     Open from the dev server: http://192.168.1.111:5181/docs/pocket-options.html
+     Everything is drawn in code (no image files); the only library is Three.js (MIT), see docs/ASSETS.md. -->
+<style>
+  :root { --bg: #0f1513; --panel: #18211e; --line: #2b3a35; --text: #e8efe9; --muted: #9db0a7; --on: #e7c35a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.35 system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 16px 8px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 16px; margin: 0 0 6px; letter-spacing: .04em; }
+  h2 { font-size: 13px; letter-spacing: .08em; color: var(--muted); font-weight: 600; margin: 18px 16px 6px; }
+  .tabs { display: flex; gap: 8px; }
+  .tabs button, .mini button { flex: 1; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel);
+    color: var(--text); font-size: 16px; font-weight: 700; }
+  .tabs button.on, .mini button.on { border-color: var(--on); color: var(--on); }
+  .mini { display: flex; gap: 8px; margin: 0 16px 6px; }
+  .mini button { height: 36px; font-size: 14px; font-weight: 600; }
+  #desc { margin: 8px 0 0; color: var(--muted); font-size: 14px; min-height: 2.7em; }
+  #desc b { color: var(--text); }
+  .view { display: block; width: calc(100% - 32px); margin: 0 16px; border-radius: 10px; background: #000; }
+  .row3 { display: flex; gap: 6px; margin: 0 16px; }
+  .row3 figure { flex: 1; margin: 0; min-width: 0; }
+  .row3 canvas { display: block; width: 100%; border-radius: 8px; background: #000; }
+  .row3 figcaption { text-align: center; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .note { margin: 8px 16px 0; color: var(--muted); font-size: 13px; }
+  footer { height: 32px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>147 · POCKET OPTIONS (look A, camera C, balls 1.4x)</h1>
+  <div class="tabs" id="tabs"></div>
+  <p id="desc"></p>
+</header>
+<h2>CORNER POCKET (CLOSE-UP)</h2>
+<div class="mini" id="cornerPick"></div>
+<canvas class="view" id="vCorner"></canvas>
+<p class="note">Red: just potted (its centre is over the hole, so the physics drops it). Yellow: touching the rounded jaw (a rattle).
+  Blue: resting on the bed just in front of the drop.</p>
+<h2>MIDDLE POCKET (CLOSE-UP)</h2>
+<canvas class="view" id="vMiddle"></canvas>
+<h2>WHOLE TABLE (CAMERA C)</h2>
+<canvas class="view" id="vTable"></canvas>
+<h2>SIDE BY SIDE · CORNER</h2>
+<div class="row3" id="cmpCorner"></div>
+<h2>SIDE BY SIDE · MIDDLE</h2>
+<div class="row3" id="cmpMiddle"></div>
+<footer></footer>
+<script>window.onerror = (m) => { document.getElementById("desc").textContent = "Error: " + m; };</script>
+<script type="module">
+import * as THREE from 'three';
+import { buildTable, arcPoints } from '/src/core/table/geometry.ts';
+import { newFrame } from '/src/core/rules.ts';
+import { fitCamera } from '/src/view/camera.ts';
+import { CONFIG } from '/src/config/game.config.ts';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const table = buildTable();
+const hw = table.halfWidth, hl = table.halfLength, R = table.ballRadius, S = 1.4; // balls drawn at 1.4x
+const V = CONFIG.view3d, TC = CONFIG.table;
+const A = { bg: '#0b0907', cloth: '#1c6a37', oldCushion: '#1a6133', wood: '#4a2412' }; // look A colours (look-options.html)
+
+// Drawn heights (m). Rail top highest, cushion top a little lower, bed at 0, hole below the bed.
+const H = { cushion: 0.040, rail: 0.050, plate: 0.0045, pit: 0.10, railBottom: -0.002, skirt: -0.10 };
+const CW = 0.05; // cushion width, nose to rail (drawing only)
+// Pocket opening in the rail (drawing only). db = depth (from the mouth, along the throat) where the cushion ends and
+// the round back of the hole starts. Plate: inner edge = the rail cut; outer edge = a circle (centre depth pc, radius pr),
+// starting at depth da.
+const DRAW = { corner: { db: 0.07, da: 0.0, pc: 0.04, pr: 0.15 }, middle: { db: 0.0, da: -0.02, pc: -0.03, pr: 0.14 } };
+
+const OPTIONS = {
+  P1: { name: 'Brass plates', line: 'Polished brass pocket plates on the rail, a dark net hint inside the hole. Corner plate: long U along the throat; middle plate: a half-round cap.', plate: 'brass', inside: 'net' },
+  P2: { name: 'Leather plates', line: 'Dark brown leather pocket covers on the rail, a leather bag inside the hole. Same shapes as P1.', plate: 'leather', inside: 'leather' },
+  Before: { name: 'Current drawing', line: 'Today\'s look A: darker cushion strip up to the hole, cushion ends drawn past the rail, flat black disc with a ring on top.' },
+};
+const BALL = { cue: '#f6f3e8', red: '#c8161d', yellow: '#f4c430', green: '#14804a', brown: '#7a4a24', blue: '#1f5fcf', pink: '#f58fb0', black: '#0d0d0d' };
+
+// ---------- pocket shapes, in the pocket's own frame: d = depth along the throat (0 = narrowest point, + = into the
+// pocket), l = sideways (+ = jaw on one side; the other side is the mirror image) ----------
+const byId = Object.fromEntries(table.pockets.map((p) => [p.id, p]));
+function pocketShapes(p) {
+  const pc = p.kind === 'corner' ? TC.corner : TC.middle, D = DRAW[p.kind];
+  const r = pc.jawRadius, m2 = (pc.mouth + TC.mouthExtra) / 2, w = CW;
+  const sweep = p.kind === 'corner' ? Math.PI / 4 : Math.PI / 2;
+  const u = p.inward, v = { x: -u.y, y: u.x }, O = p.mouthMid;
+  const W = ([d, l]) => ({ x: O.x + d * u.x + l * v.x, y: O.y + d * u.y + l * v.y });
+  const hwid = (d) => (d >= 0 ? m2 : m2 + r - Math.sqrt(Math.max(0, r * r - d * d)));
+  const ff = p.fallFront, Rc = p.captureRadius, dc = ff + Rc;
+  const chw = (d) => Math.sqrt(Math.max(0, Rc * Rc - (d - dc) ** 2));
+  let lo = ff, hi = dc; // depth where the hole edge meets the nose
+  for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (hwid(m) > chw(m)) lo = m; else hi = m; }
+  const dS = (lo + hi) / 2, db = D.db, N = 24;
+  if (db < dS || db < 0) throw new Error(`pocket ${p.id}: db ${db} must be >= ${dS.toFixed(3)} and >= 0`);
+  const arc = (t0, t1, rad) => Array.from({ length: N + 1 }, (_, i) => { const t = t0 + (t1 - t0) * i / N; return [-rad * Math.sin(t), m2 + r - rad * Math.cos(t)]; });
+  const mir = (pts) => pts.map(([d, l]) => [d, -l]);
+  const rev = (pts) => [...pts].reverse();
+  const noseFrom = (a, b) => (a < 0 ? [...arc(Math.asin(-a / r), 0, r), ...(b > 0 ? [[b, m2]] : [])] : [[a, m2], [b, m2]]);
+  const semi = (a0, a1, rad, cd = db) => Array.from({ length: N + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / N; return [cd + rad * Math.cos(a), rad * Math.sin(a)]; });
+  // bed edge: nose from the tangent point to where the hole starts, the front of the hole, the other nose
+  const sideA = dS < 0 ? arc(sweep, Math.asin(-dS / r), r) : [...arc(sweep, 0, r), [dS, m2]];
+  const phiS = Math.atan2(hwid(dS), dS - dc);
+  const front = Array.from({ length: 2 * N + 1 }, (_, i) => { const f = phiS + (2 * Math.PI - 2 * phiS) * i / (2 * N); return [dc + Rc * Math.cos(f), Rc * Math.sin(f)]; });
+  const bed = [...sideA, ...front.slice(1, -1), ...rev(mir(sideA))];
+  // the hole as seen from above: front of the slate cut, the noses, a round back
+  const sideIn = noseFrom(dS, db);
+  const pit = [...front, ...mir(sideIn).slice(1), ...semi(-Math.PI / 2, Math.PI / 2, m2).slice(1, -1), ...rev(sideIn).slice(0, -1)];
+  const frontCount = front.length;
+  // cushion end (one side): nose from the tangent point to db, back edge offset by the cushion width
+  const bandFront = [...arc(sweep, 0, r), ...(db > 0 ? [[db, m2]] : [])];
+  const bandBack = [...(db > 0 ? [[db, m2 + w]] : []), ...arc(0, sweep, r - w)];
+  const band = [...bandFront, ...bandBack];
+  // rail edge around the pocket: back of the cushion, the cushion end, round back of the hole, other side
+  const railSide = [...arc(sweep, 0, r - w), ...(db > 0 ? [[db, m2 + w]] : []), [db, m2]];
+  const rail = [...railSide, ...semi(Math.PI / 2, -Math.PI / 2, m2).slice(1, -1), ...rev(mir(railSide))];
+  // pocket plate on the rail top
+  const da = D.da, ta = da < 0 ? Math.asin(-da / (r - w)) : 0;
+  const plateSide = [...(da >= 0 ? [[da, m2 + w]] : arc(ta, 0, r - w)), ...(db > 0 ? [[db, m2 + w]] : []), [db, m2]];
+  const a0 = Math.atan2(Math.sqrt(D.pr * D.pr - (da - D.pc) ** 2), da - D.pc);
+  const plate = [...plateSide, ...semi(Math.PI / 2, -Math.PI / 2, m2).slice(1, -1), ...rev(mir(plateSide)), ...semi(-a0, a0, D.pr, D.pc)];
+  // self-check: the drawn jaw noses lie exactly on the physics jaw circles
+  for (const [d, l] of arc(sweep, 0, r)) for (const s of [1, -1]) {
+    const q = W([d, s * l]);
+    const err = Math.min(...table.jaws.filter((j) => j.pocket === p.id).map((j) => Math.abs(Math.hypot(q.x - j.centre.x, q.y - j.centre.y) - r)));
+    if (err > 1e-9) throw new Error(`pocket ${p.id}: drawn jaw is ${err} m off the physics jaw`);
+  }
+  // demo balls (physics positions; drawn 1.4x)
+  const tY = sweep * 0.55, ny = [-Math.sin(tY), -Math.cos(tY)], nose = [-r * Math.sin(tY), m2 + r - r * Math.cos(tY)];
+  const demo = [
+    { kind: 'red', pos: W([ff + 0.010, -0.014]), z: R * S - 0.014 },
+    { kind: 'yellow', pos: W([nose[0] + R * ny[0], nose[1] + R * ny[1]]), z: R * S },
+    { kind: 'blue', pos: W([ff - 0.20, -0.07]), z: R * S },
+  ];
+  const toW = (pts) => pts.map(W);
+  return { p, W, bed: toW(bed), pit: toW(pit), frontCount, bands: [toW(band), toW(mir(band))], rail: toW(rail), plate: toW(plate), demo };
+}
+const shapes = table.pockets.map(pocketShapes);
+// walk round the table (anticlockwise) so the pocket paths join up along the straight cushions
+shapes.sort((a, b) => Math.atan2(a.p.mouthMid.y, a.p.mouthMid.x) - Math.atan2(b.p.mouthMid.y, b.p.mouthMid.x));
+shapes.forEach((s, i) => {
+  const next = shapes[(i + 1) % shapes.length].p.mouthMid, b = s.bed;
+  const dEnd = Math.hypot(b[b.length - 1].x - next.x, b[b.length - 1].y - next.y), dStart = Math.hypot(b[0].x - next.x, b[0].y - next.y);
+  if (dStart < dEnd) { s.bed.reverse(); s.rail.reverse(); }
+});
+const v2 = (pts) => pts.map((q) => new THREE.Vector2(q.x, q.y));
+
+// ---------- procedural textures (drawn in code, no image files) ----------
+function noiseTexture(base, amount, size = 256, grain = false) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, size, size);
+  const img = g.getImageData(0, 0, size, size); const d = img.data;
+  let seed = 12345; const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const i = (y * size + x) * 4;
+    let n = (rnd() - 0.5) * amount * 255;
+    if (grain) n += Math.sin(y * 0.11 + Math.sin(x * 0.02) * 3) * 14 + Math.sin(y * 0.53) * 5;
+    d[i] += n; d[i + 1] += n * 0.8; d[i + 2] += n * 0.6;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+function vignette(strength) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'); const gr = g.createRadialGradient(128, 128, 40, 128, 128, 180);
+  gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, `rgba(0,0,0,${strength})`);
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+  return new THREE.CanvasTexture(c);
+}
+function insideTexture(kind) { // bottom of the hole: a dark net grid or dark leather
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = kind === 'net' ? '#050505' : '#140a05'; g.fillRect(0, 0, 128, 128);
+  if (kind === 'net') {
+    g.strokeStyle = '#2a2a2a'; g.lineWidth = 2;
+    for (let i = -128; i < 256; i += 16) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 128, 128); g.stroke(); g.beginPath(); g.moveTo(i + 128, 0); g.lineTo(i, 128); g.stroke(); }
+  } else {
+    const gr = g.createRadialGradient(64, 64, 4, 64, 64, 70); gr.addColorStop(0, 'rgba(60,32,14,.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// ---------- shared parts of every scene ----------
+const layout = newFrame(15, table).balls.map((b, i) => {
+  if (b.kind === 'red' && i % 4 === 1) return { ...b, pos: { x: b.pos.x + (i % 8 < 4 ? -0.18 : 0.21), y: b.pos.y - 0.25 - (i % 3) * 0.12 } };
+  if (b.kind === 'cue') return { ...b, pos: { x: 0.22, y: -0.62 } };
+  return b;
+}).map((b) => ({ kind: b.kind, pos: b.pos, z: R * S }));
+const demoPockets = ['topLeft', 'bottomLeft', 'middleLeft'];
+const balls = [...layout, ...shapes.filter((s) => demoPockets.includes(s.p.id)).flatMap((s) => s.demo)];
+
+function addBalls(sc) {
+  const geo = new THREE.SphereGeometry(R, 40, 28);
+  for (const b of balls) {
+    const m = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({ color: BALL[b.kind], roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05 }));
+    m.scale.setScalar(S); m.position.set(b.pos.x, b.pos.y, b.z); m.castShadow = true; sc.add(m);
+  }
+}
+const LAMP_ANGLE = 0.8; // look A lamp cone, widened 0.66 -> 0.8 (all three options) so the corner pockets are lit
+function addLamp(sc) { // look A: one warm lamp over the table
+  sc.add(new THREE.HemisphereLight('#ffe7c2', '#1a0f08', 0.35));
+  const lamp = new THREE.SpotLight('#ffd9a0', 22, 6, LAMP_ANGLE, 0.7, 1.2); lamp.position.set(0, 0, 2.6); lamp.target.position.set(0, 0, 0);
+  lamp.castShadow = true; lamp.shadow.mapSize.set(2048, 2048); lamp.shadow.bias = -0.0005; lamp.shadow.radius = 4;
+  lamp.shadow.camera.near = 0.5; lamp.shadow.camera.far = 6; sc.add(lamp, lamp.target);
+}
+const clothTex = () => { const t = noiseTexture(A.cloth, 0.07, 256); t.repeat.set(3.4, 3.4); return t; }; // uv = metres
+const woodTex = () => { const t = noiseTexture(A.wood, 0.05, 256, true); t.repeat.set(0.6, 0.6); return t; };
+
+// ---------- new drawing (P1, P2) ----------
+function buildNew(id) {
+  const O = OPTIONS[id];
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(A.bg);
+  const clothMat = new THREE.MeshStandardMaterial({ map: clothTex(), roughness: 0.95 }); // ONE cloth for bed and cushions
+  const woodMat = new THREE.MeshStandardMaterial({ map: woodTex(), roughness: 0.45 });
+
+  // bed: one piece, cloth right up to the front edge of every hole
+  const bedShape = new THREE.Shape(v2(shapes.flatMap((s) => s.bed)));
+  const bedGeo = new THREE.ShapeGeometry(bedShape, 12);
+  const bed = new THREE.Mesh(bedGeo, clothMat); bed.receiveShadow = true; sc.add(bed);
+  const vt = vignette(0.45); vt.repeat.set(1 / (2 * hw), 1 / (2 * hl)); vt.offset.set(0.5, 0.5);
+  const vig = new THREE.Mesh(bedGeo, new THREE.MeshBasicMaterial({ map: vt, transparent: true, depthWrite: false })); vig.position.z = 0.0005; sc.add(vig);
+
+  // cushions: straight ones between pockets + the rounded ends, all the same cloth, all inside the rail
+  const extrude = (pts, depth, mat, z0) => {
+    const m = new THREE.Mesh(new THREE.ExtrudeGeometry(new THREE.Shape(v2(pts)), { depth, bevelEnabled: false, curveSegments: 12 }), mat);
+    m.position.z = z0; m.castShadow = m.receiveShadow = true; sc.add(m); return m;
+  };
+  shapes.forEach((s, i) => {
+    const n = shapes[(i + 1) % shapes.length];
+    extrude([s.bed[s.bed.length - 1], n.bed[0], n.rail[0], s.rail[s.rail.length - 1]], H.cushion, clothMat, 0);
+    for (const b of s.bands) extrude(b, H.cushion, clothMat, 0);
+  });
+
+  // rail: one wooden frame, cut away at each pocket
+  const outer = new THREE.Shape(v2([{ x: -hw - V.rim, y: -hl - V.rim }, { x: hw + V.rim, y: -hl - V.rim }, { x: hw + V.rim, y: hl + V.rim }, { x: -hw - V.rim, y: hl + V.rim }]));
+  outer.holes.push(new THREE.Path(v2(shapes.flatMap((s) => s.rail))));
+  const railMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(outer, { depth: H.rail - H.railBottom, bevelEnabled: false }), woodMat);
+  railMesh.position.z = H.railBottom; railMesh.castShadow = railMesh.receiveShadow = true; sc.add(railMesh);
+  // outer skirt of the table body (only near the outside edge, so it never shows inside a hole)
+  const skirt = new THREE.Shape(outer.getPoints());
+  const e = V.rim - 0.03; skirt.holes.push(new THREE.Path(v2([{ x: -hw - e, y: -hl - e }, { x: hw + e, y: -hl - e }, { x: hw + e, y: hl + e }, { x: -hw - e, y: hl + e }])));
+  const skirtMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(skirt, { depth: H.railBottom - H.skirt, bevelEnabled: false }), woodMat);
+  skirtMesh.position.z = H.skirt; sc.add(skirtMesh);
+
+  // pocket plates on the rail top
+  const plateMat = O.plate === 'brass'
+    ? new THREE.MeshStandardMaterial({ color: '#a9822f', metalness: 1, roughness: 0.32, envMap: brassEnv(), envMapIntensity: 0.35 })
+    : new THREE.MeshStandardMaterial({ color: '#160c07', roughness: 0.42 }); // near-black leather, so it stands out from the mahogany
+  for (const s of shapes) extrude(s.plate, H.plate, plateMat, H.rail);
+
+  // holes: below the bed, dark walls getting darker downwards, net or leather at the bottom
+  const inTex = insideTexture(O.inside); inTex.repeat.set(14, 14);
+  for (const s of shapes) {
+    const pts = s.pit, zs = [0, -0.012, -0.035, -H.pit];
+    const top = (i) => (i < s.frontCount ? [0.05, 0.16, 0.08] : O.inside === 'net' ? [0.07, 0.06, 0.05] : [0.17, 0.09, 0.04]);
+    const below = [[0.03, 0.05, 0.03], [0.012, 0.012, 0.01], [0.004, 0.004, 0.004]];
+    const pos = [], col = [];
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      const ca = [top(i), ...below], cb = [top((i + 1) % pts.length), ...below];
+      for (let k = 0; k < zs.length - 1; k++) {
+        const quad = [[a, zs[k], ca[k]], [b, zs[k], cb[k]], [b, zs[k + 1], cb[k + 1]], [a, zs[k], ca[k]], [b, zs[k + 1], cb[k + 1]], [a, zs[k + 1], ca[k + 1]]];
+        for (const [q, z, c] of quad) { pos.push(q.x, q.y, z); col.push(...c); }
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    sc.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })));
+    const bottom = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape(v2(pts))), new THREE.MeshBasicMaterial({ map: inTex }));
+    bottom.position.z = -H.pit; sc.add(bottom);
+  }
+  addBalls(sc); addLamp(sc);
+  return sc;
+}
+
+// ---------- current drawing (copied from look-options.html, look A) ----------
+function buildBefore() {
+  const sc = new THREE.Scene(); sc.background = new THREE.Color(A.bg);
+  const M = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...extra });
+  const ct = noiseTexture(A.cloth, 0.07, 256); ct.repeat.set(6, 12);
+  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(2 * hw + 0.1, 2 * hl + 0.1), M('#ffffff', { map: ct, roughness: 0.95 }));
+  cloth.receiveShadow = true; sc.add(cloth);
+  const v = new THREE.Mesh(new THREE.PlaneGeometry(2 * hw, 2 * hl), new THREE.MeshBasicMaterial({ map: vignette(0.45), transparent: true, depthWrite: false })); v.position.z = 0.0005; sc.add(v);
+  const wt = noiseTexture(A.wood, 0.05, 256, true);
+  const woodMat = M('#ffffff', { map: wt, roughness: 0.45, metalness: 0.0 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2 * (hw + V.rim), 2 * (hl + V.rim), 0.06), woodMat);
+  body.position.z = -0.031; body.receiveShadow = true; sc.add(body);
+  const railH = 0.045;
+  const rail = (x, y, w, h) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, railH), woodMat); m.position.set(x, y, railH / 2 - 0.004); m.castShadow = m.receiveShadow = true; sc.add(m); };
+  const inner = 0.05, outer = V.rim, gapC = 0.11, gapM = 0.08;
+  for (const sx of [-1, 1]) { const len = hl - gapC - gapM; for (const sy of [-1, 1]) rail(sx * (hw + inner + (outer - inner) / 2), sy * (gapM + len / 2), outer - inner, len); }
+  for (const sy of [-1, 1]) rail(0, sy * (hl + inner + (outer - inner) / 2), 2 * (hw - gapC), outer - inner);
+  const cushMat = M(A.oldCushion, { roughness: 0.9 });
+  const wall = (a, b, n) => {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(dx, dy), V.cushionDepth, V.cushionHeight), cushMat);
+    m.position.set((a.x + b.x) / 2 - n.x * V.cushionDepth / 2, (a.y + b.y) / 2 - n.y * V.cushionDepth / 2, V.cushionHeight / 2);
+    m.rotation.z = Math.atan2(dy, dx); m.castShadow = m.receiveShadow = true; sc.add(m);
+  };
+  for (const s of [...table.cushions, ...table.throatWalls]) wall(s.a, s.b, s.normal);
+  for (const j of table.jaws) {
+    const pts = arcPoints(j, j.start, j.start + j.sweep, V.jawPieces);
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i]; const mid = { x: (a.x + b.x) / 2 - j.centre.x, y: (a.y + b.y) / 2 - j.centre.y }; const l = Math.hypot(mid.x, mid.y);
+      wall(a, b, { x: mid.x / l, y: mid.y / l });
+    }
+  }
+  for (const p of table.pockets) {
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(p.captureRadius, 40), new THREE.MeshBasicMaterial({ color: '#060504' }));
+    hole.position.set(p.captureCentre.x, p.captureCentre.y, 0.0012); sc.add(hole);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(p.captureRadius + 0.006, 0.011, 10, 40), new THREE.MeshStandardMaterial({ color: '#2a1609', roughness: 0.55 }));
+    ring.position.set(p.captureCentre.x, p.captureCentre.y, 0.004); ring.castShadow = true; sc.add(ring);
+  }
+  addBalls(sc); addLamp(sc);
+  return sc;
+}
+
+// ---------- views: one renderer, copied into each canvas ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+let envTex = null; // reflections for the brass only (a generated room, no image file)
+function brassEnv() { if (!envTex) { const pm = new THREE.PMREMGenerator(renderer); envTex = pm.fromScene(new RoomEnvironment(), 0.04).texture; } return envTex; }
+const scenes = { P1: buildNew('P1'), P2: buildNew('P2'), Before: buildBefore() };
+
+function cameraC(aspect) {
+  const fit = fitCamera(table, 'C', aspect);
+  const cam = new THREE.PerspectiveCamera(fit.fov, aspect, 0.05, 50);
+  cam.up.set(0, 0, 1); cam.position.set(...fit.position); cam.lookAt(new THREE.Vector3(...fit.lookAt));
+  return cam;
+}
+// close-up: same viewing direction as camera C on that pocket (from the C camera position), just nearer
+function closeUp(pocketId, aspect, dist) {
+  const s = shapes.find((x) => x.p.id === pocketId);
+  const t = s.W([0.03, 0]); const target = new THREE.Vector3(t.x, t.y, 0);
+  const c = cameraC(390 / 600).position.clone();
+  const cam = new THREE.PerspectiveCamera(38, aspect, 0.02, 20); cam.up.set(0, 0, 1);
+  cam.position.copy(target).add(c.sub(target).normalize().multiplyScalar(dist)); cam.lookAt(target);
+  return cam;
+}
+function paint(canvas, scene, makeCam, aspect) {
+  const w = canvas.clientWidth, h = Math.round(w / aspect);
+  const pr = renderer.getPixelRatio();
+  canvas.style.height = h + 'px'; canvas.width = Math.round(w * pr); canvas.height = Math.round(h * pr);
+  renderer.setSize(w, h, false);
+  renderer.render(scene, makeCam(aspect));
+  canvas.getContext('2d').drawImage(renderer.domElement, 0, 0, canvas.width, canvas.height);
+}
+
+let current = 'P1', corner = 'topLeft';
+const CORNERS = { topLeft: 'Far corner', bottomLeft: 'Near corner' };
+function drawAll() {
+  const sc = scenes[current];
+  paint(document.getElementById('vCorner'), sc, (a) => closeUp(corner, a, 0.62), 1);
+  paint(document.getElementById('vMiddle'), sc, (a) => closeUp('middleLeft', a, 0.62), 1);
+  paint(document.getElementById('vTable'), sc, (a) => cameraC(a), 390 / 600);
+  for (const [box, id] of [['cmpCorner', corner], ['cmpMiddle', 'middleLeft']])
+    document.querySelectorAll(`#${box} canvas`).forEach((c) => paint(c, scenes[c.dataset.id], (a) => closeUp(id, a, 0.62), 0.8));
+}
+function show(id) {
+  current = id;
+  document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
+  document.getElementById('desc').innerHTML = `<b>${id} · ${OPTIONS[id].name}</b> — ${OPTIONS[id].line}`;
+  drawAll();
+}
+const tabs = document.getElementById('tabs');
+for (const id of ['P1', 'P2', 'Before']) { const b = document.createElement('button'); b.textContent = id; b.dataset.id = id; b.onclick = () => show(id); tabs.appendChild(b); }
+const pick = document.getElementById('cornerPick');
+for (const [id, label] of Object.entries(CORNERS)) {
+  const b = document.createElement('button'); b.textContent = label; b.dataset.id = id;
+  b.onclick = () => { corner = id; pick.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.id === id)); drawAll(); };
+  b.classList.toggle('on', id === corner); pick.appendChild(b);
+}
+for (const box of ['cmpCorner', 'cmpMiddle']) for (const id of ['Before', 'P1', 'P2']) {
+  const f = document.createElement('figure'); f.innerHTML = `<canvas data-id="${id}"></canvas><figcaption>${id}</figcaption>`;
+  document.getElementById(box).appendChild(f);
+}
+let resizeTimer = 0;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawAll, 150); });
+show(OPTIONS[location.hash.slice(1)] ? location.hash.slice(1) : 'P1');
+window.__ready = true;
+</script>
+</body>
+</html>
