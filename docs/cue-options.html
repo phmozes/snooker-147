@@ -4,29 +4,31 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Cue Options</title>
-<!-- Cue stick options: C0 nothing (today), C1 full cue, C2 cue tip only, C3 impact flash. Mockup only: nothing here
-     is used by the game, and the physics, solver and timing are not changed. The ball movement on this page is a
-     simple hand-made animation (not the game's physics); only the cue is being judged.
+<!-- Cue stick look. The owner chose C1 (full cue); its motion and timing are fixed (0.25 s, only after SHOOT, same for
+     pot and miss, fades while the balls roll, raised butt). This page compares the LOOK: C1 new / C1 old / C0 nothing.
+     Mockup only: nothing here is used by the game, and the physics, solver and timing are not changed. The ball
+     movement on this page is a simple hand-made animation (not the game's physics); only the cue is being judged.
      Table = the approved drawing: look A with the T1 pockets, copied as-is from docs/pocket-options.html (the part
      between the two "COPIED" marks below), camera C, balls 1.4x.
      Open from the dev server: http://192.168.1.111:5181/docs/cue-options.html
      Everything is drawn in code (no image files); the only library is Three.js (MIT), see docs/ASSETS.md.
-     For a still picture: add ?shot=0..2&freeze=SECONDS (time since the SHOOT press) &miss=1, and #C0..#C3. -->
+     For a still picture: add ?shot=0..2&freeze=SECONDS (time since the SHOOT press) &miss=1, and #C0 #C1old #C1. -->
 <style>
   :root { --bg: #0f1513; --panel: #18211e; --line: #2b3a35; --text: #e8efe9; --muted: #9db0a7; --on: #e7c35a; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 15px/1.35 system-ui, sans-serif; }
-  body { display: flex; flex-direction: column; overflow: hidden; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.35 system-ui, sans-serif; }
+  .screen { height: 100vh; height: 100svh; min-height: 560px; max-height: 900px; display: flex; flex-direction: column; }
   header { padding: 8px 16px 6px; }
   h1 { font-size: 15px; margin: 0 0 6px; letter-spacing: .04em; }
+  h2 { font-size: 13px; letter-spacing: .08em; color: var(--muted); font-weight: 600; margin: 18px 16px 6px; }
   .tabs { display: flex; gap: 8px; }
   .tabs button { flex: 1; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel);
-    color: var(--text); font-size: 17px; font-weight: 700; }
+    color: var(--text); font-size: 16px; font-weight: 700; }
   .tabs button.on { border-color: var(--on); color: var(--on); }
   #desc { margin: 6px 0 0; color: var(--muted); font-size: 13px; min-height: 2.7em; }
   #desc b { color: var(--text); }
   main { flex: 1; position: relative; min-height: 0; background: #0b0907; }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  main canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   #shoot { position: absolute; left: 10px; top: 8px; padding: 5px 16px; border-radius: 999px;
     border: 1px solid #6b5a2a; background: rgba(20, 18, 12, .78); color: #b9a56a; font-weight: 800; letter-spacing: .12em; font-size: 13px;
     pointer-events: none; }
@@ -42,19 +44,32 @@
     color: var(--text); font-size: 13px; font-weight: 600; padding: 0 4px; }
   .shots button.on { border-color: var(--on); color: var(--on); }
   .shots button#again { flex: 1.15; background: #23302b; }
+  .still { display: block; width: calc(100% - 32px); margin: 0 16px; border-radius: 10px; background: #000; }
+  .note { margin: 8px 16px 0; color: var(--muted); font-size: 13px; }
+  .end { height: 32px; }
 </style>
 </head>
 <body>
-<header>
-  <h1>147 · CUE OPTIONS (mockup · look A, camera C, balls 1.4x)</h1>
-  <div class="tabs" id="tabs"></div>
-  <p id="desc"></p>
-</header>
-<main><canvas id="c"></canvas><div id="result"></div><div id="shoot">SHOOT</div></main>
-<footer>
-  <p id="time"></p>
-  <div class="shots" id="shots"></div>
-</footer>
+<div class="screen">
+  <header>
+    <h1>147 · CUE LOOK (mockup · look A, camera C, balls 1.4x)</h1>
+    <div class="tabs" id="tabs"></div>
+    <p id="desc"></p>
+  </header>
+  <main><canvas id="c"></canvas><div id="result"></div><div id="shoot">SHOOT</div></main>
+  <footer>
+    <p id="time"></p>
+    <div class="shots" id="shots"></div>
+  </footer>
+</div>
+<h2 id="stillTitle">CLOSE-UP (STILL) · THE CUE LYING ACROSS THE TABLE</h2>
+<canvas class="still" id="sWhole"></canvas>
+<p class="note">The butt reaches out past the rail, over the black background.</p>
+<h2>TIP END</h2>
+<canvas class="still" id="sTip"></canvas>
+<h2>BUTT END</h2>
+<canvas class="still" id="sButt"></canvas>
+<div class="end"></div>
 <script>window.onerror = (m) => { document.getElementById("desc").textContent = "Error: " + m; };</script>
 <script type="module">
 // ======== COPIED from docs/pocket-options.html (approved table: look A + T1 pockets). Do not edit here. ========
@@ -607,21 +622,29 @@ function buildNew(id) {
 
 // ================= cue mockup (everything below is this page's own) =================
 const RS = R * S; // drawn ball radius
-// Every number of the cue look and timing is here.
+// MOTION AND TIMING: approved by the owner with C1. Do not change these numbers.
 const CUE = {
-  length: 1.47, tipR: 0.0065, buttR: 0.019,      // m (a little thicker than a real cue, like the balls)
-  tipOnly: 0.30, tipSolid: 0.07,                 // C2: drawn length, and how much of it is fully solid before it fades
+  length: 1.47, tipR: 0.0065, buttR: 0.019,      // m. The OLD cue's thickness. Also used for the raised-butt angle of both cues.
   minElevation: 4, maxElevation: 40, clear: 0.006, // degrees; `clear` = air (m) between the cue and a rail or ball under it
   pull: 0.10,                                    // tip starts this far (m) behind the cue ball
   follow: 0.03, followTime: 0.12,                // tip goes on this far after the hit
   fadeOutDelay: 0.05, fadeOut: 0.35,             // after the hit, while the balls roll
-  flashTime: 0.16, flashSize: 5.5,               // C3
 };
+// LOOK of the new cue: every number is here.
+const LOOK = {
+  scale: 1.8,                        // thickness against a real cue (real: 10 mm tip, 29 mm butt). Old cue was 1.3x.
+  tip: 0.011, ferrule: 0.032,        // m from the tip end: blue tip up to `tip`, brass ferrule up to `ferrule`
+  pointsTop: 0.74, pointsBase: 1.10, // the four ebony points run from `pointsBase` up to `pointsTop` (m from the tip)
+  ring: [1.392, 1.406], cap: 1.452,  // brass ring and the dark end cap
+  glow: 0.10, rim: 0.55,             // own light of the wood (so the butt never goes black) and the lighter edge
+  shadow: { dark: 0.55, blur: 0.004, spread: 0.07 }, // darkness at the cloth, soft edge (m), extra soft edge per metre of height
+};
+const DIM = { old: { tipR: CUE.tipR, buttR: CUE.buttR }, new: { tipR: 0.005 * LOOK.scale, buttR: 0.0145 * LOOK.scale } };
+const radiusAt = (kind, s) => DIM[kind].tipR + (DIM[kind].buttR - DIM[kind].tipR) * Math.min(1, s / CUE.length);
 const VARIANTS = {
-  C0: { name: 'Nothing (today)', line: 'The cue ball just starts to move.', appear: 0, stroke: 0 },
-  C1: { name: 'Full cue', line: 'The whole cue appears behind the cue ball, one short stroke, then it fades out while the balls roll.', appear: 0.06, stroke: 0.19, cue: 'full' },
-  C2: { name: 'Cue tip only', line: 'Only the last 30 cm of the cue, fading out towards the butt. One short stroke, then it fades out.', appear: 0.05, stroke: 0.15, cue: 'tip' },
-  C3: { name: 'No cue, impact flash', line: 'No cue. A small flash on the cue ball at the moment of the strike.', appear: 0, stroke: 0, flash: true },
+  C0: { label: 'C0', name: 'Nothing (today)', line: 'The cue ball just starts to move.', appear: 0, stroke: 0 },
+  C1old: { label: 'C1 old', name: 'Full cue, first drawing', line: 'The thin pale cue from the last round, for comparison.', appear: 0.06, stroke: 0.19, cue: 'old' },
+  C1: { label: 'C1 new', name: 'Full cue, new look', line: 'Thicker tapered cue: blue tip, brass ferrule, ash shaft with grain, ebony butt with four points and a brass ring, soft shadow. Same motion and timing.', appear: 0.06, stroke: 0.19, cue: 'new' },
 };
 for (const v of Object.values(VARIANTS)) { v.added = v.appear + v.stroke; if (v.added > 0.2501) throw new Error('cue action longer than 0.25 s'); }
 const TIMING = { before: 0.9, after: 0.9, press: 0.18, ballSpeed: 2.6 }; // s, s, s, m/s (hand-made, not the game's physics)
@@ -660,8 +683,9 @@ function planShot(shot) {
     if (i !== shot.obj && segDist(b.pos, O, P) < 2 * RS) throw new Error(shot.label + ': a ball is in the way of the object ball');
   }
   // cue elevation: the lowest angle (not under the minimum) that clears the cushion, the rail and any ball under the cue.
-  // The centre line of the cue always points at the middle of the cue ball.
-  const back = { x: -d.x, y: -d.y }, rAt = (s) => CUE.tipR + (CUE.buttR - CUE.tipR) * Math.min(1, s / CUE.length);
+  // The centre line of the cue always points at the middle of the cue ball. (Approved angles: worked out with the OLD
+  // thickness for both cues, so the new, thicker cue is raised exactly as before; it still clears everything by 3 mm.)
+  const back = { x: -d.x, y: -d.y }, rAt = (s) => radiusAt('old', s);
   let tan = Math.tan(CUE.minElevation * Math.PI / 180), why = 'flat';
   const need = (s, top, what) => { if (s < CUE.length) { const t = (top + rAt(s) + CUE.clear - RS) / s; if (t > tan) { tan = t; why = what; } } };
   need(exitAt(C, back, hw, hl), H.cushion, 'cushion'); need(exitAt(C, back, hw + CW, hl + CW), H.rail, 'rail');
@@ -696,48 +720,139 @@ const ballMesh = (kind) => { const m = new THREE.Mesh(ballGeo, new THREE.MeshPhy
   m.scale.setScalar(S); m.castShadow = true; scene.add(m); return m; };
 const otherMeshes = OTHERS.map((b) => ballMesh(b.kind)), cueBall = ballMesh('cue');
 
-// The cue: one turned shape (tip, ferrule, ash shaft, dark butt with a brass ring), coloured per point; drawn in code.
-function makeCue(kind) {
-  const L = kind === 'tip' ? CUE.tipOnly : CUE.length, e = 0.0002, rAt = (s) => CUE.tipR + (CUE.buttR - CUE.tipR) * s / CUE.length;
+// OLD cue (last round, unchanged): one turned shape coloured per point.
+function makeOldCue() {
+  const L = CUE.length, e = 0.0002, rAt = (s) => radiusAt('old', s);
   const stops = [0, 0.009 - e, 0.009 + e, 0.034 - e, 0.034 + e];
   for (let s = 0.06; s < L - 0.01; s += 0.03) stops.push(s);
-  if (kind === 'full') stops.push(1.02 - e, 1.02 + e, 1.035 - e, 1.035 + e);
+  stops.push(1.02 - e, 1.02 + e, 1.035 - e, 1.035 + e);
   stops.sort((a, b) => a - b); stops.push(L);
   const pts = [new THREE.Vector2(0, 0), ...stops.map((s) => new THREE.Vector2(rAt(s) * (s === 0 ? 0.8 : 1), s)), new THREE.Vector2(0, L)];
   const geo = new THREE.LatheGeometry(pts, 16);
   const pos = geo.attributes.position, col = new Float32Array(pos.count * 4), c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const s = pos.getY(i);
-    c.set(s < 0.009 ? '#3f6f8f' : s < 0.034 ? '#f1ead6' : kind === 'full' && s > 1.035 ? '#22130c' : kind === 'full' && s > 1.02 ? '#c9a24a' : '#dcb878');
-    const t = clamp01((s - CUE.tipSolid) / (L - CUE.tipSolid)), alpha = kind === 'tip' ? 1 - t * t * (3 - 2 * t) : 1;
-    col.set([c.r, c.g, c.b, alpha], i * 4);
+    c.set(s < 0.009 ? '#3f6f8f' : s < 0.034 ? '#f1ead6' : s > 1.035 ? '#22130c' : s > 1.02 ? '#c9a24a' : '#dcb878');
+    col.set([c.r, c.g, c.b, 1], i * 4);
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 4));
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, roughness: 0.35, side: THREE.DoubleSide, depthWrite: kind === 'full' });
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, roughness: 0.35, side: THREE.DoubleSide });
   const m = new THREE.Mesh(geo, mat); m.visible = false; m.renderOrder = 5; scene.add(m); return m;
 }
-const cues = { full: makeCue('full'), tip: makeCue('tip') };
-const flash = (() => { // C3: a soft white burst, drawn in code
-  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
-  const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,246,214,0.85)'); gr.addColorStop(0.6, 'rgba(255,228,150,0.25)'); gr.addColorStop(1, 'rgba(255,220,130,0)');
-  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false, toneMapped: false, blending: THREE.AdditiveBlending }));
-  s.visible = false; s.renderOrder = 6; scene.add(s); return s;
-})();
 
+// NEW cue. Its skin is painted in code: across the picture = round the cue, down the picture = from the tip to the butt.
+function cueSkin() {
+  const W = 128, Hh = 2048, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+  const g = c.getContext('2d'), y = (s) => s / CUE.length * Hh;
+  let seed = 777; const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
+  const streaks = (n, y0, y1, rgb, a0, a1, l0, l1) => { for (let i = 0; i < n; i++) {
+    const x = rnd() * W, ys = y0 + rnd() * (y1 - y0), l = l0 + rnd() * (l1 - l0);
+    g.strokeStyle = `rgba(${rgb},${(a0 + rnd() * (a1 - a0)).toFixed(3)})`; g.lineWidth = 0.6 + rnd() * 1.4;
+    g.beginPath(); g.moveTo(x, ys); g.lineTo(x + (rnd() - 0.5) * 4, Math.min(y1, ys + l)); g.stroke(); } };
+  // shaft: pale ash, long fine grain lines and a few of the dark arrow marks ash is known for
+  g.fillStyle = '#e6c98f'; g.fillRect(0, 0, W, Hh);
+  streaks(230, 0, Hh, '168,118,58', 0.10, 0.30, 80, 420);
+  streaks(60, 0, Hh, '255,240,205', 0.10, 0.25, 60, 300);
+  for (let k = 0; k < 16; k++) {
+    const cx = rnd() * W, cy = y(0.10) + rnd() * (y(LOOK.pointsTop) - y(0.10)), w = 6 + rnd() * 7, h = 16 + rnd() * 26;
+    g.strokeStyle = `rgba(120,78,34,${(0.35 + rnd() * 0.25).toFixed(2)})`; g.lineWidth = 1.3;
+    for (let j = 0; j < 3; j++) { g.beginPath(); g.moveTo(cx - w, cy + j * 9); g.lineTo(cx, cy + j * 9 - h); g.lineTo(cx + w, cy + j * 9); g.stroke(); }
+  }
+  // butt: ebony, with four long points running up into the ash, each edged with a thin lighter veneer line
+  const base = y(LOOK.pointsBase), apex = y(LOOK.pointsTop), q = W / 4;
+  g.beginPath();
+  for (let k = 0; k < 4; k++) { g.moveTo(k * q, base + 1); g.lineTo((k + 0.5) * q, apex); g.lineTo((k + 1) * q, base + 1); }
+  g.rect(0, base, W, Hh - base);
+  g.fillStyle = '#2a1a13'; g.fill();
+  g.strokeStyle = 'rgba(176,112,52,0.95)'; g.lineWidth = 2.2; g.beginPath();
+  for (let k = 0; k < 4; k++) { g.moveTo(k * q, base); g.lineTo((k + 0.5) * q, apex); g.lineTo((k + 1) * q, base); }
+  g.stroke();
+  g.save(); g.beginPath();
+  for (let k = 0; k < 4; k++) { g.moveTo(k * q + 3, base); g.lineTo((k + 0.5) * q, apex + 24); g.lineTo((k + 1) * q - 3, base); }
+  g.rect(0, base, W, Hh - base); g.clip();
+  streaks(90, apex, Hh, '128,92,66', 0.10, 0.28, 60, 320); // faint lighter grain in the ebony
+  g.restore();
+  // brass ring near the end, and the dark end cap
+  const band = (s0, s1, stops) => { const gr = g.createLinearGradient(0, y(s0), 0, y(s1)); stops.forEach(([t, col]) => gr.addColorStop(t, col)); g.fillStyle = gr; g.fillRect(0, y(s0), W, y(s1) - y(s0)); };
+  band(LOOK.ring[0], LOOK.ring[1], [[0, '#8a6a24'], [0.35, '#f0d587'], [0.6, '#d3ab4c'], [1, '#7c5c1c']]);
+  band(LOOK.cap, CUE.length, [[0, '#6a5444'], [0.12, '#3a2c24'], [1, '#2c211b']]);
+  // tip end: brass ferrule, then the blue chalked tip
+  band(LOOK.tip, LOOK.ferrule, [[0, '#7c5c1c'], [0.12, '#e9cd7c'], [0.55, '#d6b052'], [0.9, '#b8913a'], [1, '#6d5220']]);
+  g.fillStyle = '#3f84c4'; g.fillRect(0, 0, W, y(LOOK.tip));
+  for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(190,222,248,${(0.25 + rnd() * 0.5).toFixed(2)})`; g.fillRect(rnd() * W, rnd() * y(LOOK.tip), 1.5, 1.5); }
+  const t = new THREE.CanvasTexture(c); t.flipY = false; t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+function makeNewCue() {
+  const L = CUE.length, rAt = (s) => radiusAt('new', s), tipR = DIM.new.tipR, buttR = DIM.new.buttR;
+  const pts = [new THREE.Vector2(0, 0), new THREE.Vector2(tipR * 0.55, 0.0006), new THREE.Vector2(tipR * 0.9, 0.003)]; // domed tip
+  for (let s = 0.006; s < L - 0.012; s += 0.02) pts.push(new THREE.Vector2(rAt(s), s));
+  pts.push(new THREE.Vector2(buttR, L - 0.012), new THREE.Vector2(buttR * 0.93, L - 0.004), new THREE.Vector2(buttR * 0.7, L), new THREE.Vector2(0, L)); // rounded end
+  const geo = new THREE.LatheGeometry(pts, 28);
+  const pos = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < pos.count; i++) uv.setY(i, pos.getY(i) / L); // the skin runs by true distance from the tip
+  const skin = cueSkin();
+  const mat = new THREE.MeshPhysicalMaterial({ map: skin, roughness: 0.4, clearcoat: 0.9, clearcoatRoughness: 0.22, transparent: true, side: THREE.DoubleSide,
+    emissive: '#ffffff', emissiveMap: skin, emissiveIntensity: LOOK.glow });
+  mat.onBeforeCompile = (sh) => { // a slightly lighter edge all along the cue, so the dark butt stands out against a black background
+    sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      totalEmissiveRadiance += vec3(0.62, 0.47, 0.33) * ${LOOK.rim.toFixed(3)} * pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))), 2.2);`);
+  };
+  const m = new THREE.Mesh(geo, mat); m.visible = false; m.renderOrder = 5; scene.add(m); return m;
+}
+const cues = { old: makeOldCue(), new: makeNewCue() };
+
+// Soft shadow of the new cue: its outline thrown along the lamp's light (the same lamp that makes the ball shadows,
+// see addLamp above) onto the cloth, and onto the rail top where the cue passes over the rail. The higher the cue is
+// over the surface, the further the shadow moves away from it and the softer and paler it gets.
+const LIGHT = new THREE.Vector3(-0.3, 1.6, -4).normalize(); // the way the lamp light travels
+const SHADOW_STEPS = 60;
+const onBed = (x, y) => Math.abs(x) <= hw && Math.abs(y) <= hl;
+const shadowParts = [
+  { z: 0.003, inside: onBed, dark: 1 },
+  { z: H.rail + 0.002, dark: 1.4, inside: (x, y) => !onBed(x, y) && Math.abs(x) <= hw + V.rim && Math.abs(y) <= hl + V.rim }, // dark wood needs a stronger shadow to show
+].map((part) => {
+  const n = (SHADOW_STEPS + 1) * 4, geo = new THREE.BufferGeometry(), index = [];
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 4), 4));
+  for (let i = 0; i < SHADOW_STEPS; i++) for (let j = 0; j < 3; j++) { const a = i * 4 + j, b = a + 4; index.push(a, b, a + 1, a + 1, b, b + 1); }
+  geo.setIndex(index);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+  mesh.frustumCulled = false; mesh.renderOrder = 4; mesh.visible = false; scene.add(mesh);
+  return { ...part, mesh };
+});
+function castCueShadow(tip, axis, alpha) {
+  const k0 = axis.z / -LIGHT.z, dir = unit({ x: axis.x + LIGHT.x * k0, y: axis.y + LIGHT.y * k0 }), nx = -dir.y, ny = dir.x;
+  for (const part of shadowParts) {
+    const pos = part.mesh.geometry.attributes.position, col = part.mesh.geometry.attributes.color;
+    for (let i = 0; i <= SHADOW_STEPS; i++) {
+      const s = CUE.length * i / SHADOW_STEPS, px = tip.x + axis.x * s, py = tip.y + axis.y * s, h = tip.z + axis.z * s - part.z;
+      const k = h / -LIGHT.z, x = px + LIGHT.x * k, y = py + LIGHT.y * k, r = radiusAt('new', s);
+      const w = r + LOOK.shadow.blur + LOOK.shadow.spread * Math.max(0, h), core = r * 0.6;
+      const a = h > 0 && part.inside(x, y) ? Math.min(0.9, LOOK.shadow.dark * part.dark) * alpha * Math.min(1, (r + LOOK.shadow.blur) / w) ** 0.8 : 0;
+      [-w, -core, core, w].forEach((o, j) => { pos.setXYZ(i * 4 + j, x + nx * o, y + ny * o, part.z); col.setXYZW(i * 4 + j, 0, 0, 0, j === 0 || j === 3 ? 0 : a); });
+    }
+    pos.needsUpdate = col.needsUpdate = true; part.mesh.visible = true;
+  }
+}
+
+function cameraC(aspect) {
+  const fit = fitCamera(table, 'C', aspect); // the fixed camera C of the game, fitted to this screen
+  const cam = new THREE.PerspectiveCamera(fit.fov, aspect, 0.05, 50);
+  cam.up.set(0, 0, 1); cam.position.set(...fit.position); cam.lookAt(new THREE.Vector3(...fit.lookAt));
+  return cam;
+}
 let camera = null;
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return;
   renderer.setSize(w, h, false);
-  const fit = fitCamera(table, 'C', w / h); // the fixed camera C of the game, fitted to this screen
-  camera = new THREE.PerspectiveCamera(fit.fov, w / h, 0.05, 50);
-  camera.up.set(0, 0, 1); camera.position.set(...fit.position); camera.lookAt(new THREE.Vector3(...fit.lookAt));
+  camera = cameraC(w / h);
   checkHidden();
 }
 
 // ---------- one frame: `tau` = seconds since the SHOOT press (negative = before the press) ----------
-const Y = new THREE.Vector3(0, 1, 0);
+const Y = new THREE.Vector3(0, 1, 0), tipAt = new THREE.Vector3();
 function cuePose(plan, V, tau) { // gap between tip and cue ball, and opacity. Uses only the aim of the plan, never the result.
   const T = V.added, sinceHit = tau - T;
   const k = clamp01((tau - V.appear) / V.stroke);
@@ -745,12 +860,12 @@ function cuePose(plan, V, tau) { // gap between tip and cue ball, and opacity. U
   const alpha = tau < 0 ? 0 : Math.min(clamp01(tau / V.appear), 1 - clamp01((sinceHit - CUE.fadeOutDelay) / CUE.fadeOut));
   return { gap, alpha };
 }
-function frame(tau) {
+function pose(tau, still) { // `still` = { gap }: the cue fully shown, lying at rest (for the close-up pictures)
   const plan = PLANS[shotIx], V = VARIANTS[variant], t = tau - V.added; // t = seconds since the cue ball started
   OTHERS.forEach((b, i) => otherMeshes[i].position.set(b.pos.x, b.pos.y, RS));
   otherMeshes.forEach((m) => { m.visible = true; });
   let c = plan.C;
-  if (t > 0) {
+  if (t > 0 && !still) {
     const tc = t - plan.tHit;
     c = tc <= 0 ? add(plan.C, plan.d, TIMING.ballSpeed * t) : add(plan.G, plan.tang, run(plan.vC, plan.aC, tc));
     if (tc > 0) {
@@ -762,41 +877,63 @@ function frame(tau) {
   }
   cueBall.position.set(c.x, c.y, RS);
   for (const m of Object.values(cues)) m.visible = false;
+  for (const p of shadowParts) p.mesh.visible = false;
   if (V.cue) {
-    const m = cues[V.cue], { gap, alpha } = cuePose(plan, V, tau);
+    const m = cues[V.cue], { gap, alpha } = still ? { gap: still.gap, alpha: 1 } : cuePose(plan, V, tau);
     if (alpha > 0.003) {
-      m.visible = true; m.material.opacity = alpha; m.castShadow = V.cue === 'full' && alpha > 0.5;
+      m.visible = true; m.material.opacity = alpha; m.castShadow = V.cue === 'old' && alpha > 0.5;
       m.quaternion.setFromUnitVectors(Y, plan.axis);
-      m.position.set(plan.C.x, plan.C.y, RS).addScaledVector(plan.axis, RS + gap);
+      tipAt.set(plan.C.x, plan.C.y, RS).addScaledVector(plan.axis, RS + gap); m.position.copy(tipAt);
+      if (V.cue === 'new') castCueShadow(tipAt, plan.axis, alpha);
     }
   }
-  flash.visible = false;
-  if (V.flash && t >= 0 && t < CUE.flashTime) {
-    const p = t / CUE.flashTime;
-    flash.visible = true; flash.material.opacity = 1 - p * p;
-    flash.position.set(plan.C.x - plan.d.x * RS, plan.C.y - plan.d.y * RS, RS * 1.15); flash.scale.setScalar(RS * (2 + (CUE.flashSize - 2) * p));
-  }
+}
+function frame(tau) {
+  pose(tau);
   document.getElementById('shoot').classList.toggle('down', tau >= 0 && tau < TIMING.press);
   if (camera) renderer.render(scene, camera);
 }
 
-// Rule check, on the real screen: at no moment may the cue cover the object ball or the pocket the shot is aimed at.
+// Rule check, on the real screen: at no moment may the cue (its full drawn thickness) cover the object ball or the
+// pocket the shot is aimed at.
 function checkHidden() {
   const warn = [];
   if (camera) for (const [id, V] of Object.entries(VARIANTS)) if (V.cue) for (const [i, plan] of PLANS.entries()) {
     const px = (v3) => { const q = v3.clone().project(camera); return { x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight }; };
-    const L = V.cue === 'tip' ? CUE.tipOnly : CUE.length, centre = new THREE.Vector3(plan.C.x, plan.C.y, RS);
+    const size = (p3, rad) => len(sub(px(p3.clone().add(new THREE.Vector3(rad, 0, 0))), px(p3))); // metres to pixels at that place
+    const centre = new THREE.Vector3(plan.C.x, plan.C.y, RS);
     const targets = [[new THREE.Vector3(plan.O.x, plan.O.y, RS), RS, 'object ball'], [new THREE.Vector3(plan.P.x, plan.P.y, 0), byId[SHOTS[i].pocket].captureRadius, 'pocket']];
     for (const [p3, rad, what] of targets) {
-      const p = px(p3), r = len(sub(px(p3.clone().add(new THREE.Vector3(rad, 0, 0))), p));
-      for (const gap of [CUE.pull, 0, -CUE.follow]) for (let s = 0; s <= L; s += 0.02) {
-        const q = px(centre.clone().addScaledVector(plan.axis, RS + gap + s));
-        if (len(sub(q, p)) < r + 4) { warn.push(id + ' ' + SHOTS[i].label + ': cue covers the ' + what); s = L; }
+      const p = px(p3), r = size(p3, rad);
+      for (const gap of [CUE.pull, 0, -CUE.follow]) for (let s = 0; s <= CUE.length; s += 0.02) {
+        const q3 = centre.clone().addScaledVector(plan.axis, RS + gap + s);
+        if (len(sub(px(q3), p)) < r + size(q3, radiusAt(V.cue, s)) + 2) { warn.push(V.label + ' ' + SHOTS[i].label + ': cue covers the ' + what); s = CUE.length; }
       }
     }
   }
   window.__hidden = warn;
   if (warn.length) document.getElementById('desc').textContent = 'RULE BROKEN: ' + [...new Set(warn)].join('; ');
+}
+
+// ---------- close-up stills: the cue at rest behind the cue ball of the "Middle" shot ----------
+function stillCamera(sAlong, dist, aspect) { // looks at a point on the cue from the direction of camera C, only nearer
+  const plan = PLANS[0], target = new THREE.Vector3(plan.C.x, plan.C.y, RS).addScaledVector(plan.axis, RS + 0.015 + sAlong);
+  const cam = new THREE.PerspectiveCamera(38, aspect, 0.02, 30); cam.up.set(0, 0, 1);
+  cam.position.copy(target).add(cameraC(390 / 600).position.sub(target).normalize().multiplyScalar(dist)); cam.lookAt(target);
+  return cam;
+}
+function paintStills() {
+  const keep = [shotIx, variant]; shotIx = 0; if (!VARIANTS[variant].cue) variant = 'C1';
+  document.getElementById('stillTitle').textContent = `CLOSE-UP (STILL) · ${VARIANTS[variant].label.toUpperCase()} · THE CUE LYING ACROSS THE TABLE`;
+  pose(0, { gap: 0.015 });
+  for (const [id, s, dist, aspect] of [['sWhole', 0.80, 2.45, 1], ['sTip', 0.16, 0.62, 1.5], ['sButt', 1.14, 1.05, 1.5]]) {
+    const cv = document.getElementById(id), w = cv.clientWidth, h = Math.round(w / aspect), pr = renderer.getPixelRatio(); if (!w) continue;
+    cv.style.height = h + 'px'; cv.width = Math.round(w * pr); cv.height = Math.round(h * pr);
+    renderer.setSize(w, h, false); renderer.render(scene, stillCamera(s, dist, aspect));
+    cv.getContext('2d').drawImage(renderer.domElement, 0, 0, cv.width, cv.height);
+  }
+  [shotIx, variant] = keep;
+  resize();
 }
 
 // ---------- controls and loop ----------
@@ -807,15 +944,15 @@ function labels() {
   const V = VARIANTS[variant], plan = PLANS[shotIx];
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.id === variant));
   document.querySelectorAll('#shots button[data-ix]').forEach((b) => b.classList.toggle('on', Number(b.dataset.ix) === shotIx));
-  if (!window.__hidden?.length) document.getElementById('desc').innerHTML = `<b>${variant} · ${V.name}</b> — ${V.line}`;
-  const parts = V.cue ? `appear ${V.appear.toFixed(2)} + stroke ${V.stroke.toFixed(2)}` : V.flash ? 'flash plays while the ball moves' : 'as today';
+  if (!window.__hidden?.length) document.getElementById('desc').innerHTML = `<b>${V.label} · ${V.name}</b> — ${V.line}`;
+  const parts = V.cue ? `appear ${V.appear.toFixed(2)} + stroke ${V.stroke.toFixed(2)}` : 'as today';
   document.getElementById('time').innerHTML = `Added time per shot: <b>+${V.added.toFixed(2)} s</b> <span>(${parts})</span>`;
   document.getElementById('result').textContent = `this time: ${miss ? 'MISS' : 'POT'}` + (V.cue ? ` · cue raised ${Math.round(plan.el * 180 / Math.PI)}°` : '');
 }
 function restart(keepResult) { if (!keepResult) miss = false; t0 = performance.now(); labels(); }
 const tabs = document.getElementById('tabs'), shotsBox = document.getElementById('shots');
-for (const id of Object.keys(VARIANTS)) { const b = document.createElement('button'); b.textContent = id; b.dataset.id = id;
-  b.onclick = () => { variant = id; history.replaceState(null, '', '#' + id); restart(true); }; tabs.appendChild(b); }
+for (const id of ['C0', 'C1old', 'C1']) { const b = document.createElement('button'); b.textContent = VARIANTS[id].label; b.dataset.id = id;
+  b.onclick = () => { variant = id; history.replaceState(null, '', '#' + id); paintStills(); restart(true); }; tabs.appendChild(b); }
 SHOTS.forEach((s, i) => { const b = document.createElement('button'); b.textContent = s.label; b.dataset.ix = i; b.onclick = () => { shotIx = i; restart(); }; shotsBox.appendChild(b); });
 { const b = document.createElement('button'); b.id = 'again'; b.textContent = '↻ Play again'; b.onclick = () => restart(true); shotsBox.appendChild(b); }
 function tick(now) {
@@ -824,8 +961,10 @@ function tick(now) {
   frame(freeze ?? tau);
   requestAnimationFrame(tick);
 }
-window.addEventListener('resize', resize);
-resize(); labels(); frame(freeze ?? -1);
+let resizeTimer = 0;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(paintStills, 150); });
+if (q.has('stills')) document.querySelector('.screen').style.display = 'none'; // close-ups only (for test pictures)
+paintStills(); labels(); frame(freeze ?? -1);
 requestAnimationFrame(tick);
 window.__ready = true;
 </script>
