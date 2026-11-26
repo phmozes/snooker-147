@@ -14,13 +14,13 @@ const provider = () => recording(createPhysicsProvider(table, { reds6: lib }), t
 describe('task 5.4: round code', () => {
   it('the code has the seed, the colour letters and the cash-out step', () => {
     let r = start(setLevel(newRound(4242), 'reds6'), provider(), table);
-    expect(roundCodeOf(r)).toBe('reds6-4242');
+    expect(roundCodeOf(r)).toBe('reds6-v2-4242'); // new rounds: generator v2, marker in the code
     const p = provider();
     r = start(setLevel(newRound(4242), 'reds6'), p, table);
     while (r.phase === 'decide' && r.step < 4) r = shoot(r, p, table);
     if (r.phase === 'decide') {
       r = cashOut(r);
-      expect(roundCodeOf(r)).toMatch(/^reds6-4242-[YGNBPK]+-C4$/);
+      expect(roundCodeOf(r)).toMatch(/^reds6-v2-4242-[YGNBPK]+-C4$/);
     }
   });
 
@@ -38,9 +38,9 @@ describe('task 5.4: round code', () => {
     }
   }, 600_000);
 
-  it('an old code without letters replays with the automatic colours', () => {
+  it('an old code without letters (and without the v2 marker: generator v1) replays with the automatic colours', () => {
     const pa = provider();
-    let a = start(setLevel(newRound(77), 'reds6'), pa, table);
+    let a = start(setLevel(newRound(77, undefined, 1), 'reds6'), pa, table);
     while (a.phase === 'decide') a = shoot(a, pa, table);
     const pb = provider();
     const b = replayRound(parseRoundCode('reds6-77')!, pb, table);

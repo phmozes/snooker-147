@@ -3,9 +3,12 @@
 // the colour steps while reds remain (in order, one per red potted and followed by a colour shot); `-C7` means the
 // player cashed out after step 7. Without `-C` the round ran to its own end (failure, clearance or RE-RACK).
 // Old codes without letters (`reds6-48213`) still parse: then every colour is the automatic pick (RULES B.3).
+// Generator version (night 4, docs/FAIRNESS.md): a code of a v2 round (HMAC-SHA256, every new round) carries the marker
+// `v2` before the seed: `reds6-v2-48213-BKPK-C7` (or `v2-48213` without the level). A code without the marker is a v1
+// round (the old light hash) and replays with the old generator exactly as before.
 // Pure: no rendering, no Math.random.
 
-import { cashOut, newRound, setLevel, shoot, start, type LevelId, type Round, type ShotProvider } from './round';
+import { baseCode, cashOut, newRound, setLevel, shoot, start, type LevelId, type Round, type RngVersion, type ShotProvider } from './round';
 import type { TableGeometry } from './table/geometry';
 import type { Colour } from './types';
 import { CONFIG } from '../config/game.config';
@@ -13,7 +16,7 @@ import { CONFIG } from '../config/game.config';
 export const COLOUR_LETTER: Record<Colour, string> = { yellow: 'Y', green: 'G', brown: 'N', blue: 'B', pink: 'P', black: 'K' };
 const LETTER_COLOUR = Object.fromEntries(Object.entries(COLOUR_LETTER).map(([c, l]) => [l, c])) as Record<string, Colour>;
 
-export interface RoundCode { levelId: LevelId | null; seed: number; colours: Colour[] | null; cashOutAfter: number | null }
+export interface RoundCode { levelId: LevelId | null; seed: number; rng: RngVersion; colours: Colour[] | null; cashOutAfter: number | null }
 
 /** The colours of the colour steps (a shot right after a potted red), in order. */
 export function colourSteps(r: Round): Colour[] {
@@ -25,21 +28,22 @@ export function colourSteps(r: Round): Colour[] {
 /** The full code of a round (while it runs: what has been played so far). */
 export function roundCodeOf(r: Round): string {
   const letters = colourSteps(r).map((c) => COLOUR_LETTER[c]).join('');
-  return `${r.levelId}-${r.seed}${letters ? `-${letters}` : ''}${r.end?.type === 'cashOut' ? `-C${r.step}` : ''}`;
+  return `${baseCode(r.levelId, r.seed, r.rng)}${letters ? `-${letters}` : ''}${r.end?.type === 'cashOut' ? `-C${r.step}` : ''}`;
 }
 
 /** "reds6-12345", "12345" (the level stays as it is), "reds6-12345-BKP-C7". null if it is not a round code. */
 export function parseRoundCode(text: string): RoundCode | null {
-  const m = /^\s*(?:(reds\d+)\s*-\s*)?(\d{1,10})(?:\s*-\s*([YGNBPK]+))?(?:\s*-\s*C(\d{1,3}))?\s*$/i.exec(text);
+  const m = /^\s*(?:(reds\d+)\s*-\s*)?(?:(v2)\s*-\s*)?(\d{1,10})(?:\s*-\s*([YGNBPK]+))?(?:\s*-\s*C(\d{1,3}))?\s*$/i.exec(text);
   if (!m) return null;
-  const seed = Number(m[2]);
+  const seed = Number(m[3]);
+  const rng: RngVersion = m[2] ? 2 : 1;
   if (seed > 0xffffffff) return null;
   const levelId = m[1] ? (CONFIG.levels.find((l) => l.id === m[1]!.toLowerCase())?.id ?? null) : null;
   if (m[1] && !levelId) return null;
-  const colours = m[3] ? [...m[3].toUpperCase()].map((l) => LETTER_COLOUR[l]!) : null;
-  const cashOutAfter = m[4] ? Number(m[4]) : null;
+  const colours = m[4] ? [...m[4].toUpperCase()].map((l) => LETTER_COLOUR[l]!) : null;
+  const cashOutAfter = m[5] ? Number(m[5]) : null;
   if (cashOutAfter !== null && cashOutAfter < 1) return null;
-  return { levelId, seed, colours, cashOutAfter };
+  return { levelId, seed, rng, colours, cashOutAfter };
 }
 
 /** The colour the code asks for on the colour step with this index, or undefined (then the automatic pick). */
@@ -53,7 +57,7 @@ export function codeColour(code: RoundCode, colourIndex: number): Colour | undef
  */
 export function replayRound(code: RoundCode, provider: ShotProvider, table: TableGeometry, levelId?: LevelId): Round {
   const level = code.levelId ?? levelId ?? (CONFIG.defaultLevel as LevelId);
-  let r: Round = start(setLevel(newRound(code.seed), level), provider, table);
+  let r: Round = start(setLevel(newRound(code.seed, undefined, code.rng), level), provider, table);
   let colourIndex = 0;
   while (r.phase === 'decide') {
     if (code.cashOutAfter !== null && r.step >= code.cashOutAfter) return cashOut(r);

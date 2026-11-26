@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import reds15lib from '../public/breaks/reds15.json';
 import { CONFIG } from '../src/config/game.config';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
-import { newRound, setLevel, shoot, start, streamValue, type FailureLabel, type LevelId, type Round, type ShotProvider } from '../src/core/round';
+import { newRound, setLevel, shoot, start, streamValue, type FailureLabel, type LevelId, type Round, type RngVersion, type ShotProvider } from '../src/core/round';
 import type { FrameState, ShotResult } from '../src/core/rules';
 import { buildTable } from '../src/core/table/geometry';
 import type { BallKind, Colour } from '../src/core/types';
@@ -48,16 +48,16 @@ const bad: ShotProvider = {
   autoColour: (_f, ctx) => COLOURS[ctx.step % COLOURS.length]!,
 };
 
-const play = (seed: number, level: LevelId, provider: ShotProvider): Round => {
-  let r = start(setLevel(newRound(seed), level), provider, table);
+const play = (seed: number, level: LevelId, provider: ShotProvider, rng: RngVersion = 2): Round => {
+  let r = start(setLevel(newRound(seed, undefined, rng), level), provider, table);
   while (r.phase === 'decide') r = shoot(r, provider, table);
   return r;
 };
 /** From the seed alone (not through round.ts's own check): success while u(k) < p(k), up to the first failure. */
-const fromSeed = (seed: number, level: LevelId): boolean[] => {
+const fromSeed = (seed: number, level: LevelId, rng: RngVersion = 2): boolean[] => {
   const ladder = setLevel(newRound(seed), level).ladder;
   const out: boolean[] = [];
-  for (let k = 1; k <= ladder.length; k++) { const ok = streamValue(seed, 'outcome', k) < ladder[k - 1]!.p; out.push(ok); if (!ok) break; }
+  for (let k = 1; k <= ladder.length; k++) { const ok = streamValue(seed, 'outcome', k, rng) < ladder[k - 1]!.p; out.push(ok); if (!ok) break; }
   return out;
 };
 const outcomes = (r: Round) => r.history.map((h) => h.outcome);
@@ -103,19 +103,19 @@ describe('F.1: the outcome depends on the seed and the step only', () => {
   });
 });
 
-describe("F.1: the owner's phone round reds15-102978669", () => {
+describe("F.1: the owner's phone round reds15-102978669 (a v1 code: old generator)", () => {
   const seed = 102978669;
   const level: LevelId = 'reds15';
   it('steps 1-12: outcome stream value vs p(step); the step 10 miss comes from the seed', () => {
     const ladder = setLevel(newRound(seed), level).ladder;
-    const rows = ladder.slice(0, 12).map((s, i) => ({ step: i + 1, u: streamValue(seed, 'outcome', i + 1), p: s.p }));
+    const rows = ladder.slice(0, 12).map((s, i) => ({ step: i + 1, u: streamValue(seed, 'outcome', i + 1, 1), p: s.p }));
     console.log(rows.map((x) => `step ${x.step}: u ${x.u.toFixed(4)} ${x.u < x.p ? '<' : '>='} p ${x.p.toFixed(4)}`).join('\n'));
-    expect(fromSeed(seed, level)).toEqual([...Array(9).fill(true), false]); // steps 1-9 succeed, step 10 fails
+    expect(fromSeed(seed, level, 1)).toEqual([...Array(9).fill(true), false]); // steps 1-9 succeed, step 10 fails
   });
   it('the bad-position fake and the real solver (current version) both miss at step 10', () => {
-    expect(play(seed, level, bad).end).toMatchObject({ type: 'failure', step: 10 });
+    expect(play(seed, level, bad, 1).end).toMatchObject({ type: 'failure', step: 10 });
     expect(CONFIG.breakLibrary.files[level]).toBe('breaks/reds15.json');
-    const real = play(seed, level, createPhysicsProvider(table, { [level]: reds15lib as never }));
+    const real = play(seed, level, createPhysicsProvider(table, { [level]: reds15lib as never }), 1);
     expect(real.end).toMatchObject({ type: 'failure', step: 10 });
     expect(outcomes(real).slice(0, 9).every((o) => o === 'success')).toBe(true);
   }, 300_000);

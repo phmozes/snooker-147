@@ -6,6 +6,7 @@
 import { CONFIG } from '../config/game.config';
 import { ladderForLevel, type LadderStep } from './ladder';
 import { mulberry32 } from './rng';
+import { HmacSha256, utf8 } from './sha256';
 import { applyShot, newFrame, type FrameState, type ShotResult } from './rules';
 import type { TableGeometry } from './table/geometry';
 import type { BallKind, Colour } from './types';
@@ -41,6 +42,7 @@ export interface Round {
   bet: number;
   levelId: LevelId;
   seed: number; // round seed: the outcome of step k = f(seed, 'outcome', k)
+  rng: RngVersion; // which outcome generator (2 for every new round; 1 only when replaying an old code)
   roundCode: string;
   ladder: LadderStep[];
   step: number; // successful pots so far (0 = before step 1)
@@ -53,18 +55,43 @@ export interface Round {
 
 // ---------------- seeded streams (RULES A.5, config rng.streams) ----------------
 
-/** A number in [0, 1) for (seed, stream name, index): independent streams, the same on every device. */
-export function streamValue(seed: number, stream: string, k: number): number {
+/** Outcome generator version (docs/FAIRNESS.md). 2 = HMAC-SHA256 (every new round); 1 = the old light hash, kept only
+ *  so that old round codes (without the version marker) replay exactly as before. */
+export type RngVersion = 1 | 2;
+export const RNG_VERSION_NEW: RngVersion = 2;
+
+/** v1 (until 2026-11-26): FNV-1a of seed + `${stream}#${k}` feeding one mulberry32 draw. Replay of old codes only. */
+export function streamValueV1(seed: number, stream: string, k: number): number {
   let h = 2166136261 ^ seed;
   for (const ch of `${stream}#${k}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
   return mulberry32(h >>> 0)();
 }
 
+let macSeed = -1;
+const MSG: Record<string, Uint8Array[]> = {}; // the encoded messages `${stream}#${k}` (a few dozen, reused)
+let mac: HmacSha256 | null = null;
+/** The HMAC key for a 32-bit seed: its 4 bytes, big-endian (the server will use a 32-byte seed, same function). */
+export const seedKey = (seed: number): Uint8Array => { const s = seed >>> 0; return new Uint8Array([s >>> 24, (s >>> 16) & 255, (s >>> 8) & 255, s & 255]); };
+/** v2: u = first 52 bits of HMAC-SHA256(key = seed, message = `${stream}#${k}`) / 2^52. */
+export function streamValueV2(seed: number, stream: string, k: number): number {
+  if (seed !== macSeed || !mac) { mac = new HmacSha256(seedKey(seed)); macSeed = seed; }
+  const msgs = (MSG[stream] ??= []);
+  const [w0, w1] = mac.first2((msgs[k] ??= utf8(`${stream}#${k}`)));
+  return ((w0 >>> 0) * 2 ** 20 + ((w1 >>> 0) >>> 12)) / 2 ** 52;
+}
+
+/** A number in [0, 1) for (seed, stream name, index): independent streams, the same on every device. */
+export function streamValue(seed: number, stream: string, k: number, version: RngVersion = RNG_VERSION_NEW): number {
+  return version === 1 ? streamValueV1(seed, stream, k) : streamValueV2(seed, stream, k);
+}
+/** The round code of a round that has just started (no colour letters yet): v2 codes carry the marker `v2`. */
+export const baseCode = (levelId: string, seed: number, rng: RngVersion): string => `${levelId}-${rng === 2 ? 'v2-' : ''}${seed}`;
+
 const money = (v: number) => Math.round(v * 10 ** CONFIG.money.currencyDecimals) / 10 ** CONFIG.money.currencyDecimals;
 
-export function newRound(seed: number, balance: number = CONFIG.money.startingBalance): Round {
+export function newRound(seed: number, balance: number = CONFIG.money.startingBalance, rng: RngVersion = RNG_VERSION_NEW): Round {
   const levelId = CONFIG.defaultLevel as LevelId;
-  return { phase: 'betting', balance, bet: CONFIG.money.defaultBet, levelId, seed, roundCode: '', ladder: ladderForLevel(levelId),
+  return { phase: 'betting', balance, bet: CONFIG.money.defaultBet, levelId, seed, rng, roundCode: '', ladder: ladderForLevel(levelId),
     step: 0, frame: null, end: null, history: [] };
 }
 
@@ -81,12 +108,12 @@ export function setBet(r: Round, bet: number): Round {
 
 /** The draw that decides step k: u from the seed, p from the ladder; success when u < p (RULES A.5). The developer
  *  panel shows it after each shot (owner 2026-11-25: the position plays no part). */
-export const outcomeDraw = (r: Round, k: number): { u: number; p: number } => ({ u: streamValue(r.seed, 'outcome', k), p: r.ladder[k - 1]!.p });
+export const outcomeDraw = (r: Round, k: number): { u: number; p: number } => ({ u: streamValue(r.seed, 'outcome', k, r.rng), p: r.ladder[k - 1]!.p });
 /** Did step k succeed? Only the seed and k decide (RULES A.5). */
 export const stepSucceeds = (r: Round, k: number): boolean => { const d = outcomeDraw(r, k); return d.u < d.p; };
 
 function pickFailure(r: Round, k: number): FailureLabel {
-  const u = streamValue(r.seed, 'failureType', k);
+  const u = streamValue(r.seed, 'failureType', k, r.rng);
   let acc = 0;
   for (const [label, share] of Object.entries(CONFIG.failures.later) as [FailureLabel, number][]) {
     acc += share;
@@ -101,10 +128,10 @@ export function start(r: Round, provider: ShotProvider, table: TableGeometry): R
   if (r.balance < r.bet) throw new Error('balance too low for this bet');
   const reds = CONFIG.levels.find((l) => l.id === r.levelId)!.reds;
   let round: Round = { ...r, phase: 'decide', balance: money(r.balance - r.bet), step: 0, end: null, history: [], forced: false,
-    roundCode: `${r.levelId}-${r.seed}`, frame: newFrame(reds, table) };
+    roundCode: baseCode(r.levelId, r.seed, r.rng), frame: newFrame(reds, table) };
   const ok = stepSucceeds(round, 1);
-  const outcome = ok ? 'success' : streamValue(r.seed, 'break', 1) < CONFIG.failures.step1.plainMiss ? 'plainMiss' : 'snookered';
-  const { afterBreak, step1, breakShot } = provider.breakAndStep1(r.levelId, outcome, streamValue(r.seed, 'variety', 0), round.frame!);
+  const outcome = ok ? 'success' : streamValue(r.seed, 'break', 1, r.rng) < CONFIG.failures.step1.plainMiss ? 'plainMiss' : 'snookered';
+  const { afterBreak, step1, breakShot } = provider.breakAndStep1(r.levelId, outcome, streamValue(r.seed, 'variety', 0, r.rng), round.frame!);
   round = { ...round, frame: afterBreak, breakShot };
   return playShot(round, 'red', ok ? 'success' : outcome, step1, table);
 }

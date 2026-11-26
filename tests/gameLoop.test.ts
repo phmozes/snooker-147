@@ -22,12 +22,15 @@ describe('task 5.2: texts (RULES B.4, D.4)', () => {
     expect(FAILURE_TEXT).toEqual({ plainMiss: 'MISSED', jawRattle: 'MISSED', inOff: 'IN-OFF', wrongBallFirst: 'FOUL', snookered: 'SNOOKERED' });
   });
   it('round codes "<level>-<seed>" or a bare seed', () => {
-    expect(parseRoundCode('reds6-12345')).toEqual({ levelId: 'reds6', seed: 12345, colours: null, cashOutAfter: null });
-    expect(parseRoundCode('reds6-12345-BKPk-C7')).toEqual({ levelId: 'reds6', seed: 12345, colours: ['blue', 'black', 'pink', 'black'], cashOutAfter: 7 });
-    expect(parseRoundCode('reds10-5-C3')).toEqual({ levelId: 'reds10', seed: 5, colours: null, cashOutAfter: 3 });
+    expect(parseRoundCode('reds6-12345')).toEqual({ levelId: 'reds6', seed: 12345, rng: 1, colours: null, cashOutAfter: null });
+    expect(parseRoundCode('reds6-v2-12345')).toEqual({ levelId: 'reds6', seed: 12345, rng: 2, colours: null, cashOutAfter: null });
+    expect(parseRoundCode('V2-12345-K-C1')).toEqual({ levelId: null, seed: 12345, rng: 2, colours: ['black'], cashOutAfter: 1 });
+    expect(parseRoundCode('reds6-v3-12345')).toBeNull();
+    expect(parseRoundCode('reds6-12345-BKPk-C7')).toEqual({ levelId: 'reds6', seed: 12345, rng: 1, colours: ['blue', 'black', 'pink', 'black'], cashOutAfter: 7 });
+    expect(parseRoundCode('reds10-5-C3')).toEqual({ levelId: 'reds10', seed: 5, rng: 1, colours: null, cashOutAfter: 3 });
     expect(parseRoundCode('reds6-5-X')).toBeNull();
     expect(parseRoundCode('reds6-5-C0')).toBeNull();
-    expect(parseRoundCode(' 987 ')).toEqual({ levelId: null, seed: 987, colours: null, cashOutAfter: null });
+    expect(parseRoundCode(' 987 ')).toEqual({ levelId: null, seed: 987, rng: 1, colours: null, cashOutAfter: null });
     expect(parseRoundCode('reds7-1')).toBeNull();
     expect(parseRoundCode('abc')).toBeNull();
     expect(parseRoundCode('99999999999')).toBeNull();
