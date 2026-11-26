@@ -82,15 +82,17 @@ const H = { cushion: 0.040, rail: 0.050, pit: 0.10, railBottom: -0.10 };
 //   `band` wide round the bend, growing (power `taper`) towards its ends, where it reaches in to the hole and starts
 //   at the point where the green strip meets the rail end; the hole is open up to it and the net hangs almost straight down from its inner edge.
 //   Middle: a straight opening as wide as the physics mouth. The green of each cushion runs on into the pocket as a
-//   thin strip along the side of the hole (following the physics jaw) up to the leather. Behind the net a leather plate
-//   fills the gap between the rail ends and stays inside the outer edge of the wood. plate: `front` = depth where its
-//   side arms start, `depth` = how far the net reaches behind that, `side` = width of the arms, `inset` = how far its
-//   outer edge stays inside the wood edge, `round` = how much that edge is rounded, `strip` = width of the green strips.
+//   thin strip along the side of the hole (following the physics jaw) up to the leather. Round the back of the net
+//   lies a rounded leather band, thin at the back and wider towards its ends. plate: `front` = depth where its ends
+//   lie, `depth` = how far the net reaches behind that, `side` = width of the band at its ends, `tip` = length of its
+//   rounded tips, `inset` = how far its back stays inside the wood edge, `strip` = width of the green strips.
+//   `end` = width of the corner band at its ends. `netFade` = depth over which the net fades in: it shows only in
+//   the back half of each hole, the front is pure black.
 //   The net hangs almost straight down from the rim along the back AND both sides of the hole: `netFront` = depth
 //   where it starts on the sides, `netLean` = how far it leans inwards on its way down.
 const DRAW = {
-  t1: { band: 0.020, taper: 2, inset: 0.014, curl: 0.006, netTop: 0.046, netBottom: -0.095, lip2: 0.0035,
-    plate: { front: 0.040, depth: 0.050, side: 0.016, inset: 0.004, round: 0.008, netFront: -0.03, strip: 0.012, netLean: 0.03 } },
+  t1: { band: 0.020, end: 0.046, taper: 2, inset: 0.014, netFade: 0.035, netTop: 0.046, netBottom: -0.095, lip2: 0.0035,
+    plate: { front: 0.040, depth: 0.062, side: 0.032, tip: 0.008, inset: 0.004, netFront: -0.03, strip: 0.012, netLean: 0.03 } },
   s1: { width: 0.026, lip: 0.001, over: { corner: 0.08, middle: 0.45 }, netTop: 0.046, netBottom: -0.06 },
   r2: { corner: { db: 0.034, bulge: 0.071, tB: 0.10 }, middle: { db: 0, bulge: 0.030, tB: 0.70 } },
   cap: { back: 0.030, over: 0.006 },
@@ -103,7 +105,7 @@ const CW = (() => { const p = table.pockets.find((q) => q.kind === 'middle'), dc
 if (!(CW > 0.025 && CW < 0.05)) throw new Error('cushion width ' + CW);
 
 const OPTIONS = {
-  T1: { label: 'T1', name: 'After the photos', line: 'Black at the front, a deep net behind it, peach-tan leather with a lighter inner lip. The green runs on along the sides of each hole and the rail ends are rounded to match. Corner leather: thin round the bend, thicker towards its ends, starting where the green meets the rail end.', mode: 't1' },
+  T1: { label: 'T1', name: 'After the photos', line: 'Black at the front, a deep net behind it, peach-tan leather with a lighter inner lip. The green runs on along the sides of each hole and the rail ends are rounded to match. Leather: a rounded band round the back of each hole, thin at the back, wider towards its ends, starting where the green meets the rail end. The net shows only in the back half of the hole.', mode: 't1' },
   S1: { label: 'S1', name: 'Last round', line: 'After the sketch: round black hole, net in the back half, thin tan leather arc.', mode: 's1' },
   Before: { label: 'Before', name: 'Current drawing', line: 'Today\'s look A: darker cushion strip up to the hole, cushion ends drawn past the rail, flat black disc with a ring on top.' },
 };
@@ -264,26 +266,30 @@ function s1Pocket(s, nextMid, style) {
   if (slot) {
     // T1 middle: behind the front of the drop circle the hole is a straight opening as wide as the mouth, ending
     // under the leather plate. Along the green strips its wall starts at the cloth; behind them at the rail top.
-    const pl = D.plate, dOut = cutPt[0] + tOut, dEdge = dOut - pl.inset - pl.round, Ls = m2 + pl.side, kI = 0.99, dG = deep[deep.length - 1][0];
+    const pl = D.plate, dOut = cutPt[0] + tOut, kI = 0.99, dG = deep[deep.length - 1][0];
     const mirL = (pts) => pts.map(([d, l]) => [d, -l]);
-    const boxPts = [[dG, -m2 * kI], [dEdge - 0.004, -m2 * kI], [dEdge - 0.004, m2 * kI], [dG, m2 * kI]];
+    const boxPts = Array.from({ length: 17 }, (_, k) => { const an = -Math.PI / 2 + Math.PI * k / 16; return [dG + (pl.depth - 0.001) * Math.cos(an), m2 * kI * Math.sin(an)]; });
     rest = [...mirL(deep).slice(1), ...boxPts, ...[...deep].reverse().slice(0, -1)];
     restFlags = [...deep.slice(1).map(() => false), ...boxPts.map(() => true), ...deep.slice(1).map(() => false)];
-    // leather plate: concave inner edge round the net, two short arms over the green strips and the rail ends, and a
-    // gently rounded outer edge that stays inside the outer edge of the wood
+    // leather: a rounded band round the back of the net, like the corner one: thin at the back (it stays `inset`
+    // inside the outer edge of the wood), growing to `side` wide at its two ends, which lie over the ends of the green
+    // strips and the rail ends, with rounded tips (`tip` long).
+    const La = m2 + pl.side, Da = dOut - pl.inset - pl.front;
+    if (Da - pl.depth < 0.01 || Da - pl.depth > pl.side) throw new Error(`pocket ${s.p.id}: leather band not thinner at the back`);
     const inner = Array.from({ length: 41 }, (_, k) => { const an = Math.PI / 2 - Math.PI * k / 40; return [pl.front + pl.depth * Math.cos(an), m2 * Math.sin(an)]; });
-    const capM = Array.from({ length: 9 }, (_, k) => { const be = Math.PI * (k + 1) / 10; return [pl.front - pl.side / 2 * Math.sin(be), -m2 - pl.side / 2 + pl.side / 2 * Math.cos(be)]; });
-    const outerB = Array.from({ length: 41 }, (_, k) => { const an = -Math.PI / 2 + Math.PI * k / 40; return [dEdge + pl.round * Math.cos(an), Ls * Math.sin(an)]; });
-    const capP = Array.from({ length: 9 }, (_, k) => { const be = Math.PI * (k + 1) / 10; return [pl.front - pl.side / 2 * Math.sin(be), m2 + pl.side / 2 + pl.side / 2 * Math.cos(be)]; });
-    leather = [...inner, ...capM, ...outerB, ...capP]; lip = band(inner.slice(3, -3), D.lip2); bevel = 0.004;
-    for (const q of leather) if (q[0] > dOut) throw new Error(`pocket ${s.p.id}: the leather plate sticks out of the table`);
+    const outerB = Array.from({ length: 41 }, (_, k) => { const an = -Math.PI / 2 + Math.PI * k / 40; return [pl.front + Da * Math.cos(an), La * Math.sin(an)]; });
+    const capP = Array.from({ length: 9 }, (_, k) => { const be = Math.PI * (k + 1) / 10; return [pl.front - pl.tip * Math.sin(be), m2 + pl.side / 2 + pl.side / 2 * Math.cos(be)]; });
+    const capM = mirL(capP).reverse();
+    leather = [...inner, ...capM, ...outerB, ...capP]; lip = band(inner.slice(2, -2), D.lip2); bevel = 0.005;
+    for (const q of leather) if (q[0] > dOut) throw new Error(`pocket ${s.p.id}: the leather band sticks out of the table`);
     // net: a bag hanging almost straight down from the rim: along both sides of the hole (from the top of the green
     // strips) and round the back (from the inner edge of the leather). It leans inwards only a little on its way down,
     // and the texture lets the threads sink into the dark.
+    const dMid = (dS + pl.front + pl.depth) / 2, fadeM = (d) => Math.max(0, Math.min(1, (d - dMid) / D.netFade)) ** 1.5; // only the back half of the hole
     const kN = 0.975, sideP = Array.from({ length: 7 }, (_, k) => [pl.netFront + (pl.front - pl.netFront) * k / 6, m2 * kN]);
-    const rim = [...sideP.map((q) => ({ q, inw: [0, -1], top: H.cushion - 0.002, al: Math.min(1, (q[0] - pl.netFront) / 0.02) })),
-      ...inner.slice(1, -1).map(([d, l]) => { const q = [pl.front + (d - pl.front) * kN, l * kN], nl = Math.hypot(q[0] - pl.front, q[1]); return { q, inw: [-(q[0] - pl.front) / nl, -q[1] / nl], top: D.netTop, al: 1 }; }),
-      ...sideP.reverse().map((q) => ({ q: [q[0], -q[1]], inw: [0, 1], top: H.cushion - 0.002, al: Math.min(1, (q[0] - pl.netFront) / 0.02) }))];
+    const rim = [...sideP.map((q) => ({ q, inw: [0, -1], top: H.cushion - 0.002, al: fadeM(q[0]) })),
+      ...inner.slice(1, -1).map(([d, l]) => { const q = [pl.front + (d - pl.front) * kN, l * kN], nl = Math.hypot(q[0] - pl.front, q[1]); return { q, inw: [-(q[0] - pl.front) / nl, -q[1] / nl], top: D.netTop, al: fadeM(q[0]) }; }),
+      ...sideP.reverse().map((q) => ({ q: [q[0], -q[1]], inw: [0, 1], top: H.cushion - 0.002, al: fadeM(q[0]) }))];
     let run = 0; rim.forEach((e, k) => { if (k) run += Math.hypot(e.q[0] - rim[k - 1].q[0], e.q[1] - rim[k - 1].q[1]); e.run = run; });
     grid(rim.length - 1, 8, (fa, fr) => { const e = rim[Math.round(fa * (rim.length - 1))];
       return [e.q[0] + e.inw[0] * pl.netLean * fr, e.q[1] + e.inw[1] * pl.netLean * fr, e.top - (e.top - D.netBottom) * fr, 1 - 0.5 * fr, e.run / (2 * Rc), e.al]; });
@@ -293,14 +299,14 @@ function s1Pocket(s, nextMid, style) {
       // end, runs straight on, turns the table corner in one round bend and runs straight to the other rail end.
       // path(q) = that line moved inwards by q, from the + side to the - side.
       const dC = outPt[0] + outPt[1], dA = dC - CORNER_ROUND * Math.SQRT2;
-      // It lies `inset` inside the outer line of the table, and its straight parts curl in very slightly (`curl`)
-      // towards their ends.
-      // `grow`: the inner edge moves further in towards each end (thin round the bend, thick at the ends), so that at
-      // the rail end the band reaches right in to the hole.
-      const endW = tOut - D.inset;
-      const path = (q0, grow) => { const qAt = (tt) => q0 + D.inset + (grow ? (endW - D.band) * tt ** D.taper : 0), rc = CORNER_ROUND - qAt(0);
-        const straight = Array.from({ length: 16 }, (_, k) => { const tt = 1 - k / 16, c = D.curl * tt * tt, q = qAt(tt), r1 = CORNER_ROUND - q, S0 = [dA + r1 * Math.SQRT1_2, r1 * Math.SQRT1_2], J = [cutPt[0] + n[0] * (tOut - q), cutPt[1] + n[1] * (tOut - q)];
-          return [J[0] + (S0[0] - J[0]) * (1 - tt) - n[0] * c, J[1] + (S0[1] - J[1]) * (1 - tt) - n[1] * c]; });
+      // Round the bend it lies `inset` inside the outer line of the table and is `band` wide. Towards its ends both
+      // edges move inwards: the inner edge right in to the hole, the outer edge until the band is `end` wide, so the
+      // outer part of each rail end stays wood.
+      // path(qMid, qEnd): moved inwards by qMid round the bend, changing smoothly to qEnd at the two ends.
+      if (tOut - D.end < D.inset) throw new Error(`pocket ${s.p.id}: leather end wider than the rail end`);
+      const path = (qMid, qEnd) => { const qAt = (tt) => qMid + (qEnd - qMid) * tt ** D.taper, rc = CORNER_ROUND - qAt(0);
+        const straight = Array.from({ length: 16 }, (_, k) => { const tt = 1 - k / 16, q = qAt(tt), r1 = CORNER_ROUND - q, S0 = [dA + r1 * Math.SQRT1_2, r1 * Math.SQRT1_2], J = [cutPt[0] + n[0] * (tOut - q), cutPt[1] + n[1] * (tOut - q)];
+          return [J[0] + (S0[0] - J[0]) * (1 - tt), J[1] + (S0[1] - J[1]) * (1 - tt)]; });
         const bend = Array.from({ length: 25 }, (_, k) => { const an = Math.PI / 4 - Math.PI / 2 * k / 24; return [dA + rc * Math.cos(an), rc * Math.sin(an)]; });
         return [...straight, ...bend, ...straight.map(([d, l]) => [d, -l]).reverse()]; };
       // its four end corners are rounded off a little
@@ -308,16 +314,16 @@ function s1Pocket(s, nextMid, style) {
         return [[A[0] + a[0], A[1] + a[1]], [A[0] + 0.3 * (a[0] + c[0]), A[1] + 0.3 * (a[1] + c[1])], [A[0] + c[0], A[1] + c[1]]]; };
       // The inner edge then runs on round the hole to the point where the green strip meets the rail end: the leather
       // starts exactly there.
-      const G = circ(Rc, aX), po = path(0), pi = [G, ...path(D.band, true).slice(1, -1), [G[0], -G[1]]], no = po.length - 1, ni = pi.length - 1;
+      const qI = D.inset + D.band, G = circ(Rc, aX), po = path(D.inset, tOut - D.end), pi = [G, ...path(qI, tOut).slice(1, -1), [G[0], -G[1]]], no = po.length - 1, ni = pi.length - 1;
       leather = [...soft(po[0], pi[0], po[2]), ...po.slice(2, -2), ...soft(po[no], po[no - 2], pi[ni]), ...soft(pi[ni], po[no], pi[ni - 3], 0.014), ...pi.slice(3, -3).reverse(), ...soft(pi[0], pi[3], po[0], 0.014)];
       lip = band(pi.slice(3, -3), D.lip2); bevel = 0.005;
       // the hole: the physics drop circle, opened out behind up to the rail ends and the leather band
       const sideArc = (sg) => Array.from({ length: 5 }, (_, k) => circ(Rc - 0.0006, sg * (a0 + (a1 - a0) * k / 4)));
-      rest = [...sideArc(-1), ...path(D.band + 0.0008, true).reverse(), ...sideArc(1).reverse()]; restFlags = rest.map(() => true);
+      rest = [...sideArc(-1), ...path(qI + 0.0008, tOut + 0.0008).reverse(), ...sideArc(1).reverse()]; restFlags = rest.map(() => true);
       // net: a bag hanging almost straight down from that whole edge; it fades out towards the front, where the balls drop in
       const aN = a0 - 0.05, fine = (pts) => pts.flatMap((q, k) => (k ? [[(pts[k - 1][0] + q[0]) / 2, (pts[k - 1][1] + q[1]) / 2], q] : [q]));
-      const edge = [...Array.from({ length: 5 }, (_, k) => circ(Rc * 0.975, aN + (a1 - aN) * k / 4)), ...fine(path(D.band + 0.003, true)), ...Array.from({ length: 5 }, (_, k) => circ(Rc * 0.975, -a1 - (aN - a1) * k / 4))];
-      const rim = edge.map((q) => { const nl = Math.hypot(q[0] - dc, q[1]); return { q, inw: [-(q[0] - dc) / nl, -q[1] / nl], al: Math.min(1, (aN - Math.abs(Math.atan2(q[1], q[0] - dc))) / 0.45) }; });
+      const edge = [...Array.from({ length: 5 }, (_, k) => circ(Rc * 0.975, aN + (a1 - aN) * k / 4)), ...fine(path(qI + 0.003, tOut + 0.003)), ...Array.from({ length: 5 }, (_, k) => circ(Rc * 0.975, -a1 - (aN - a1) * k / 4))];
+      const rim = edge.map((q) => { const nl = Math.hypot(q[0] - dc, q[1]); return { q, inw: [-(q[0] - dc) / nl, -q[1] / nl], al: Math.max(0, Math.min(1, (q[0] - dc) / D.netFade)) ** 1.5 }; });
       let run = 0; rim.forEach((e, k) => { if (k) run += Math.hypot(e.q[0] - rim[k - 1].q[0], e.q[1] - rim[k - 1].q[1]); e.run = run; });
       grid(rim.length - 1, 8, (fa, fr) => { const e = rim[Math.round(fa * (rim.length - 1))];
         return [e.q[0] + e.inw[0] * D.plate.netLean * fr, e.q[1] + e.inw[1] * D.plate.netLean * fr, D.netTop - (D.netTop - D.netBottom) * fr, 1 - 0.5 * fr, e.run / (2 * Rc), e.al]; });
@@ -486,16 +492,28 @@ function buildNew(id) {
 
   if (s1) {
     // leather with a rounded top (so it catches the light and throws a shadow), its lighter inner lip (T1), and the net
-    const tanMat = new THREE.MeshStandardMaterial({ color: t1 ? '#d2a078' : '#c9a26b', roughness: 0.55 });
-    const lipMat = new THREE.MeshStandardMaterial({ color: '#ecd3b6', roughness: 0.6 });
+    const tanMat = new THREE.MeshStandardMaterial({ color: t1 ? '#b98556' : '#c9a26b', roughness: t1 ? 0.62 : 0.55, vertexColors: t1 });
+    const lipMat = new THREE.MeshStandardMaterial({ color: '#dcbb93', roughness: 0.6 });
+    const shadeMat = new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, depthWrite: false, side: THREE.DoubleSide, vertexColors: true });
     const netMat = (tex, fade = false) => new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, vertexColors: fade });
     const nets = t1 ? { t1: netMat(netTexture(0.5, 0.99, 26, 4.5, '#dcdcd6', true), true) } : { s1: netMat(netTexture(0.5, 0.58, 34, 5, '#a3a39d')) };
-    const puff = (pts, mat, bv, z0, depth) => { // a soft-edged piece lying on the rail top
-      const m = new THREE.Mesh(new THREE.ExtrudeGeometry(new THREE.Shape(v2(pts)), { depth, bevelEnabled: true, bevelThickness: bv, bevelSize: bv, bevelOffset: -bv, bevelSegments: 5, curveSegments: 12 }), mat);
+    // a soft-edged piece lying on the rail top. With `shade` (T1 leather) its colour runs from dark at the bottom
+    // edge to light on top, and a soft dark shadow lies round it on the wood.
+    const puff = (pts, mat, bv, z0, depth, shade = false) => {
+      const geo = new THREE.ExtrudeGeometry(new THREE.Shape(v2(pts)), { depth, bevelEnabled: true, bevelThickness: bv, bevelSize: bv, bevelOffset: -bv, bevelSegments: shade ? 8 : 5, curveSegments: 12 });
+      if (mat.vertexColors) { const P = geo.attributes.position, col = [];
+        for (let k = 0; k < P.count; k++) { const f = Math.max(0, Math.min(1, (P.getZ(k) + bv) / (depth + 2 * bv))), c = shade ? 0.42 + 0.66 * f * f * (3 - 2 * f) : 1; col.push(c, c, c); }
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); }
+      const m = new THREE.Mesh(geo, mat);
       m.position.z = z0 + bv; m.castShadow = m.receiveShadow = true; sc.add(m);
+      if (shade) { const sw = 0.011, bt = 0.0004, g2 = new THREE.ExtrudeGeometry(new THREE.Shape(v2(pts)), { depth: 0.0001, bevelEnabled: true, bevelThickness: bt, bevelSize: sw, bevelOffset: 0, bevelSegments: 4, curveSegments: 12 });
+        const P = g2.attributes.position, col = [];
+        for (let k = 0; k < P.count; k++) { const f = Math.max(0, Math.min(1, -P.getZ(k) / bt)); col.push(0, 0, 0, 0.5 * f * f); }
+        g2.setAttribute('color', new THREE.Float32BufferAttribute(col, 4));
+        const sh = new THREE.Mesh(g2, shadeMat); sh.position.z = H.rail + 0.0012; sh.renderOrder = 2; sc.add(sh); }
     };
     for (const h of S1) {
-      puff(h.leather, tanMat, h.bevel, H.rail - 0.003, 0.006);
+      puff(h.leather, tanMat, h.bevel, H.rail - 0.003, 0.006, t1);
       if (h.lip) puff(h.lip, lipMat, 0.002, H.rail - 0.003, 0.006 + 2 * h.bevel - 0.006);
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(h.net.pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(h.net.uv, 2)); g.setIndex(h.net.idx);
