@@ -35,8 +35,10 @@ until the round is over. The game logic (RULES A.5: outcome = seed + step only) 
 1. Split src/core into "server-safe" (rng, round, ladder, rules) and "client" (solver, physics, view). Already pure.
 2. Small server: START / SHOOT / CASH OUT endpoints, seed store, balance ledger, rate limits, logs. Tests: the same
    fairness tests run against the server API.
-3. Seed size: today seeds are 32-bit (round codes stay short). For real money use the 256-bit server seed and derive
-   the 32-bit game seed from it (HMAC), so codes stay short and the proof still holds.
+3. Seed size: today seeds are 32-bit (round codes stay short). Night 4: the outcome generator is already v2 =
+   HMAC-SHA256(key = seed, message = `stream#k`), first 52 bits / 2^52 (src/core/round.ts, docs/FAIRNESS.md). The server
+   will use the SAME function with a 32-byte server seed as the HMAC key (today the key is the 32-bit seed as 4 bytes,
+   big-endian). Only the key length changes; the streams, the messages and u stay the same.
 4. Security review, then a soak against the server (latency on SHOOT must stay hidden behind the solve time).
 
 ## Risks

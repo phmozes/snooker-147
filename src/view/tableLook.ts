@@ -520,5 +520,5 @@ function buildNew(mode, sc, withLamp = true) {
   if (withLamp) addLamp(sc);
   return sc;
 }
-return { shapes, T1, S1: S1_ALL, H, BALL, EDGE_DARK, CORNER_ROUND, buildNew, addLamp, noiseTexture, vignette, v2 };
+return { shapes, T1, S1: S1_ALL, H, BALL, EDGE_DARK, CORNER_ROUND, CW, buildNew, addLamp, noiseTexture, vignette, v2 };
 }

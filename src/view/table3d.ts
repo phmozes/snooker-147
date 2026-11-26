@@ -14,6 +14,7 @@ import type { BallKind, Vec2 } from '../core/types';
 import { fitCamera, type CameraFit, type PresetId } from './camera';
 import { BALL_COLOURS } from './playback';
 import { createLook } from './tableLook';
+import { createCueShadow, CUE, cueAxis, makeNewCue, placeCue, radiusAt } from './cue';
 
 const G = CONFIG.view3d;
 export type TableLookId = 'club' | 'grey';
@@ -78,8 +79,10 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
   const r = table.ballRadius;
   let ballColour: Record<string, string> = BALL_COLOURS;
   let pit = 0.1;
+  let heights: { cushionZ: number; railZ: number; cw: number } = { cushionZ: G.cushionHeight, railZ: G.cushionHeight + 0.01, cw: G.cushionDepth };
   if (club) {
     const L = createLook(table);
+    heights = { cushionZ: L.H.cushion, railZ: L.H.rail, cw: L.CW };
     L.buildNew('t1', scene, false);
     // the lamp of the mockup; on a phone its shadow map is smaller (config view3d.club.shadowMap)
     L.addLamp(scene);
@@ -98,6 +101,8 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
   let prev: (Vec2 | null)[] = [];
   let lastAt = 0;
   let drops: (Drop | null)[] = [];
+  let moveVel: ({ x: number; y: number } | null)[] = [];
+  let movedAt: (number | undefined)[] = [];
   function setKinds(ks: BallKind[]) {
     for (const m of balls) { scene.remove(m); (m.material as THREE.Material).dispose(); }
     balls = ks.map((k) => {
@@ -109,7 +114,7 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
       scene.add(m);
       return m;
     });
-    last = ks.map(() => null); prev = ks.map(() => null); drops = ks.map(() => null);
+    last = ks.map(() => null); prev = ks.map(() => null); drops = ks.map(() => null); moveVel = ks.map(() => null); movedAt = ks.map(() => undefined);
   }
   setKinds(kinds);
 
@@ -130,10 +135,15 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     return best;
   };
   let frameReq = 0;
+  let vt = 0, lastReal = performance.now() / 1000, speed = 1;
   let current: (Vec2 | null)[] = [];
   function draw(positions: (Vec2 | null)[]) {
     current = positions;
-    const now = performance.now() / 1000;
+    // the view clock runs at the playback speed (slow motion / pause in the dev pocket check freeze the fall too)
+    const real = performance.now() / 1000;
+    vt += Math.min(0.1, Math.max(0, real - lastReal)) * speed;
+    lastReal = real;
+    const now = vt;
     const dt = Math.max(1 / 240, now - lastAt);
     let falling = false;
     positions.forEach((q, i) => {
@@ -141,14 +151,19 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
       if (!m) return;
       const was = last[i];
       if (q) {
+        if (was && (Math.abs(q.x - was.x) > 1e-7 || Math.abs(q.y - was.y) > 1e-7)) {
+          const span = Math.max(1 / 240, now - (movedAt[i] ?? now - dt));
+          moveVel[i] = { x: (q.x - was.x) / span, y: (q.y - was.y) / span };
+          movedAt[i] = now;
+        } else if (!was) { moveVel[i] = null; movedAt[i] = now; }
         drops[i] = null;
         m.visible = true;
         m.position.set(q.x, q.y, r * ballScale);
       } else if (was && !drops[i] && G.dropSeconds > 0) {
         // the physics has just dropped this ball: it keeps its speed towards the pocket for a moment and sinks
-        const p = prev[i] ?? was;
+        // (its speed: from the last two DIFFERENT positions; playback holds the last position for a frame before a drop)
         const pk = nearestPocket(was);
-        drops[i] = { from: was, vel: { x: (was.x - p.x) / Math.max(dt, 1 / 120), y: (was.y - p.y) / Math.max(dt, 1 / 120) }, to: pk.captureCentre, t0: now };
+        drops[i] = { from: was, vel: moveVel[i] ?? { x: 0, y: 0 }, to: pk.captureCentre, t0: now };
       }
       const d = drops[i];
       if (!q && d) {
@@ -183,5 +198,52 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
   }
   function setPreset(p: PresetId) { preset = p; resize(); }
   function setBallScale(s: number) { ballScale = s; for (const m of balls) { m.scale.setScalar(s); m.position.z = r * s; } }
-  return { resize, draw, dispose, setPreset, setBallScale, setKinds, look, getFit: () => fit };
+  // ---- the cue (Part 4): made on first use; drawn by src/view/cue.ts (the same code as docs/cue-options.html) ----
+  let cue: { mesh: THREE.Mesh; shadow: { cast: (tip: THREE.Vector3, axis: THREE.Vector3, alpha: number, len?: number) => void; hide: () => void }; plane: THREE.Plane } | null = null;
+  const rsNow = () => r * ballScale;
+  /** Hide the cue. */
+  function hideCue() { if (cue) { cue.mesh.visible = false; cue.shadow.hide(); } }
+  /** The cue for a shot from C in direction d: its axis (raised-butt rule) and its visible length (shortened when it
+   *  would cover the protected things on screen: the object ball and the aimed pocket). Uses the layout and the
+   *  planned direction only. */
+  function planCue(C: Vec2, d: Vec2, others: Vec2[], protect: { p: Vec2; z: number; radius: number }[]) {
+    const rs = rsNow();
+    const { axis, el } = cueAxis(C, d, others, { hw: table.halfWidth, hl: table.halfLength, rs, ...heights });
+    const px = (v3: THREE.Vector3) => { const q = v3.clone().project(camera); return { x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight }; };
+    const size = (p3: THREE.Vector3, rad: number) => { const a = px(p3), b = px(p3.clone().add(new THREE.Vector3(rad, 0, 0))); return Math.hypot(a.x - b.x, a.y - b.y); };
+    const centre = new THREE.Vector3(C.x, C.y, rs);
+    let len = CUE.length;
+    for (const t of protect) {
+      const p3 = new THREE.Vector3(t.p.x, t.p.y, t.z), p = px(p3), rr = size(p3, t.radius);
+      for (const gap of [CUE.pull, 0, -CUE.follow]) for (let s = 0; s <= len; s += 0.02) {
+        const q3 = centre.clone().addScaledVector(axis as THREE.Vector3, rs + gap + s), q = px(q3);
+        if (Math.hypot(q.x - p.x, q.y - p.y) < rr + size(q3, radiusAt('new', s)) + 2) { len = Math.max(0.12, s - 0.04); break; }
+      }
+    }
+    return { axis: axis as THREE.Vector3, el, len };
+  }
+  /** Draw the cue at rest `gap` behind the cue ball (negative = past the hit), with opacity alpha and visible length. */
+  function showCue(C: Vec2, plan: { axis: THREE.Vector3; len: number }, gap: number, alpha: number) {
+    if (!cue) {
+      const mesh = makeNewCue(scene, renderer) as THREE.Mesh;
+      const plane = new THREE.Plane();
+      (mesh.material as THREE.Material).clippingPlanes = [plane];
+      renderer.localClippingEnabled = true;
+      cue = { mesh, plane, shadow: createCueShadow(scene, { hw: table.halfWidth, hl: table.halfLength, rim: G.rim, railZ: heights.railZ }) };
+    }
+    if (alpha <= 0.003) { hideCue(); return; }
+    if (!cue) return;
+    const tip = placeCue(cue.mesh, C, rsNow(), plan.axis, gap, alpha) as THREE.Vector3;
+    // keep only the part of the cue from the tip up to `len` (plane: axis . p <= axis . tip + len)
+    cue.plane.set(plan.axis.clone().negate(), plan.axis.dot(tip) + plan.len);
+    cue.shadow.cast(tip, plan.axis, alpha, plan.len);
+  }
+  /** Playback speed of the view clock (1 = real time, 0 = frozen); only the falling of potted balls uses it. */
+  function setSpeed(x: number) { speed = x; }
+  /** Where a table point appears on the canvas (CSS px from its top-left); for dev screenshots. */
+  function project(x: number, y: number, z = 0) {
+    const v = new THREE.Vector3(x, y, z).project(camera);
+    return { x: ((v.x + 1) / 2) * canvas.clientWidth, y: ((1 - v.y) / 2) * canvas.clientHeight };
+  }
+  return { resize, draw, dispose, setPreset, setBallScale, setKinds, setSpeed, project, planCue, showCue, hideCue, look, getFit: () => fit };
 }

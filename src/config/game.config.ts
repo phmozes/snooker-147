@@ -119,6 +119,11 @@ export const CONFIG = {
     maxDuration: 1.5,
     maxDurationFlex: 2.2,        // fallback level 1 may allow this
     playbackTimeScale: 1.0,      // >1 = play recorded shot faster (pace tuning without re-solving)
+    // Night 4, Part 3b (docs/SLOW-SHOTS.md option 1): play the END of a shot faster, playback only (src/view/fastEnd.ts).
+    // Starts only once the result is visible (every pot down, the object ball at rest or dropped), the same rule on
+    // success and failure shots; eases from 1x to `rate` over `ease` s; not when less than `minRest` s would remain.
+    // OFF by default (owner decides after a phone check); dev panel switch.
+    fastEnd: { enabled: false, rate: 2.5, ease: 0.4, minRest: 0.5 },
     preferLowestPower: true,
     buttonsReturnDelay: 0.1,
   },
@@ -401,6 +406,10 @@ export const CONFIG = {
     look: 'club' as 'club' | 'grey',
     club: { shadowMap: 2048, maxPixelRatio: 2 }, // lamp shadow map size (px) and the highest device pixel ratio drawn
     dropSeconds: 0.2,            // a potted ball is seen falling into the hole for at most this long (visual only)
+    // Night 4, Part 4: the cue (C1, approved in docs/cue-options.html; drawn by src/view/cue.ts). Shown after the SHOOT
+    // press and on the automatic step-1 shot: appears, one short stroke (appear + stroke <= 0.25 s), then fades out while
+    // the balls roll. Visual and timing only. ON by default, dev panel switch.
+    cue: { enabled: true },
   },
 
   // Game screen layout from mockups A/C/D (share of the screen height, top to bottom). Used by the replay check page

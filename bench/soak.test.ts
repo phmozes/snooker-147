@@ -9,7 +9,9 @@ import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
 import { judgeShot } from '../src/core/rules';
-import { newRound, setLevel, shoot, start, type LevelId, type Round } from '../src/core/round';
+import { baseCode, newRound, setLevel, shoot, start, type LevelId, type Round } from '../src/core/round';
+import { createSim, recordShot, strike } from '../src/core/physics/sim';
+import { playbackSeconds, resultVisibleAt } from '../src/view/fastEnd';
 import { classifySuccess, playFacts } from '../src/core/shotType';
 import { shotCaps } from '../src/core/solver';
 import { buildTable } from '../src/core/table/geometry';
@@ -26,6 +28,25 @@ it('soak', () => {
   const file = `${out}/${level}-${shard}`;
   writeFileSync(`${file}-failures.txt`, '');
   if (process.env.SHOTLOG && !process.env.START_I) writeFileSync(`${file}-slow.jsonl`, '');
+  // night 4: SHOTS=1 writes one line per SHOOT shot (success AND failure) to <OUT>/<level>-<shard>-shots.jsonl:
+  // outcome, failure label, flex level, length, playback length with the faster end (Part 3b), solve time, tries
+  if (process.env.SHOTS && !process.env.START_I) writeFileSync(`${file}-shots.jsonl`, '');
+  const FE = { ...CONFIG.shot.fastEnd, enabled: true };
+  const shotLine = (code: string, before: Round['frame'], h: Round['history'][number], ms: number, flex: string | null) => {
+    if (!process.env.SHOTS) return;
+    const line: Record<string, unknown> = { code, step: h.step, target: h.target, outcome: h.outcome, flex, ms: Math.round(ms), tried: h.tried ?? null };
+    const shot = h.shot as { dir: { x: number; y: number }; speed: number; spin: number; duration: number; fallback?: string | null; label?: string } | undefined;
+    if (shot && before) {
+      const sim = createSim(before.balls, table);
+      strike(sim, 'cue', shot.dir, shot.speed, shot.spin);
+      const rec = recordShot(sim);
+      const vis = resultVisibleAt(rec);
+      Object.assign(line, { d: Math.round(rec.duration * 1000) / 1000, vis: vis === null ? null : Math.round(vis * 1000) / 1000,
+        play: Math.round(playbackSeconds(rec, FE) * 1000) / 1000, fallback: shot.fallback ?? null, speed: Math.round(shot.speed * 100) / 100,
+        pots: rec.events.filter((e) => e.type === 'pot').length });
+    }
+    appendFileSync(`${file}-shots.jsonl`, `${JSON.stringify(line)}\n`);
+  };
   const lib = JSON.parse(readFileSync(`public/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
   const provider = createPhysicsProvider(table, { [level]: lib });
   const cap = shotCaps().decision;
@@ -68,7 +89,7 @@ it('soak', () => {
   for (let i = Number(process.env.START_I ?? 0); s.success < target && s.rounds < maxRounds && Date.now() < until; i++) {
     const seed = 5_000_000 + shard + i * shards; // never the bench seeds (seed * 7 + 3, small)
     let rd: Round = setLevel(newRound(seed), level);
-    const code = `${level}-${seed}`;
+    const code = baseCode(level, seed, rd.rng); // night 4: v2 rounds carry the v2 marker
     try {
       rd = start(rd, provider, table);
       stepCount(rd, 1);
@@ -87,6 +108,7 @@ it('soak', () => {
         if ((h.tried ?? 0) > cap) { s.overCap++; problem(code, h.step, `simulated ${h.tried} shots, cap ${cap}`); }
         s.maxTried = Math.max(s.maxTried, h.tried ?? 0);
         if (before.phase === 'colour') bump(s.colours, h.target);
+        shotLine(code, before, h, ms, flexLevel);
         if (h.outcome === 'reRack') { s.reRacks++; s.success++; problem(code, h.step, `RE-RACK (target ${h.target})`); continue; }
         const shot = h.shot as { dir: { x: number; y: number }; speed: number; spin: number; duration: number; fallback?: string | null };
         if (h.outcome !== 'success') { s.failShots++; if (shot.fallback) s.failFallbacks++; bump(s.failureKinds, `${h.outcome}${shot.fallback ? `->${shot.fallback}` : ''}`); continue; }
