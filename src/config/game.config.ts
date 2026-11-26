@@ -397,6 +397,10 @@ export const CONFIG = {
     ballScale: 1.4,              // owner's choice after the real-phone test (2026-11-24), provisional
     ballScaleOptions: [1, 1.3, 1.4, 1.6, 2], // developer menu on the game page
     ambientLight: 1.2, topLight: 1.6,
+    // Night 4: the approved look (look A + T1 pockets, src/view/tableLook.ts) or the old gray box (dev panel switch).
+    look: 'club' as 'club' | 'grey',
+    club: { shadowMap: 2048, maxPixelRatio: 2 }, // lamp shadow map size (px) and the highest device pixel ratio drawn
+    dropSeconds: 0.2,            // a potted ball is seen falling into the hole for at most this long (visual only)
   },
 
   // Game screen layout from mockups A/C/D (share of the screen height, top to bottom). Used by the replay check page

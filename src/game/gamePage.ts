@@ -10,16 +10,16 @@
 import { CONFIG } from '../config/game.config';
 import { createSim, recordShot, strike } from '../core/physics/sim';
 import { createPhysicsProvider, type BreakLibrary } from '../core/physicsProvider';
-import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, type ForcedOutcome,
+import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, RNG_VERSION_NEW, type RngVersion, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
 import { rtpText } from '../core/ladder';
 import { shotCaps, type FallbackLogEntry } from '../core/solver';
 import { buildTable } from '../core/table/geometry';
 import { rackBalls } from '../core/table/rack';
-import { COLOURS, type Ball, type Colour, type Vec2 } from '../core/types';
+import { COLOURS, type Ball, type BallKind, type Colour, type Vec2 } from '../core/types';
 import { positionsAt } from '../view/playback';
-import { createTable3d } from '../view/table3d';
+import { createTable3d, type TableLookId } from '../view/table3d';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
@@ -46,8 +46,9 @@ let round: Round = newRound(newSeed());
 const startLevel = CONFIG.levels.find((l) => l.id === params.get('level'))?.id;
 if (startLevel) round = setLevel(round, startLevel);
 let pendingSeed: number | null = null; // developer menu: the next START uses this seed
+let pendingRng: RngVersion = RNG_VERSION_NEW; // ...with this generator (a code without the v2 marker = v1, docs/FAIRNESS.md)
 const seedParam = parseRoundCode(params.get('seed') ?? '');
-if (seedParam) { pendingSeed = seedParam.seed; if (seedParam.levelId) round = setLevel(round, seedParam.levelId); }
+if (seedParam) { pendingSeed = seedParam.seed; pendingRng = seedParam.rng; if (seedParam.levelId) round = setLevel(round, seedParam.levelId); }
 let seedText = '';
 // task 5.4: a round being replayed from its round code (the shots, colours and cash-out step come from the code)
 let replay: RoundCode | null = null;
@@ -166,15 +167,35 @@ const level = () => CONFIG.levels.find((l) => l.id === round.levelId)!;
 const ladder = () => round.ladder;
 
 // ---------------- 3D table: one mesh per ball of the full rack; balls off the table are hidden ----------------
-const canvas = $('c3d') as HTMLCanvasElement;
+let canvas = $('c3d') as HTMLCanvasElement;
 let ids: string[] = [];
 let view3d: ReturnType<typeof createTable3d> | null = null;
 let rest: (Vec2 | null)[] = []; // what is drawn when nothing moves
+// night 4: the table look ('club' = the approved look, 'grey' = the old gray box), dev panel switch, kept on this device
+const LOOK_KEY = 'snooker147.look';
+let tableLook: TableLookId = (() => { try { const v = localStorage.getItem(LOOK_KEY); return v === 'grey' || v === 'club' ? v : CONFIG.view3d.look; } catch { return CONFIG.view3d.look; } })();
+let kinds: BallKind[] = [];
 function buildView(balls: Ball[]) {
-  view3d?.dispose();
   ids = balls.map((b) => b.id);
-  view3d = createTable3d(canvas, table, balls.map((b) => b.kind));
+  kinds = balls.map((b) => b.kind);
+  // the table itself is built once (textures and shapes are costly); only the balls change between racks
+  if (view3d && view3d.look === tableLook) { view3d.setKinds(balls.map((b) => b.kind)); return; }
+  view3d?.dispose();
+  view3d = createTable3d(canvas, table, balls.map((b) => b.kind), tableLook);
   view3d.setBallScale(ballScale);
+}
+function setTableLook(l: TableLookId) {
+  tableLook = l;
+  try { localStorage.setItem(LOOK_KEY, l); } catch { /* private window */ }
+  const keep = rest;
+  view3d?.dispose(); view3d = null;
+  // a new WebGL context needs a fresh canvas
+  const old = $('c3d') as HTMLCanvasElement, fresh = old.cloneNode(false) as HTMLCanvasElement;
+  old.replaceWith(fresh); canvas = fresh;
+  view3d = createTable3d(canvas, table, kinds, tableLook);
+  view3d.setBallScale(ballScale);
+  rest = keep;
+  draw3d();
 }
 const placed = (balls: Ball[]) => ids.map((id) => balls.find((b) => b.id === id)?.pos ?? null);
 function showBalls(balls: Ball[]) { rest = placed(balls); draw3d(); }
@@ -241,6 +262,7 @@ async function onStart() {
   render();
   try { await loadLibrary(round.levelId); } catch (e) { busy = null; showBetArea = true; lastShot = String(e); render(); return; }
   const seed = pendingSeed ?? newSeed();
+  const rng = pendingSeed !== null ? pendingRng : RNG_VERSION_NEW;
   pendingSeed = null;
   let afterBreak: FrameState | null = null;
   const base = createPhysicsProvider(table, library);
@@ -249,7 +271,7 @@ async function onStart() {
     afterBreak = x.afterBreak;
     return x;
   } };
-  round = start({ ...round, seed }, provider, table);
+  round = start({ ...round, seed, rng }, provider, table);
   shownBalance = round.balance;
   presolveNext(); // solving starts during the break-off animation
   // RULES B.1: the balls re-rack quickly, then the opponent breaks off (from the library), then step 1 plays itself
@@ -563,7 +585,7 @@ function renderDev() {
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
       '<div class="opts" id="devAuto"></div>' : '') +
-    '<h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
+    '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
   $('devScreens').appendChild(opt('Live game', mode === 'live', () => setMode('live'), busy !== null));
@@ -572,7 +594,7 @@ function renderDev() {
   }
   $('devRound').innerHTML = `Round code: <b>${code}</b>${round.phase === 'decide' ? ` · step ${round.step}` : round.phase === 'over' ? ' · replays this whole round' : ''}<br>` +
     (replay ? `Replaying code <b>${seedText || code}</b><br>` : '') +
-    `${pendingSeed !== null ? `Next START uses seed <b>${pendingSeed}</b>` : 'Next START: new random seed'}<br>` +
+    `${pendingSeed !== null ? `Next START uses seed <b>${pendingRng === 2 ? 'v2-' : ''}${pendingSeed}</b>` : 'Next START: new random seed'}<br>` +
     `Fallbacks this session: ${fallbacks.length}${fallbacks.length ? ' (details in the browser console)' : ''}`;
   const input = $('devSeed') as HTMLInputElement;
   input.value = seedText;
@@ -581,13 +603,13 @@ function renderDev() {
     const p = parseRoundCode(seedText);
     if (!p) { $('devRound').innerHTML += '<br><span class="bad">Not a seed or round code</span>'; return; }
     if (p.levelId && p.levelId !== round.levelId) { if (locked) return; changeLevel(p.levelId); }
-    pendingSeed = p.seed;
+    pendingSeed = p.seed; pendingRng = p.rng;
     render();
   };
   ($('devUseSeed') as HTMLButtonElement).disabled = locked;
   const startReplay = (p: RoundCode) => {
     if (p.levelId && p.levelId !== round.levelId) changeLevel(p.levelId);
-    replay = p; pendingSeed = p.seed;
+    replay = p; pendingSeed = p.seed; pendingRng = p.rng;
     $('dev').classList.remove('open');
     void onStart();
   };
@@ -621,6 +643,8 @@ function renderDev() {
     (import.meta.env.DEV ? ` · cost lines v${COST_LINE_VERSION}: ${costSent} sent${costFailed ? `, ${costFailed} FAILED` : ''}` : '');
   $('devWeird').appendChild(opt('Clear list', false, () => { weird = []; saveWeird(); renderFlag(); render(); }, !weird.length));
   if (import.meta.env.DEV) renderTestPanel(opt);
+  $('devLook').appendChild(opt('Club (new)', tableLook === 'club', () => { setTableLook('club'); render(); }, busy !== null));
+  $('devLook').appendChild(opt('Gray box (old)', tableLook === 'grey', () => { setTableLook('grey'); render(); }, busy !== null));
   for (const s of CONFIG.view3d.ballScaleOptions) {
     $('devScale').appendChild(opt(`${s}x`, ballScale === s, () => { ballScale = s; view3d?.setBallScale(s); render(); draw3d(); }));
   }
