@@ -4,7 +4,7 @@
 - RTP 50M check FAILED the |z|<3 rule on reds6 steps 13, 14, 18 (all BELOW 97%): decide next step (docs/NIGHT-3.md, bench/results/rtp-rng-50M.txt).
 - Read docs/SLOW-SHOTS.md: pick a fix (or none) for the 327 shots over 3.5 s and for the 4 RE-RACKs.
 - Pick a look A-D on the phone: http://192.168.1.111:5181/docs/look-options.html. Try "Replay this round" (≡ menu).
-- Pick pocket drawing Q1 plain / Q2 thin rim / Q3 leather (look A; P1, P2 rejected): http://192.168.1.111:5181/docs/pocket-options.html (mockup only).
+- Pick pocket drawing R1 half-moon + thin rim / R2 half-moon + leather cap (look A; Q2 kept to compare): http://192.168.1.111:5181/docs/pocket-options.html (mockup only).
 - Decide: may position play be tuned (7 of 11 night-3 marks need it)?
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
 ## Claude's turn (waiting for the owner's answers)
