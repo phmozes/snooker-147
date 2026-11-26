@@ -1,0 +1,1 @@
+reds10-5000483 step 8: solver took 12898 ms (stuck limit 10000)

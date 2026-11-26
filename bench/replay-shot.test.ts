@@ -43,7 +43,7 @@ it('replay marked shots', () => {
         const blk = before.balls.find((b) => b.kind === 'black')?.pos; const cueEnd = pf.after.find((b) => b.kind === 'cue')!.pos;
         out.push(`  position: pocket ${pk?.id} cut ${pk ? cutAngle(cueB, ball.pos, pk.mouthMid, table.ballRadius).toFixed(0) : '?'} deg, cue->ball ${Math.hypot(ball.pos.x - cueB.x, ball.pos.y - cueB.y).toFixed(2)} m, ball->pocket ${pk ? Math.hypot(pk.mouthMid.x - ball.pos.x, pk.mouthMid.y - ball.pos.y).toFixed(2) : '?'} m; cue ${blk && cueB.y > blk.y ? 'BEHIND' : 'not behind'} the black; cue ends (${cueEnd.x.toFixed(2)},${cueEnd.y.toFixed(2)})${blk && cueEnd.y > blk.y ? ' BEHIND the black' : ''}`);
       }
-      out.push(`  strict check: ${t} -> ${naturalCheck(t, { ...facts, duration: pf.duration, cueTravel: pf.cueTravel, after: pf.after, strikeSpeed: (h.shot as { speed: number }).speed }) ?? 'NATURAL'} (cue ball rolls ${pf.cueTravel.toFixed(2)} m after contact, ${pf.events.filter((e) => e.type === 'cushion' && e.a === 'cue').length} cushions)`);
+      out.push(`  strict check: ${t} -> ${naturalCheck(t, { ...facts, duration: pf.duration, cueTravel: pf.cueTravel, after: pf.after }) ?? 'NATURAL'} (cue ball rolls ${pf.cueTravel.toFixed(2)} m after contact, ${pf.events.filter((e) => e.type === 'cushion' && e.a === 'cue').length} cushions)`);
     }
     out.push(`  before: ${before.balls.map((b) => `${b.id}(${b.pos.x.toFixed(3)},${b.pos.y.toFixed(3)})`).join(' ')}`);
   }

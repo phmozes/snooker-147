@@ -125,7 +125,7 @@ export const CONFIG = {
 
   // ---------------- SHOT SOLVER ----------------
   solver: {
-    version: '4.11',           // shown in the weird-shot list: a replay needs the same solver version
+    version: '4.10',           // shown in the weird-shot list: a replay needs the same solver version
     timeBudgetMs: 150,           // per outcome, in a Web Worker, solved while the player decides (a guide now)
     // The search stops after this many simulated shots, NOT after a number of ms, so every device (fast PC or slow
     // phone) picks exactly the same shot (task 4.5 plan, done early). 250 shots take about 150 ms on the dev PC.
@@ -190,9 +190,6 @@ export const CONFIG = {
       disturbFrom: 0.01,         // m: a ball that moves more than this is disturbed ...
       packDisturbMax: 0.5,       // ... except reds moved at most this far by a (pack / soft) cannon
       packCannonSpeed: 1.5,      // m/s: a pack cannon hitting the reds harder is not planned
-      // solver 4.11 (owner mark reds15-2764519739:2): a colour pot whose cue ball goes on into the pack is not natural when
-      // it is struck harder than this (m/s), even if the cue ball has slowed down by the time it reaches the reds
-      packCannonColourStrikeMax: 4.0,
       unnaturalPlayCost: 3.0,
       lookaheadNatural: false,   // the lookahead check accepts only a strictly natural next shot
       autoColourNeedsNextRed: true, // RULES B.3 auto colour: black is 'natural' only if it also leaves a red

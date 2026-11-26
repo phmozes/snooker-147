@@ -283,9 +283,6 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     if (opts.maxDuration !== undefined && duration > opts.maxDuration) return 'done';
     const type = classifySuccess({ state: state.balls, target, potted: v.potted, aimedPocket: pocket, events: sim.events, table });
     if (!ex && isExhibition(type)) return 'miss'; // a player would not have meant it
-    // solver 4.11 (owner mark reds15-2764519739:2): a colour struck near full power with the cue ball going on into the
-    // pack is never planned (only the exhibition search may still use it)
-    if (!ex && target !== 'red' && state.redsLeft > 0 && type === 'packCannon' && speed > NAT.packCannonColourStrikeMax) return 'done';
     if (opts.naturalOnly && !NATURAL_TYPES.includes(type)) return 'miss';
     const cueEnd = sim.balls.find((b) => b.kind === 'cue')!.pos;
     const after: Ball[] = sim.balls.filter((b) => !b.potted).map((b) => ({ id: b.id, kind: b.kind, pos: b.pos }));
@@ -309,7 +306,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     // only locked reds left (no pocket can take any of them): a dead end, only a cannon frees them (RE-RACK risk)
     const locked = Sv.position.lockedCost ? allRedsLocked(after, table) * Sv.position.lockedCost : 0;
     const whyNot = naturalCheck(type, { state: state.balls, target, potted: v.potted, aimedPocket: pocket, events: sim.events, table,
-      duration, cueTravel: travel, after, strikeSpeed: speed });
+      duration, cueTravel: travel, after });
     if (opts.naturalOnly && whyNot !== null) return 'done';
     // task 4.10: a long colour pot must not send the cue ball into another ball (like a yellow off its spot)
     const longMoves = TC.enabled && target !== 'red' && type === 'long' && state.balls.some((b) => {
