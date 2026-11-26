@@ -10,4 +10,4 @@ No image, model or font files. Cloth, wood grain and the lamp vignette are drawn
 so there is nothing to licence. The page uses only Three.js (MIT, above) and the game's own table geometry and camera.
 
 ## Pocket options page (docs/pocket-options.html; not used by the game)
-No image, model or font files. Cloth, wood and leather are drawn in code.
+No image, model or font files. Cloth, wood, leather and the pocket net are drawn in code.
