@@ -396,7 +396,6 @@ for (const box of ['cmpCorner', 'cmpMiddle']) for (const id of ['Before', 'P1', 
 let resizeTimer = 0;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawAll, 150); });
 show(OPTIONS[location.hash.slice(1)] ? location.hash.slice(1) : 'P1');
-window.__dbg = { scenes, closeUp, THREE };
 window.__ready = true;
 </script>
 </body>
