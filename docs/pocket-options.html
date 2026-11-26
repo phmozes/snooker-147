@@ -47,11 +47,9 @@
   Blue: resting on the bed just in front of the drop.</p>
 <h2>MIDDLE POCKET (CLOSE-UP)</h2>
 <canvas class="view" id="vMiddle"></canvas>
-<h2>SIDE BY SIDE · WHOLE TABLE</h2>
-<div class="row3" id="cmpTable"></div>
-<h2>SIDE BY SIDE · NEAR CORNER</h2>
+<h2>NEW vs OLD · NEAR CORNER</h2>
 <div class="row3" id="cmpCorner"></div>
-<h2>SIDE BY SIDE · MIDDLE</h2>
+<h2>NEW vs OLD · MIDDLE</h2>
 <div class="row3" id="cmpMiddle"></div>
 <footer></footer>
 <script>window.onerror = (m) => { document.getElementById("desc").textContent = "Error: " + m; };</script>
@@ -61,7 +59,6 @@ import { buildTable, arcPoints } from '/src/core/table/geometry.ts';
 import { newFrame } from '/src/core/rules.ts';
 import { fitCamera } from '/src/view/camera.ts';
 import { CONFIG } from '/src/config/game.config.ts';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const table = buildTable();
 const hw = table.halfWidth, hl = table.halfLength, R = table.ballRadius, S = 1.4; // balls drawn at 1.4x
@@ -70,16 +67,17 @@ const A = { bg: '#0b0907', cloth: '#1c6a37', oldCushion: '#1a6133', wood: '#4a24
 
 // Drawn heights (m). Rail top highest, cushion top a little lower, bed at 0, hole below the bed.
 const H = { cushion: 0.040, rail: 0.050, pit: 0.10, railBottom: -0.10 };
-// How much of the hole is seen from above (drawing only; the physics drop circle never moves):
-// `moon` (R1, R2): the rail top overhangs the back of the hole, as on a real table. The cushions end at depth `db`
-//   and the visible black closes just behind them with a shallow round back (`bulge` deep, as wide as the mouth).
-// `disc` (Q2, round 2): the whole slate cut is open; `back` flattens its far side a little.
-// `rim`: width of the thin brass edge round the back of the hole. `cap`: R2 leather piece behind the hole, `back`
-// wide at the back and `side` wide at its two ends.
+// How much of the hole is seen from above (drawing only; the physics drop circle never moves). The rail top overhangs
+// the back of the hole, as on a real table: the cushions end at depth `db` and the visible black closes behind them
+// with a round back (`bulge` deep, as wide as the mouth).
+// `new` (R2): the leather cap also reaches forward over the cushion ends, so the green narrows to a point at the hole
+//   instead of stopping as a block. `tB` = how far back along the jaw (angle, rad) the cap starts to cover the cushion.
+// `old` (R2 old): the cap only lies behind the hole and the cushion ends are square.
+// cap: `back` = width behind the hole, `side` = width at its two ends (old), `over` = overlap onto the wood (new).
 const DRAW = {
-  moon: { corner: { db: 0.050, bulge: 0.055 }, middle: { db: 0, bulge: 0.030 } },
-  disc: { corner: { back: 0.084 }, middle: { back: 0.062 } },
-  rim: 0.009, cap: { back: 0.030, side: 0.020 },
+  new: { corner: { db: 0.034, bulge: 0.071, tB: 0.10 }, middle: { db: 0, bulge: 0.030, tB: 0.70 } },
+  old: { corner: { db: 0.050, bulge: 0.055 }, middle: { db: 0, bulge: 0.030 } },
+  cap: { back: 0.030, side: 0.020, over: 0.006 },
 };
 const CORNER_ROUND = 0.12; // outer corners of the rail are rounded (radius, m)
 // cushion width, nose to rail (drawing only; slimmer than before): chosen so that the back corner of a cushion end
@@ -89,10 +87,9 @@ const CW = (() => { const p = table.pockets.find((q) => q.kind === 'middle'), dc
 if (!(CW > 0.025 && CW < 0.05)) throw new Error('cushion width ' + CW);
 
 const OPTIONS = {
-  R1: { name: 'Half-moon, thin rim', line: 'The rail top covers the back of the hole, so only a half-moon of black shows at the cushion line. A thin dark-brass rim round it.', mode: 'moon', edge: 'rim' },
-  R2: { name: 'Half-moon, leather cap', line: 'Same hole as R1, with a small dark leather cap on the rail behind each pocket.', mode: 'moon', edge: 'cap' },
-  Q2: { name: 'Round 2 (for comparison)', line: 'The earlier drawing: the whole round hole open in the wood, thin dark-brass rim.', mode: 'disc', edge: 'rim' },
-  Before: { name: 'Current drawing', line: 'Today\'s look A: darker cushion strip up to the hole, cushion ends drawn past the rail, flat black disc with a ring on top.' },
+  R2: { label: 'R2', name: 'Leather cap, tucked cushion ends', line: 'The cushion nose follows the jaw; at the pocket the green narrows to a point and tucks under the leather cap. No square ends.', mode: 'new' },
+  R2old: { label: 'R2 old', name: 'Round 3', line: 'The earlier R2: the cushions stop as square blocks beside the hole.', mode: 'old' },
+  Before: { label: 'Before', name: 'Current drawing', line: 'Today\'s look A: darker cushion strip up to the hole, cushion ends drawn past the rail, flat black disc with a ring on top.' },
 };
 const BALL = { cue: '#f6f3e8', red: '#c8161d', yellow: '#f4c430', green: '#14804a', brown: '#7a4a24', blue: '#1f5fcf', pink: '#f58fb0', black: '#0d0d0d' };
 
@@ -120,30 +117,14 @@ function pocketShapes(p, mode) {
   const phiS = Math.atan2(hwid(dS), dS - dc);
   const front = Array.from({ length: 2 * N + 1 }, (_, i) => { const f = phiS + (2 * Math.PI - 2 * phiS) * i / (2 * N); return [dc + Rc * Math.cos(f), Rc * Math.sin(f)]; });
   const bed = [...sideA, ...front.slice(1, -1), ...rev(mir(sideA))];
-  // db = depth where the cushions end; back = the visible back edge of the hole, from the + side round to the - side;
-  // endHalf = half-width of the hole where the back starts; c0 = a point inside the back curve
-  let db, back, endHalf, c0;
-  if (mode === 'moon') {
-    db = D.db; endHalf = m2; c0 = [db, 0];
-    back = Array.from({ length: M + 1 }, (_, i) => { const a = Math.PI / 2 - Math.PI * i / M; return [db + D.bulge * Math.cos(a), m2 * Math.sin(a)]; });
-  } else { // the whole slate cut: the back corner of a cushion end (m2 + w from the middle) lies on the circle
-    lo = Math.max(dS, 0); hi = dc;
-    for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (chw(m) < m2 + w) lo = m; else hi = m; }
-    db = (lo + hi) / 2 < 1e-6 ? 0 : (lo + hi) / 2; endHalf = chw(db); c0 = [dc, 0];
-    if (Math.abs(endHalf - m2 - w) > 1e-6) throw new Error(`pocket ${p.id}: cushion end does not meet the slate cut (db ${db})`);
-    const phi0 = Math.acos((db - dc) / Rc);
-    back = Array.from({ length: M + 1 }, (_, i) => { const f = phi0 - 2 * phi0 * i / M; return [dc + (Math.cos(f) > 0 ? D.back : Rc) * Math.cos(f), Rc * Math.sin(f)]; });
-  }
+  // db = depth where the cushions end; back = the visible back edge of the hole, from the + side round to the - side
+  const db = D.db, c0 = [db, 0];
+  const ell = (sd, sl) => Array.from({ length: M + 1 }, (_, i) => { const a = Math.PI / 2 - Math.PI * i / M; return [db + sd * Math.cos(a), sl * Math.sin(a)]; });
+  const back = ell(D.bulge, m2);
   if (db < dS || db < 0) throw new Error(`pocket ${p.id}: db ${db} must be >= ${dS.toFixed(3)} and >= 0`);
-  const grow = (pts, t) => pts.map((q, i) => { // the same curve moved outwards by t
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
-    const n = [-(b[1] - a[1]), b[0] - a[0]], nl = Math.hypot(n[0], n[1]) || 1;
-    const k = (n[0] * (q[0] - c0[0]) + n[1] * (q[1] - c0[1]) > 0 ? 1 : -1) * t / nl;
-    return [q[0] + n[0] * k, q[1] + n[1] * k];
-  });
   // the hole as seen from above: front of the slate cut, the noses up to the cushion ends, then the back
   const sideIn = noseFrom(dS, db);
-  const pit = [...front, ...mir(sideIn).slice(1), [db, -endHalf], ...rev(back), [db, endHalf], ...rev(sideIn).slice(0, -1)];
+  const pit = [...front, ...mir(sideIn).slice(1), [db, -m2], ...rev(back), [db, m2], ...rev(sideIn).slice(0, -1)];
   const frontCount = front.length, b0 = frontCount + sideIn.length;
   // back of the hole: its dark lining runs up to the rail top and covers the wooden cut face
   const backFlags = pit.map((_, i) => i >= b0 && i < b0 + back.length);
@@ -153,15 +134,27 @@ function pocketShapes(p, mode) {
   const band = [...bandFront, ...bandBack];
   // rail edge around the pocket: back of the cushion, back of the hole, other side
   const railSide = [...arc(sweep, 0, r - w), ...(db > 0 ? [[db, m2 + w]] : [])];
-  const rail = [...railSide, ...(endHalf < m2 + w - 1e-6 ? back : back.slice(1, -1)), ...rev(mir(railSide))];
-  // on the rail top behind the hole: a thin rim (R1, Q2) or a small leather cap (R2)
-  const ring = [...back, ...rev(grow(back, DRAW.rim))];
-  const capOuter = mode === 'moon' ? Array.from({ length: M + 1 }, (_, i) => { const a = Math.PI / 2 - Math.PI * i / M; return [db + (D.bulge + DRAW.cap.back) * Math.cos(a), (m2 + DRAW.cap.side) * Math.sin(a)]; }) : [];
-  const cap = [...back, ...rev(capOuter)];
+  const rail = [...railSide, ...back, ...rev(mir(railSide))];
+  // leather cap on the rail top behind the hole
+  let cap;
+  if (mode === 'old') cap = [...back, ...rev(ell(D.bulge + DRAW.cap.back, m2 + DRAW.cap.side))];
+  else {
+    // its front edge starts at the very end of the nose (T), leaves it at a shallow angle and crosses the cushion top
+    // to the wood (B): what is left of the green is a wedge that narrows to nothing at the hole
+    const jr = r - w - DRAW.cap.over, T = [db, m2], B = [-jr * Math.sin(D.tB), m2 + r - jr * Math.cos(D.tB)];
+    const C = [(db + B[0]) / 2, m2 + 0.004];
+    const edge = Array.from({ length: 17 }, (_, i) => { const t = i / 16, a = (1 - t) ** 2, b = 2 * t * (1 - t), c = t * t; return [a * T[0] + b * C[0] + c * B[0], a * T[1] + b * C[1] + c * B[1]]; });
+    for (const [d, l] of edge) if (l < hwid(d) - 1e-9) throw new Error(`pocket ${p.id}: the leather cap covers the physics mouth`);
+    let outer = [...edge, ...ell(D.bulge + DRAW.cap.back, m2 + w + 2 * DRAW.cap.over), ...rev(mir(edge))];
+    for (let n = 0; n < 12; n++) outer = outer.map((q, i) => { // round off its outer corners
+      if (i < 12 || i > outer.length - 13) return q;
+      const a = outer[i - 1], b = outer[i + 1]; return [(a[0] + 2 * q[0] + b[0]) / 4, (a[1] + 2 * q[1] + b[1]) / 4]; });
+    cap = [...outer, ...rev(back).slice(1, -1)];
+  }
   // nothing may reach the outer edge of the wood
   const X = hw + V.rim, Y = hl + V.rim, rr = CORNER_ROUND;
   const sdOuter = (q) => { const qx = Math.abs(q.x) - (X - rr), qy = Math.abs(q.y) - (Y - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr; };
-  for (const q of [...ring, ...cap]) if (sdOuter(W(q)) > -0.008) throw new Error(`pocket ${p.id}: drawing reaches the outer rail edge`);
+  for (const q of cap) if (sdOuter(W(q)) > -0.008) throw new Error(`pocket ${p.id}: drawing reaches the outer rail edge`);
   // self-check: the drawn jaw noses lie exactly on the physics jaw circles
   for (const [d, l] of arc(sweep, 0, r)) for (const s of [1, -1]) {
     const q = W([d, s * l]);
@@ -181,7 +174,7 @@ function pocketShapes(p, mode) {
   // how far into the pocket a point is: 0 on the open bed, 1 from the front edge of the hole inwards (for shading the jaws)
   const into = (x, y) => { const d = (x - O.x) * u.x + (y - O.y) * u.y, t = Math.min(1, Math.max(0, (d - (dS - 0.06)) / 0.06)); return t * t * (3 - 2 * t); };
   return { p, W, bed: toW(bed), pit: toW(pit), pitWall: toW(inset(pit)), backFlags, frontCount, bands, noses, rail: toW(rail),
-    ring: toW(ring), cap: toW(cap), into, demo };
+    cap: toW(cap), into, demo };
 }
 function makeShapes(mode) {
   const list = table.pockets.map((p) => pocketShapes(p, mode));
@@ -194,8 +187,8 @@ function makeShapes(mode) {
   });
   return list;
 }
-const SHAPES = { moon: makeShapes('moon'), disc: makeShapes('disc') };
-const shapes = SHAPES.moon; // demo balls and close-up cameras are the same for both
+const SHAPES = { new: makeShapes('new'), old: makeShapes('old') };
+const shapes = SHAPES.new; // demo balls and close-up cameras are the same for both
 const v2 = (pts) => pts.map((q) => new THREE.Vector2(q.x, q.y));
 
 // ---------- procedural textures (drawn in code, no image files) ----------
@@ -251,7 +244,7 @@ function addLamp(sc) {
 const clothTex = () => { const t = noiseTexture(A.cloth, 0.07, 256); t.repeat.set(3.4, 3.4); return t; }; // uv = metres
 const woodTex = () => { const t = noiseTexture(A.wood, 0.05, 256, true); t.repeat.set(0.6, 0.6); return t; };
 
-// ---------- new drawing (Q1, Q2, Q3) ----------
+// ---------- new drawing (R2, R2 old) ----------
 function fadeTexture(rgb, alpha) { // a soft line: `alpha` at the edge, fading to nothing
   const c = document.createElement('canvas'); c.width = 64; c.height = 4;
   const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 64, 0);
@@ -331,12 +324,11 @@ function buildNew(id) {
   const railMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(outer, { depth: H.rail - H.railBottom, bevelEnabled: false }), woodMat);
   railMesh.position.z = H.railBottom; railMesh.castShadow = railMesh.receiveShadow = true; sc.add(railMesh);
 
-  // on the rail top behind the hole: thin dark-brass rim (R1, Q2) or a small leather cap (R2)
+  // dark leather cap behind each hole; the new one starts at cushion height so that it also lies over the cushion ends
   const leatherMat = new THREE.MeshStandardMaterial({ color: '#1b100a', roughness: 0.6 });
-  const brassMat = new THREE.MeshStandardMaterial({ color: '#3f2f16', metalness: 0.9, roughness: 0.55, envMap: brassEnv(), envMapIntensity: 0.18 });
   for (const s of shapes) {
-    if (O.edge === 'rim') extrude(s.ring, 0.004, brassMat, H.rail, 0.0015);
-    if (O.edge === 'cap') extrude(s.cap, 0.005, leatherMat, H.rail, 0.002);
+    if (O.mode === 'old') extrude(s.cap, 0.005, leatherMat, H.rail, 0.002);
+    else extrude(s.cap, H.rail + 0.005 - H.cushion, leatherMat, H.cushion, 0.002);
   }
 
   // holes: near-black. The walls only get darker downwards; nothing bright inside.
@@ -413,9 +405,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
-let envTex = null; // reflections for the brass only (a generated room, no image file)
-function brassEnv() { if (!envTex) { const pm = new THREE.PMREMGenerator(renderer); envTex = pm.fromScene(new RoomEnvironment(), 0.04).texture; } return envTex; }
-const scenes = { R1: buildNew('R1'), R2: buildNew('R2'), Q2: buildNew('Q2'), Before: buildBefore() };
+const scenes = { R2: buildNew('R2'), R2old: buildNew('R2old'), Before: buildBefore() };
 
 function cameraC(aspect) {
   const fit = fitCamera(table, 'C', aspect);
@@ -441,32 +431,31 @@ function paint(canvas, scene, makeCam, aspect) {
   canvas.getContext('2d').drawImage(renderer.domElement, 0, 0, canvas.width, canvas.height);
 }
 
-let current = 'R1';
+let current = 'R2';
 const corner = 'bottomLeft'; // the near corner (the far ones look the same, only smaller)
 function drawAll() {
   const sc = scenes[current];
   paint(document.getElementById('vCorner'), sc, (a) => closeUp(corner, a, 0.62), 1);
   paint(document.getElementById('vMiddle'), sc, (a) => closeUp('middleLeft', a, 0.62), 1);
   paint(document.getElementById('vTable'), sc, (a) => cameraC(a), 390 / 600);
-  document.querySelectorAll('#cmpTable canvas').forEach((c) => paint(c, scenes[c.dataset.id], (a) => cameraC(a), 390 / 600));
   for (const [box, id] of [['cmpCorner', corner], ['cmpMiddle', 'middleLeft']])
-    document.querySelectorAll(`#${box} canvas`).forEach((c) => paint(c, scenes[c.dataset.id], (a) => closeUp(id, a, 0.62), 0.8));
+    document.querySelectorAll(`#${box} canvas`).forEach((c) => paint(c, scenes[c.dataset.id], (a) => closeUp(id, a, 0.5), 0.8));
 }
 function show(id) {
   current = id;
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
-  document.getElementById('desc').innerHTML = `<b>${id} · ${OPTIONS[id].name}</b> — ${OPTIONS[id].line}`;
+  document.getElementById('desc').innerHTML = `<b>${OPTIONS[id].label} · ${OPTIONS[id].name}</b> — ${OPTIONS[id].line}`;
   drawAll();
 }
 const tabs = document.getElementById('tabs');
-for (const id of ['R1', 'R2', 'Q2', 'Before']) { const b = document.createElement('button'); b.textContent = id; b.dataset.id = id; b.onclick = () => show(id); tabs.appendChild(b); }
-for (const box of ['cmpTable', 'cmpCorner', 'cmpMiddle']) for (const id of ['R1', 'R2', 'Q2']) {
-  const f = document.createElement('figure'); f.innerHTML = `<canvas data-id="${id}"></canvas><figcaption>${id}</figcaption>`;
+for (const id of ['R2', 'R2old', 'Before']) { const b = document.createElement('button'); b.textContent = OPTIONS[id].label; b.dataset.id = id; b.onclick = () => show(id); tabs.appendChild(b); }
+for (const box of ['cmpCorner', 'cmpMiddle']) for (const id of ['R2', 'R2old']) {
+  const f = document.createElement('figure'); f.innerHTML = `<canvas data-id="${id}"></canvas><figcaption>${id === 'R2' ? 'R2 (new)' : 'R2 old'}</figcaption>`;
   document.getElementById(box).appendChild(f);
 }
 let resizeTimer = 0;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawAll, 150); });
-show(OPTIONS[location.hash.slice(1)] ? location.hash.slice(1) : 'R1');
+show(OPTIONS[location.hash.slice(1)] ? location.hash.slice(1) : 'R2');
 window.__ready = true;
 </script>
 </body>
