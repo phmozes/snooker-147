@@ -60,6 +60,16 @@ Details: bench/results/n3-marks-replay.txt, n3-marks-diag.txt, n3-diag.txt). No 
   slowed down by the time it reaches the pack. Breaks: owner's "no full-power pack cannon on a colour" (as the night
   review of reds10-983480511:10). Cause: strike power is not looked at for a colour pack cannon.
 
+Night 3 fix try, solver 4.11 (REVERTED: the paired soak was worse, docs/NIGHT-3.md). Only cause tried: a colour struck
+over 4.0 m/s whose cue ball goes on into the pack (mark 2764519739:2). The game is still on 4.10, so every mark below
+STILL HAPPENS. What 4.11 did (bench/results/n3-marks-replay-411.txt):
+- reds15-2764519739:2: would be FIXED (plain black, 1.29 s, no pack cannon).
+- reds15-3132621162:17 / :19 and reds10-3813538593:8: would change through an earlier hard pack cannon in the same
+  round (plain reds 1.55 / 1.63 s; a 2.2 s miss on the black instead of the 3.3 s long blue).
+- reds15-942643257:15: would be WORSE (the step-14 black leaves the cue ball touching the black; step 15 a soft foul).
+- reds6-1527464874:6, reds10-483330344:3/6/8/10, reds15-640290895:10: NOT CHANGED (cause is red/colour position play,
+  not tried tonight: it would be general tuning).
+
 | Time | Round code | Step | Ball | Outcome | Shot type | Length | Level | Solver |
 |---|---|---|---|---|---|---|---|---|
 | 2026-11-24 21:29 | reds15-3804251161 | 10 | black | success | plain | 5.22 s | reds15 | 4.7b |
