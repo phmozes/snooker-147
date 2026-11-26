@@ -220,7 +220,8 @@ function s1Pocket(s, nextMid, style) {
   // T1 middle: the rail end is rounded. Its edge runs round with the jaw (same centre), closing in on the nose from the
   // full cushion width to the width of the green strip, so the brown has the shape of the green.
   const gS = slot ? D.plate.strip : 0;
-  const spiral = slot ? Array.from({ length: 25 }, (_, k) => { const tt = sweep * (1 - k / 24), rad = r - (w + (gS - w) * (k / 24)); return [-rad * Math.sin(tt), m2 + r - rad * Math.cos(tt)]; }) : null;
+  // (the closing-in is eased, so the edge leaves the rail line straight, without a bump)
+  const spiral = slot ? Array.from({ length: 25 }, (_, k) => { const uu = k / 24, tt = sweep * (1 - uu), rad = r - (w + (gS - w) * uu * uu * (1.8 + 0.4 * uu - 1.2 * uu * uu)); return [-rad * Math.sin(tt), m2 + r - rad * Math.cos(tt)]; }) : null;
   const arcPts = slot ? [[0, m2 + gS]] : Array.from({ length: 9 }, (_, k) => circ(Rc, a0 + (a1 - a0) * k / 8));
   const cutPt = arcPts[arcPts.length - 1], n = [Math.sin(sweep), Math.cos(sweep)];
   const tOut = V.rim - ((cutPt[0] - sideA[0][0]) * n[0] + (cutPt[1] - sideA[0][1]) * n[1]);
