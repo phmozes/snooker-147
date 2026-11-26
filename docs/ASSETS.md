@@ -10,5 +10,5 @@ No image, model or font files. Cloth, wood grain and the lamp vignette are drawn
 so there is nothing to licence. The page uses only Three.js (MIT, above) and the game's own table geometry and camera.
 
 ## Pocket options page (docs/pocket-options.html; not used by the game)
-No image, model or font files. Cloth, wood, net and leather are drawn in code. Brass reflections use Three.js's own
+No image, model or font files. Cloth, wood, leather and brass are drawn in code. Brass reflections use Three.js's own
 `RoomEnvironment` (three/addons, part of the MIT package above): a room generated in code, no image file.
