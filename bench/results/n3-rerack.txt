@@ -1,0 +1,46 @@
+solver 4.10; table half width 0.889, half length 1.7845, ball r 0.02625
+
+== reds6-5000265 step 11: end reRack, target red
+  cue (-0.045, 1.577); reds on the table: 1
+  red1 (0.000, 0.947): 812 mm from the nearest cushion; touching pink; straight line cue->red blocked by black
+    pockets with a clear red->pocket line: topLeft topRight
+  colours: yellow (0.292, -1.048), green (-0.292, -1.048), brown (0.000, -1.048), pink (0.000, 0.892), blue (0.000, 0.000), black (0.000, 1.460)
+  game solver again: level reRack, 1540 shots simulated
+  wide 10x: nothing, 0 shots
+  exhibition 10x: nothing, 1400 shots
+  exhibition 10x, no lookahead, no position: nothing, 1400 shots
+
+== reds6-5000787 step 11: end reRack, target red
+  cue (-0.045, 1.577); reds on the table: 1
+  red1 (0.000, 0.947): 812 mm from the nearest cushion; touching pink; straight line cue->red blocked by black
+    pockets with a clear red->pocket line: topLeft topRight
+  colours: yellow (0.292, -1.048), green (-0.292, -1.048), brown (0.000, -1.048), pink (0.000, 0.892), blue (0.000, 0.000), black (0.000, 1.460)
+  game solver again: level reRack, 1540 shots simulated
+  wide 10x: nothing, 0 shots
+  exhibition 10x: nothing, 1400 shots
+  exhibition 10x, no lookahead, no position: nothing, 1400 shots
+
+== reds6-5002489 step 11: end reRack, target red
+  cue (0.051, 1.432); reds on the table: 1
+  red1 (0.000, 0.947): 812 mm from the nearest cushion; touching pink; straight line cue->red blocked by nothing
+    pockets with a clear red->pocket line: topLeft topRight
+  colours: yellow (0.292, -1.048), green (-0.292, -1.048), brown (0.000, -1.048), pink (0.000, 0.892), blue (0.000, 0.000), black (0.000, 1.460)
+  game solver again: level reRack, 2020 shots simulated
+  wide 10x: nothing, 0 shots
+  exhibition 10x: nothing, 1400 shots
+  exhibition 10x, no lookahead, no position: nothing, 1400 shots
+
+== reds6-5002931 step 11: end reRack, target red
+  cue (-0.045, 1.577); reds on the table: 1
+  red1 (0.000, 0.947): 812 mm from the nearest cushion; touching pink; straight line cue->red blocked by black
+    pockets with a clear red->pocket line: topLeft topRight
+  colours: yellow (0.292, -1.048), green (-0.292, -1.048), brown (0.000, -1.048), pink (0.000, 0.892), blue (0.000, 0.000), black (0.000, 1.460)
+  game solver again: level reRack, 1540 shots simulated
+  wide 10x: nothing, 0 shots
+  exhibition 10x: nothing, 1400 shots
+  exhibition 10x, no lookahead, no position: nothing, 1400 shots
+
+library reds6 redPottable: 200 entries, red frozen to the pink after the break-off in 135: [0, 3, 4, 5, 6, 7, 8, 10, 12, 13, 16, 17, 18, 19, 20, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 44, 45, 47, 48, 49, 50, 51, 53, 54, 56, 57, 59, 61, 64, 65, 67, 69, 70, 72, 74, 75, 76, 78, 79, 82, 83, 85, 87, 88, 91, 92, 93, 94, 95, 99, 101, 102, 103, 104, 105, 106, 107, 108, 109, 113, 114, 115, 117, 119, 121, 122, 123, 124, 125, 127, 129, 131, 132, 133, 136, 139, 140, 141, 142, 144, 145, 147, 148, 149, 150, 152, 153, 154, 158, 159, 160, 161, 162, 164, 165, 167, 169, 172, 174, 175, 176, 179, 180, 181, 182, 183, 184, 186, 187, 188, 190, 191, 192, 194, 195, 197, 199]
+library reds6 snookered: 200 entries, red frozen to the pink after the break-off in 193: [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 85, 86, 87, 88, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199]
+soak seeds 5,000,000..5,002,999 (reds6): after step 1 a red is frozen to the pink in 2013 of 3000 rounds (1831 of them went on past step 1)
+examples: reds6-5000001, reds6-5000003, reds6-5000004, reds6-5000265, reds6-5000787, reds6-5002489, reds6-5002931

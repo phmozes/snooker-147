@@ -25,6 +25,7 @@ it('soak', () => {
   mkdirSync(out, { recursive: true });
   const file = `${out}/${level}-${shard}`;
   writeFileSync(`${file}-failures.txt`, '');
+  if (process.env.SHOTLOG && !process.env.START_I) writeFileSync(`${file}-slow.jsonl`, '');
   const lib = JSON.parse(readFileSync(`public/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
   const provider = createPhysicsProvider(table, { [level]: lib });
   const cap = shotCaps().decision;
@@ -105,10 +106,16 @@ it('soak', () => {
           const A = pf.after[a]!.pos; const C = pf.after[c]!.pos;
           if (Math.hypot(A.x - C.x, A.y - C.y) < 2 * r - 1e-3) problem(code, h.step, `${pf.after[a]!.id} and ${pf.after[c]!.id} overlap`);
         }
-        bump(s.types, classifySuccess({ state: before.balls, target: h.target, potted: pf.potted[0]!, aimedPocket: null, events: pf.events, table }));
+        const type = classifySuccess({ state: before.balls, target: h.target, potted: pf.potted[0]!, aimedPocket: null, events: pf.events, table });
+        bump(s.types, type);
         const d = shot.duration;
         bump(s.lengths, (Math.min(6, Math.floor(d / 0.25) * 0.25)).toFixed(2));
         if (d > 3.5) s.over35++;
+        // SHOTLOG=1 (2026-11-26, diagnosis only): one line per success shot over 3.5 s in <OUT>/<level>-<shard>-slow.jsonl
+        if (d > 3.5 && process.env.SHOTLOG) appendFileSync(`${file}-slow.jsonl`, JSON.stringify({ code, step: h.step, target: h.target,
+          potted: pf.potted[0], type, flex: flexLevel, d: Math.round(d * 100) / 100, speed: Math.round(shot.speed * 100) / 100, spin: shot.spin,
+          cueCushions: pf.events.filter((e) => e.type === 'cushion' && e.a === 'cue').length,
+          cushions: pf.events.filter((e) => e.type === 'cushion').length, reds: before.balls.filter((x) => x.kind === 'red' && !x.potted).length }) + '\n');
         const kind = h.target === 'red' ? 'red' : 'colour';
         s.durs[kind].push(Math.round(d * 100) / 100);
         if (flexLevel === 'exhibition') s.lastResort[kind].push(Math.round(d * 100) / 100);

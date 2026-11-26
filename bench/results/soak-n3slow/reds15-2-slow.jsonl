@@ -1,0 +1,16 @@
+{"code":"reds15-5000062","step":19,"target":"red","potted":"red9","type":"cushionFirst","flex":"exhibition","d":3.56,"speed":6,"spin":1,"cueCushions":2,"cushions":8,"reds":6}
+{"code":"reds15-5000217","step":9,"target":"red","potted":"red10","type":"plant","flex":"exhibition","d":3.81,"speed":6,"spin":0,"cueCushions":2,"cushions":5,"reds":11}
+{"code":"reds15-5000247","step":21,"target":"red","potted":"red8","type":"cushionFirst","flex":"exhibition","d":3.76,"speed":6,"spin":-1,"cueCushions":2,"cushions":4,"reds":5}
+{"code":"reds15-5000377","step":7,"target":"red","potted":"red14","type":"long","flex":"overLong","d":5.51,"speed":6,"spin":1,"cueCushions":4,"cushions":6,"reds":12}
+{"code":"reds15-5000377","step":9,"target":"red","potted":"red9","type":"cushionFirst","flex":"exhibition","d":3.86,"speed":6,"spin":-0.3,"cueCushions":1,"cushions":3,"reds":11}
+{"code":"reds15-5000532","step":16,"target":"black","potted":"black","type":"packCannon","flex":"overLong","d":5,"speed":6,"spin":0.6,"cueCushions":4,"cushions":4,"reds":7}
+{"code":"reds15-5000987","step":21,"target":"red","potted":"red7","type":"long","flex":"overLong","d":4.08,"speed":6,"spin":-0.3,"cueCushions":3,"cushions":4,"reds":5}
+{"code":"reds15-5001172","step":17,"target":"red","potted":"red10","type":"cannon","flex":"overLong","d":3.58,"speed":3.83,"spin":-0.3,"cueCushions":0,"cushions":2,"reds":7}
+{"code":"reds15-5001527","step":14,"target":"black","potted":"black","type":"cannon","flex":"overLong","d":4.83,"speed":6,"spin":1,"cueCushions":5,"cushions":5,"reds":8}
+{"code":"reds15-5001747","step":18,"target":"black","potted":"black","type":"packCannon","flex":"overLong","d":5.03,"speed":6,"spin":1,"cueCushions":5,"cushions":6,"reds":6}
+{"code":"reds15-5001922","step":9,"target":"red","potted":"red7","type":"plant","flex":"exhibition","d":4.41,"speed":6,"spin":1,"cueCushions":1,"cushions":10,"reds":11}
+{"code":"reds15-5002037","step":10,"target":"black","potted":"black","type":"packCannon","flex":"overLong","d":5.34,"speed":6,"spin":1,"cueCushions":5,"cushions":5,"reds":10}
+{"code":"reds15-5002202","step":12,"target":"black","potted":"black","type":"cannon","flex":"overLong","d":4.21,"speed":3.83,"spin":-1,"cueCushions":3,"cushions":3,"reds":9}
+{"code":"reds15-5002412","step":15,"target":"red","potted":"red10","type":"cannon","flex":"overLong","d":4.41,"speed":4.5,"spin":0.8,"cueCushions":0,"cushions":3,"reds":8}
+{"code":"reds15-5002797","step":18,"target":"black","potted":"black","type":"packCannon","flex":"overLong","d":5.03,"speed":6,"spin":1,"cueCushions":5,"cushions":6,"reds":6}
+{"code":"reds15-5002922","step":17,"target":"red","potted":"red10","type":"cannon","flex":"overLong","d":3.58,"speed":3.83,"spin":-0.3,"cueCushions":0,"cushions":2,"reds":7}
