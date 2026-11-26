@@ -96,8 +96,10 @@ const DRAW = {
   r2: { corner: { db: 0.034, bulge: 0.071, tB: 0.10 }, middle: { db: 0, bulge: 0.030, tB: 0.70 } },
   cap: { back: 0.030, over: 0.006 },
 };
+// `fall` / `fallWidth` = darkness and width of the shadow on the bed at the front of each hole; `jaw` = how much darker the
+// cushion faces get where they look into a pocket (T1).
 // T1 leather: `bump` = how strongly the lamp picks out its rounded top; its soft shadow on the wood: `width` (m) and `dark` (0..1)
-const SHADE = { bump: 2.5, width: 0.026, dark: 0.72 };
+const SHADE = { bump: 2.5, width: 0.026, dark: 0.72, fall: 0.75, fallWidth: 0.026, jaw: 0.9 };
 const CORNER_ROUND = 0.12; // outer corners of the rail are rounded (radius, m)
 // cushion width, nose to rail (drawing only; slimmer than before): chosen so that the back corner of a cushion end
 // lies exactly on the edge of the slate cut
@@ -499,7 +501,7 @@ function buildNew(id) {
     const m = extrude(pts, H.cushion, [clothMat, into ? jawMat : faceMat], 0);
     if (into) {
       const g = m.geometry, P = g.attributes.position, Nn = g.attributes.normal, col = [];
-      for (let i = 0; i < P.count; i++) { const c = Math.abs(Nn.getZ(i)) > 0.5 ? 1 : 1 - 0.8 * into(P.getX(i), P.getY(i)); col.push(c, c, c); }
+      for (let i = 0; i < P.count; i++) { const c = Math.abs(Nn.getZ(i)) > 0.5 ? 1 : 1 - (t1 ? SHADE.jaw : 0.8) * into(P.getX(i), P.getY(i)); col.push(c, c, c); }
       g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
     }
     const top = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape(v2(pts)), 12), vigMat); top.position.z = H.cushion + 0.0004; top.renderOrder = 1; sc.add(top);
@@ -536,14 +538,18 @@ function buildNew(id) {
         geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
         mat = new THREE.MeshStandardMaterial({ map: tx.map, bumpMap: tx.bump, bumpScale: SHADE.bump, roughness: 0.66 }); }
       const m = new THREE.Mesh(geo, mat);
-      m.position.z = z0 + bv; m.castShadow = m.receiveShadow = true; sc.add(m);
+      // (the T1 leather throws no lamp shadow: that one is hard-edged; the painted soft shadow below replaces it)
+      m.position.z = z0 + bv; m.castShadow = !shade; m.receiveShadow = true; sc.add(m);
       if (shade) { const bt = 0.0004, g2 = new THREE.ExtrudeGeometry(new THREE.Shape(v2(pts)), { depth: 0.0001, bevelEnabled: true, bevelThickness: bt, bevelSize: SHADE.width, bevelOffset: 0, bevelSegments: 8, curveSegments: 12 });
         const P = g2.attributes.position, col = [];
         for (let k = 0; k < P.count; k++) { const f = Math.max(0, Math.min(1, -P.getZ(k) / bt)), near = 1 - Math.sqrt(1 - f * f); col.push(0, 0, 0, SHADE.dark * near ** 1.4); }
         g2.setAttribute('color', new THREE.Float32BufferAttribute(col, 4));
         const sh = new THREE.Mesh(g2, shadeMat); sh.position.z = H.rail + 0.0012; sh.renderOrder = 2; sc.add(sh); }
     };
+    // T1: a soft dark shadow on the bed where the cloth falls into the hole, so the edge of the bed looks rounded
+    const fallMat = new THREE.MeshBasicMaterial({ map: fadeTexture('0,0,0', SHADE.fall), transparent: true, depthWrite: false });
     for (const h of S1) {
+      if (t1) sc.add(edgeStrip(h.hole.pitWall.slice(0, h.hole.frontCount), centre(h.hole.pitWall), -1, SHADE.fallWidth, 0.0011, fallMat));
       puff(h.leather, tanMat, h.bevel, H.rail - 0.003, 0.006, t1);
       if (h.lip) puff(h.lip, lipMat, 0.002, H.rail - 0.003, 0.006 + 2 * h.bevel - 0.006);
       const g = new THREE.BufferGeometry();
