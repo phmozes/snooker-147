@@ -69,6 +69,9 @@
 <canvas class="still" id="sTip"></canvas>
 <h2>BUTT END</h2>
 <canvas class="still" id="sButt"></canvas>
+<h2>THE NAME ON THE RING</h2>
+<canvas class="still" id="sLogo"></canvas>
+<p class="note">The name is drawn in code as letters (no image file), in the ebony's dark brown on the brass.</p>
 <div class="end"></div>
 <script>window.onerror = (m) => { document.getElementById("desc").textContent = "Error: " + m; };</script>
 <script type="module">
@@ -632,19 +635,22 @@ const CUE = {
 };
 // LOOK of the new cue: every number is here.
 const LOOK = {
-  scale: 1.8,                        // thickness against a real cue (real: 10 mm tip, 29 mm butt). Old cue was 1.3x.
-  tip: 0.011, ferrule: 0.032,        // m from the tip end: blue tip up to `tip`, brass ferrule up to `ferrule`
-  pointsTop: 0.74, pointsBase: 1.10, // the four ebony points run from `pointsBase` up to `pointsTop` (m from the tip)
-  ring: [1.392, 1.406], cap: 1.452,  // brass ring and the dark end cap
+  // Real cue: 147 cm long, 9.5 mm tip, 29 mm butt end, even taper. Lengths are real; only the thickness is multiplied.
+  scale: 1.8,                        // thickness against the real cue. Old cue was about 1.3x.
+  tipD: 0.0095, buttD: 0.029,        // real diameters (m)
+  tip: 0.005, ferrule: 0.012,        // m from the tip end: blue leather tip 5 mm, then a 7 mm brass ferrule
+  pointsTop: 1.04, pointsBase: 1.25, // ebony butt = the last 43 cm: four points from `pointsBase` up to `pointsTop` (m from the tip)
+  ring: [1.385, 1.407], cap: 1.452,  // brass ring (22 mm, wide enough for the name) and the dark end cap
+  logo: 'Adraba', logoHeight: 0.72, logoFlip: true, // name on the ring: letter size as a share of the ring width
   glow: 0.10, rim: 0.55,             // own light of the wood (so the butt never goes black) and the lighter edge
   shadow: { dark: 0.55, blur: 0.004, spread: 0.07 }, // darkness at the cloth, soft edge (m), extra soft edge per metre of height
 };
-const DIM = { old: { tipR: CUE.tipR, buttR: CUE.buttR }, new: { tipR: 0.005 * LOOK.scale, buttR: 0.0145 * LOOK.scale } };
+const DIM = { old: { tipR: CUE.tipR, buttR: CUE.buttR }, new: { tipR: LOOK.tipD / 2 * LOOK.scale, buttR: LOOK.buttD / 2 * LOOK.scale } };
 const radiusAt = (kind, s) => DIM[kind].tipR + (DIM[kind].buttR - DIM[kind].tipR) * Math.min(1, s / CUE.length);
 const VARIANTS = {
   C0: { label: 'C0', name: 'Nothing (today)', line: 'The cue ball just starts to move.', appear: 0, stroke: 0 },
   C1old: { label: 'C1 old', name: 'Full cue, first drawing', line: 'The thin pale cue from the last round, for comparison.', appear: 0.06, stroke: 0.19, cue: 'old' },
-  C1: { label: 'C1 new', name: 'Full cue, new look', line: 'Thicker tapered cue: blue tip, brass ferrule, ash shaft with grain, ebony butt with four points and a brass ring, soft shadow. Same motion and timing.', appear: 0.06, stroke: 0.19, cue: 'new' },
+  C1: { label: 'C1 new', name: 'Full cue, new look', line: 'Real cue sizes (147 cm, 9.5 mm tip, 29 mm butt, 7 mm brass ferrule, 43 cm ebony butt with four points), drawn 1.8x thick. Ash with dark grain, textured ebony, the name Adraba on the brass ring, soft shadow. Same motion and timing.', appear: 0.06, stroke: 0.19, cue: 'new' },
 };
 for (const v of Object.values(VARIANTS)) { v.added = v.appear + v.stroke; if (v.added > 0.2501) throw new Error('cue action longer than 0.25 s'); }
 const TIMING = { before: 0.9, after: 0.9, press: 0.18, ballSpeed: 2.6 }; // s, s, s, m/s (hand-made, not the game's physics)
@@ -742,44 +748,61 @@ function makeOldCue() {
 
 // NEW cue. Its skin is painted in code: across the picture = round the cue, down the picture = from the tip to the butt.
 function cueSkin() {
-  const W = 128, Hh = 2048, c = document.createElement('canvas'); c.width = W; c.height = Hh;
-  const g = c.getContext('2d'), y = (s) => s / CUE.length * Hh;
+  const W = 256, Hh = 4096, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+  const g = c.getContext('2d'), y = (s) => s / CUE.length * Hh, kx = W / 128, ky = Hh / 2048;
   let seed = 777; const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
-  const streaks = (n, y0, y1, rgb, a0, a1, l0, l1) => { for (let i = 0; i < n; i++) {
-    const x = rnd() * W, ys = y0 + rnd() * (y1 - y0), l = l0 + rnd() * (l1 - l0);
-    g.strokeStyle = `rgba(${rgb},${(a0 + rnd() * (a1 - a0)).toFixed(3)})`; g.lineWidth = 0.6 + rnd() * 1.4;
-    g.beginPath(); g.moveTo(x, ys); g.lineTo(x + (rnd() - 0.5) * 4, Math.min(y1, ys + l)); g.stroke(); } };
-  // shaft: pale ash, long fine grain lines and a few of the dark arrow marks ash is known for
+  const streaks = (n, y0, y1, rgb, a0, a1, l0, l1, wide = 1) => { for (let i = 0; i < n; i++) {
+    const x = rnd() * W, ys = y0 + rnd() * (y1 - y0), l = (l0 + rnd() * (l1 - l0)) * ky;
+    g.strokeStyle = `rgba(${rgb},${(a0 + rnd() * (a1 - a0)).toFixed(3)})`; g.lineWidth = (0.6 + rnd() * 1.4) * kx * wide;
+    g.beginPath(); g.moveTo(x, ys); g.lineTo(x + (rnd() - 0.5) * 4 * kx, Math.min(y1, ys + l)); g.stroke(); } };
+  // shaft: pale ash with clearly visible dark grain: long lines, and the dark arrow marks ash is known for
   g.fillStyle = '#e6c98f'; g.fillRect(0, 0, W, Hh);
-  streaks(230, 0, Hh, '168,118,58', 0.10, 0.30, 80, 420);
+  streaks(260, 0, Hh, '150,100,45', 0.14, 0.38, 80, 420);
+  streaks(70, 0, Hh, '96,60,24', 0.30, 0.60, 120, 520, 0.8);
   streaks(60, 0, Hh, '255,240,205', 0.10, 0.25, 60, 300);
-  for (let k = 0; k < 16; k++) {
-    const cx = rnd() * W, cy = y(0.10) + rnd() * (y(LOOK.pointsTop) - y(0.10)), w = 6 + rnd() * 7, h = 16 + rnd() * 26;
-    g.strokeStyle = `rgba(120,78,34,${(0.35 + rnd() * 0.25).toFixed(2)})`; g.lineWidth = 1.3;
-    for (let j = 0; j < 3; j++) { g.beginPath(); g.moveTo(cx - w, cy + j * 9); g.lineTo(cx, cy + j * 9 - h); g.lineTo(cx + w, cy + j * 9); g.stroke(); }
+  for (let k = 0; k < 26; k++) {
+    const cx = rnd() * W, cy = y(0.06) + rnd() * (y(LOOK.pointsTop) - y(0.06)), w = (6 + rnd() * 7) * kx, h = (16 + rnd() * 26) * ky;
+    g.strokeStyle = `rgba(96,60,24,${(0.45 + rnd() * 0.3).toFixed(2)})`; g.lineWidth = 1.3 * kx;
+    for (let j = 0; j < 3; j++) { g.beginPath(); g.moveTo(cx - w, cy + j * 9 * ky); g.lineTo(cx, cy + j * 9 * ky - h); g.lineTo(cx + w, cy + j * 9 * ky); g.stroke(); }
   }
-  // butt: ebony, with four long points running up into the ash, each edged with a thin lighter veneer line
+  // butt: ebony, with four points running up into the ash, each edged with a thin lighter veneer line
   const base = y(LOOK.pointsBase), apex = y(LOOK.pointsTop), q = W / 4;
   g.beginPath();
   for (let k = 0; k < 4; k++) { g.moveTo(k * q, base + 1); g.lineTo((k + 0.5) * q, apex); g.lineTo((k + 1) * q, base + 1); }
   g.rect(0, base, W, Hh - base);
   g.fillStyle = '#2a1a13'; g.fill();
-  g.strokeStyle = 'rgba(176,112,52,0.95)'; g.lineWidth = 2.2; g.beginPath();
+  // wood figure inside the ebony only: brown bands, long grain lines of several browns, near-black lines and small pores
+  g.save(); g.beginPath();
+  for (let k = 0; k < 4; k++) { g.moveTo(k * q + 3 * kx, base + 1); g.lineTo((k + 0.5) * q, apex + 24 * ky); g.lineTo((k + 1) * q - 3 * kx, base + 1); }
+  g.rect(0, base, W, Hh - base); g.clip();
+  for (let i = 0; i < 9; i++) { const x = rnd() * W, w = (5 + rnd() * 12) * kx, gr = g.createLinearGradient(x - w, 0, x + w, 0);
+    gr.addColorStop(0, 'rgba(110,68,38,0)'); gr.addColorStop(0.5, `rgba(110,68,38,${(0.22 + rnd() * 0.25).toFixed(2)})`); gr.addColorStop(1, 'rgba(110,68,38,0)');
+    g.fillStyle = gr; g.fillRect(x - w, apex, 2 * w, Hh - apex); }
+  streaks(170, apex, Hh, '142,96,60', 0.16, 0.42, 60, 360);
+  streaks(60, apex, Hh, '186,132,84', 0.12, 0.30, 30, 160, 0.6);
+  streaks(90, apex, Hh, '10,6,4', 0.30, 0.65, 80, 420);
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${rnd() < 0.5 ? '170,120,80' : '8,5,3'},${(0.2 + rnd() * 0.35).toFixed(2)})`; g.fillRect(rnd() * W, apex + rnd() * (Hh - apex), 1.2, (2 + rnd() * 6) * ky); }
+  g.restore();
+  g.strokeStyle = 'rgba(176,112,52,0.95)'; g.lineWidth = 2.2 * kx; g.beginPath();
   for (let k = 0; k < 4; k++) { g.moveTo(k * q, base); g.lineTo((k + 0.5) * q, apex); g.lineTo((k + 1) * q, base); }
   g.stroke();
-  g.save(); g.beginPath();
-  for (let k = 0; k < 4; k++) { g.moveTo(k * q + 3, base); g.lineTo((k + 0.5) * q, apex + 24); g.lineTo((k + 1) * q - 3, base); }
-  g.rect(0, base, W, Hh - base); g.clip();
-  streaks(90, apex, Hh, '128,92,66', 0.10, 0.28, 60, 320); // faint lighter grain in the ebony
-  g.restore();
-  // brass ring near the end, and the dark end cap
+  // brass ring near the end with the name engraved on it, and the dark end cap
   const band = (s0, s1, stops) => { const gr = g.createLinearGradient(0, y(s0), 0, y(s1)); stops.forEach(([t, col]) => gr.addColorStop(t, col)); g.fillStyle = gr; g.fillRect(0, y(s0), W, y(s1) - y(s0)); };
-  band(LOOK.ring[0], LOOK.ring[1], [[0, '#8a6a24'], [0.35, '#f0d587'], [0.6, '#d3ab4c'], [1, '#7c5c1c']]);
+  band(LOOK.ring[0], LOOK.ring[1], [[0, '#7c5c1c'], [0.1, '#e4c672'], [0.5, '#d9b558'], [0.9, '#c9a244'], [1, '#6d5220']]);
+  { // the name runs round the ring, in the ebony's own dark brown (cut into the brass), with a thin light lower edge
+    const y0 = y(LOOK.ring[0]), y1 = y(LOOK.ring[1]), hPx = (y1 - y0) * LOOK.logoHeight, circ = 2 * Math.PI * radiusAt('new', LOOK.ring[0]);
+    const sx = (W / circ) / (Hh / CUE.length); // the picture is stretched round the cue: squeeze the letters so they come out true
+    g.save(); g.translate(W / 2, (y0 + y1) / 2); g.scale(LOOK.logoFlip ? -sx : sx, 1);
+    g.font = `800 ${hPx.toFixed(1)}px "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(255,238,170,0.75)'; g.fillText(LOOK.logo, 0, hPx * 0.09);
+    g.fillStyle = '#2a1a13'; g.fillText(LOOK.logo, 0, hPx * 0.04);
+    g.restore();
+  }
   band(LOOK.cap, CUE.length, [[0, '#6a5444'], [0.12, '#3a2c24'], [1, '#2c211b']]);
-  // tip end: brass ferrule, then the blue chalked tip
-  band(LOOK.tip, LOOK.ferrule, [[0, '#7c5c1c'], [0.12, '#e9cd7c'], [0.55, '#d6b052'], [0.9, '#b8913a'], [1, '#6d5220']]);
+  // tip end: the blue chalked leather tip, then the short brass ferrule
+  band(LOOK.tip, LOOK.ferrule, [[0, '#6d5220'], [0.15, '#ecd183'], [0.55, '#d6b052'], [0.88, '#b8913a'], [1, '#5f4718']]);
   g.fillStyle = '#3f84c4'; g.fillRect(0, 0, W, y(LOOK.tip));
-  for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(190,222,248,${(0.25 + rnd() * 0.5).toFixed(2)})`; g.fillRect(rnd() * W, rnd() * y(LOOK.tip), 1.5, 1.5); }
+  for (let i = 0; i < 120; i++) { g.fillStyle = `rgba(190,222,248,${(0.25 + rnd() * 0.5).toFixed(2)})`; g.fillRect(rnd() * W, rnd() * y(LOOK.tip), 2, 2); }
   const t = new THREE.CanvasTexture(c); t.flipY = false; t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = renderer.capabilities.getMaxAnisotropy();
   return t;
@@ -852,7 +875,7 @@ function resize() {
 }
 
 // ---------- one frame: `tau` = seconds since the SHOOT press (negative = before the press) ----------
-const Y = new THREE.Vector3(0, 1, 0), tipAt = new THREE.Vector3();
+const Y = new THREE.Vector3(0, 1, 0), tipAt = new THREE.Vector3(), TOWARD_CAMERA = new THREE.Vector3(0, -0.5, 0.87).normalize();
 function cuePose(plan, V, tau) { // gap between tip and cue ball, and opacity. Uses only the aim of the plan, never the result.
   const T = V.added, sinceHit = tau - T;
   const k = clamp01((tau - V.appear) / V.stroke);
@@ -884,7 +907,11 @@ function pose(tau, still) { // `still` = { gap }: the cue fully shown, lying at 
       m.visible = true; m.material.opacity = alpha; m.castShadow = V.cue === 'old' && alpha > 0.5;
       m.quaternion.setFromUnitVectors(Y, plan.axis);
       tipAt.set(plan.C.x, plan.C.y, RS).addScaledVector(plan.axis, RS + gap); m.position.copy(tipAt);
-      if (V.cue === 'new') castCueShadow(tipAt, plan.axis, alpha);
+      if (V.cue === 'new') {
+        castCueShadow(tipAt, plan.axis, alpha);
+        const face = TOWARD_CAMERA.clone().applyQuaternion(m.quaternion.clone().invert()); // roll the skin so the name on the ring faces the player
+        m.material.map.offset.x = 0.5 - Math.atan2(face.x, face.z) / (2 * Math.PI);
+      }
     }
   }
 }
@@ -926,7 +953,7 @@ function paintStills() {
   const keep = [shotIx, variant]; shotIx = 0; if (!VARIANTS[variant].cue) variant = 'C1';
   document.getElementById('stillTitle').textContent = `CLOSE-UP (STILL) · ${VARIANTS[variant].label.toUpperCase()} · THE CUE LYING ACROSS THE TABLE`;
   pose(0, { gap: 0.015 });
-  for (const [id, s, dist, aspect] of [['sWhole', 0.80, 2.45, 1], ['sTip', 0.16, 0.62, 1.5], ['sButt', 1.14, 1.05, 1.5]]) {
+  for (const [id, s, dist, aspect] of [['sWhole', 0.80, 2.45, 1], ['sTip', 0.16, 0.62, 1.5], ['sButt', 1.17, 0.95, 1.5], ['sLogo', (LOOK.ring[0] + LOOK.ring[1]) / 2, 0.30, 1.5]]) {
     const cv = document.getElementById(id), w = cv.clientWidth, h = Math.round(w / aspect), pr = renderer.getPixelRatio(); if (!w) continue;
     cv.style.height = h + 'px'; cv.width = Math.round(w * pr); cv.height = Math.round(h * pr);
     renderer.setSize(w, h, false); renderer.render(scene, stillCamera(s, dist, aspect));
