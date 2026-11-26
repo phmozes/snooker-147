@@ -20,6 +20,9 @@
 - Note: the first run stopped early (an old default stop after 1,000 successful shots per worker); I continued it on
   the next seeds, so the 3,000 are all different rounds. Solves over 10 s (49 / 50 / 88) are wall time on a PC
   running 12-15 jobs at once, not a stuck solver.
+- 2026-11-26 decisive RTP run, 50M rounds per level, seeds 5,000,000,001+ (bench/results/rtp-rng-50M.txt): rule |z|<3
+  FAILS on 3 steps, all reds6 (13: -3.22, 14: -3.45, 18: 96.78% vs 97.00%, -3.20), all BELOW 97%. Steps and step pairs
+  clean (|z| <= 2.16); a perfect RNG fails this rule in ~10% of runs. Likely noise, not proven. No fix (owner decides).
 ## Task 3, owner's 11 marks: diagnosis DONE; fix 4.11 tried and REVERTED
 - Diagnosis per mark in docs/WEIRD-SHOTS.md (Night 3 review). Causes: a red leaves the cue ball badly placed for the
   black (7: 1527464874:6, 3813538593:8 also a 3.3 s miss, 483330344 x4, 640290895:10); a blue leaves it far from
