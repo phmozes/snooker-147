@@ -13,6 +13,7 @@
 - Measure: bench/results/night/run.sh <tag>; big soak: bench/soak.test.ts with ROUNDS (START_I to continue, SHOTLOG=1
   for slow shots), summary node bench/soak-night3.mjs <dirs>; RTP: bench/rtp/rng50m.test.ts + rng50m-sum.mjs.
 - Dev server always on port 5181 (vite.config.ts, strictPort): phone http://192.168.1.111:5181. Never another port.
+  Page shows only BALANCE = stale Vite cache (504 Outdated Optimize Dep on three.js): restart with `npx vite --force`.
 ## Waiting on others: nothing.
 ## Later
 - LAUNCH BLOCKER: outcomes on a server before real money (plan: docs/SERVER-OUTCOMES.md).
