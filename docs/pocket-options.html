@@ -78,7 +78,7 @@ const H = { cushion: 0.040, rail: 0.050, pit: 0.10, railBottom: -0.10 };
 // T1 (round 6, after the owner's two photos of a real table): black at the front of the pocket, a bright net behind it,
 //   and peach-tan leather at the back with a lighter inner lip (`lip2` = half its width).
 //   Corner: a round hole; the green runs on beside the throat as a thin strip up to the hole, and the rail ends are
-//   rounded to follow it. The leather is a band (`band` wide) along the outer line of the table, from rail end to
+//   rounded to follow it. The leather is a band (`band` wide) just inside the outer line of the table, from rail end to
 //   rail end; the hole is open up to it and the net hangs almost straight down from its inner edge.
 //   Middle: a straight opening as wide as the physics mouth. The green of each cushion runs on into the pocket as a
 //   thin strip along the side of the hole (following the physics jaw) up to the leather. Behind the net a leather plate
@@ -88,7 +88,7 @@ const H = { cushion: 0.040, rail: 0.050, pit: 0.10, railBottom: -0.10 };
 //   The net hangs almost straight down from the rim along the back AND both sides of the hole: `netFront` = depth
 //   where it starts on the sides, `netLean` = how far it leans inwards on its way down.
 const DRAW = {
-  t1: { band: 0.030, netTop: 0.046, netBottom: -0.095, lip2: 0.0035,
+  t1: { band: 0.028, inset: 0.014, curl: 0.006, netTop: 0.046, netBottom: -0.095, lip2: 0.0035,
     plate: { front: 0.040, depth: 0.050, side: 0.016, inset: 0.004, round: 0.008, netFront: -0.03, strip: 0.012, netLean: 0.03 } },
   s1: { width: 0.026, lip: 0.001, over: { corner: 0.08, middle: 0.45 }, netTop: 0.046, netBottom: -0.06 },
   r2: { corner: { db: 0.034, bulge: 0.071, tB: 0.10 }, middle: { db: 0, bulge: 0.030, tB: 0.70 } },
@@ -224,7 +224,12 @@ function s1Pocket(s, nextMid, style) {
   const t1 = style === 't1', gS = t1 ? D.plate.strip : 0;
   // (the closing-in is eased, so the edge leaves the rail line straight, without a bump)
   const eA = Math.min(1.8, 0.9 * (r - w) * sweep * sweep / 2 / (w - gS || 1)), ease = (x) => x * x * (eA + (4 - 2 * eA) * x + (eA - 3) * x * x);
-  const spiral = t1 ? Array.from({ length: 25 }, (_, k) => { const tt = sweep * (1 - k / 24), rad = r - (w + (gS - w) * ease(k / 24)); return [-rad * Math.sin(tt), m2 + r - rad * Math.cos(tt)]; }) : null;
+  const spiralM = () => Array.from({ length: 25 }, (_, k) => { const tt = sweep * (1 - k / 24), rad = r - (w + (gS - w) * ease(k / 24)); return [-rad * Math.sin(tt), m2 + r - rad * Math.cos(tt)]; });
+  // T1 corner: the rail edge simply runs straight on along the rail line and then turns, in one small round bend,
+  // into the line of the green strip (no bump)
+  const spiralC = () => { const rho = 0.04, sx = (Bt[1] - (m2 + gS)) / Math.sin(sweep), X0 = [Bt[0] + sx * dir[0], Bt[1] + sx * dir[1]], tl = rho * Math.tan(sweep / 2), T2 = [X0[0] + tl, X0[1]];
+    return [Bt, ...Array.from({ length: 13 }, (_, k) => { const an = -Math.PI / 2 - sweep * (1 - k / 12); return [T2[0] + rho * Math.cos(an), T2[1] + rho + rho * Math.sin(an)]; })]; };
+  const spiral = slot ? spiralM() : t1 ? spiralC() : null;
   // T1 corner: the green strip runs on beside the throat until its outer edge meets the round hole (at depth dX)
   const dX = dc - Math.sqrt(Rc * Rc - (m2 + gS) ** 2), aX = Math.atan2(m2 + gS, dX - dc);
   if (t1 && !slot && aX < a1) throw new Error(`pocket ${s.p.id}: green strip ends behind the rail cut`);
@@ -287,10 +292,18 @@ function s1Pocket(s, nextMid, style) {
       // end, runs straight on, turns the table corner in one round bend and runs straight to the other rail end.
       // path(q) = that line moved inwards by q, from the + side to the - side.
       const dC = outPt[0] + outPt[1], dA = dC - CORNER_ROUND * Math.SQRT2;
-      const path = (q) => [[cutPt[0] + n[0] * (tOut - q), cutPt[1] + n[1] * (tOut - q)],
-        ...Array.from({ length: 25 }, (_, k) => { const an = Math.PI / 4 - Math.PI / 2 * k / 24; return [dA + (CORNER_ROUND - q) * Math.cos(an), (CORNER_ROUND - q) * Math.sin(an)]; }),
-        [cutPt[0] + n[0] * (tOut - q), -(cutPt[1] + n[1] * (tOut - q))]];
-      leather = [...path(0), ...path(D.band).reverse()]; lip = band(path(D.band), D.lip2); bevel = 0.005;
+      // It lies `inset` inside the outer line of the table, and its straight parts curl in very slightly (`curl`)
+      // towards their ends.
+      const path = (q0) => { const q = q0 + D.inset, rc = CORNER_ROUND - q, S0 = [dA + rc * Math.SQRT1_2, rc * Math.SQRT1_2], J = [cutPt[0] + n[0] * (tOut - q), cutPt[1] + n[1] * (tOut - q)];
+        const straight = Array.from({ length: 8 }, (_, k) => { const tt = 1 - k / 8, c = D.curl * tt * tt; return [J[0] + (S0[0] - J[0]) * (1 - tt) - n[0] * c, J[1] + (S0[1] - J[1]) * (1 - tt) - n[1] * c]; });
+        const bend = Array.from({ length: 25 }, (_, k) => { const an = Math.PI / 4 - Math.PI / 2 * k / 24; return [dA + rc * Math.cos(an), rc * Math.sin(an)]; });
+        return [...straight, ...bend, ...straight.map(([d, l]) => [d, -l]).reverse()]; };
+      // its four end corners are rounded off a little
+      const soft = (A, B, C) => { const rr2 = 0.007, ua = Math.hypot(B[0] - A[0], B[1] - A[1]), uc = Math.hypot(C[0] - A[0], C[1] - A[1]), a = [(B[0] - A[0]) / ua * rr2, (B[1] - A[1]) / ua * rr2], c = [(C[0] - A[0]) / uc * rr2, (C[1] - A[1]) / uc * rr2];
+        return [[A[0] + a[0], A[1] + a[1]], [A[0] + 0.3 * (a[0] + c[0]), A[1] + 0.3 * (a[1] + c[1])], [A[0] + c[0], A[1] + c[1]]]; };
+      const po = path(0), pi = path(D.band), no = po.length - 1;
+      leather = [...soft(po[0], pi[0], po[1]), ...po.slice(1, -1), ...soft(po[no], po[no - 1], pi[no]), ...soft(pi[no], po[no], pi[no - 1]), ...pi.slice(1, -1).reverse(), ...soft(pi[0], pi[1], po[0])];
+      lip = band(pi.slice(2, -2), D.lip2); bevel = 0.005;
       // the hole: the physics drop circle, opened out behind up to the rail ends and the leather band
       const sideArc = (sg) => Array.from({ length: 5 }, (_, k) => circ(Rc - 0.0006, sg * (a0 + (a1 - a0) * k / 4)));
       rest = [...sideArc(-1), ...path(D.band + 0.0008).reverse(), ...sideArc(1).reverse()]; restFlags = rest.map(() => true);
