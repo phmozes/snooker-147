@@ -51,6 +51,7 @@ export interface Round {
   history: { step: number; target: BallKind; outcome: 'success' | FailureLabel | 'reRack'; shot?: unknown; tried?: number; forced?: boolean }[];
   breakShot?: unknown; // the opponent's break-off of this round (opaque, for playback)
   forced?: boolean; // developer test panel (task 5.3): at least one outcome of this round was forced, not decided
+  free?: boolean; // a replay (night 4, owner): takes no bet and pays nothing, the balance stays as it was
 }
 
 // ---------------- seeded streams (RULES A.5, config rng.streams) ----------------
@@ -87,6 +88,8 @@ export function streamValue(seed: number, stream: string, k: number, version: Rn
 /** The round code of a round that has just started (no colour letters yet): v2 codes carry the marker `v2`. */
 export const baseCode = (levelId: string, seed: number, rng: RngVersion): string => `${levelId}-${rng === 2 ? 'v2-' : ''}${seed}`;
 
+/** The balance after a win is paid (a free replay pays nothing; its end still shows what the real round paid). */
+const paid = (r: Round, amount: number) => (r.free ? r.balance : money(r.balance + amount));
 const money = (v: number) => Math.round(v * 10 ** CONFIG.money.currencyDecimals) / 10 ** CONFIG.money.currencyDecimals;
 
 export function newRound(seed: number, balance: number = CONFIG.money.startingBalance, rng: RngVersion = RNG_VERSION_NEW): Round {
@@ -125,9 +128,9 @@ function pickFailure(r: Round, k: number): FailureLabel {
 /** RULES B.1 / B.2: START takes the bet, the opponent breaks, step 1 is played automatically. */
 export function start(r: Round, provider: ShotProvider, table: TableGeometry): Round {
   if (r.phase !== 'betting' && r.phase !== 'over') throw new Error('START only between rounds');
-  if (r.balance < r.bet) throw new Error('balance too low for this bet');
+  if (!r.free && r.balance < r.bet) throw new Error('balance too low for this bet');
   const reds = CONFIG.levels.find((l) => l.id === r.levelId)!.reds;
-  let round: Round = { ...r, phase: 'decide', balance: money(r.balance - r.bet), step: 0, end: null, history: [], forced: false,
+  let round: Round = { ...r, phase: 'decide', balance: r.free ? r.balance : money(r.balance - r.bet), step: 0, end: null, history: [], forced: false,
     roundCode: baseCode(r.levelId, r.seed, r.rng), frame: newFrame(reds, table) };
   const ok = stepSucceeds(round, 1);
   const outcome = ok ? 'success' : streamValue(r.seed, 'break', 1, r.rng) < CONFIG.failures.step1.plainMiss ? 'plainMiss' : 'snookered';
@@ -143,7 +146,7 @@ function playShot(r: Round, target: BallKind, outcome: 'success' | FailureLabel,
     // RULES D.4: the pot counts, no shot is played, the round ends paid at the NEW multiplier
     const m = r.ladder[k - 1]!.multiplier;
     const amount = money(r.bet * m);
-    return { ...r, phase: 'over', step: k, balance: money(r.balance + amount), end: { type: 'reRack', amount, multiplier: m },
+    return { ...r, phase: 'over', step: k, balance: paid(r, amount), end: { type: 'reRack', amount, multiplier: m },
       history: [...r.history, { step: k, target, outcome: 'reRack' }] };
   }
   const frame = applyShot(r.frame!, target, planned.result, table);
@@ -156,7 +159,7 @@ function playShot(r: Round, target: BallKind, outcome: 'success' | FailureLabel,
   if (k === r.ladder.length || frame.phase === 'cleared') {
     const m = r.ladder[r.ladder.length - 1]!.multiplier; // RULES A.4: clearing the table pays the top multiplier
     const amount = money(r.bet * m);
-    return { ...r, phase: 'over', step: k, frame, history, balance: money(r.balance + amount), end: { type: 'clearance', amount, multiplier: m } };
+    return { ...r, phase: 'over', step: k, frame, history, balance: paid(r, amount), end: { type: 'clearance', amount, multiplier: m } };
   }
   return { ...r, step: k, frame, history };
 }
@@ -200,7 +203,7 @@ export function cashOut(r: Round): Round {
   if (r.phase !== 'decide' || r.step < 1) throw new Error('CASH OUT is only possible after a successful step');
   const m = r.ladder[r.step - 1]!.multiplier;
   const amount = money(r.bet * m);
-  return { ...r, phase: 'over', balance: money(r.balance + amount), end: { type: 'cashOut', amount, multiplier: m } };
+  return { ...r, phase: 'over', balance: paid(r, amount), end: { type: 'cashOut', amount, multiplier: m } };
 }
 
 // ---------------- developer test panel (task 5.3) ----------------

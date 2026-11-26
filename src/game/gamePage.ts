@@ -13,16 +13,19 @@ import { createPhysicsProvider, type BreakLibrary } from '../core/physicsProvide
 import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, RNG_VERSION_NEW, type RngVersion, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
-import { rtpText } from '../core/ladder';
+import { ladderForLevel, rtpText } from '../core/ladder';
 import { shotCaps, type FallbackLogEntry } from '../core/solver';
 import { buildTable } from '../core/table/geometry';
 import { rackBalls } from '../core/table/rack';
 import { COLOURS, type Ball, type BallKind, type Colour, type Vec2 } from '../core/types';
 import { positionsAt } from '../view/playback';
 import { createTable3d, type TableLookId } from '../view/table3d';
+import { cuePose, VARIANTS } from '../view/cue';
+import { rateAt, startOf } from '../view/fastEnd';
+import { isMuted, muteIcon, setMuted } from './sound';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
-import { clearanceText, endLine, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
+import { clearanceText, endLine, FAILURE_TEXT, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
 import { codeColour, colourSteps, roundCodeOf, type RoundCode } from '../core/roundCode';
 
 type ScreenId = 'D' | 'A' | 'C';
@@ -201,21 +204,96 @@ const placed = (balls: Ball[]) => ids.map((id) => balls.find((b) => b.id === id)
 function showBalls(balls: Ball[]) { rest = placed(balls); draw3d(); }
 const draw3d = () => { if (!view3d) return; view3d.resize(); view3d.draw(rest); };
 
+// dev only (night 4 pocket check): slow motion (?slow=0.1) and the last recording, for scripts/pocket-check.mjs
+let devSlow = import.meta.env.DEV ? Number(params.get('slow')) || 1 : 1;
+let devLastRec: { rec: ReturnType<typeof recordShot>; t0: number; scale: number; n: number; simT?: number } | null = null;
+let devShots = 0;
+let devPauseOn: { kind: 'jaw' | 'pot' | 'potCue'; offset: number } | null = null;
+let devPause: { at: number; event: unknown; paused: boolean } | null = null;
+let devResume = false;
+// Part 4 / 3b switches (dev panel; kept on this device so the owner can compare on the phone)
+const readSwitch = (key: string, def: boolean) => { try { const v = localStorage.getItem(key); return v === null ? def : v === '1'; } catch { return def; } };
+const saveSwitch = (key: string, v: boolean) => { try { localStorage.setItem(key, v ? '1' : '0'); } catch { /* private window */ } };
+let cueOn = readSwitch('snooker147.cue', CONFIG.view3d.cue.enabled);
+let fastEndOn = readSwitch('snooker147.fastEnd', CONFIG.shot.fastEnd.enabled);
+const CUE_TIMING = VARIANTS.C1 as unknown as { appear: number; stroke: number; added: number }; // appear + stroke = 0.25 s (approved C1)
+/** What the cue must never cover (Part 4): the object ball (the first ball on the cue ball's line) and the pocket that
+ *  ball is sent towards. Worked out from the layout and the planned direction only, never from the outcome. */
+function cueProtect(balls: Ball[], C: Vec2, d: Vec2) {
+  const r = table.ballRadius, rs = r * ballScale;
+  let best: { b: Ball; t: number; lat: number } | null = null;
+  for (const b of balls) {
+    if (b.kind === 'cue') continue;
+    const rx = b.pos.x - C.x, ry = b.pos.y - C.y, t = rx * d.x + ry * d.y, lat = Math.abs(rx * d.y - ry * d.x);
+    if (t > 0 && lat < 2 * r && (!best || t < best.t)) best = { b, t, lat };
+  }
+  if (!best) return [];
+  const back = Math.sqrt(Math.max(0, 4 * r * r - best.lat * best.lat));
+  const G = { x: C.x + d.x * (best.t - back), y: C.y + d.y * (best.t - back) }, O = best.b.pos;
+  const ul = Math.hypot(O.x - G.x, O.y - G.y) || 1, u = { x: (O.x - G.x) / ul, y: (O.y - G.y) / ul };
+  let pk = table.pockets[0]!, bestCos = -2;
+  for (const p of table.pockets) {
+    const vx = p.captureCentre.x - O.x, vy = p.captureCentre.y - O.y, l = Math.hypot(vx, vy) || 1, c = (vx * u.x + vy * u.y) / l;
+    if (c > bestCos) { bestCos = c; pk = p; }
+  }
+  return [{ p: O, z: rs, radius: rs }, { p: pk.captureCentre, z: 0, radius: pk.captureRadius }];
+}
 /** Play a shot from `balls` on screen; resolves with its length in seconds when every ball has stopped. */
-function playShot(balls: Ball[], s: Shot): Promise<number> {
+function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise<number> {
   const sim = createSim(balls, table);
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
   const slot = rec.ids.map((id) => ids.indexOf(id));
+  // Part 4: the cue (after SHOOT and on the automatic step 1, never on the break-off). Its direction is the planned
+  // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
+  const cueBall = balls.find((b) => b.kind === 'cue');
+  const cuePlan = opts.cue && cueOn && cueBall && view3d ? view3d.planCue(cueBall.pos, s.dir, balls.filter((b) => b.kind !== 'cue').map((b) => b.pos), cueProtect(balls, cueBall.pos, s.dir)) : null;
+  const lead = cuePlan ? CUE_TIMING.added : 0;
+  const fastFrom = fastEndOn ? startOf(rec, { ...CONFIG.shot.fastEnd, enabled: true }) : null;
+  const FE = { ...CONFIG.shot.fastEnd, enabled: true };
   return new Promise((res) => {
     const t0 = performance.now();
+    let tau = 0; // seconds since the cue appeared (the cue's own clock)
+    const scale = CONFIG.shot.playbackTimeScale * devSlow;
+    if (import.meta.env.DEV) devLastRec = { rec, t0, scale, n: ++devShots };
+    let t = 0, prevNow = t0;
+    // dev pocket check: freeze the playback at the first event of the asked kind (+ offset) until __dev.resume()
+    let pauseAt: number | null = null;
+    if (import.meta.env.DEV && devPauseOn) {
+      const w = devPauseOn;
+      const ev = rec.events.find((e) => (w.kind === 'jaw' ? e.type === 'jaw' && e.a !== 'cue' : e.type === 'pot' && (w.kind === 'potCue') === (e.a === 'cue')));
+      if (ev) { pauseAt = Math.min(rec.duration, ev.t + w.offset); devPause = { at: pauseAt, event: ev, paused: false }; } else devPause = null;
+      devPauseOn = null;
+    }
     const tick = () => {
-      const t = Math.min(rec.duration, ((performance.now() - t0) / 1000) * CONFIG.shot.playbackTimeScale);
+      const now = performance.now();
+      const dReal = ((now - prevNow) / 1000) * devSlow;
+      prevNow = now;
+      const paused = !!(import.meta.env.DEV && devPause?.paused && !devResume);
+      if (!paused) tau += dReal;
+      if (cuePlan) { const { gap, alpha } = cuePose(CUE_TIMING, tau); if (alpha > 0.003) view3d?.showCue(cueBall!.pos, cuePlan, gap, alpha); else view3d?.hideCue(); }
+      if (tau < lead) { // the stroke: the balls wait until the tip reaches the cue ball
+        const p0 = positionsAt(rec, 0);
+        rest = ids.map(() => null);
+        slot.forEach((j, n) => { if (j >= 0) rest[j] = p0[n]!; });
+        draw3d();
+        requestAnimationFrame(tick);
+        return;
+      }
+      const rate = fastFrom === null ? 1 : rateAt(t, fastFrom, FE);
+      t = Math.min(rec.duration, t + dReal * CONFIG.shot.playbackTimeScale * rate);
+      view3d?.setSpeed(CONFIG.shot.playbackTimeScale * devSlow * rate);
+      if (import.meta.env.DEV && pauseAt !== null && devPause) {
+        if (t >= pauseAt) { t = pauseAt; devPause.paused = true; }
+        if (devPause.paused && !devResume) { view3d?.setSpeed(0); rest = ids.map(() => null); slot.forEach((j, n) => { if (j >= 0) rest[j] = positionsAt(rec, t)[n]!; }); draw3d(); requestAnimationFrame(tick); return; }
+        if (devResume) { pauseAt = null; devResume = false; devPause = null; }
+      }
+      if (import.meta.env.DEV && devLastRec) devLastRec.simT = t;
       const p = positionsAt(rec, t);
       rest = ids.map(() => null);
       slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
       draw3d();
-      if (t < rec.duration) requestAnimationFrame(tick); else res(rec.duration);
+      if (t < rec.duration) requestAnimationFrame(tick); else { view3d?.hideCue(); res(rec.duration); }
     };
     tick();
   });
@@ -255,7 +333,7 @@ function presolveAhead(req: SolveRequest, success: Solved) {
 
 async function onStart() {
   if (busy || round.phase === 'decide') return;
-  if (round.balance < round.bet) return;
+  if (!replay && round.balance < round.bet) return; // a replay is free (owner, night 4): no bet, no pay
   presolver.cancel();
   busy = 'rerack';
   showBetArea = false;
@@ -271,7 +349,7 @@ async function onStart() {
     afterBreak = x.afterBreak;
     return x;
   } };
-  round = start({ ...round, seed, rng }, provider, table);
+  round = start({ ...round, seed, rng, free: replay !== null }, provider, table);
   shownBalance = round.balance;
   presolveNext(); // solving starts during the break-off animation
   // RULES B.1: the balls re-rack quickly, then the opponent breaks off (from the library), then step 1 plays itself
@@ -287,7 +365,7 @@ async function onStart() {
   showBalls(afterBreak!.balls);
   busy = 'step1';
   render();
-  const len = await playShot(afterBreak!.balls, round.history[0]!.shot as Shot);
+  const len = await playShot(afterBreak!.balls, round.history[0]!.shot as Shot, { cue: true });
   lastShot = `step 1: red · ${round.history[0]!.outcome} · from the break-off library · ${len.toFixed(2)} s long`;
   lastCost = 'step 1: from the break-off library, no solve';
   if (import.meta.env.DEV) lastDraw = `step 1 ${drawText(outcomeDraw(round, 1), null)}`;
@@ -338,7 +416,7 @@ async function onShoot() {
     lastInfo = { code: round.roundCode, step, type: 'reRack', target: h.target, outcome: 'reRack', length: 0 };
   } else {
     // developer jump: no animation, the balls just move to where the shot leaves them
-    const len = auto?.mode === 'jump' ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot);
+    const len = auto?.mode === 'jump' ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true });
     const type = (h.shot as { type?: string }).type ?? '?';
     lastShot = `step ${step}: ${h.target} · ${h.outcome} · ${TYPE_TEXT[type] ?? type} · ${len.toFixed(2)} s long · ${work}`;
     lastInfo = { code: round.roundCode, step, type, target: h.target, outcome: h.outcome, length: len };
@@ -390,7 +468,7 @@ async function endRound() {
 /** RULES B.4: big message on the empty cloth, at most clearanceMessageMaxSeconds, tap to skip. */
 function clearanceMessage(): Promise<void> {
   const el = $('message');
-  el.innerHTML = `<div>${clearanceText(round)}</div><small>${endLine(round.end!, round.bet)}</small>`;
+  el.innerHTML = `<div>${clearanceText(round)}</div><small>${round.free ? replayEndLine(round.end!) : endLine(round.end!, round.bet)}</small>`;
   el.classList.add('show');
   return new Promise((res) => {
     const done = () => { clearTimeout(timer); el.classList.remove('show'); el.onclick = null; res(); };
@@ -413,9 +491,14 @@ function countUpBalance(to: number) {
 }
 
 // ---------------- texts and buttons ----------------
-const renderBalance = () => { $('balance').textContent = money(mode === 'live' ? shownBalance : CONFIG.money.startingBalance); };
+let balanceLen = 0;
+const renderBalance = () => {
+  const t = money(mode === 'live' ? shownBalance : CONFIG.money.startingBalance);
+  $('balance').textContent = t;
+  if (t.length !== balanceLen) { balanceLen = t.length; fitTop(); } // a longer amount (also during the count-up) must not touch the centre slot
+};
 
-function chipsHtml(step: number) {
+function chipsHtml(step: number, between = false) {
   const L = ladder();
   const { previous, next } = CONFIG.ui.ladderStrip;
   const count = previous + 1 + next;
@@ -424,20 +507,30 @@ function chipsHtml(step: number) {
     const cls = k < step ? 'prev' : k === step ? 'current' : k === step + 1 ? 'next' : '';
     return `<div class="chip ${cls}">${formatMult(L[k - 1]!.multiplier)}</div>`;
   });
-  return `<div class="step">STEP ${step}<br>/ ${L.length}</div>${chips.join('')}`;
+  // night 4 (Part 5): between rounds the first cell names the level's top multiplier instead of the step
+  const first0 = between ? `<div class="step upto">UP TO<br>${formatMult(L[L.length - 1]!.multiplier)}</div>` : `<div class="step">STEP ${step}<br>/ ${L.length}</div>`;
+  return `${first0}${chips.join('')}`;
+}
+
+/** The end line of a free replay: what happened, no money (the balance did not change). */
+function replayEndLine(end: NonNullable<Round['end']>): string {
+  if (end.type === 'failure') return `REPLAY OVER · ${FAILURE_TEXT[end.label]} · NO BET`;
+  return `REPLAY OVER · ${end.type === 'cashOut' ? 'CASHED OUT' : end.type === 'clearance' ? 'CLEARED' : 'RE-RACK'} ${formatMult(end.multiplier)} · NO BET`;
 }
 
 function render() {
   if (mode !== 'live') { renderStatic(); renderDev(); return; }
   renderBalance();
+  // night 4: a small REPLAY label on the table while a replay runs (it takes no bet and pays nothing)
+  $('replayTag').classList.toggle('show', !!round.free && (round.phase === 'decide' || busy !== null));
   const inRound = round.phase === 'decide' || busy !== null;
-  $('centre').innerHTML = inRound && round.step > 0 && round.phase === 'decide'
-    ? `<span class="mult">${formatMult(ladder()[round.step - 1]!.multiplier)}</span>`
-    : `<span class="pill">${level().label}</span>`;
+  // night 4 (Part 5): the centre slot. Between rounds: the three level balls (6 / 10 / 15 reds; the level can only
+  // change between rounds). During a round: the big current multiplier in the same place.
+  renderCentre(inRound);
   // the end line stays in the strip until the next START (RULES B.4)
   $('ladder').innerHTML = round.phase === 'over' && round.end && busy === null
-    ? `<div class="endline ${round.end.type === 'failure' ? 'lost' : 'won'}">${endLine(round.end, round.bet)}${round.forced ? ' · FORCED' : ''}</div>`
-    : chipsHtml(round.step);
+    ? `<div class="endline ${round.end.type === 'failure' ? 'lost' : 'won'}">${round.free ? replayEndLine(round.end) : endLine(round.end, round.bet)}${round.forced ? ' · FORCED' : ''}</div>`
+    : chipsHtml(round.step, !inRound);
 
   const bottom = $('bottom');
   if (busy) {
@@ -445,7 +538,9 @@ function render() {
     bottom.innerHTML = `<div class="hint">${what}</div><button class="big" disabled>SHOOT</button>`;
   } else if (round.phase === 'decide') {
     const amount = (cashOut(round).end as { amount: number }).amount; // exactly what CASH OUT pays
-    bottom.innerHTML = `<button class="cash" id="bCash">CASH OUT<b>${money(amount)}</b></button>` +
+    // a free replay pays nothing: CASH OUT shows the multiplier, never an amount that looks like money
+    const cashText = round.free ? `${formatMult(ladder()[round.step - 1]!.multiplier)} · REPLAY` : money(amount);
+    bottom.innerHTML = `<button class="cash" id="bCash">CASH OUT<b>${cashText}</b></button>` +
       `<div class="hint">${hintText(round, presolver.target())}</div><button class="big" id="bShoot">SHOOT</button>`;
     $('bCash').onclick = onCashOut;
     $('bShoot').onclick = () => { void onShoot(); };
@@ -454,20 +549,81 @@ function render() {
   } else {
     const bet = round.bet;
     const can = round.balance >= bet;
+    // night 4 (Part 5): one row with - BET + and the quick amounts, then START (the RTP text moved into the Rules)
     bottom.innerHTML = `
-      <div class="row"><button class="sq" id="bMinus">−</button><div class="bet">BET<b>${money(bet)}</b></div><button class="sq" id="bPlus">+</button></div>
-      <div class="row">${CONFIG.money.quickBets.map((q) => `<button class="quick${q === bet ? ' on' : ''}" data-q="${q}">${q}</button>`).join('')}</div>
-      <button class="big" id="bStart" ${can ? '' : 'disabled'}>${can ? `START · ${money(bet)}` : 'BALANCE TOO LOW'}</button>
-      <div class="hint rtp">${rtpText(level().id)}</div>`;
+      <div class="row betrow"><button class="sq" id="bMinus">−</button><div class="bet">BET<b>${money(bet)}</b></div><button class="sq" id="bPlus">+</button>${CONFIG.money.quickBets.map((q) => `<button class="quick${q === bet ? ' on' : ''}" data-q="${q}">${q}</button>`).join('')}</div>
+      <button class="big" id="bStart" ${can ? '' : 'disabled'}>${can ? `START · ${money(bet)}` : 'BALANCE TOO LOW'}</button>`;
     const setB = (b: number) => { round = setBet(round, b); render(); };
     $('bMinus').onclick = () => setB(round.bet - CONFIG.money.betStep);
     $('bPlus').onclick = () => setB(round.bet + CONFIG.money.betStep);
     bottom.querySelectorAll<HTMLButtonElement>('.quick').forEach((b) => { b.onclick = () => setB(Number(b.dataset.q)); });
     $('bStart').onclick = () => { void onStart(); };
   }
+  renderFooter();
   renderDevTag();
   renderDev();
+  fitTop();
 }
+
+/** The centre slot of the top bar (Part 5). */
+function renderCentre(inRound: boolean) {
+  const c = $('centre');
+  if (inRound) {
+    c.innerHTML = round.step > 0 && round.phase === 'decide' ? `<span class="mult">${formatMult(ladder()[round.step - 1]!.multiplier)}</span>` : '';
+    return;
+  }
+  c.innerHTML = CONFIG.levels.map((l) => `<button class="lvl${l.id === round.levelId ? ' on' : ''}" data-l="${l.id}" aria-label="${l.reds} reds">${l.reds}</button>`).join('');
+  c.querySelectorAll<HTMLButtonElement>('.lvl').forEach((b) => { b.onclick = () => changeLevel(b.dataset.l as LevelId); });
+}
+/** Part 5: the balance may never touch the centre slot: first the level balls may go down to 40 px (narrow phones),
+ *  then the balance font shrinks. The centre slot itself never moves. */
+function fitTop() {
+  const scr = $('screen'), centre = $('centre'), bal = $('balance');
+  const gap = 6;
+  // the right group (mute button + balance) and the left group (BACK + menu) must both stay clear of the centre slot
+  const right = document.querySelector('.top .right') as HTMLElement, left = document.querySelector('.top .left') as HTMLElement;
+  const clear = () => {
+    const c = centre.getBoundingClientRect(), b = right.getBoundingClientRect(), l = left.getBoundingClientRect();
+    return c.width === 0 || (b.left >= c.right + gap && l.right + gap <= c.left);
+  };
+  scr.style.setProperty('--ball', '44px');
+  bal.style.fontSize = '';
+  if (!clear()) scr.style.setProperty('--ball', '40px');
+  for (let px = 17; px >= 9 && !clear(); px--) bal.style.fontSize = `${px}px`;
+}
+/** Footer: "147 · DEMO · Round <code> · <clock>" on the left. */
+function renderFooter() {
+  const now = new Date();
+  const clock = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const code = round.roundCode ? roundCodeOf(round) : '—';
+  $('footLeft').textContent = `147 · DEMO · Round ${code} · ${clock}`;
+}
+setInterval(renderFooter, 20_000);
+/** The Rules box (Part 5): how a round works, and the RTP range of every level (moved here from the bet area). */
+function openRules() {
+  const el = $('rules');
+  const rtps = CONFIG.levels.map((l) => {
+    const top = Math.max(...ladderForLevel(l.id).map((x) => x.multiplier));
+    return `<li><b>${l.reds} reds</b> (up to ${formatMult(top)}): ${rtpText(l.id)}</li>`;
+  }).join('');
+  el.innerHTML = `<div class="box"><h2>Rules</h2>
+    <ul><li>Pick a level and a bet, then START. The opponent breaks off and your first red plays itself.</li>
+    <li>Each SHOOT plays the next ball in snooker order: a red, then a colour, and so on. A pot moves you one step up the ladder.</li>
+    <li>CASH OUT after any pot to take bet × the current multiplier. A miss, a foul or an in-off ends the round and the bet is lost.</li>
+    <li>Clearing the table pays the top multiplier. If no shot can be found the balls are re-racked and the round is paid.</li>
+    <li>Every outcome is decided before the shot is shown and does not depend on where the balls lie.</li></ul>
+    <h2>Return to player (RTP)</h2><ul>${rtps}</ul>
+    <button class="close" id="rulesClose">Close</button></div>`;
+  el.classList.add('open');
+  $('rulesClose').onclick = () => el.classList.remove('open');
+  el.onclick = (e) => { if (e.target === el) el.classList.remove('open'); };
+}
+$('rulesBtn').onclick = openRules;
+// BACK: TODO (casino) return to the lobby. For now it does nothing visible.
+$('back').onclick = () => { /* TODO: lobby */ };
+const renderMute = () => { const b = $('mute'); b.innerHTML = muteIcon(isMuted()); b.setAttribute('aria-pressed', String(isMuted())); };
+$('mute').onclick = () => { setMuted(!isMuted()); renderMute(); };
+renderMute();
 
 // ---------------- static mockup screens (developer menu, as in task 2.2) ----------------
 function staticBalls(id: ScreenId): Ball[] {
@@ -484,14 +640,13 @@ function renderStatic() {
   const step = S[id].step;
   const mult = (k: number) => ladder()[k - 1]!.multiplier;
   $('balance').textContent = money(CONFIG.money.startingBalance);
-  $('centre').innerHTML = id === 'D' ? `<span class="pill">${level().label}</span>` : `<span class="mult">${formatMult(mult(step))}</span>`;
-  $('ladder').innerHTML = chipsHtml(step);
+  if (id === 'D') renderCentre(false); else $('centre').innerHTML = `<span class="mult">${formatMult(mult(step))}</span>`;
+  $('ladder').innerHTML = chipsHtml(step, id === 'D');
   const hint = S[id].hint.replace('{next}', step < ladder().length ? mult(step + 1).toFixed(2) : '');
   const cashB = step > 0 ? `<button class="cash">CASH OUT<b>${money(CONFIG.money.defaultBet * mult(step))}</b></button>` : '';
   if (id === 'D') {
     $('bottom').innerHTML = `
-      <div class="row"><button class="sq">−</button><div class="bet">BET<b>${money(CONFIG.money.defaultBet)}</b></div><button class="sq">+</button></div>
-      <div class="row">${CONFIG.money.quickBets.map((q) => `<button class="quick${q === CONFIG.money.defaultBet ? ' on' : ''}">${q}</button>`).join('')}</div>
+      <div class="row betrow"><button class="sq">−</button><div class="bet">BET<b>${money(CONFIG.money.defaultBet)}</b></div><button class="sq">+</button>${CONFIG.money.quickBets.map((q) => `<button class="quick${q === CONFIG.money.defaultBet ? ' on' : ''}">${q}</button>`).join('')}</div>
       <button class="big">START · ${money(CONFIG.money.defaultBet)}</button>`;
   } else if (id === 'A') {
     $('bottom').innerHTML = `${cashB}<div class="hint">${hint}</div><button class="big">SHOOT</button>`;
@@ -558,6 +713,7 @@ function layout() {
   const shown: ScreenId = mode !== 'live' ? mode : round.phase === 'decide' ? 'A' : 'D';
   ($('mockup') as HTMLImageElement).src = `/mockups/${shown}.png`;
   draw3d();
+  fitTop();
 }
 
 // ---------------- developer panel ----------------
@@ -585,7 +741,7 @@ function renderDev() {
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
       '<div class="opts" id="devAuto"></div>' : '') +
-    '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
+    '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>FASTER SHOT END (PLAYBACK)</h3><div class="opts" id="devFast"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
   $('devScreens').appendChild(opt('Live game', mode === 'live', () => setMode('live'), busy !== null));
@@ -616,12 +772,12 @@ function renderDev() {
   $('devReplay').onclick = () => {
     const p = parseRoundCode(seedText);
     if (!p) { $('devRound').innerHTML += '<br><span class="bad">Not a round code</span>'; return; }
-    if (!locked && round.balance >= round.bet) startReplay(p);
+    if (!locked) startReplay(p); // free: no bet needed
   };
-  ($('devReplay') as HTMLButtonElement).disabled = locked || mode !== 'live' || round.balance < round.bet;
+  ($('devReplay') as HTMLButtonElement).disabled = locked || mode !== 'live';
   if (round.roundCode) {
     $('devRoundBtns').appendChild(opt('Replay this round', false, () => { seedText = roundCodeOf(round); startReplay(parseRoundCode(seedText)!); },
-      locked || round.phase !== 'over' || round.balance < round.bet));
+      locked || round.phase !== 'over'));
   }
   $('devRoundBtns').appendChild(opt(`Balance back to ${CONFIG.money.startingBalance}`, false, () => {
     round = { ...round, balance: CONFIG.money.startingBalance };
@@ -645,6 +801,10 @@ function renderDev() {
   if (import.meta.env.DEV) renderTestPanel(opt);
   $('devLook').appendChild(opt('Club (new)', tableLook === 'club', () => { setTableLook('club'); render(); }, busy !== null));
   $('devLook').appendChild(opt('Gray box (old)', tableLook === 'grey', () => { setTableLook('grey'); render(); }, busy !== null));
+  $('devCue').appendChild(opt('On', cueOn, () => { cueOn = true; saveSwitch('snooker147.cue', true); render(); }));
+  $('devCue').appendChild(opt('Off', !cueOn, () => { cueOn = false; saveSwitch('snooker147.cue', false); view3d?.hideCue(); render(); }));
+  $('devFast').appendChild(opt('Off', !fastEndOn, () => { fastEndOn = false; saveSwitch('snooker147.fastEnd', false); render(); }));
+  $('devFast').appendChild(opt('On', fastEndOn, () => { fastEndOn = true; saveSwitch('snooker147.fastEnd', true); render(); }));
   for (const s of CONFIG.view3d.ballScaleOptions) {
     $('devScale').appendChild(opt(`${s}x`, ballScale === s, () => { ballScale = s; view3d?.setBallScale(s); render(); draw3d(); }));
   }
@@ -707,6 +867,27 @@ function changeLevel(id: LevelId) {
   const rack = rackBalls(level().reds, table);
   if (mode === 'live') { buildView(newFrame(level().reds, table).balls); showBalls(rack); } else setMode(mode);
   render();
+}
+if (import.meta.env.DEV) {
+  // the developer test panel's actions, for scripts (the same calls the panel buttons make)
+  (window as unknown as Record<string, unknown>).__dev = {
+    force: (f: ForcedOutcome | null) => { force = f; if (round.phase === 'decide' && !busy) { presolver.cancel(); presolveNext(); } render(); },
+    shoot: () => onShoot(), start: () => onStart(),
+    state: () => ({ busy, phase: round.phase, step: round.step, balance: round.balance, code: round.roundCode, mode }),
+    lastRec: () => devLastRec && { n: devLastRec.n, t0: devLastRec.t0, scale: devLastRec.scale, duration: devLastRec.rec.duration, events: devLastRec.rec.events, ids: devLastRec.rec.ids, simT: devLastRec.simT ?? 0 },
+    setSlow: (x: number) => { devSlow = x; },
+    pauseOn: (kind: 'jaw' | 'pot' | 'potCue', offset: number) => { devPauseOn = { kind, offset }; devPause = null; devResume = false; },
+    pause: () => devPause, resume: () => { devResume = true; },
+    /** page coordinates (CSS px) of a pocket's drop circle centre, and of a point `r` metres from it (for crops) */
+    pocketBox: (id: string) => {
+      const pk = table.pockets.find((q) => q.id === id)!, c = canvas.getBoundingClientRect();
+      const a = view3d!.project(pk.captureCentre.x - 0.2, pk.captureCentre.y - 0.2), b = view3d!.project(pk.captureCentre.x + 0.2, pk.captureCentre.y + 0.2);
+      const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+      return { x: c.left + x0, y: c.top + y0, width: x1 - x0, height: y1 - y0 };
+    },
+    balanceBack: () => { round = { ...round, balance: CONFIG.money.startingBalance }; render(); },
+    setBalance: (v: number) => { round = { ...round, balance: v }; shownBalance = v; render(); }, // layout check: a long balance
+  };
 }
 $('menu').onclick = () => { $('dev').classList.toggle('open'); renderDev(); };
 

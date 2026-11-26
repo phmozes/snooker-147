@@ -18,27 +18,41 @@
             env(safe-area-inset-bottom) env(safe-area-inset-left); }
 
     #stage { position: absolute; left: 0; top: 0; transform-origin: top left; display: flex; gap: 16px; }
+    /* night 4 (Part 5): full-screen phone layout. The table runs edge to edge; the other rows keep a small side gap. */
     #screen { position: relative; background: var(--bg); display: flex; flex-direction: column;
-              padding: 0 16px 18px; box-sizing: border-box; overflow: hidden; }
+              padding: 0 0 4px; box-sizing: border-box; overflow: hidden; --side: 10px; --ball: 44px; }
     #mockup { display: none; height: 844px; width: 390px; }
     body.compare #mockup { display: block; }
 
-    /* top bar */
-    .top { height: 64px; flex: none; display: flex; align-items: center; justify-content: space-between; padding-top: 6px; }
-    .balance .label { font-size: 11px; letter-spacing: .08em; color: var(--dim); }
-    .balance .value { font-size: 19px; font-weight: 600; margin-top: 3px; }
-    .mult { font-size: 26px; font-weight: 800; color: var(--yellow); }
+    /* top bar, one row: BACK, menu | centre slot (on the centre line of the screen) | mute, balance (right-aligned) */
+    .top { height: 58px; flex: none; position: relative; display: flex; align-items: center; justify-content: space-between;
+           padding: 4px var(--side) 0; }
+    .top .left, .top .right { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .top .right { flex: none; }
+    .icon { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
+            font-size: 22px; padding: 0; display: flex; align-items: center; justify-content: center; }
+    .icon svg { width: 22px; height: 22px; }
+    .balance { text-align: right; white-space: nowrap; }
+    .balance .label { font-size: 10px; letter-spacing: .08em; color: var(--dim); }
+    .balance .value { font-size: 18px; font-weight: 600; margin-top: 2px; }
+    /* centre slot: centred on the SCREEN, never moved; between rounds the level balls, during a round the multiplier */
+    #centre { position: absolute; left: 50%; top: calc(50% + 2px); transform: translate(-50%, -50%); display: flex; gap: calc((var(--ball) - 36px) * 0.75);
+              align-items: center; justify-content: center; }
+    .mult { font-size: 28px; font-weight: 800; color: var(--yellow); white-space: nowrap; }
+    .lvl { width: var(--ball); height: var(--ball); border-radius: 50%; padding: 0; border: none; flex: none;
+           background: radial-gradient(circle at 34% 30%, #ff8a80 0, #d7322f 38%, #8e1210 78%, #5a0807 100%);
+           color: #fff; font-size: 17px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,.6); opacity: .45; }
+    .lvl.on { opacity: 1; box-shadow: 0 0 0 3px var(--yellow); }
     .pill { border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; font-size: 13px; color: var(--text); }
-    .menu { width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
-            font-size: 24px; padding: 0; }
 
     /* table: the 3D canvas fills this box; nothing is drawn on the cloth */
-    .table { flex: 1; min-height: 0; position: relative; margin: 8px 0 6px; }
+    .table { flex: 1; min-height: 0; position: relative; margin: 4px 0 6px; }
     .table canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
     /* ladder strip (display only, not buttons) */
-    .ladder { height: 34px; flex: none; display: flex; align-items: center; gap: 6px; }
+    .ladder { height: 34px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 var(--side); }
     .ladder .step { width: 48px; font-size: 11px; line-height: 1.25; color: var(--dim); }
+    .ladder .step.upto { width: 56px; color: var(--yellow); font-weight: 700; }
     .chip { flex: 1; height: 34px; border-radius: 10px; background: var(--panel); display: flex; align-items: center;
             justify-content: center; font-size: 13px; color: var(--text); box-sizing: border-box; }
     .chip.prev { color: var(--dim); background: #141b19; }
@@ -47,8 +61,20 @@
 
     /* bottom area */
     /* one fixed height for every state (bet area, SHOOT, playing), so the table never changes size during a round */
-    .bottom { flex: none; display: flex; flex-direction: column; justify-content: flex-end; gap: 13px; margin-top: 15px;
-              height: 180px; }
+    .bottom { flex: none; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; margin-top: 10px;
+              height: 144px; padding: 0 var(--side); }
+    /* footer: one small grey line */
+    .footer { flex: none; height: 18px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+              padding: 4px var(--side) 0; font-size: 10px; color: var(--dim); white-space: nowrap; }
+    .footer #footLeft { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .footer button { background: none; border: none; color: var(--dim); font-size: 10px; padding: 0; text-decoration: underline; }
+    #rules { display: none; position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.7); align-items: center;
+             justify-content: center; padding: 16px; }
+    #rules.open { display: flex; }
+    #rules .box { background: #111816; border: 1px solid var(--line); border-radius: 12px; padding: 14px; max-height: 90%;
+                  overflow-y: auto; font-size: 13px; line-height: 1.45; }
+    #rules h2 { margin: 0 0 8px; font-size: 15px; } #rules ul { margin: 6px 0; padding-left: 18px; }
+    #rules .close { margin-top: 10px; width: 100%; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
     button:disabled { opacity: .45; cursor: default; }
     .endline { flex: 1; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
                font-size: 14px; font-weight: 700; letter-spacing: .06em; background: var(--panel); }
@@ -70,6 +96,11 @@
     #devTag { display: none; position: absolute; top: 0; right: 0; z-index: 3; padding: 4px 8px; border-radius: 8px;
               background: #b3261e; color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
     #devTag.show { display: block; }
+    /* night 4: shown while a free replay runs (no bet, no pay) */
+    #replayTag { display: none; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; padding: 3px 10px;
+                 border-radius: 8px; background: rgba(0,0,0,.6); color: #ffd36b; font-size: 12px; font-weight: 800; letter-spacing: .12em;
+                 pointer-events: none; }
+    #replayTag.show { display: block; }
     /* F.1: solver version in small text (dev build only), so a screen video shows which version it was recorded on */
     #devVer { display: none; position: absolute; bottom: 2px; left: 4px; z-index: 3; font-size: 10px; color: var(--text);
               opacity: .6; pointer-events: none; }
@@ -85,10 +116,12 @@
     .row > * { flex: 1; }
     .sq { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
           font-size: 22px; padding: 0; }
-    .bet { height: 44px; border-radius: 12px; background: #141b19; display: flex; align-items: center; justify-content: center;
-           font-size: 12px; letter-spacing: .1em; color: #aab5b1; }
-    .bet b { font-size: 18px; letter-spacing: 0; color: var(--text); margin-left: 10px; }
-    .quick { height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); font-size: 15px; }
+    .bet { height: 44px; border-radius: 12px; background: #141b19; display: flex; flex-direction: column; align-items: center;
+           justify-content: center; font-size: 9px; letter-spacing: .1em; color: #aab5b1; min-width: 0; }
+    .bet b { font-size: 15px; letter-spacing: 0; color: var(--text); }
+    .quick { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
+             font-size: 15px; padding: 0; }
+    .row.betrow { gap: 5px; }
     .quick.on { border-color: var(--yellow); color: var(--yellow); background: #24210f; }
     .colour { height: 66px; border-radius: 18px; border: none; font-size: 20px; font-weight: 700; }
     .colour.blue { background: #2f6fdb; color: #fff; }
@@ -98,7 +131,7 @@
     .colour.brown { background: #8b5a2b; color: #fff; }
 
     /* developer panel (opened from the menu button; only until the real menu exists) */
-    #dev { display: none; position: absolute; top: 64px; right: 16px; z-index: 5; background: #111816; border: 1px solid var(--line);
+    #dev { display: none; position: absolute; top: 58px; left: 10px; z-index: 5; background: #111816; border: 1px solid var(--line);
            border-radius: 12px; padding: 10px; width: 230px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
     #dev.open { display: block; }
     #dev h3 { margin: 4px 0 6px; font-size: 11px; letter-spacing: .08em; color: var(--dim); font-weight: 600; }
@@ -118,15 +151,24 @@
   <div id="safe"></div>
   <div id="stage">
     <div id="screen">
-      <div class="top">
-        <div class="balance"><div class="label">BALANCE</div><div class="value" id="balance"></div></div>
+      <div class="top" id="top">
+        <div class="left">
+          <!-- TODO (casino): BACK returns to the lobby. For now it does nothing visible. -->
+          <button class="icon" id="back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <button class="icon" id="menu" aria-label="Menu">≡</button>
+        </div>
         <div id="centre"></div>
-        <button class="menu" id="menu" aria-label="Menu">≡</button>
+        <div class="right">
+          <button class="icon" id="mute" aria-label="Sound on or off"></button>
+          <div class="balance" id="balanceBox"><div class="label">BALANCE</div><div class="value" id="balance"></div></div>
+        </div>
       </div>
       <div class="table"><canvas id="c3d"></canvas><div id="message"></div>
-        <button id="flag" aria-label="Mark the last shot as weird">⚑<span id="flagCount"></span></button><div id="toast"></div><div id="devTag"></div><div id="devVer"></div></div>
+        <button id="flag" aria-label="Mark the last shot as weird">⚑<span id="flagCount"></span></button><div id="toast"></div><div id="devTag"></div><div id="replayTag">REPLAY</div><div id="devVer"></div></div>
       <div class="ladder" id="ladder"></div>
       <div class="bottom" id="bottom"></div>
+      <div class="footer"><span id="footLeft"></span><span><button id="rulesBtn">Rules</button> · PLAY RESPONSIBLY</span></div>
+      <div id="rules"></div>
       <div id="dev"></div>
     </div>
     <img id="mockup" alt="mockup" />

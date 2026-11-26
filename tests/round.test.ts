@@ -234,3 +234,30 @@ describe('developer test panel: forced outcomes (task 5.3)', () => {
     expect(played.history.some((h) => h.forced)).toBe(false);
   });
 });
+
+describe('night 4, Part 3a: a replay is free (no bet, no pay; the balance is the same before and after)', () => {
+  const playFree = (seed: number, cashAt: number | null, free: boolean, provider = fake(), balance = 990) => {
+    let r = start({ ...newRound(seed, balance), free }, provider, table);
+    const afterStart = r.balance;
+    while (r.phase === 'decide') r = cashAt !== null && r.step >= cashAt ? cashOut(r) : shoot(r, provider, table);
+    return { r, afterStart };
+  };
+  it('every end type: balance unchanged on a replay; the same round played for real pays as before', () => {
+    const ends = new Set<string>();
+    for (let seed = 1; seed <= 300; seed++) for (const [cashAt, prov] of [[null, fake()], [2, fake()], [null, fake({ reRack: true })]] as const) {
+      const free = playFree(seed, cashAt, true, prov), real = playFree(seed, cashAt, false, prov);
+      expect(free.afterStart).toBe(990); // START took no bet
+      expect(free.r.balance).toBe(990); // and nothing was paid
+      expect(real.afterStart).toBe(980); // the real round: bet 10 taken
+      expect(free.r.end).toEqual(real.r.end); // same outcome and end (the end still says what the real round paid)
+      expect(free.r.history.map((h) => h.outcome)).toEqual(real.r.history.map((h) => h.outcome));
+      ends.add(free.r.end!.type);
+    }
+    expect([...ends].sort()).toEqual(['cashOut', 'clearance', 'failure', 'reRack'].filter((e) => ends.has(e)).sort());
+    expect(ends.size).toBeGreaterThanOrEqual(3);
+  });
+  it('a replay may start with a balance below the bet', () => {
+    expect(() => start({ ...newRound(5, 3), free: true }, fake(), table)).not.toThrow();
+    expect(() => start({ ...newRound(5, 3), free: false }, fake(), table)).toThrow();
+  });
+});
