@@ -9,14 +9,15 @@ import { newRound, setLevel, stepSucceeds, type LevelId } from '../../src/core/r
 
 it('RNG-only RTP matches the formula', () => {
   const n = Number(process.env.N ?? 2_000_000);
-  const out: string[] = [`RNG-only RTP, ${n} rounds per level, seeds 1..${n} (outcome = seed + step only)`];
+  const base0 = Number(process.env.SEED_BASE ?? 0); // seeds base0+1 .. base0+n
+  const out: string[] = [`RNG-only RTP, ${n} rounds per level, seeds ${base0 + 1}..${base0 + n} (outcome = seed + step only)`];
   let bad = 0;
   for (const l of CONFIG.levels) {
     const base = setLevel(newRound(1), l.id as LevelId);
     const L = base.ladder.length;
     const reach = new Array<number>(L + 1).fill(0); // reach[k]: rounds whose steps 1..k all succeeded
     for (let s = 1; s <= n; s++) {
-      const r = { ...base, seed: s };
+      const r = { ...base, seed: base0 + s };
       let k = 0;
       while (k < L && stepSucceeds(r, k + 1)) k++;
       for (let j = 1; j <= k; j++) reach[j]!++;

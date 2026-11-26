@@ -1,0 +1,4 @@
+reds6-5000192 step 10: solver took 16451 ms (stuck limit 10000)
+reds6-5000246 step 11: solver took 11981 ms (stuck limit 10000)
+reds6-5000324 step 10: solver took 13992 ms (stuck limit 10000)
+reds6-5000345 step 7: solver took 11177 ms (stuck limit 10000)

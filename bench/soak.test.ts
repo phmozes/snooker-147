@@ -19,7 +19,7 @@ it('soak', () => {
   const level = (process.env.LEVEL ?? 'reds6') as LevelId;
   const shard = Number(process.env.SHARD ?? 0);
   const shards = Number(process.env.SHARDS ?? 1);
-  const target = Number(process.env.TARGET ?? 1000); // success shots (after step 1) for this shard
+  const target = Number(process.env.TARGET ?? (process.env.ROUNDS ? Infinity : 1000)); // success shots (after step 1) for this shard (no limit when ROUNDS is set)
   const until = Number(process.env.UNTIL ?? Infinity); // stop at this time (epoch ms)
   const out = process.env.OUT ?? 'bench/results/soak';
   mkdirSync(out, { recursive: true });
@@ -63,7 +63,8 @@ it('soak', () => {
   };
   let seen = 0;
   const maxRounds = Number(process.env.ROUNDS ?? Infinity); // stop after this many rounds (night 3: 3,000 per level)
-  for (let i = 0; s.success < target && s.rounds < maxRounds && Date.now() < until; i++) {
+  // START_I: continue a shard after an earlier run (its seeds 0..START_I-1 were already played)
+  for (let i = Number(process.env.START_I ?? 0); s.success < target && s.rounds < maxRounds && Date.now() < until; i++) {
     const seed = 5_000_000 + shard + i * shards; // never the bench seeds (seed * 7 + 3, small)
     let rd: Round = setLevel(newRound(seed), level);
     const code = `${level}-${seed}`;

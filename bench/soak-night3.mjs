@@ -1,13 +1,15 @@
-// Night 3 soak summary: node bench/soak-night3.mjs <dir> [maxRoundsPerShard]  -> one line per level (and <dir>/night3.txt)
+// Night 3 soak summary: node bench/soak-night3.mjs <dir> [<dir> ...]  -> one line per level (written to <first dir>/night3.txt);
+// several dirs are added together (a shard continued with START_I in a second dir)
 // Per level: rounds, stuck solver (over the simulated-shot cap or a crash; wall-time solves over 10 s shown apart, they depend on PC load), RE-RACK, ball off the
 // table or overlapping (problems), fallback share (success shots that needed a flex fallback; failures that needed a
 // D.2 fallback), shots over 3.5 s (all / not last resort), pace (median and 90% for reds and colours), and the real
 // success rate per step against p (z = (rate - p) / sd; tolerance |z| <= 3, steps with fewer than 30 tries skipped).
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
-const dir = process.argv[2] ?? 'bench/results/soak-n3base';
+const dirs = process.argv.slice(2).length ? process.argv.slice(2) : ['bench/results/soak-n3base'];
+const dir = dirs[0];
 const by = {};
-for (const f of readdirSync(dir).filter((x) => /^reds\d+-\d+\.json$/.test(x))) {
-  const j = JSON.parse(readFileSync(`${dir}/${f}`, 'utf8'));
+for (const f of dirs.flatMap((d) => readdirSync(d).filter((x) => /^reds\d+-\d+\.json$/.test(x)).map((x) => `${d}/${x}`))) {
+  const j = JSON.parse(readFileSync(f, 'utf8'));
   const m = (by[j.level] ??= { rounds: 0, success: 0, shots: 0, reRacks: 0, problems: 0, over35: 0, slowSolves: 0, overCap: 0, maxSolveMs: 0,
     flexShots: 0, failShots: 0, failFallbacks: 0, crash: 0, steps: {}, red: [], colour: [], lrRed: [], lrColour: [], maxDuration: 0, flex: {} });
   for (const k of ['rounds', 'success', 'shots', 'reRacks', 'problems', 'over35', 'slowSolves', 'overCap', 'flexShots', 'failShots', 'failFallbacks']) m[k] += j[k] ?? 0;
