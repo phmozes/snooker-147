@@ -1,0 +1,146 @@
+{
+ "options": [
+  {
+   "id": 0,
+   "elev": 64,
+   "small": false,
+   "what": "Today's camera: 64° above the cloth, bottom area 144 px (112 px on a short screen)."
+  },
+  {
+   "id": 1,
+   "elev": 57,
+   "small": false,
+   "what": "Camera lower: 64° → 57° above the cloth (7° lower). Bottom area unchanged."
+  },
+  {
+   "id": 2,
+   "elev": 50,
+   "small": false,
+   "what": "Camera much lower: 64° → 50° above the cloth (14° lower). Bottom area unchanged."
+  },
+  {
+   "id": 3,
+   "elev": 64,
+   "small": true,
+   "what": "Camera unchanged (64°). Bottom area smaller: 144 → 104 px (short screen 112 → 84 px), about 40 / 28 px more for the table."
+  }
+ ],
+ "sizes": [
+  {
+   "key": "full",
+   "w": 390,
+   "h": 844
+  },
+  {
+   "key": "inapp",
+   "w": 390,
+   "h": 664
+  }
+ ],
+ "results": [
+  {
+   "option": 0,
+   "size": "full",
+   "w": 390,
+   "h": 844,
+   "pct": 98,
+   "tableW": 382,
+   "tableH": 534,
+   "inside": true,
+   "errs": [
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts",
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts",
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts"
+   ]
+  },
+  {
+   "option": 0,
+   "size": "inapp",
+   "w": 390,
+   "h": 664,
+   "pct": 80,
+   "tableW": 311,
+   "tableH": 433,
+   "inside": true,
+   "errs": [
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts",
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts",
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts"
+   ]
+  },
+  {
+   "option": 1,
+   "size": "full",
+   "w": 390,
+   "h": 844,
+   "pct": 98,
+   "tableW": 382,
+   "tableH": 480,
+   "inside": true,
+   "errs": []
+  },
+  {
+   "option": 1,
+   "size": "inapp",
+   "w": 390,
+   "h": 664,
+   "pct": 91,
+   "tableW": 357,
+   "tableH": 433,
+   "inside": true,
+   "errs": []
+  },
+  {
+   "option": 2,
+   "size": "full",
+   "w": 390,
+   "h": 844,
+   "pct": 98,
+   "tableW": 382,
+   "tableH": 424,
+   "inside": true,
+   "errs": []
+  },
+  {
+   "option": 2,
+   "size": "inapp",
+   "w": 390,
+   "h": 664,
+   "pct": 98,
+   "tableW": 382,
+   "tableH": 401,
+   "inside": true,
+   "errs": []
+  },
+  {
+   "option": 3,
+   "size": "full",
+   "w": 390,
+   "h": 844,
+   "pct": 98,
+   "tableW": 382,
+   "tableH": 541,
+   "inside": true,
+   "errs": [
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts",
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts",
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts"
+   ]
+  },
+  {
+   "option": 3,
+   "size": "inapp",
+   "w": 390,
+   "h": 664,
+   "pct": 85,
+   "tableW": 332,
+   "tableH": 463,
+   "inside": true,
+   "errs": [
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts",
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts",
+    "edit did not apply: http://localhost:5181/src/config/game.config.ts"
+   ]
+  }
+ ]
+}

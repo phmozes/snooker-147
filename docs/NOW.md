@@ -5,7 +5,7 @@
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the table size in your in-app browser (80-89% wide).
-- Decide (design): table 80-89% wide in an in-app browser; more needs a lower camera angle or a smaller bottom area.
+- Decide (design): camera option 0-3 from mockups/camera-angles/index.html (in-app width 80 / 91 / 98 / 85%).
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
 ## Claude's turn (waiting for the owner's answers)
 - Owner 2026-11-27: NO playback speed-up at all (faster shot end OFF, switch removed). Failure shots over 3 s are

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camera angles</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; --bg: #0f1513; --panel: #18211e; --text: #e8ece9; --dim: #9aa7a2; --yellow: #f2c94c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .intro { color: var(--dim); margin: 0 0 18px; }
+  .intro b { color: var(--text); }
+  section { background: var(--panel); border-radius: 14px; padding: 12px; margin-bottom: 18px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  .what { margin: 0 0 10px; color: var(--dim); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+  figure { margin: 0; }
+  img { width: 100%; height: auto; display: block; border-radius: 8px; }
+  figcaption { font-size: 12px; color: var(--dim); margin-top: 4px; }
+  figcaption b { color: var(--yellow); font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Camera angles: 4 options</h1>
+  <p class="intro">Same frozen position in every picture: mid-round (step 1 played), 6 reds, colours on their spots,
+    cue ball near the blue. Real game look (look A, T1 pockets, cue C1, markings, full screen around the table).
+    Left: <b>full screen 390×844</b>. Right: <b>in-app browser 390×664</b> (the size measured on 2026-11-27, where
+    the table is 80% wide today). The % is the table width (rails and pockets included) as a share of the screen
+    width. All 6 pockets are fully in view in every picture.
+    <br>Note: on full screen the table is already 98% wide (limited by the width), so a lower camera cannot make it
+    wider there; it only makes the table shorter (height in px below).</p>
+
+  <section>
+    <h2>Option 0 · today</h2>
+    <p class="what">Camera 64° above the cloth. Bottom area 144 px (112 px on a short screen). Nothing changed.</p>
+    <div class="pair">
+      <figure><img src="opt0-full.jpg" alt="Option 0, full screen" loading="lazy"><figcaption>Full screen: <b>98%</b> wide · table 382×534 px</figcaption></figure>
+      <figure><img src="opt0-inapp.jpg" alt="Option 0, in-app browser" loading="lazy"><figcaption>In-app: <b>80%</b> wide · table 311×433 px</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Option 1 · camera 7° lower</h2>
+    <p class="what">Camera 64° → 57° above the cloth. Bottom area unchanged.</p>
+    <div class="pair">
+      <figure><img src="opt1-full.jpg" alt="Option 1, full screen" loading="lazy"><figcaption>Full screen: <b>98%</b> wide · table 382×480 px</figcaption></figure>
+      <figure><img src="opt1-inapp.jpg" alt="Option 1, in-app browser" loading="lazy"><figcaption>In-app: <b>91%</b> wide (+11) · table 357×433 px</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Option 2 · camera 14° lower</h2>
+    <p class="what">Camera 64° → 50° above the cloth. Bottom area unchanged.</p>
+    <div class="pair">
+      <figure><img src="opt2-full.jpg" alt="Option 2, full screen" loading="lazy"><figcaption>Full screen: <b>98%</b> wide · table 382×424 px</figcaption></figure>
+      <figure><img src="opt2-inapp.jpg" alt="Option 2, in-app browser" loading="lazy"><figcaption>In-app: <b>98%</b> wide (+18) · table 382×401 px</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Option 3 · smaller bottom area</h2>
+    <p class="what">Camera unchanged (64°). Bottom area 144 → 104 px (short screen 112 → 84 px): smaller gaps, CASH OUT
+      and SHOOT a little lower. About 40 px (28 px on a short screen) more for the table.</p>
+    <div class="pair">
+      <figure><img src="opt3-full.jpg" alt="Option 3, full screen" loading="lazy"><figcaption>Full screen: <b>98%</b> wide · table 382×541 px</figcaption></figure>
+      <figure><img src="opt3-inapp.jpg" alt="Option 3, in-app browser" loading="lazy"><figcaption>In-app: <b>85%</b> wide (+5) · table 332×463 px</figcaption></figure>
+    </div>
+  </section>
+</main>
+</body>
+</html>
