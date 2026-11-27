@@ -29,7 +29,7 @@ until the round is over. The game logic (RULES A.5: outcome = seed + step only) 
 - The colour pick and position play stay visual only (they never change money).
 
 ## How a player verifies a round afterwards
-1. Before START the server shows `hash = SHA-256(server seed)` (and the player's own seed text, if decision 3 is yes).
+1. Before START the server shows `hash = SHA-256(server seed)` (and the player's own seed text, if the casino's provably-fair switch and the player seed are on).
 2. After the round ends the server reveals the server seed. The round code becomes `level-seed-letters-Cstep` as today
    (task 5.4), with the long seed.
 3. A public verify page (static, runs in any browser, open source): it checks SHA-256(seed) = the hash shown before

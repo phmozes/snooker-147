@@ -15,6 +15,6 @@ the next step is the owner's gambling-lawyer advice before any server work. No c
 soaks were run (no soak failures). Committed and pushed to origin/master (standing approval). The previous report is
 in docs/reports/2026-11-27-a456be5.md.
 
-One small leftover: step 1 of "How a player verifies a round afterwards" in that file still says "if decision 3 is
-yes". With the new decision 3 it should read "if the casino's provably-fair switch and the player seed are on". I left
-it as it is because the task said to keep everything else.
+Follow-up (owner's word): the old line in step 1 of "How a player verifies a round afterwards" said "if decision 3
+is yes". It now reads "if the casino's provably-fair switch and the player seed are on", to match the new decision 3.
+Committed and pushed as well.
