@@ -252,7 +252,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
   const slot = rec.ids.map((id) => ids.indexOf(id));
-  // Part 4: the cue (after SHOOT and on step 1, never on the break-off). Its direction is the planned
+  // Part 4: the cue (every shot: SHOOT, step 1 and, since 2026-11-27, the break-off). Its direction is the planned
   // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
   const cueBall = balls.find((b) => b.kind === 'cue');
   // the solver's shot direction is ghost ball - cue ball (metres, not unit length): the cue needs the unit direction
@@ -377,7 +377,8 @@ async function onStart() {
   const brk = round.breakShot as { cueStart: Vec2; shot: Shot };
   busy = 'break';
   render();
-  await playShot(rack.map((b) => (b.kind === 'cue' ? { ...b, pos: { ...brk.cueStart } } : b)), brk.shot);
+  // owner 2026-11-27: the opponent's break-off is played with the same cue, look and timing as our shots
+  await playShot(rack.map((b) => (b.kind === 'cue' ? { ...b, pos: { ...brk.cueStart } } : b)), brk.shot, { cue: true });
   // RULES B.2 (owner 2026-11-27): the game now waits; SHOOT plays step 1 (no CASH OUT before it)
   afterShot();
 }
