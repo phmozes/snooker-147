@@ -1,0 +1,12 @@
+360x640 between rounds: ok | level balls 40/40/40 px, balance font 13px, table 360x354 at y 66
+360x640 racking / break-off: ok | level balls - px, balance font 18px, table 360x354 at y 66
+360x640 during a round (SHOOT / CASH OUT): ok | level balls - px, balance font 18px, table 360x354 at y 66
+360x640 long balance 1,234,567.89: ok | level balls 40/40/40 px, balance font 9px, table 360x354 at y 66
+390x844 between rounds: ok | level balls 40/40/40 px, balance font 18px, table 390x558 at y 66
+390x844 racking / break-off: ok | level balls - px, balance font 18px, table 390x558 at y 66
+390x844 during a round (SHOOT / CASH OUT): ok | level balls - px, balance font 18px, table 390x558 at y 66
+390x844 long balance 1,234,567.89: ok | level balls 40/40/40 px, balance font 11px, table 390x558 at y 66
+412x915 between rounds: ok | level balls 44/44/44 px, balance font 18px, table 412x629 at y 66
+412x915 racking / break-off: ok | level balls - px, balance font 18px, table 412x629 at y 66
+412x915 during a round (SHOOT / CASH OUT): ok | level balls - px, balance font 18px, table 412x629 at y 66
+412x915 long balance 1,234,567.89: ok | level balls 40/40/40 px, balance font 13px, table 412x629 at y 66

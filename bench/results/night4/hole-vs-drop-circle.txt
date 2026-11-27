@@ -1,0 +1,6 @@
+topLeft R 0.0890 fallFront 0.0200 front off circle 2.2e-16 hole front min depth 0.0200 centre depth 0.1090 mouthMid -0.890 1.785
+topRight R 0.0890 fallFront 0.0200 front off circle 2.4e-16 hole front min depth 0.0200 centre depth 0.1090 mouthMid 0.890 1.785
+bottomLeft R 0.0890 fallFront 0.0200 front off circle 2.4e-16 hole front min depth 0.0200 centre depth 0.1090 mouthMid -0.890 -1.785
+bottomRight R 0.0890 fallFront 0.0200 front off circle 2.2e-16 hole front min depth 0.0200 centre depth 0.1090 mouthMid 0.890 -1.785
+middleLeft R 0.0890 fallFront -0.0680 front off circle 4.2e-17 hole front min depth -0.0680 centre depth 0.0210 mouthMid -0.969 0.000
+middleRight R 0.0890 fallFront -0.0680 front off circle 4.2e-17 hole front min depth -0.0680 centre depth 0.0210 mouthMid 0.969 0.000

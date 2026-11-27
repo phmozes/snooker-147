@@ -1,0 +1,55 @@
+solver 4.10
+reds6-1527464874:6: blue success; {"target":"blue","pocket":"bottomRight","dir":{"x":0.45835851816994766,"y":-1.2156187955136686},"speed":6,"spin":-0.3,"duration":1.3125000000000127,"computeMs":0,"tried":540,"score":12.930298570348313,"nextCost":0.9331861033367639,"cueEnd":{"x":-0.30815386794925975,"y":0.029646160920679357},"type":"long","natural":5.87882684022534,"whyNot":"long","lookahead":"ok","nextNatural":true}
+  flex log: []
+  position: pocket bottomRight cut 6 deg, cue->ball 1.35 m, ball->pocket 1.99 m; cue not behind the black; cue ends (-0.31,0.03)
+  strict check: long -> long (cue ball rolls 0.30 m after contact, 0 cushions)
+  before: cue(-0.482,1.263) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(0.000,0.892) red1(0.000,0.947) red2(-0.506,0.729) red3(0.033,0.989) black(0.000,1.460)
+reds10-3813538593:8: blue plainMiss; {"target":"blue","pocket":"bottomRight","dir":{"x":0.46176118731177695,"y":-1.11435532460941},"speed":2.53002606050533,"spin":0.4,"duration":3.304166666666639,"computeMs":0,"tried":250,"kind":"plainMiss","fallback":null,"type":"attempt","natural":0,"whyNot":null,"score":3.304166666666639,"nextCost":null,"cueEnd":{"x":0.014349617334539303,"y":-0.4878736459876444}}
+  flex log: []
+  before: cue(-0.488,1.160) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(0.000,0.892) red1(-0.000,0.945) red2(-0.028,0.991) red3(0.032,0.988) red4(-0.710,0.481) red5(0.003,1.039) red6(0.071,1.029) black(0.000,1.460)
+reds10-483330344:3: red success; {"target":"red1","pocket":"middleRight","dir":{"x":0.2911064510889837,"y":-0.44147733260374944},"speed":2.53002606050533,"spin":-0.3,"duration":1.1250000000000033,"computeMs":0,"tried":1000,"score":5.85087514061882,"nextCost":1.14235698164013,"cueEnd":{"x":-0.11411656618822397,"y":0.7775364381797273},"type":"plain","natural":0.8658694637989512,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: []
+  position: pocket middleRight cut 14 deg, cue->ball 0.58 m, ball->pocket 1.31 m; cue not behind the black; cue ends (-0.11,0.78)
+  strict check: plain -> NATURAL (cue ball rolls 0.17 m after contact, 0 cushions)
+  before: cue(-0.320,1.364) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(-0.003,0.725) red1(0.010,0.887) red3(0.264,0.873) red4(-0.196,0.924) red5(-0.008,1.037) red6(0.065,1.017) red7(-0.530,1.526) red8(-0.030,1.089) red9(0.036,1.088) red10(0.417,0.792) black(0.000,1.460)
+reds10-483330344:6: pink success; {"target":"pink","pocket":"middleRight","dir":{"x":0.45145625142399565,"y":-0.5160100548933926},"speed":3.3739119660875967,"spin":0,"duration":1.233333333333342,"computeMs":0,"tried":601,"score":4.228541189308328,"nextCost":0.6901392357042964,"cueEnd":{"x":-0.002611284058606996,"y":0.6919033853258606},"type":"plain","natural":0.6165267659080642,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: []
+  position: pocket middleRight cut 6 deg, cue->ball 0.74 m, ball->pocket 1.32 m; cue not behind the black; cue ends (-0.00,0.69)
+  strict check: plain -> NATURAL (cue ball rolls 0.24 m after contact, 0 cushions)
+  before: cue(-0.490,1.444) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) red3(0.264,0.873) red4(-0.196,0.924) red5(-0.008,1.037) red6(0.065,1.017) red8(-0.030,1.089) red9(0.036,1.088) red10(0.417,0.792) black(0.000,1.460) pink(0.000,0.892)
+reds10-483330344:8: pink success; {"target":"pink","pocket":"middleRight","dir":{"x":0.33886262789995036,"y":-0.17942187776862384},"speed":3.3739119660875967,"spin":0,"duration":1.204166666666674,"computeMs":0,"tried":784,"score":3.624588909596734,"nextCost":0.5440726981295331,"cueEnd":{"x":0.13540605580367773,"y":0.9677307521463556},"type":"packCannon","natural":0.5254694323609741,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: []
+  position: pocket middleRight cut 15 deg, cue->ball 0.43 m, ball->pocket 1.32 m; cue not behind the black; cue ends (0.14,0.97)
+  strict check: packCannon -> NATURAL (cue ball rolls 0.19 m after contact, 0 cushions)
+  before: cue(-0.377,1.107) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) red3(0.264,0.873) red5(-0.008,1.037) red6(0.065,1.017) red8(-0.030,1.089) red9(0.036,1.088) red10(0.417,0.792) black(0.000,1.460) pink(0.000,0.892)
+reds10-483330344:10: pink success; {"target":"pink","pocket":"middleRight","dir":{"x":0.22503546296864374,"y":-0.44120567650826814},"speed":2.53002606050533,"spin":-0.3,"duration":1.3833333333333495,"computeMs":0,"tried":500,"score":4.65149624714538,"nextCost":0.8100686769720189,"cueEnd":{"x":-0.24659086749960074,"y":0.6483989842983731},"type":"plain","natural":0.5586379219306487,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: []
+  position: pocket middleRight cut 20 deg, cue->ball 0.54 m, ball->pocket 1.32 m; cue not behind the black; cue ends (-0.25,0.65)
+  strict check: plain -> NATURAL (cue ball rolls 0.35 m after contact, 0 cushions)
+  before: cue(-0.263,1.369) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) red3(0.264,0.873) red5(-0.008,1.037) red8(-0.030,1.089) red9(0.036,1.088) red10(0.417,0.792) black(0.000,1.460) pink(0.000,0.892)
+reds15-640290895:10: pink success; {"target":"pink","pocket":"middleLeft","dir":{"x":-0.4894677151754186,"y":-0.18153563424396912},"speed":2.53002606050533,"spin":0,"duration":1.514583333333356,"computeMs":0,"tried":300,"score":4.016912023245526,"nextCost":0.5022847628725216,"cueEnd":{"x":-0.21694552046964719,"y":0.980561954371663},"type":"packCannon","natural":0.5664273786406967,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: [{"roundCode":"reds15-640290895","step":10,"target":"pink","level":"longerDuration","tried":300}]
+  position: pocket middleLeft cut 22 deg, cue->ball 0.57 m, ball->pocket 1.32 m; cue not behind the black; cue ends (-0.22,0.98)
+  strict check: packCannon -> NATURAL (cue ball rolls 0.28 m after contact, 0 cushions)
+  before: cue(0.528,1.110) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red2(-0.130,1.038) red3(0.567,0.617) red5(0.001,1.038) red6(0.080,1.008) red7(-0.084,1.087) red8(-0.019,1.089) red9(0.069,1.073) red10(0.174,1.043) red12(-0.054,1.133) red13(-0.004,1.152) black(0.000,1.460) blue(0.000,0.000) pink(0.000,0.892)
+reds15-942643257:15: red plainMiss; {"target":"red7","pocket":"topLeft","dir":{"x":-0.3005509121743104,"y":0.27834063157017697},"speed":1.8972136591515114,"spin":0.8,"duration":2.3395833333333607,"computeMs":0,"tried":250,"kind":"plainMiss","fallback":null,"type":"attempt","natural":0,"whyNot":null,"score":2.3395833333333607,"nextCost":null,"cueEnd":{"x":-0.06431588191099316,"y":0.7150482128334255}}
+  flex log: []
+  before: cue(-0.426,0.233) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red1(0.008,0.893) red2(-0.075,0.992) red3(0.025,0.979) red5(-0.007,1.036) red6(0.046,1.033) red7(-0.737,0.563) red8(-0.040,1.085) red9(0.024,1.083) pink(0.000,1.130) black(0.000,1.460) blue(0.000,0.000)
+reds15-3132621162:17: red success; {"target":"red14","pocket":"topLeft","dir":{"x":1.5838848766629048,"y":1.4323400144180587},"speed":4.796475396697448,"spin":0.3,"duration":2.9124999999999948,"computeMs":0,"tried":1321,"score":43.227772421196754,"nextCost":3.99,"cueEnd":{"x":0.2547456912565288,"y":0.7592675665619721},"type":"cushionFirst","natural":9.480181614131208,"whyNot":"cushionFirst","lookahead":"ok","nextNatural":false}
+  flex log: [{"roundCode":"reds15-3132621162","step":17,"target":"red","level":"exhibition","tried":1321}]
+  position: pocket topLeft cut 56 deg, cue->ball 1.58 m, ball->pocket 1.16 m; cue not behind the black; cue ends (0.25,0.76)
+  strict check: cushionFirst -> cushionFirst (cue ball rolls 1.76 m after contact, 2 cushions)
+  before: cue(0.092,-0.453) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red3(0.050,0.972) red4(-0.027,1.057) red5(0.010,1.014) red6(0.072,1.037) red9(0.026,1.083) red10(0.145,1.079) red14(0.063,1.130) pink(-0.495,0.867) black(0.000,1.460) blue(0.000,0.000)
+reds15-3132621162:19: red success; {"target":"red4","pocket":"topLeft","dir":{"x":0.36406336687298757,"y":1.074319389378918},"speed":3.834362705187325,"spin":-0.3,"duration":2.9479166666666594,"computeMs":0,"tried":1329,"score":32.92963612598817,"nextCost":0.6548874524761841,"cueEnd":{"x":-0.31796923515704745,"y":1.4376526961813996},"type":"cannon","natural":9.025260290150909,"whyNot":"cannon","lookahead":"ok","nextNatural":true}
+  flex log: [{"roundCode":"reds15-3132621162","step":19,"target":"red","level":"overLong","tried":1329}]
+  position: pocket topLeft cut 65 deg, cue->ball 1.16 m, ball->pocket 1.11 m; cue not behind the black; cue ends (-0.32,1.44)
+  strict check: cannon -> cannon (cue ball rolls 1.14 m after contact, 1 cushions)
+  before: cue(-0.421,-0.094) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.366,0.341) red3(0.018,0.882) red4(-0.095,1.017) red5(0.010,1.014) red6(0.073,1.006) red9(-0.006,1.118) red10(0.068,1.070) pink(-0.495,0.867) blue(0.000,0.000) black(0.000,1.460)
+reds15-2764519739:2: black success; {"target":"black","pocket":"topLeft","dir":{"x":-0.542165491619939,"y":0.016246386843202343},"speed":4.499274585588834,"spin":-0.8,"duration":1.5979166666666935,"computeMs":0,"tried":149,"score":5.659426689564615,"nextCost":0.6467194407043652,"cueEnd":{"x":0.2522499723978989,"y":1.0836158919103338},"type":"packCannon","natural":0.7614566894119266,"whyNot":null,"lookahead":"ok","nextNatural":true}
+  flex log: [{"roundCode":"reds15-2764519739","step":2,"target":"black","level":"longerDuration","tried":149}]
+  position: pocket topLeft cut 18 deg, cue->ball 0.59 m, ball->pocket 0.95 m; cue not behind the black; cue ends (0.25,1.08)
+  strict check: packCannon -> NATURAL (cue ball rolls 0.60 m after contact, 0 cushions)
+  before: cue(0.591,1.426) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(-0.000,0.878) black(0.000,1.460) red1(-0.004,0.931) red2(-0.055,0.974) red3(0.044,0.976) red4(-0.052,1.034) red5(0.001,1.037) red6(0.096,1.009) red7(-0.098,1.071) red8(-0.026,1.083) red9(0.047,1.090) red10(0.442,0.886) red11(-0.409,0.650) red12(-0.067,1.127) red13(0.107,1.215) red14(0.131,1.107)
+reds15-136485470:3: red inOff; {"target":"red11","pocket":"middleLeft","dir":{"x":-0.4889704959588702,"y":-0.5994707943975727},"speed":4.499274585588834,"spin":0.4,"duration":4.610416666666565,"computeMs":0,"tried":250,"kind":"inOff","fallback":null,"type":"attempt","natural":0,"whyNot":null,"score":4.610416666666565,"nextCost":null,"cueEnd":{"x":0.9047327961745277,"y":0.024783996401430187}}
+  flex log: []
+  before: cue(-0.267,1.147) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) pink(0.004,0.698) red1(-0.018,0.862) red2(-0.028,0.993) red3(0.591,0.600) red4(-0.340,0.864) red5(0.001,1.037) red6(0.081,1.007) red7(-0.081,1.081) red8(-0.018,1.087) red9(0.034,1.079) red10(0.171,1.028) red11(-0.773,0.498) red12(-0.055,1.129) red13(-0.006,1.152) red14(0.051,1.130) black(0.000,1.460)

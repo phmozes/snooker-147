@@ -1,0 +1,3 @@
+bench/results/night4/after3c-reds6.jsonl [reds6]: 200 identical, 0 different 
+bench/results/night4/after3c-reds10.jsonl [reds10]: 200 identical, 0 different 
+bench/results/night4/after3c-reds15.jsonl [reds15]: 200 identical, 0 different 

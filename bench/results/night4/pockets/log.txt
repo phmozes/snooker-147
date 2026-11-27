@@ -1,0 +1,11 @@
+success topRight: pot of black at 0.406 s, playback frozen at 0.466 s, reds15-v2-1251509459 step 2
+jawRattle bottomRight: jaw of red11 at 2.260 s, playback frozen at 2.260 s, reds15-v2-1251509459 step 3
+inOff middleLeft: pot of cue at 2.308 s, playback frozen at 2.368 s, reds15-v2-3324060290 step 2
+success topLeft: pot of black at 0.892 s, playback frozen at 0.952 s, reds15-v2-3061521979 step 2
+jawRattle topRight: jaw of red15 at 1.342 s, playback frozen at 1.342 s, reds15-v2-3061521979 step 3
+inOff topRight: pot of cue at 1.902 s, playback frozen at 1.962 s, reds15-v2-1035891890 step 2
+success middleRight: pot of red12 at 0.948 s, playback frozen at 1.008 s, reds15-v2-2260508344 step 5
+jawRattle topLeft: jaw of black at 1.561 s, playback frozen at 1.561 s, reds15-v2-464744753 step 2
+inOff middleRight: pot of cue at 1.015 s, playback frozen at 1.075 s, reds15-v2-532294889 step 2
+success bottomRight: pot of blue at 1.035 s, playback frozen at 1.095 s, reds15-v2-1651236110 step 4
+covered 10 of 18; missing: inOff:topLeft success:middleLeft jawRattle:middleLeft jawRattle:middleRight success:bottomLeft jawRattle:bottomLeft inOff:bottomLeft inOff:bottomRight

@@ -1,0 +1,3 @@
+bench/results/night4/v1-all-reds6.jsonl [reds6]: 302 identical, 0 different 
+bench/results/night4/v1-all-reds10.jsonl [reds10]: 304 identical, 0 different 
+bench/results/night4/v1-all-reds15.jsonl [reds15]: 310 identical, 0 different 
