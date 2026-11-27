@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Read docs/NIGHT-4.md (summary table at the top). Nothing pushed; ~12 commits on master wait for your word.
+- Read docs/NIGHT-4.md (summary table at the top). Nothing pushed; 10 commits on master wait for your word.
 - Phone check http://192.168.1.111:5181: new table look, cue, phone layout, free replay. ≡ menu = dev switches
   (TABLE LOOK club/gray, CUE on/off, FASTER SHOT END off/on, POSITION PLAY 4.10/4.11p). Watch for stutter.
 - Decide: faster shot end ON? (removes every non-last-resort success shot over 3.5 s; docs/SLOW-SHOTS.md C).
