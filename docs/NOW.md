@@ -6,7 +6,7 @@
   roll; the cue; the rail wood; "BREAK n"; the camera at 57° (option 1: in-app about 91% wide).
 - Phone: pocket cam ~1 shot in 6 (force: menu > POCKET CAM ON NEXT SHOT); clearance replay: menu > Clearance: last ball.
 - Hosted demo: dist/ rebuilt with camera 57°, not republished yet (publishing = your word).
-- Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
+- Server: decided 2026-11-27 (B2B, docs/SERVER-OUTCOMES.md top); next = your gambling-lawyer advice before any server work.
 ## Claude's turn (waiting for the owner's answers)
 - Owner 2026-11-27: NO playback speed-up; failure shots over 3 s accepted for now (docs/SLOW-SHOTS.md D).
 - Owner 2026-11-27: KEEP the cue's extra 0.25 s. Pocket cam AUTO ON: 1 in 6 (success = failure), P1b/P2 70/30, +0.32 s/shot.

@@ -2,12 +2,17 @@
 Before real money, the outcome of every step must be decided on a server; the seed must never reach the browser
 until the round is over. The game logic (RULES A.5: outcome = seed + step only) does not change.
 
-## Open decisions for the owner (top first)
-1. Licence and certified RNG: which jurisdiction / test lab (needed before any real-money launch; legal advice first).
-2. Verify mode: "provably fair" (seed hash shown before START, seed shown after the round) — yes / no.
-3. Player seed: may the player add their own text to the seed (stronger proof, standard in crypto games) — yes / no.
-4. Hosting and cost: which server/provider and region (goes into EXPENSES.md); what happens if the server is down.
-5. Who owns the balance and bet limits on the server, and how long round records are kept (privacy policy).
+## Owner's decisions (2026-11-27)
+1. Business model: sell the game to casinos (B2B). The casino holds the player licence, the player accounts and the
+   balance. We supply the game plus a small game server that decides outcomes. Licence and certified test lab: the
+   owner will get advice from a gambling lawyer before any server work. The demo work continues meanwhile.
+2. Provably fair (seed hash before START, seed revealed after the round, public verify page): built as a per-casino
+   switch.
+3. Player seed: part of the same switch, off by default, shown only under an "advanced" link.
+4. Hosting: we run the game server and casinos connect to it. Pick the provider after the lawyer's advice. If the
+   server is down: follow the casino's rules for unfinished rounds (to be confirmed with each casino).
+5. Balance and wallet: owned by the casino. Bet limits are set per casino in config. Round records are kept as long
+   as the licence requires.
 
 ## What moves to the server
 - The round seed: a random 32-byte server seed per round from a cryptographic RNG (later: the certified one).
