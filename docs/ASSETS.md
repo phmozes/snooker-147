@@ -13,3 +13,31 @@ so there is nothing to licence. The page uses only Three.js (MIT, above) and the
 
 ## Table look (night 4: src/view/tableLook.ts, used by the game AND docs/pocket-options.html)
 No image, model or font files. Cloth, wood, leather and the pocket net are drawn in code (canvas textures at load).
+## Sound options (PLAN 9.1 step 1, mockups/sounds/; not used by the game yet)
+All CC0 1.0 (public domain): commercial use allowed, no credit needed. Licence checked on each sound's own page
+(Freesound) or in the pack's License.txt (Kenney) on 2026-11-27. Freesound files are the site's 128 kbps preview of
+the original; trimmed and levelled by us (same loudness, mono 96 kbps mp3). Times = the part of the original we used.
+
+| File | Source page | Author | Licence | Part used |
+|---|---|---|---|---|
+| cue-A | https://freesound.org/people/craigsmith/sounds/675330/ | craigsmith | CC0 1.0 | 7.21-7.60 s |
+| cue-B | https://freesound.org/people/mccarthy@bedmas.com/sounds/42365/ | mccarthy@bedmas.com | CC0 1.0 | 0.29-0.66 s |
+| cue-C | https://freesound.org/people/AmberdeMeillon/sounds/443067/ | AmberdeMeillon | CC0 1.0 | 5.05-5.42 s |
+| ball-A-soft, ball-A-hard | https://freesound.org/people/DigPro120/sounds/531226/ | DigPro120 | CC0 1.0 | 0.23-0.45 s / 0.45-0.64 s |
+| ball-B-soft, ball-B-hard | https://freesound.org/people/rvdw2004/sounds/709674/ | rvdw2004 | CC0 1.0 | 1.07-1.20 s / 0.50-0.78 s |
+| ball-C-soft, ball-C-hard | https://freesound.org/people/Cymeon/sounds/245397/ | Cymeon | CC0 1.0 | 4.16-4.45 s / 1.68-1.90 s |
+| pocket-A | https://freesound.org/people/Yarmonics/sounds/441857/ | Yarmonics | CC0 1.0 | whole |
+| pocket-B | https://freesound.org/people/Caitlin_100/sounds/365525/ | Caitlin_100 | CC0 1.0 | 6.39-7.42 s |
+| pocket-C | https://freesound.org/people/ChloePieterse/sounds/763601/ | ChloePieterse | CC0 1.0 | 9.44-10.90 s |
+| cushion-A | https://freesound.org/people/mccarthy@bedmas.com/sounds/42364/ | mccarthy@bedmas.com | CC0 1.0 | 0.37 s-end |
+| cushion-B | https://kenney.nl/assets/impact-sounds (impactSoft_medium_000) | Kenney | CC0 1.0 | whole |
+| cushion-C | https://kenney.nl/assets/impact-sounds (impactSoft_heavy_001) | Kenney | CC0 1.0 | whole |
+| win-A | https://freesound.org/people/Qvantor/sounds/878618/ | Qvantor | CC0 1.0 | whole |
+| win-B | https://freesound.org/people/Zott820/sounds/209578/ | Zott820 | CC0 1.0 | whole |
+| win-C | https://freesound.org/people/steaq/sounds/387232/ | steaq | CC0 1.0 | whole |
+| tap-A | https://kenney.nl/assets/interface-sounds (click_001) | Kenney | CC0 1.0 | whole |
+| tap-B | https://kenney.nl/assets/ui-audio (click1) | Kenney | CC0 1.0 | whole |
+| tap-C | https://kenney.nl/assets/interface-sounds (select_001) | Kenney | CC0 1.0 | whole |
+
+Tools (development only, not in the game, not in the repo): ffmpeg 9 (via the pip package imageio-ffmpeg, LGPL/GPL
+binary) and numpy, in a temporary folder, for trimming, levelling and mp3 encoding.

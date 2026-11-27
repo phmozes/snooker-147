@@ -1,10 +1,10 @@
 # NOW (max 30 lines, no history)
-
 ## Owner's turn
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the camera at 57° (option 1: in-app about 91% wide).
 - Phone: pocket cam ~1 shot in 6 (force: menu > POCKET CAM ON NEXT SHOT); clearance replay: menu > Clearance: last ball.
+- Sounds: pick A/B/C for 6 sounds on mockups/sounds/index.html (phone: http://192.168.1.111:5181/mockups/sounds/).
 - Hosted demo: dist/ rebuilt with camera 57°, not republished yet (publishing = your word).
 - Server: decided 2026-11-27 (B2B, docs/SERVER-OUTCOMES.md top); next = your gambling-lawyer advice before any server work.
 ## Claude's turn (waiting for the owner's answers)
