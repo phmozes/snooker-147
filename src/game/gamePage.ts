@@ -26,6 +26,7 @@ import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
+import { initTableSounds, playCueStrike, playEventsBetween } from './tableSounds';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, FAILURE_TEXT, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
@@ -294,7 +295,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
     let tau = 0; // seconds since the cue appeared (the cue's own clock)
     const scale = CONFIG.shot.playbackTimeScale * devSlow;
     if (import.meta.env.DEV) devLastRec = { rec, t0, scale, n: ++devShots };
-    let t = 0, prevNow = t0;
+    let t = 0, prevNow = t0, struck = false;
     // dev pocket check: freeze the playback at the first event of the asked kind (+ offset) until __dev.resume()
     let pauseAt: number | null = null;
     if (import.meta.env.DEV && devPauseOn) {
@@ -319,6 +320,8 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
         return;
       }
       const rate = (fastFrom === null ? 1 : rateAt(t, fastFrom, FE)) * cutRateAt(t, cut);
+      if (!struck) { struck = true; playCueStrike(s.speed); } // PLAN 9.1: the tip reaches the cue ball now
+      const tPrev = t;
       t = Math.min(end, t + dReal * CONFIG.shot.playbackTimeScale * rate);
       if (cut) { // a hard cut in, a hard cut back (TV style); the camera never moves while it is on
         const want = t >= cut.from && t < cut.to;
@@ -331,6 +334,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
         if (devResume) { pauseAt = null; devResume = false; devPause = null; }
       }
       if (import.meta.env.DEV && devLastRec) devLastRec.simT = t;
+      playEventsBetween(rec, tPrev, t); // PLAN 9.1: the hits of this moment, at the speed shown (slow motion too)
       const p = positionsAt(rec, t);
       rest = ids.map(() => null);
       slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
@@ -563,7 +567,7 @@ function clearanceReplay(target: string, pocket: string): Promise<void> {
   view3d.setSpeed(R.slowMotionScale);
   const before = rest; // the balls as the shot left them
   return new Promise((res) => {
-    let t = win.from, prev = performance.now(), stop = false;
+    let t = win.from, prev = performance.now(), stop = false, first = true;
     const t0 = prev;
     const done = () => {
       if (stop) return;
@@ -580,8 +584,11 @@ function clearanceReplay(target: string, pocket: string): Promise<void> {
     const tick = () => {
       if (stop) return;
       const now = performance.now();
+      const tPrev = t;
       t = Math.min(win.to, t + ((now - prev) / 1000) * R.slowMotionScale);
       prev = now;
+      playEventsBetween(lp.rec, first ? tPrev - 1e-9 : tPrev, t); // PLAN 9.1: the sounds again, in slow motion
+      first = false;
       const p = positionsAt(lp.rec, t);
       rest = ids.map(() => null);
       lp.slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
@@ -755,6 +762,7 @@ $('back').onclick = () => { /* TODO: lobby */ };
 const renderMute = () => { const b = $('mute'); b.innerHTML = muteIcon(isMuted()); b.setAttribute('aria-pressed', String(isMuted())); };
 $('mute').onclick = () => { setMuted(!isMuted()); renderMute(); };
 renderMute();
+initTableSounds(); // PLAN 9.1: the first tap anywhere switches the table sounds on
 
 // ---------------- static mockup screens (developer menu, as in task 2.2) ----------------
 function staticBalls(id: ScreenId): Ball[] {

@@ -1,53 +1,92 @@
-# Report: sound options page (PLAN 9.1 step 1, 2026-11-27)
+# Report: table sounds in the game + sound options round 2 (PLAN 9.1, 2026-11-27)
 
-No change to the game. No builds (as asked).
+## Part 1: the 4 picked table sounds are in the game
+Your picks: cue B, ball-ball B, pocket B, cushion B. Files in `public/sounds/` (cue, ball-soft, ball-hard, cushion,
+pocket; 26 KB together), copied unchanged from mockups/sounds/.
 
-## What was done
-- 18 sounds found, 3 options (A/B/C) for each of the 6 sounds. Ball-hits-ball has a soft and a hard version per
-  option, so 21 sound files in total. Every one is **CC0 1.0** (public domain): commercial use allowed, no credit needed.
-- Sources: Freesound (13 sounds, licence checked on each sound's own page) and Kenney packs (5 sounds, licence in the
-  pack's License.txt). Mixkit and OpenGameArt had no usable pool/snooker sounds.
-- Each file was trimmed (silence cut, short fade-out), set to the same loudness (loudest 50 ms = -18 dB, all within
-  0.2 dB; a gentle limiter stops sharp clicks from clipping), and saved as mono 96 kbps mp3. Largest file 35.2 KB.
-- docs/ASSETS.md: new section "Sound options" with source page, author, licence and the part of the original used.
-- mockups/sounds/index.html: one row per sound, big A/B/C buttons (ball row: soft + hard buttons), licence under each.
-  Relative paths, no external requests, a sound loads and plays only when its button is tapped.
+- **New file `src/game/tableSounds.ts`.** It plays the sounds from the shot recording's events: the cue strike (when
+  the cue tip reaches the cue ball), every ball-ball hit, every cushion hit (pocket jaws use the cushion sound too),
+  every ball that drops. It only reads the recording; it never changes it.
+- **When:** the playback clock decides. Each screen frame plays the events between the last moment shown and the
+  moment shown now. So in the **pocket-camera cut** and the **clearance replay** (slow motion) the sounds come later,
+  exactly when the balls touch on screen. The sound itself keeps its normal pitch.
+- **Phones:** nothing loads or plays before the first tap anywhere on the page. That tap switches sound on and loads
+  the 5 files.
+- **Mute:** the existing mute button (remembered on the device). Turning it on also stops sounds that are playing.
+- **Overlap:** at most 6 sounds at the same time (a break has many hits at once; extra ones are left out). The same
+  two balls (or ball + cushion) sound at most once in 25 ms, so one contact is never heard twice.
+- No library (PLAN said Howler): the browser's own Web Audio is enough, so there is nothing extra to licence.
 
-## Please note
-- I cannot hear sounds. I picked the parts of each recording by measuring where the hits are, not by listening.
-  Some picks may be wrong (for example a second ball or noise in the clip). Your listening test decides.
-- Freesound files are the site's 128 kbps preview copy (downloading the original needs a login). For short game
-  sounds this is fine; if you pick one, I can get the original later with your Freesound login.
-- In the game, soft table hits will also be played quieter (PLAN 9.1: sound scaled by impact).
+### How the volume scales (all numbers in `src/config/game.config.ts`, `sound.tableHits`)
+Impact speed s (m/s). Below `min` the hit is **silent**. Above it:
+volume = floor + (1 - floor) x ((s - min) / (max - min)) ^ 0.6, at most 1, then x master volume 0.8.
 
-## Files (mockups/sounds/)
-| File | Size (bytes) | Length | Source | Author | Licence |
+| Sound | Speed used | Silent below | Full at | Quietest heard |
+|---|---|---|---|---|
+| Cue strike | the shot's cue speed | 0.05 | 6.0 (hardest shot) | 25% |
+| Ball hits ball | closing speed of the two balls | 0.08 | 4.0 | 10% |
+| Cushion / jaw | speed into the cushion | 0.12 | 3.5 | 10% |
+| Pocket drop | ball speed just before it drops | (always heard) | 2.5 | 45% |
+
+Ball hits ball uses the **soft** file below 1.2 m/s and the **hard** file from 1.2 m/s. The power 0.6 means soft hits
+stay audible and hard hits do not get much louder. These are first guesses: tell me "too loud / too quiet" for any
+sound and I change one number.
+
+## Part 2: new options page `mockups/sounds2/` (phone: http://192.168.1.111:5181/mockups/sounds2/)
+Same format as round 1. All from Freesound, **CC0 1.0** only, licence checked on each sound's own page. No sound
+from freesoundeffects.com. This round I searched Freesound only (Kenney's clicks were round 1; Mixkit not searched).
+
+| Option | What | Length | Source | Author | Licence |
 |---|---|---|---|---|---|
-| index.html | 6072 | - | (ours) | - | - |
-| cue-A.mp3 | 5642 | 0.39 s | freesound.org/people/craigsmith/sounds/675330/ | craigsmith | CC0 1.0 |
-| cue-B.mp3 | 5015 | 0.36 s | freesound.org/people/mccarthy@bedmas.com/sounds/42365/ | mccarthy@bedmas.com | CC0 1.0 |
-| cue-C.mp3 | 5015 | 0.36 s | freesound.org/people/AmberdeMeillon/sounds/443067/ | AmberdeMeillon | CC0 1.0 |
-| ball-A-soft.mp3 | 3448 | 0.22 s | freesound.org/people/DigPro120/sounds/531226/ | DigPro120 | CC0 1.0 |
-| ball-A-hard.mp3 | 3134 | 0.19 s | freesound.org/people/DigPro120/sounds/531226/ | DigPro120 | CC0 1.0 |
-| ball-B-soft.mp3 | 2507 | 0.14 s | freesound.org/people/rvdw2004/sounds/709674/ | rvdw2004 | CC0 1.0 |
-| ball-B-hard.mp3 | 4075 | 0.29 s | freesound.org/people/rvdw2004/sounds/709674/ | rvdw2004 | CC0 1.0 |
-| ball-C-soft.mp3 | 4075 | 0.29 s | freesound.org/people/Cymeon/sounds/245397/ | Cymeon | CC0 1.0 |
-| ball-C-hard.mp3 | 3448 | 0.22 s | freesound.org/people/Cymeon/sounds/245397/ | Cymeon | CC0 1.0 |
-| pocket-A.mp3 | 8777 | 0.68 s | freesound.org/people/Yarmonics/sounds/441857/ | Yarmonics | CC0 1.0 |
-| pocket-B.mp3 | 13165 | 1.03 s | freesound.org/people/Caitlin_100/sounds/365525/ | Caitlin_100 | CC0 1.0 |
-| pocket-C.mp3 | 18181 | 1.46 s | freesound.org/people/ChloePieterse/sounds/763601/ | ChloePieterse | CC0 1.0 |
-| cushion-A.mp3 | 5329 | 0.37 s | freesound.org/people/mccarthy@bedmas.com/sounds/42364/ | mccarthy@bedmas.com | CC0 1.0 |
-| cushion-B.mp3 | 2194 | 0.12 s | kenney.nl/assets/impact-sounds (impactSoft_medium_000) | Kenney | CC0 1.0 |
-| cushion-C.mp3 | 7523 | 0.57 s | kenney.nl/assets/impact-sounds (impactSoft_heavy_001) | Kenney | CC0 1.0 |
-| win-A.mp3 | 31346 | 2.56 s | freesound.org/people/Qvantor/sounds/878618/ | Qvantor | CC0 1.0 |
-| win-B.mp3 | 22569 | 1.83 s | freesound.org/people/Zott820/sounds/209578/ | Zott820 | CC0 1.0 |
-| win-C.mp3 | 36049 | 2.94 s | freesound.org/people/steaq/sounds/387232/ | steaq | CC0 1.0 |
-| tap-A.mp3 | 1253 | 0.04 s | kenney.nl/assets/interface-sounds (click_001) | Kenney | CC0 1.0 |
-| tap-B.mp3 | 1880 | 0.09 s | kenney.nl/assets/ui-audio (click1) | Kenney | CC0 1.0 |
-| tap-C.mp3 | 1253 | 0.04 s | kenney.nl/assets/interface-sounds (select_001) | Kenney | CC0 1.0 |
+| WIN A | small crowd applause | 2.2 s | Freesound #858309 | miuziqa | CC0 1.0 |
+| WIN B | small indoor crowd applause | 2.2 s | Freesound #792298 | hz37 | CC0 1.0 |
+| WIN C | soft crystal bell chime | 1.4 s | Freesound #614833 | arseniiv | CC0 1.0 |
+| TAP A | "Soft UI Button Click" | 0.08 s | Freesound #528561 | Jummit | CC0 1.0 |
+| TAP B | "Button Tick" | 0.08 s | Freesound #268108 | NenadSimic | CC0 1.0 |
+| TAP C | "Starry UI Click 63" (short part) | 0.25 s | Freesound #876010 | SignatureSoundsOrg | CC0 1.0 |
 
-Total: 22 files, about 187 KB.
+Full sources and the trimmed parts: docs/ASSETS.md. Again: I cannot hear. I picked the parts by measuring loudness,
+so the applause was cut to 2.2 s with a soft fade-out; your ears decide.
+
+## Checks
+- **Replay check** (bench/camera-replay.test.ts, 10 round codes, every outcome and every ball path frame by frame):
+  before and after are **identical** (bench/results/sounds/replay-before.txt = replay-after.txt).
+- **npm test: 308 / 308 passed** (30 files). New: tests/tableSounds.test.ts (soft touches silent, louder with speed,
+  never above 1; only the game page uses the sound code and it takes nothing from the core but types; files exist).
+- **Live check** (new scripts/sound-check.mjs, headless Chrome, phone size): no sound before the first tap (0); after
+  the tap step 1 played sounds; with mute on a whole break-off played with 0 sounds; no page errors.
+  It counts sounds started; it cannot judge how they sound.
+
+## Soak failures
+No soak ran (sound only, outcomes proven unchanged by the replay check). Nothing new to list.
+
+## Build files
+`npm run build` (production, dist/):
+| File | Size |
+|---|---|
+| index.html | 10.6 KB |
+| assets/index-SOeE9r0i.js | 678.5 KB |
+| assets/solverWorker-CIEVpTZV.js | 48.6 KB |
+| sounds/ball-hard.mp3 | 4.0 KB |
+| sounds/ball-soft.mp3 | 2.4 KB |
+| sounds/cue.mp3 | 4.9 KB |
+| sounds/cushion.mp3 | 2.1 KB |
+| sounds/pocket.mp3 | 12.9 KB |
+| breaks/reds6.json, reds10.json, reds15.json | 478.4 / 575.3 / 696.0 KB |
+| breaks-v3/reds6.json, reds10.json, reds15.json | 477.4 / 576.0 / 696.2 KB |
+
+`npm run build:test` (dist-test/: developer menu, no PC posting): the same files, except
+| index.html | 10.8 KB |
+|---|---|
+| assets/index-BxWcdQDD.js | 691.8 KB |
+
+## Tools
+ffmpeg 9 (pip package imageio-ffmpeg) and numpy, installed in the user Python (development only, not in the game or
+repo), for trimming and levelling the round-2 files.
 
 ## Owner's turn
-Open mockups/sounds/index.html on the phone (dev server: http://192.168.1.111:5181/mockups/sounds/ when it is
-running) and pick A, B or C for each of the 6 sounds.
+1. Listen to the table sounds in the game on the phone (tap once first). Say if any is too loud, too quiet or wrong.
+2. Pick A/B/C for WIN and TAP on mockups/sounds2/.
+3. The hosted demo is not republished (your word).
+
+Committed and pushed to origin/master (standing approval). Nothing published.

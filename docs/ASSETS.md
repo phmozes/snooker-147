@@ -13,7 +13,7 @@ so there is nothing to licence. The page uses only Three.js (MIT, above) and the
 
 ## Table look (night 4: src/view/tableLook.ts, used by the game AND docs/pocket-options.html)
 No image, model or font files. Cloth, wood, leather and the pocket net are drawn in code (canvas textures at load).
-## Sound options (PLAN 9.1 step 1, mockups/sounds/; not used by the game yet)
+## Sound options (PLAN 9.1 step 1, mockups/sounds/; the B picks are now in the game, see below)
 All CC0 1.0 (public domain): commercial use allowed, no credit needed. Licence checked on each sound's own page
 (Freesound) or in the pack's License.txt (Kenney) on 2026-11-27. Freesound files are the site's 128 kbps preview of
 the original; trimmed and levelled by us (same loudness, mono 96 kbps mp3). Times = the part of the original we used.
@@ -41,3 +41,29 @@ the original; trimmed and levelled by us (same loudness, mono 96 kbps mp3). Time
 
 Tools (development only, not in the game, not in the repo): ffmpeg 9 (via the pip package imageio-ffmpeg, LGPL/GPL
 binary) and numpy, in a temporary folder, for trimming, levelling and mp3 encoding.
+
+## Table sounds in the game (PLAN 9.1, public/sounds/; owner's picks 2026-11-27: B for cue, ball-ball, pocket, cushion)
+The same files as the B options above (copied unchanged from mockups/sounds/). All CC0 1.0: commercial use, no credit.
+
+| File in public/sounds/ | Copy of | Source page | Author | Licence |
+|---|---|---|---|---|
+| cue.mp3 | cue-B | https://freesound.org/people/mccarthy@bedmas.com/sounds/42365/ | mccarthy@bedmas.com | CC0 1.0 |
+| ball-soft.mp3, ball-hard.mp3 | ball-B-soft, ball-B-hard | https://freesound.org/people/rvdw2004/sounds/709674/ | rvdw2004 | CC0 1.0 |
+| pocket.mp3 | pocket-B | https://freesound.org/people/Caitlin_100/sounds/365525/ | Caitlin_100 | CC0 1.0 |
+| cushion.mp3 | cushion-B | https://kenney.nl/assets/impact-sounds (impactSoft_medium_000) | Kenney | CC0 1.0 |
+
+Played with the browser's own Web Audio (no library, so nothing to licence).
+
+## Sound options round 2 (mockups/sounds2/; not used by the game yet)
+Win A/B/C and tap A/B/C were rejected in round 1. New options, all from Freesound, CC0 1.0 only (licence checked on
+each sound's own page on 2026-11-27). Not used: freesoundeffects.com (its free sounds are non-commercial only).
+Same treatment as round 1: the site's 128 kbps preview, trimmed, faded out, levelled (loudest 50 ms = -18 dB), mono 96 kbps.
+
+| File | Source page | Author | Licence | Part used |
+|---|---|---|---|---|
+| win-A (applause) | https://freesound.org/people/miuziqa/sounds/858309/ | miuziqa | CC0 1.0 | 0.30-2.50 s, 0.7 s fade-out |
+| win-B (applause) | https://freesound.org/people/hz37/sounds/792298/ | hz37 | CC0 1.0 | 0.10-2.30 s, 0.8 s fade-out |
+| win-C (chime) | https://freesound.org/people/arseniiv/sounds/614833/ | arseniiv | CC0 1.0 | whole (1.38 s) |
+| tap-A | https://freesound.org/people/Jummit/sounds/528561/ | Jummit | CC0 1.0 | 0-0.08 s |
+| tap-B | https://freesound.org/people/NenadSimic/sounds/268108/ | NenadSimic | CC0 1.0 | 0-0.08 s |
+| tap-C | https://freesound.org/people/SignatureSoundsOrg/sounds/876010/ | SignatureSoundsOrg | CC0 1.0 | 0-0.25 s, 0.15 s fade-out |

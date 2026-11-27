@@ -512,6 +512,18 @@ export const CONFIG = {
   sound: {
     masterVolume: 0.8,
     ballBallMinImpact: 0.05, ballBallMaxImpact: 4.0,   // impact speed -> volume 0..1
+    // PLAN 9.1: table sounds from the shot recording (src/game/tableSounds.ts). Volume of a hit with impact speed s (m/s):
+    //   s < min: silent;  otherwise  floor + (1 - floor) x ((s - min) / (max - min)) ^ curve, at most 1, x masterVolume.
+    // Files in public/sounds/ (owner's picks 2026-11-27: option B of each, docs/ASSETS.md).
+    tableHits: {
+      curve: 0.6,                // < 1: soft hits are still audible, hard hits do not get much louder
+      cue:     { min: 0.05, max: 6.0, floor: 0.25 },  // cue strike, s = the shot's cue speed
+      ball:    { min: 0.08, max: 4.0, floor: 0.10, hardFrom: 1.2 }, // s = closing speed; hard file from hardFrom m/s
+      cushion: { min: 0.12, max: 3.5, floor: 0.10 },  // cushions and pocket jaws, s = speed into the cushion
+      pocket:  { min: 0.0,  max: 2.5, floor: 0.45 },  // ball drop, s = the ball's speed just before it drops
+      maxVoices: 6,              // at most this many sounds at once (a break has many hits in the same moment)
+      minGapMs: 25,              // the same pair of balls (or ball + cushion) sounds at most once in this time
+    },
     table: ['cueHit', 'ballBall', 'cushion', 'pocketDrop', 'jawRattle', 'breakOff'],
     ui: ['button', 'cashOut', 'popup'],
     voiceSlots: [                // optional, empty until the owner supplies files
