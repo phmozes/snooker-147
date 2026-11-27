@@ -5,12 +5,14 @@
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the camera at 57° (option 1: in-app about 91% wide).
+- Phone: pocket camera (dev only): menu > POCKET CAM ON NEXT SHOT > P1b / P2 / random, then SHOOT (+1.86 s per cut).
 - Hosted demo: dist/ rebuilt with camera 57°, not republished yet (publishing = your word).
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
 ## Claude's turn (waiting for the owner's answers)
 - Owner 2026-11-27: NO playback speed-up at all (faster shot end OFF, switch removed). Failure shots over 3 s are
   accepted as they are for now (66.8 per 1,000 failures, longest 4.54 s; docs/SLOW-SHOTS.md D).
-- Owner 2026-11-27: KEEP the cue's extra 0.25 s per shot (docs/SLOW-SHOTS.md C).
+- Owner 2026-11-27: KEEP the cue's extra 0.25 s per shot (docs/SLOW-SHOTS.md C). Pocket camera: P1b main, P2 ~30%,
+  dev-forced cuts only (src/view/pocketCam.ts); automatic cuts (PLAN 8.2 rates) wait for the owner's word.
 - Next night run (not before): 6-red RE-RACK fix A = library rule dropping 6-red breaks that leave a red against the
   pink, new round marker v4 (v3 codes keep their library). Until then kept as is (owner 2026-11-27; night7/SUMMARY.txt).
 - Night 6 done: break with the cue, table markings, break-off on the baulk line = round version v3 (v1/v2 codes keep the
@@ -21,7 +23,8 @@
 ## Later (waiting on others: nothing)
 - LAUNCH BLOCKER: outcomes on a server before real money (plan: docs/SERVER-OUTCOMES.md; v2/v3 HMAC is ready for it).
 - The hosted demo is an artifact: rebuild (`npm run build`, dist/) and republish it after changes.
-- Not now: 147-maximum bonus (keep RTP 97%, own design); 14 announcer voice files; BACK -> casino lobby.
+- Not now: 147-maximum bonus (keep RTP 97%, own design); 14 announcer voice files; BACK -> casino lobby;
+  the background/room behind the table (owner idea 2026-11-27, big job).
 ## Working rules
 - Owner decides: design, money (odds, bets, RTP), publishing. Claude decides: code details, tests, commits.
 - Rules are locked in docs/RULES.md. Concept changes only after asking the owner.

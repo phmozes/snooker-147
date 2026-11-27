@@ -90,6 +90,14 @@ export function streamValueV2(seed: number, stream: string, k: number): number {
 export function streamValue(seed: number, stream: string, k: number, version: RngVersion = RNG_VERSION_NEW): number {
   return version === 1 ? streamValueV1(seed, stream, k) : streamValueV2(seed, stream, k);
 }
+/** Small task 2 (2026-11-27): the VISUAL-ONLY draw for the pocket-camera pick (P1b or P2) of step k. Its own stream
+ *  (CONFIG.pocketCut.stream), never one of the game streams (outcome, break, failure type, solver ...), so it cannot
+ *  change or reveal a result; it is read only after the outcome is fixed and the shot is planned. */
+export function pocketCamDraw(seed: number, k: number, version: RngVersion = RNG_VERSION_NEW): number {
+  const stream = CONFIG.pocketCut.stream;
+  if ((CONFIG.rng.streams as readonly string[]).includes(stream)) throw new Error(`pocket camera stream ${stream} is a game stream`);
+  return streamValue(seed, stream, k, version);
+}
 /** The round code of a round that has just started (no colour letters yet): v2 / v3 codes carry the marker `v2` / `v3`. */
 export const baseCode = (levelId: string, seed: number, rng: RngVersion): string => `${levelId}-${rng === 1 ? '' : `v${rng}-`}${seed}`;
 

@@ -48,6 +48,7 @@ export const CONFIG = {
     algorithm: 'mulberry32',     // seeded, fast; one independent stream per purpose
     // outcome of step k = f(seed, 'outcome', k) -> never depends on colour choices or visuals
     streams: ['outcome', 'break', 'failureType', 'variety', 'solver', 'messages'],
+    // visual only, kept OUT of this list on purpose: 'pocketCam' (pocket-camera pick, round.ts pocketCamDraw)
   },
 
   // ---------------- TABLE GEOMETRY (real snooker table) ----------------
@@ -333,7 +334,14 @@ export const CONFIG = {
     rattleCutRate: 0.40,         // share of jaw rattles that get the cut
     successCutRate: 0.10,        // share of successful pots that get the same cut
     secondsBeforeArrival: 0.5,   // cut happens this long before the ball reaches the pocket
-    maxSeconds: 3,
+    maxSeconds: 3,               // the pocket camera stays on screen at most this long (real seconds, slow motion included)
+    // 2026-11-27 small task 2 (src/view/pocketCam.ts). DEV ONLY for now: a cut happens only when the developer panel
+    // forces it ("pocket cam on next shot"); the real game has no automatic cuts yet (rattleCutRate/successCutRate unused).
+    secondsAfterArrival: 0.5,    // the pocket camera stays this long (shot time) after the ball arrives, then back to main
+    arriveRadius: 0.06,          // "arrives" = the target ball's centre first comes this close to the mouth middle (m),
+                                 // or its first jaw / pot event at that pocket, whichever is first (same rule pot or rattle)
+    p1bShare: 0.70,              // share of cuts that use P1b (the rest use P2); visual-only stream 'pocketCam'
+    stream: 'pocketCam',         // seeded stream name: u = f(round seed, 'pocketCam', step). Visual only, never physics
   },
 
   // ---------------- RE-RACK (last resort, RULES D.4) ----------------
@@ -411,7 +419,14 @@ export const CONFIG = {
       bottomLeft:  { position: [-0.6, -2.2, 0.35], lookAt: [-0.889, -1.78, 0], fov: 35 },
       bottomRight: { position: [ 0.6, -2.2, 0.35], lookAt: [ 0.889, -1.78, 0], fov: 35 },
     },
-    slowMotionScale: 0.35,
+    // pocket cameras (owner 2026-11-27, mockups/pocket-camera): placed per pocket from the pocket's own axis (the
+    // `inward` direction of its throat), so the same numbers work for all 6 pockets (mirrored and rotated).
+    //   back = metres from the mouth middle along the throat, away from the table (negative = over the table)
+    pocketViews: {
+      P1b: { height: 0.40, back: 0.60, tiltDeg: 20, fov: 55 },             // main: low, behind the jaws, looks back up the table
+      P2:  { height: 0.75, back: -0.12, lookAhead: 0.02, fov: 40 },        // sometimes: high above the pocket, looks down
+    },
+    slowMotionScale: 0.35,       // the pocket-camera part plays at this speed (0.35 = about 3x slower)
     clearanceFinale: 'replayAfterPot', // final pot plays from main camera, then pocket-camera slow-motion replay
   },
 

@@ -118,15 +118,19 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
   }
   setKinds(kinds);
 
+  let override: CameraFit | null = null;
+  /** Show the scene from another camera (a pocket camera), or null = back to the main camera. Visual only. */
+  function setCameraOverride(pose: CameraFit | null) { override = pose; resize(); }
   function resize() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     fit = fitCamera(table, preset, camera.aspect);
-    camera.fov = fit.fov;
-    camera.position.set(...fit.position);
-    camera.lookAt(new THREE.Vector3(...fit.lookAt));
+    const pose = override ?? fit; // pocket camera (pocketCam.ts) while a cut is on, else the main camera
+    camera.fov = pose.fov;
+    camera.position.set(...pose.position);
+    camera.lookAt(new THREE.Vector3(...pose.lookAt));
     camera.updateProjectionMatrix();
   }
   const nearestPocket = (q: Vec2) => {
@@ -255,5 +259,5 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     const v = new THREE.Vector3(x, y, z).project(camera);
     return { x: ((v.x + 1) / 2) * canvas.clientWidth, y: ((1 - v.y) / 2) * canvas.clientHeight };
   }
-  return { resize, draw, dispose, setPreset, setBallScale, setKinds, setSpeed, project, planCue, showCue, hideCue, look, getFit: () => fit };
+  return { resize, draw, dispose, setPreset, setBallScale, setKinds, setSpeed, setCameraOverride, project, planCue, showCue, hideCue, look, getFit: () => fit };
 }

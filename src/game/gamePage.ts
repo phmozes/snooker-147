@@ -24,6 +24,7 @@ import { pos411pOn, setPos411p, solverVersion } from '../core/solverMode';
 import { cuePose, VARIANTS } from '../view/cue';
 import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
+import { addedSeconds, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
@@ -66,6 +67,10 @@ const replayColour = (r: Round) => (replay && r.frame?.phase === 'colour' ? code
 let force: ForcedOutcome | null = null; // the NEXT shot's outcome, forced (then back to null)
 let auto: null | { mode: 'round' | 'jump' | 'clearance'; to: number } = null; // play shots by itself
 let jumpText = '';
+/** Small task 2 (2026-11-27): "pocket cam on next shot" (dev only). The ONLY way a cut happens for now: the real game
+ *  has no automatic cuts (this stays null outside a dev build, so the cut code never runs there). */
+let devPocketCam: null | PocketView | 'random' = null;
+let lastCut = ''; // dev panel: what the last forced cut did
 const FORCE_TEXT: Record<ForcedOutcome, string> = { success: 'Success', plainMiss: 'Miss', jawRattle: 'Rattle', inOff: 'In-off',
   wrongBallFirst: 'Foul (wrong ball)', reRack: 'RE-RACK' };
 /** The forced outcome of the next shot, if any (auto jump / clearance force success). Always null outside a dev build. */
@@ -255,7 +260,7 @@ function cueProtect(balls: Ball[], C: Vec2, d: Vec2) {
   return [{ p: O, z: rs, radius: rs }, { p: pk.captureCentre, z: 0, radius: pk.captureRadius }];
 }
 /** Play a shot from `balls` on screen; resolves with its length in seconds when every ball has stopped. */
-function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise<number> {
+function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target: string; pocket: string; view: PocketView } } = {}): Promise<number> {
   const sim = createSim(balls, table);
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
@@ -269,6 +274,16 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise
   const lead = cuePlan ? CUE_TIMING.added : 0;
   const fastFrom = fastEndOn ? startOf(rec, { ...CONFIG.shot.fastEnd, enabled: true }) : null;
   const FE = { ...CONFIG.shot.fastEnd, enabled: true };
+  // small task 2: the pocket-camera cut (dev-forced only). Playback only: the same recording, part of it from the
+  // pocket camera in slow motion. Same rule for a pot and a rattle (pocketCam.ts).
+  const cut: PocketCut | null = import.meta.env.DEV && opts.cam
+    ? planCut(rec, table, opts.cam.target, opts.cam.pocket as PocketCut['pocket'], opts.cam.view) : null;
+  const cutPose = cut ? pocketCamPose(table.pockets.find((p) => p.id === cut.pocket)!, cut.view) : null;
+  if (import.meta.env.DEV && opts.cam) lastCut = cut
+    ? `${cut.view} at ${cut.pocket}: ${cut.from.toFixed(2)}-${cut.to.toFixed(2)} s of the shot, +${addedSeconds(cut).toFixed(2)} s slow motion`
+    : `no cut: ${opts.cam.target} never came near ${opts.cam.pocket}`;
+  let camOn = false;
+  const end = playbackEnd(rec.duration, cut); // the recording's end, or later while a cut holds the still table
   return new Promise((res) => {
     const t0 = performance.now();
     let tau = 0; // seconds since the cue appeared (the cue's own clock)
@@ -298,8 +313,12 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise
         requestAnimationFrame(tick);
         return;
       }
-      const rate = fastFrom === null ? 1 : rateAt(t, fastFrom, FE);
-      t = Math.min(rec.duration, t + dReal * CONFIG.shot.playbackTimeScale * rate);
+      const rate = (fastFrom === null ? 1 : rateAt(t, fastFrom, FE)) * cutRateAt(t, cut);
+      t = Math.min(end, t + dReal * CONFIG.shot.playbackTimeScale * rate);
+      if (cut) { // a hard cut in, a hard cut back (TV style); the camera never moves while it is on
+        const want = t >= cut.from && t < cut.to;
+        if (want !== camOn) { camOn = want; view3d?.setCameraOverride(want ? cutPose : null); }
+      }
       view3d?.setSpeed(CONFIG.shot.playbackTimeScale * devSlow * rate);
       if (import.meta.env.DEV && pauseAt !== null && devPause) {
         if (t >= pauseAt) { t = pauseAt; devPause.paused = true; }
@@ -311,7 +330,8 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise
       rest = ids.map(() => null);
       slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
       draw3d();
-      if (t < rec.duration) requestAnimationFrame(tick); else { view3d?.hideCue(); res(rec.duration); }
+      if (t < end) requestAnimationFrame(tick);
+      else { view3d?.hideCue(); if (camOn) view3d?.setCameraOverride(null); res(rec.duration); }
     };
     tick();
   });
@@ -453,7 +473,12 @@ async function onShoot() {
     lastInfo = { code: round.roundCode, step, type: 'reRack', target: h.target, outcome: 'reRack', length: 0 };
   } else {
     // developer jump: no animation, the balls just move to where the shot leaves them
-    const len = auto?.mode === 'jump' ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true });
+    const pc = import.meta.env.DEV ? devPocketCam : null; // dev only: "pocket cam on next shot"
+    const sh = h.shot as { target?: string; pocket?: string };
+    const cam = pc && sh.target && sh.pocket
+      ? { target: sh.target, pocket: sh.pocket, view: pc === 'random' ? pickView(round.seed, step, round.rng) : pc } : undefined;
+    if (import.meta.env.DEV && pc) { devPocketCam = null; if (!cam) lastCut = 'no cut: this shot has no target pocket'; }
+    const len = auto?.mode === 'jump' ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam });
     const type = (h.shot as { type?: string }).type ?? '?';
     lastShot = `step ${step}: ${h.target} · ${h.outcome} · ${TYPE_TEXT[type] ?? type} · ${len.toFixed(2)} s long · ${work}`;
     lastInfo = { code: round.roundCode, step, type, target: h.target, outcome: h.outcome, length: len };
@@ -785,7 +810,8 @@ function renderDev() {
     '<div class="info" id="devWeirdList"></div>' +
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
-      '<div class="opts" id="devAuto"></div>' : '') +
+      '<div class="opts" id="devAuto"></div>' +
+      '<h3>POCKET CAM ON NEXT SHOT (DEV ONLY)</h3><div class="opts" id="devPocketCam"></div><div class="info" id="devCut"></div>' : '') +
     '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>POSITION PLAY (EXPERIMENT)</h3><div class="opts" id="devPos"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
@@ -888,13 +914,17 @@ function renderTestPanel(opt: (label: string, on: boolean, click: () => void, di
     if (round.phase === 'decide') void onShoot(); else void onStart();
   }, busy !== null || mode !== 'live' || (round.phase !== 'decide' && round.balance < round.bet)));
   $('devAuto').appendChild(opt('Stop', false, () => { auto = null; render(); }, !auto));
+  // small task 2: force a pocket-camera cut on the next SHOOT (one shot, then off again)
+  for (const v of ['P1b', 'P2', 'random'] as const) $('devPocketCam').appendChild(opt(v, devPocketCam === v, () => { devPocketCam = devPocketCam === v ? null : v; render(); }));
+  $('devCut').textContent = lastCut ? `last cut · ${lastCut}` : '';
 }
 /** The red tag on the table whenever an outcome is forced or the game plays by itself (developer only). */
 function renderDevTag() {
   if (!import.meta.env.DEV) return;
   const el = $('devTag');
   const text = auto ? (auto.mode === 'round' ? 'DEV · AUTO PLAY' : auto.mode === 'jump' ? `DEV · FORCED · JUMP TO ${auto.to}` : 'DEV · FORCED · CLEARANCE')
-    : force ? `DEV · NEXT FORCED: ${FORCE_TEXT[force].toUpperCase()}` : round.forced ? 'DEV · FORCED ROUND' : '';
+    : force ? `DEV · NEXT FORCED: ${FORCE_TEXT[force].toUpperCase()}` : round.forced ? 'DEV · FORCED ROUND'
+    : devPocketCam ? `DEV · POCKET CAM NEXT: ${devPocketCam.toUpperCase()}` : '';
   el.textContent = text;
   el.classList.toggle('show', !!text);
 }
@@ -930,6 +960,8 @@ if (import.meta.env.DEV) {
     setSlow: (x: number) => { devSlow = x; },
     /** pictures of the bare cloth (markings check): hide every ball until the next draw of a frame */
     hideBalls: () => { showBalls([]); },
+    /** small task 2: pocket cam on the next shot ('P1b' | 'P2' | 'random' | null), and what the last cut did */
+    pocketCam: (v: null | PocketView | 'random') => { devPocketCam = v; render(); }, lastCut: () => lastCut,
     pauseOn: (kind: 'jaw' | 'pot' | 'potCue', offset: number) => { devPauseOn = { kind, offset }; devPause = null; devResume = false; },
     pause: () => devPause, resume: () => { devResume = true; },
     /** page coordinates (CSS px) of a pocket's drop circle centre, and of a point `r` metres from it (for crops) */

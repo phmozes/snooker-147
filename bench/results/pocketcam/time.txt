@@ -1,0 +1,6 @@
+all: 103 shots, 100 with a cut possible, added s: mean 1.80, min 1.24, max 1.86; shot length mean 1.69 s
+success: 95 shots, 95 with a cut possible, added s: mean 1.80, min 1.24, max 1.86; shot length mean 1.64 s
+plainMiss: 3 shots, 0 with a cut possible, added s: mean 0.00, min Infinity, max -Infinity; shot length mean 2.46 s
+jawRattle: 4 shots, 4 with a cut possible, added s: mean 1.86, min 1.86, max 1.86; shot length mean 2.03 s
+inOff: 1 shots, 1 with a cut possible, added s: mean 1.86, min 1.86, max 1.86; shot length mean 2.80 s
+view pick on these shots: P1b 74, P2 29
