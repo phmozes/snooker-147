@@ -12,7 +12,7 @@ import { CONFIG } from '../config/game.config';
 import { arcPoints, type TableGeometry } from '../core/table/geometry';
 import type { BallKind, Vec2 } from '../core/types';
 import { fitCamera, type CameraFit, type PresetId } from './camera';
-import { BALL_COLOURS } from './playback';
+import { BALL_COLOURS, DROP_GRAVITY } from './playback';
 import { createLook } from './tableLook';
 import { createCueShadow, CUE, cueAxis, makeNewCue, placeCue, radiusAt } from './cue';
 
@@ -57,7 +57,7 @@ function buildGrey(scene: THREE.Scene, table: TableGeometry) {
   }
 }
 
-interface Drop { from: Vec2; vel: Vec2; to: Vec2; t0: number }
+interface Drop { from: Vec2; vel: Vec2; to: Vec2; t0: number; realT0: number; logged?: boolean }
 
 export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, kinds: BallKind[], look: TableLookId = G.look) {
   const club = look === 'club';
@@ -175,12 +175,12 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
         // the physics has just dropped this ball: it keeps its speed towards the pocket for a moment and sinks
         // (its speed: from the last two DIFFERENT positions; playback holds the last position for a frame before a drop)
         const pk = nearestPocket(was);
-        drops[i] = { from: was, vel: moveVel[i] ?? { x: 0, y: 0 }, to: pk.captureCentre, t0: now };
+        drops[i] = { from: was, vel: moveVel[i] ?? { x: 0, y: 0 }, to: pk.captureCentre, t0: now, realT0: real * 1000 };
       }
       const d = drops[i];
       if (!q && d) {
         const t = now - d.t0;
-        const z = r * ballScale - 0.5 * 9.81 * t * t;
+        const z = r * ballScale - 0.5 * DROP_GRAVITY * t * t; // the drop sound comes when z = 0 (playback.ts dropSeenAt)
         if (t > G.dropSeconds || z < -pit + r * ballScale * 0.3) { drops[i] = null; m.visible = false; return; }
         // horizontal: on along its own path, pulled towards the pocket centre (never further than the centre)
         const k = Math.min(1, t / G.dropSeconds);
@@ -190,6 +190,12 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
         // seen from above a sinking ball hardly changes, so it also goes dark as it sinks into the hole
         shade(m, Math.max(0.08, 1 - (r * ballScale - z) / G.dropDarkM));
         falling = true;
+        // dev only (scripts/drop-sound-check.mjs): the first drawn frame with the ball's centre below the cloth
+        if (import.meta.env.DEV && z <= 0 && !d.logged) {
+          d.logged = true;
+          ((window as unknown as { __dropLog?: { i: number; at: number; fallAt: number }[] }).__dropLog ??= [])
+            .push({ i, at: performance.now(), fallAt: d.realT0 });
+        }
       } else if (!q) m.visible = false;
     });
     prev = last.map((p, i) => (positions[i] ? p : null));

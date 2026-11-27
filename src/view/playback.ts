@@ -27,3 +27,21 @@ export const BALL_COLOURS: Record<BallKind, string> = {
   cue: '#f4f4ef', red: '#d7322f', yellow: '#f2c94c', green: '#1f9d55', brown: '#8b5a2b',
   blue: '#2f6fdb', pink: '#f29cb8', black: '#151515',
 };
+
+/** Gravity of the drawn fall of a potted ball (table3d.ts), m/s². Visual only. */
+export const DROP_GRAVITY = 9.81;
+
+/** Bug 2026-11-27 (drop sound early): the shot time at which a potted ball is SEEN dropping, i.e. the drawn ball's
+ *  centre reaches the cloth (half of it below the cloth). The view (table3d.ts) starts the fall when the playback
+ *  first shows the ball as gone (the first recorded frame without it, positionsAt above) and lets it fall with
+ *  DROP_GRAVITY for at most dropSeconds; the view clock runs at the playback speed, so this is shot time and the same
+ *  at normal speed, in the pocket-camera slow motion and in the clearance replay. drawnRadius = ball radius x ballScale.
+ *  Null if the ball is never potted in the recording. Pure. */
+export function dropSeenAt(rec: Pick<Recording, 'frames' | 'frameDt' | 'ids'>, id: string, drawnRadius: number,
+  dropSeconds: number): number | null {
+  const n = rec.ids.indexOf(id);
+  if (n < 0) return null;
+  const f = rec.frames.findIndex((fr) => Number.isNaN(fr[2 * n]!));
+  if (f < 0) return null;
+  return f * rec.frameDt + Math.min(Math.max(0, dropSeconds), Math.sqrt((2 * drawnRadius) / DROP_GRAVITY));
+}

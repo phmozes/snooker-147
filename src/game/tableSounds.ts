@@ -4,6 +4,7 @@
 // The mute button (sound.ts) silences everything at once and is remembered on the device.
 import { CONFIG } from '../config/game.config';
 import type { Recording } from '../core/physics/sim';
+import { dropSeenAt } from '../view/playback';
 import type { ApplauseLevel } from './applause';
 import { isMuted, onMuteChange } from './sound';
 
@@ -66,7 +67,7 @@ function play(name: Name, volume: number, key: string, ui = false): AudioBufferS
   src.onended = () => { const i = voices.indexOf(src); if (i >= 0) voices.splice(i, 1); };
   voices.push(src);
   src.start();
-  if (import.meta.env.DEV) ((window as unknown as { __soundLog?: { name: Name; at: number }[] }).__soundLog ??= []).push({ name, at: now }); // scripts/sound-check.mjs
+  if (import.meta.env.DEV) ((window as unknown as { __soundLog?: { name: Name; at: number; key: string }[] }).__soundLog ??= []).push({ name, at: now, key }); // scripts/sound-check.mjs
   return src;
 }
 
@@ -99,15 +100,29 @@ export function breakOffMoment(rec: Recording): number | null {
   return e ? e.t : null;
 }
 
-/** Play every recorded event with prevT < e.t <= t (seconds of the shot). The caller moves t at the speed the shot is
- *  shown (slow motion included), so the sounds come exactly when the balls touch on screen.
- *  breakAt (the opponent's break-off only): one break sound at that moment instead of the ball-ball hits of the next
- *  breakOff.muteBallSeconds. */
-export function playEventsBetween(rec: Recording, prevT: number, t: number, breakAt: number | null = null) {
+/** Bug 2026-11-27: the shot time a pot is HEARD = when the ball is seen dropping on screen (its drawn centre reaches the
+ *  cloth, playback.ts dropSeenAt), not the physics pot moment (about 0.1 s earlier). The milestone applause uses it too.
+ *  drawnRadius = ball radius x the drawn ball scale. Falls back to the physics moment if the ball never leaves the frames. */
+export function potHeardAt(rec: Recording, potT: number, ball: string, drawnRadius: number): number {
+  return dropSeenAt(rec, ball, drawnRadius, CONFIG.view3d.dropSeconds) ?? potT;
+}
+/** The latest moment any sound of this recording is heard (a pot can be heard after the recording's end). */
+export function lastSoundAt(rec: Recording, drawnRadius: number): number {
+  let m = rec.duration;
+  for (const e of rec.events) if (e.type === 'pot') m = Math.max(m, potHeardAt(rec, e.t, e.a, drawnRadius));
+  return m;
+}
+
+/** Play every recorded event heard at prevT < time <= t (seconds of the shot). The caller moves t at the speed the shot
+ *  is shown (slow motion included), so the sounds come exactly when the balls touch on screen; a pot when the drawn
+ *  ball is seen dropping (potHeardAt). breakAt (the opponent's break-off only): one break sound at that moment instead
+ *  of the ball-ball hits of the next breakOff.muteBallSeconds. */
+export function playEventsBetween(rec: Recording, prevT: number, t: number, drawnRadius: number, breakAt: number | null = null) {
   if (!ctx || isMuted() || t <= prevT) return;
   if (breakAt !== null && breakAt > prevT && breakAt <= t) play('break', S.breakOff.volume, 'break');
   for (const e of rec.events) {
-    if (e.t <= prevT || e.t > t) continue;
+    const at = e.type === 'pot' ? potHeardAt(rec, e.t, e.a, drawnRadius) : e.t;
+    if (at <= prevT || at > t) continue;
     if (e.type === 'ball') {
       if (breakAt !== null && e.t >= breakAt && e.t < breakAt + S.breakOff.muteBallSeconds) continue;
       const v = impactVolume(e.speed, S.ball);

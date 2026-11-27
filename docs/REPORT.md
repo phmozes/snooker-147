@@ -1,91 +1,81 @@
-# Report: clean-up, pocket x0.4, applause levels 1-6 in the game, miss sound options (2026-11-27)
+# Report: the pocket-drop sound came before the ball was seen dropping (2026-11-27)
 
-## Part 1: side effects of the last task
-1. **Processes:** the 5 vitest workers had already ended on their own. A search for node processes with "vitest" in
-   their command line found none (0 left), so there was nothing to close.
-2. **Restored with `git restore`** (10 files the stopped run rewrote):
-   bench/results/fairness/reds6.done, fairness/reds6.jsonl, marks-diag.txt, n3-diag.txt, n3-rerack.txt, pink-black.txt,
-   roundcode.txt, rtp-rng.txt, rtp50m/shard-0.json, soak/reds6-0-failures.txt, soak/reds6-0.json (that is 11 paths:
-   I counted 10 last time; reds6-0-failures.txt was one of them too). Also deleted one new file the run had made:
-   bench/results/camera57/replay.txt (not in git; the run's default output file).
-   `git status` after that: only `bench/results/phone-cost.jsonl` and `docs/WEIRD-SHOTS.md` changed (your phone files).
-   The untracked folders that were already there at the start of the session (rtp200m logs, night7/start-flow-dev,
-   rtp200m-speed, .claude/) were left alone.
-3. **New rule** in CLAUDE.md and NOW.md Working rules: check code with `npm test` (tests/ only), never `npx vitest run`
-   on the whole repo.
+## In short
+The drop sound played at the physics "pot" moment. On screen the ball is still drawn for up to one more frame and then
+falls into the hole for about 0.09 s of shot time before it is seen going down. So the sound was about 0.1 s of shot
+time early: hardly noticed at normal speed, but in slow motion (x0.35) that is about 0.3 s on screen, which is what the
+owner heard on the phone. Now the sound (and the milestone applause) start when the drawn ball's centre reaches the
+cloth, within one screen frame, at normal speed, in the pocket-camera cut and in the clearance replay. Sound only:
+outcomes and ball paths are unchanged.
 
-## Part 2: pocket drop volume
-`sound.tableHits.pocket.gain`: **0.5 -> 0.4** (softest pot 0.18, hardest 0.4, x masterVolume 0.8). Cue stays 0.75.
+## How it was measured
+"Seen dropping" = the first drawn frame where the falling ball's centre is below the cloth (half of the ball in the
+hole). New dev-only logs: `window.__dropLog` (src/view/table3d.ts, that frame and the frame the fall starts) next to
+the existing `window.__soundLog` (now with the ball's name). The script `scripts/drop-sound-check.mjs` plays the real
+game on the dev server (forced successes; pocket camera forced to P1b; the dev "Clearance: last ball"; one round of
+forced successes for the applause) and prints, per pot, sound time minus drop time. Minus = the sound is early.
+Shot time = on-screen time x the playback speed (1, or 0.35 in the cut and the replay).
 
-## Part 3: applause levels in the game (your picks: B for all 6)
-Files: mockups/applause/1-B ... 6-B copied unchanged to public/sounds/applause-1.mp3 ... applause-6.mp3.
-**win.mp3 removed** from the game (public/sounds/ and both builds). docs/ASSETS.md updated.
-
-When each level plays (rules in src/game/applause.ts, wired in src/game/gamePage.ts):
-| Level | When | Moment |
+| case | before: sound vs drop | after: sound vs drop |
 |---|---|---|
-| 1 | CASH OUT, RE-RACK | as the round ends |
-| 2 | the break reaches 50 | the moment the ball that reaches it drops on screen (slow motion of the pocket cam included) |
-| 3 | the opponent needs snookers (lead > points left, RULES C.8) | same: as that ball drops |
-| 4 | the break reaches 100 | same: as that ball drops |
-| 5 | a clearance | after the clearance replay, when the big message appears |
-| 6 | the maximum (75 / 107 / 147, RULES C.9) | same as 5, instead of 5 |
-- Each level at most once a round. Several on the same shot: only the highest (example: 50 and needs-snookers on the
-  same pot plays 3). The clearance's last pot plays no milestone, only its 5 or 6.
-- A failure plays nothing. A free replay (REPLAY by round code, no bet) plays nothing either, as before with win.mp3.
-- Never delays the game (SHOOT and CASH OUT work while it plays). A new applause stops the old one. Mute stops it.
-- One volume for all six: `uiSounds.applauseVolume` 0.8 (was `winVolume` 0.8); the files themselves grow +3 dB a level.
-- In the developer jump (no animation) a level counts as heard but plays nothing.
-- **Dev panel:** new "APPLAUSE (DEV ONLY)" row with 6 buttons (1 CASH OUT ... 6 MAXIMUM). It is in the test build too.
+| normal speed (4 + 2 pots before, 5 + 1 after) | **-89 to -117 ms** on screen = shot time; one -304 ms (the last ball: see cause 3) | **-15 to +2 ms** |
+| pocket-camera cut P1b, x0.35 (6 pots before, 6 after) | **-270 to -317 ms** on screen = -95 to -111 ms shot time | **+1 to +2 ms** on screen (0-1 ms shot time) |
+| clearance replay, x0.35 (2 before, 4 after) | **-286 ms** on screen = -100 ms shot time (the other pairing was not usable) | **-16 to +2 ms** on screen |
+| milestone applause (after only) | (same moment as the drop sound, so the same -0.1 s shot time) | applause-2 (break 50, in a cut) **+2 ms**, applause-3 (needs snookers) **+3 ms** |
 
-## Part 4: miss sound options (mockups/miss/index.html, not in the game)
-1.5 s each, same loudness (-24 dB RMS), trimmed, fade-out, mono 96 kbps. All Freesound **CC0 1.0** (checked on each page).
-| File | What | Source | Author | Licence |
-|---|---|---|---|---|
-| miss-A | group groan | https://freesound.org/people/CHallSmith/sounds/870630/ | CHallSmith | CC0 1.0 |
-| miss-B | crowd "oh…", disappointed | https://freesound.org/people/mrrap4food/sounds/619007/ | mrrap4food | CC0 1.0 |
-| miss-C | crowd sigh of disappointment (softer, more distant) | https://freesound.org/people/ShangusBurger/sounds/764215/ | ShangusBurger | CC0 1.0 |
-Not used: two single-voice "aww" files (one person, not a crowd). C came from a quiet recording, so it may have a little
-more background hiss.
+One screen frame is 16.7 ms. At normal speed the sound is now up to one frame early, because the view starts the fall
+on the first drawn frame after the ball is gone, which can be up to one frame later than the recording says.
+Raw output: the "before" and "after" runs were printed in the session; the numbers above are copied from them.
+
+## What caused it
+1. The physics drops a ball the moment its centre is over the hole, and the sound played then (`e.t` of the pot event).
+2. The drawn ball is still shown until the next recorded frame (0-17 ms later), then the view lets it fall:
+   z = 1.4 x radius - g t²/2, so its centre reaches the cloth about 0.087 s later (ball drawn 1.4 x larger). Together:
+   0.087-0.104 s of shot time, 0.25-0.30 s on screen at x0.35.
+3. A pot at the very end of the recording (often the last ball): the playback ended right after the pot, and the
+   ball's fall then continued at a different speed (the clearance replay's slow motion), so the gap grew to 0.3 s.
+   With the new timing this case would have lost its sound, so the playback now runs on until it is heard.
+
+## What changed
+- `src/view/playback.ts`: new `dropSeenAt(rec, ball, drawnRadius, dropSeconds)` = time of the first recorded frame
+  without the ball + the drawn fall to the cloth (at most dropSeconds). New `DROP_GRAVITY` (9.81), now also used by the
+  drawn fall in table3d.ts, so the two can never drift apart.
+- `src/game/tableSounds.ts`: `potHeardAt()` and `lastSoundAt()`; `playEventsBetween()` plays a pot at `potHeardAt`
+  (new parameter: the drawn ball radius). The volume rule is unchanged.
+- `src/game/gamePage.ts`: the shot playback and the clearance replay pass the drawn radius; the milestone applause
+  (levels 2-4) uses `potHeardAt` of its pot, so it starts with the drop sound; the playback runs until the last pot is
+  heard (at most about 0.1 s more, only when a ball drops at the very end of the shot).
+- `src/view/table3d.ts`: dev-only `__dropLog` (not in the production build: checked, 0 matches in dist/assets).
+- New: `tests/dropSound.test.ts` (3 tests), `scripts/drop-sound-check.mjs` (live check).
+- Not changed: the physics, the rules, the solver, the recordings, the pocket-camera cut rule.
 
 ## Tests and checks
-- `npm test` (tests/ only): **31 files, 314 tests passed** (95 s). New: tests/applause.test.ts (5 tests, which level when);
-  tests/tableSounds.test.ts checks pocket 0.4 and the 6 applause files.
-- **Replay check** (bench/camera-replay.test.ts, every outcome and every ball path frame by frame), run before and after
-  the change: **identical** (bench/results/applause/replay-before.txt = replay-after.txt). The sounds change no round.
-- Live sound check (scripts/sound-check.mjs on the dev server): SOUND CHECK OK; CASH OUT played applause-1.
-- Live applause run (6 reds, every shot forced to succeed, a clearance): step 10 applause-3 (needs snookers),
-  step 14 applause-2 (break 50), end applause-5 (clearance, not a maximum). No page errors. Level 6 was checked by the
-  unit test only (a maximum needs black after every red).
+- **Replay check** (bench/camera-replay.test.ts, every outcome and every ball path frame by frame), run on the old code
+  and on the new code: **identical** (bench/results/drop-sound/replay-before.txt = replay-after.txt, 103 lines).
+- `npm test` (tests/ only): **32 files, 317 tests passed** (97 s). Output: bench/results/drop-sound/npm-test.txt.
+- Live check (scripts/drop-sound-check.mjs): numbers in the table above; no page errors.
 - No soak ran, so there is no *-failures.txt line to list.
 
-## Builds (bytes)
-`npm run build` (dist/) and `npm run build:test` (dist-test/) both built OK.
-| File | dist/ | dist-test/ |
-|---|---|---|
-| index.html | 10,860 | 11,057 |
-| assets/index-*.js | 696,731 (index-3tAM5Qu-.js) | 710,648 (index-9yfG4XCd.js) |
-| assets/solverWorker-B34iVOky.js | 49,830 | 49,830 |
-| breaks/reds6.json | 489,861 | 489,861 |
-| breaks/reds10.json | 589,119 | 589,119 |
-| breaks/reds15.json | 712,742 | 712,742 |
-| breaks-v3/reds6.json | 488,825 | 488,825 |
-| breaks-v3/reds10.json | 589,812 | 589,812 |
-| breaks-v3/reds15.json | 712,882 | 712,882 |
-| sounds/applause-1.mp3 | 18,808 | 18,808 |
-| sounds/applause-2.mp3 | 27,271 | 27,271 |
-| sounds/applause-3.mp3 | 36,675 | 36,675 |
-| sounds/applause-4.mp3 | 46,393 | 46,393 |
-| sounds/applause-5.mp3 | 60,813 | 60,813 |
-| sounds/applause-6.mp3 | 72,724 | 72,724 |
-| sounds/ball-hard.mp3 | 4,075 | 4,075 |
-| sounds/ball-soft.mp3 | 2,507 | 2,507 |
-| sounds/break.mp3 | 21,359 | 21,359 |
-| sounds/cue.mp3 | 5,015 | 5,015 |
-| sounds/cushion.mp3 | 2,194 | 2,194 |
-| sounds/pocket.mp3 | 13,165 | 13,165 |
-| sounds/tap.mp3 | 1,924 | 1,924 |
+## Builds
+`npm run build` (dist/, production) and `npm run build:test` (dist-test/, dev menu, no PC posting): both OK.
+Full lists also in bench/results/drop-sound/build-files.txt.
 
-## Your turn
-- Phone: listen to the applause levels (dev menu > APPLAUSE buttons) and the quieter pocket drop.
-- Pick A, B or C for the miss sound: http://192.168.1.111:5181/mockups/miss/
+| dist/ (production) | bytes | dist-test/ | bytes |
+|---|---|---|---|
+| assets/index-BAT8puSf.js | 697,241 | assets/index-CzUoLdr5.js | 711,258 |
+| assets/solverWorker-B34iVOky.js | 49,830 | assets/solverWorker-B34iVOky.js | 49,830 |
+| index.html | 10,860 | index.html | 11,057 |
+| breaks/reds6.json | 489,861 | breaks/reds6.json | 489,861 |
+| breaks/reds10.json | 589,119 | breaks/reds10.json | 589,119 |
+| breaks/reds15.json | 712,742 | breaks/reds15.json | 712,742 |
+| breaks-v3/reds6.json | 488,825 | breaks-v3/reds6.json | 488,825 |
+| breaks-v3/reds10.json | 589,812 | breaks-v3/reds10.json | 589,812 |
+| breaks-v3/reds15.json | 712,882 | breaks-v3/reds15.json | 712,882 |
+| sounds/ (13 mp3: applause-1..6, ball-hard, ball-soft, break, cue, cushion, pocket, tap) | 312,923 | sounds/ (same 13) | 312,923 |
+| **total, 22 files** | **4,654,095** | **total, 22 files** | **4,668,309** |
+
+## Owner's turn
+- On the phone (menu > POCKET CAM ON NEXT SHOT, and menu > Clearance: last ball): does the drop sound now come with
+  the ball going down? If you would rather hear it a little later (when the ball is fully in the hole), that is one
+  number to change.
+- The hosted demo is still not republished (publishing = your word).

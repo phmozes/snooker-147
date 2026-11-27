@@ -26,7 +26,7 @@ import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
-import { breakOffMoment, initTableSounds, playApplause, playCueStrike, playEventsBetween, playTap } from './tableSounds';
+import { breakOffMoment, initTableSounds, lastSoundAt, playApplause, playCueStrike, playEventsBetween, playTap, potHeardAt } from './tableSounds';
 import { endLevel, milestoneLevel, type ApplauseLevel } from './applause';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
@@ -276,9 +276,12 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
   const slot = rec.ids.map((id) => ids.indexOf(id));
   lastPlayed = { rec, slot };
   const breakAt = opts.breakOff ? breakOffMoment(rec) : null; // PLAN 9.1: one break sound on the opponent's break-off
-  // owner 2026-11-27: a milestone applause (levels 2-4) right as the pot that reaches it drops on screen
+  // owner 2026-11-27: a milestone applause (levels 2-4) right as the pot that reaches it drops on screen (the same
+  // moment as its drop sound: tableSounds.ts potHeardAt)
+  const rs = table.ballRadius * ballScale; // the drawn ball radius: when a potted ball is seen dropping
   let applause = opts.applause ?? null;
-  const applauseAt = applause ? rec.events.find((e) => e.type === 'pot' && e.a === applause!.ball)?.t ?? rec.duration : null;
+  const potEv = applause ? rec.events.find((e) => e.type === 'pot' && e.a === applause!.ball) : undefined;
+  const applauseAt = applause ? (potEv ? potHeardAt(rec, potEv.t, potEv.a, rs) : rec.duration) : null;
   // Part 4: the cue (every shot: SHOOT, step 1 and, since 2026-11-27, the break-off). Its direction is the planned
   // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
   const cueBall = balls.find((b) => b.kind === 'cue');
@@ -297,7 +300,9 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
     ? `${cut.view} at ${cut.pocket}: ${cut.from.toFixed(2)}-${cut.to.toFixed(2)} s of the shot, +${addedSeconds(cut).toFixed(2)} s slow motion`
     : `no cut: ${opts.cam.target} never came near ${opts.cam.pocket}`;
   let camOn = false;
-  const end = playbackEnd(rec.duration, cut); // the recording's end, or later while a cut holds the still table
+  // the recording's end, or later while a cut holds the still table, or until a ball potted at the very end is seen
+  // dropping (its sound and applause come then; at most about 0.1 s more)
+  const end = Math.max(playbackEnd(rec.duration, cut), lastSoundAt(rec, rs), applauseAt ?? 0);
   return new Promise((res) => {
     const t0 = performance.now();
     let tau = 0; // seconds since the cue appeared (the cue's own clock)
@@ -342,7 +347,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
         if (devResume) { pauseAt = null; devResume = false; devPause = null; }
       }
       if (import.meta.env.DEV && devLastRec) devLastRec.simT = t;
-      playEventsBetween(rec, tPrev, t, breakAt); // PLAN 9.1: the hits of this moment, at the speed shown (slow motion too)
+      playEventsBetween(rec, tPrev, t, rs, breakAt); // PLAN 9.1: the hits of this moment, at the speed shown (slow motion too)
       if (applause && applauseAt !== null && t >= applauseAt) { playApplause(applause.level); applause = null; }
       const p = positionsAt(rec, t);
       rest = ids.map(() => null);
@@ -606,7 +611,7 @@ function clearanceReplay(target: string, pocket: string): Promise<void> {
       const tPrev = t;
       t = Math.min(win.to, t + ((now - prev) / 1000) * R.slowMotionScale);
       prev = now;
-      playEventsBetween(lp.rec, first ? tPrev - 1e-9 : tPrev, t); // PLAN 9.1: the sounds again, in slow motion
+      playEventsBetween(lp.rec, first ? tPrev - 1e-9 : tPrev, t, table.ballRadius * ballScale); // PLAN 9.1: the sounds again, in slow motion
       first = false;
       const p = positionsAt(lp.rec, t);
       rest = ids.map(() => null);

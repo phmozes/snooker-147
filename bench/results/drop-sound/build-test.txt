@@ -1,0 +1,22 @@
+
+> snooker-147@0.0.1 build:test
+> tsc --noEmit && node scripts/build-test.mjs
+
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "./src/game/costLine" without a file extension (vite.config.ts:9:26). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+[36mvite v8.3.8 [32mbuilding client environment for devbuild...[36m[39m
+transforming...
+✓ 37 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-test/index.html                        11.05 kB │ gzip:   3.38 kB
+dist-test/assets/solverWorker-B34iVOky.js   49.83 kB
+dist-test/assets/index-CzUoLdr5.js         711.25 kB │ gzip: 197.13 kB
+
+[33m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 330ms[39m
