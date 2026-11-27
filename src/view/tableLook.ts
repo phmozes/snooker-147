@@ -324,7 +324,59 @@ function addLamp(sc) {
   sc.add(lamp, lamp.target);
 }
 const clothTex = () => { const t = noiseTexture(A.cloth, 0.07, 256); t.repeat.set(3.4, 3.4); return t; }; // uv = metres
-const woodTex = () => { const t = noiseTexture(A.wood, 0.05, 256, true); t.repeat.set(0.6, 0.6); return t; };
+// Wood of the rails (night 5): one long grain that runs ALONG the rail. The picture covers WOOD.along metres along
+// the grain (left-right on the picture) and WOOD.across metres across it (up-down), and it repeats seamlessly in both
+// directions, so no block edge or seam shows. railUv() lays it on each rail piece in metres along that rail's own
+// length, so all four rails get the same grain at the same scale. Grain = one pattern across (broad soft shades +
+// fine darker lines), bent gently and slowly along the length. `dark` / `light` = the two ends of the shade range.
+const WOOD = { along: 2.0, across: 0.5, w: 1024, h: 256, dark: [40, 17, 7], light: [112, 56, 26], broad: 0.55, fine: 0.35, pores: 0.06 };
+function woodTex() {
+  const W = WOOD.w, Hh = WOOD.h, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+  const g = c.getContext('2d'), img = g.createImageData(W, Hh), d = img.data;
+  let seed = 4711; const rnd = () => ((seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296);
+  // smooth random profile that repeats after n cells (cosine-eased value noise)
+  const vnoise = (n) => { const v = Array.from({ length: n }, () => rnd() * 2 - 1);
+    return (t) => { const f = ((t % n) + n) % n, i = Math.floor(f), k = (1 - Math.cos((f - i) * Math.PI)) / 2; return v[i] * (1 - k) + v[(i + 1) % n] * k; }; };
+  // the profile across the grain (one value per row, repeating after Hh rows): broad shades + fine lines
+  const b1 = vnoise(6), b2 = vnoise(14), f1 = vnoise(48), f2 = vnoise(110);
+  const prof = new Float32Array(Hh * 4); // 4x finer than a row, read with linear interpolation
+  for (let i = 0; i < prof.length; i++) {
+    const r = i / prof.length;
+    const broad = 0.65 * b1(r * 6) + 0.35 * b2(r * 14);
+    const fine = 0.6 * f1(r * 48) + 0.4 * f2(r * 110);
+    prof[i] = WOOD.broad * broad + WOOD.fine * Math.sign(fine) * Math.pow(Math.abs(fine), 0.7);
+  }
+  const at = (r) => { const f = (((r % 1) + 1) % 1) * prof.length, i = Math.floor(f), k = f - i; return prof[i] * (1 - k) + prof[(i + 1) % prof.length] * k; };
+  // how the lines bend: slow waves along the length (whole numbers of waves per picture, so it still repeats)
+  const ph = Array.from({ length: 4 }, () => rnd() * Math.PI * 2), TAU = Math.PI * 2;
+  const pore = vnoise(97);
+  for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) {
+    const u = x / W, v = y / Hh;
+    const bend = 0.030 * Math.sin(TAU * u + ph[0]) + 0.014 * Math.sin(TAU * 3 * u + ph[1]) + 0.010 * Math.sin(TAU * (2 * u + v) + ph[2]) + 0.004 * Math.sin(TAU * (7 * u - 2 * v) + ph[3]);
+    // short pores: tiny dark flecks stretched along the grain
+    const p = pore(u * 97 + Math.floor(v * 97) * 13.7) * pore(v * 194);
+    const t = Math.max(-1, Math.min(1, at(v + bend) - WOOD.pores * Math.max(0, p) * 4));
+    const m = (t + 1) / 2, i = (y * W + x) * 4;
+    for (let ch = 0; ch < 3; ch++) d[i + ch] = WOOD.dark[ch] + (WOOD.light[ch] - WOOD.dark[ch]) * m;
+    d[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8; tex.repeat.set(1 / WOOD.along, 1 / WOOD.across); // uv in metres
+  return tex;
+}
+// uv of a rail piece in metres: u = along the piece's long side, v = across it, running on down the upright faces
+// (so the grain turns over the top edge without a break). `k` shifts each piece to a different part of the picture.
+function railUv(geo, k) {
+  const P = geo.attributes.position; geo.computeBoundingBox(); const bb = geo.boundingBox;
+  const alongX = bb.max.x - bb.min.x >= bb.max.y - bb.min.y, uv = [];
+  for (let i = 0; i < P.count; i++) {
+    const x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+    const a = alongX ? x : y, b = alongX ? y : x;
+    uv.push(a + k * 0.61, b - z + k * 0.17);
+  }
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+}
 // ---------- new drawing (S1, R2) ----------
 function fadeTexture(rgb, alpha) { // a soft line: `alpha` at the edge, fading to nothing
   const c = document.createElement('canvas'); c.width = 64; c.height = 4;
@@ -436,7 +488,7 @@ function buildNew(mode, sc, withLamp = true) {
       const a = S1[i].next, b = S1[(i + 1) % shapes.length].prev;
       cushion([a.tangent, b.tangent, b.tanBack, a.tanBack], [a.tangent, b.tangent]);
       for (const e of [S1[i].next, S1[i].prev]) cushion(e.band, e.nose, s.into);
-      extrude([...[...a.wood].reverse(), a.tanBack, b.tanBack, ...b.wood], H.rail - H.railBottom, woodMat, H.railBottom);
+      railUv(extrude([...[...a.wood].reverse(), a.tanBack, b.tanBack, ...b.wood], H.rail - H.railBottom, woodMat, H.railBottom).geometry, i);
       return;
     }
     const a = s.bed[s.bed.length - 1], b = n.bed[0];
