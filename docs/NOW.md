@@ -11,20 +11,17 @@
 ## Claude's turn (waiting for the owner's answers)
 - Owner 2026-11-27: NO playback speed-up at all (faster shot end OFF, switch removed). Failure shots over 3 s are
   accepted as they are for now (66.8 per 1,000 failures, longest 4.54 s; docs/SLOW-SHOTS.md D).
-- Owner 2026-11-27: KEEP the cue's extra 0.25 s per shot (docs/SLOW-SHOTS.md C). Pocket camera: P1b main, P2 ~30%,
-  dev-forced cuts only (src/view/pocketCam.ts); automatic cuts (PLAN 8.2 rates) wait for the owner's word.
+- Owner 2026-11-27: KEEP the cue's extra 0.25 s per shot. Pocket cam P1b/P2 70/30, dev-forced only; auto cuts: owner's word.
 - Next night run (not before): 6-red RE-RACK fix A = library rule dropping 6-red breaks that leave a red against the
   pink, new round marker v4 (v3 codes keep their library). Until then kept as is (owner 2026-11-27; night7/SUMMARY.txt).
-- Night 6 done: break with the cue, table markings, break-off on the baulk line = round version v3 (v1/v2 codes keep the
-  old library; proofs + soak in bench/results/night6). Frame time: markings +7% mean, no extra slow frames (FT_AB=1).
+- Night 6 done: round version v3 (break with the cue, markings, baulk-line break-off); proofs in bench/results/night6.
 - Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1, POS410=1 = old 4.10, RNG=2 = old break library), summary
   node bench/soak-night4.mjs <dir>; replays bench/night4/fp.test.ts; marks bench/replay-shot.test.ts; scripts/*.mjs.
 - Dev server: port 5181 only, phone http://192.168.1.111:5181. Only BALANCE shows = stale .vite-cache: `npx vite --host --force`.
 ## Later (waiting on others: nothing)
 - LAUNCH BLOCKER: outcomes on a server before real money (plan: docs/SERVER-OUTCOMES.md; v2/v3 HMAC is ready for it).
 - The hosted demo is an artifact: rebuild (`npm run build`, dist/) and republish it after changes.
-- Not now: 147-maximum bonus (keep RTP 97%, own design); 14 announcer voice files; BACK -> casino lobby;
-  the background/room behind the table (owner idea 2026-11-27, big job).
+- Not now: 147 bonus (RTP 97%); 14 voice files; BACK -> lobby; the room behind the table (owner idea, big job).
 ## Working rules
 - Owner decides: design, money (odds, bets, RTP), publishing. Claude decides: code details, tests, commits.
 - Rules are locked in docs/RULES.md. Concept changes only after asking the owner.
