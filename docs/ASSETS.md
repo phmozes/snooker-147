@@ -67,3 +67,6 @@ Same treatment as round 1: the site's 128 kbps preview, trimmed, faded out, leve
 | tap-A | https://freesound.org/people/Jummit/sounds/528561/ | Jummit | CC0 1.0 | 0-0.08 s |
 | tap-B | https://freesound.org/people/NenadSimic/sounds/268108/ | NenadSimic | CC0 1.0 | 0-0.08 s |
 | tap-C | https://freesound.org/people/SignatureSoundsOrg/sounds/876010/ | SignatureSoundsOrg | CC0 1.0 | 0-0.25 s, 0.15 s fade-out |
+| break-A (break-off) | https://freesound.org/people/reg7783/sounds/204187/ | reg7783 | CC0 1.0 | 0.45-2.25 s, 0.5 s fade-out |
+| break-B (break-off) | https://freesound.org/people/LewisEmmott5/sounds/732672/ | LewisEmmott5 | CC0 1.0 | 0.25-1.95 s, 0.5 s fade-out |
+| break-C (break-off) | https://freesound.org/people/DariusOW/sounds/766411/ | DariusOW | CC0 1.0 | 0.05-1.75 s, 0.4 s fade-out |
