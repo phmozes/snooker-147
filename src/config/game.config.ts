@@ -430,6 +430,7 @@ export const CONFIG = {
   // to draw placeholder boxes; task 2.2 builds the real layout.
   layout: {
     phoneAspect: 9 / 19.5,
+    shortBelow: 2.05,            // 2026-11-27: screen height/width below this = short: smaller rows, a larger table
     portraitBelow: 0.8,          // window width/height below this = a phone: the game uses the full screen
     sidePad: 0.04,               // share of the width
     topBar: [0.0, 0.075], table: [0.075, 0.735], ladder: [0.74, 0.785], cashOut: [0.80, 0.855],

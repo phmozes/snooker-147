@@ -125,6 +125,17 @@
     .quick { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
              font-size: 15px; padding: 0; }
     .row.betrow { gap: 5px; }
+    /* 2026-11-27 (owner: the table must use all the space it can). On a short window (360x640, a phone's in-app
+       browser) the table is limited by the free height, so every row around it gets a little smaller (about 60 px
+       more for the table). The bottom area keeps one fixed height in every state, as before. */
+    #screen.short .top { height: 48px; padding-top: 2px; }
+    #screen.short .table { margin: 2px 0 2px; }
+    #screen.short .ladder, #screen.short .chip { height: 30px; }
+    #screen.short .bottom { height: 112px; gap: 6px; margin-top: 4px; }
+    #screen.short .cash { height: 40px; }
+    #screen.short .big, #screen.short .colour { height: 50px; font-size: 21px; border-radius: 14px; }
+    #screen.short .sq, #screen.short .quick, #screen.short .bet { height: 38px; }
+    #screen.short .footer { height: 14px; }
     .quick.on { border-color: var(--yellow); color: var(--yellow); background: #24210f; }
     .colour { height: 66px; border-radius: 18px; border: none; font-size: 20px; font-weight: 700; }
     .colour.blue { background: #2f6fdb; color: #fff; }

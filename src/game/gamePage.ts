@@ -739,6 +739,8 @@ function layout() {
     [w, h] = [portrait ? A.w : Math.min(A.w, Math.round(A.h * CONFIG.layout.phoneAspect)), A.h];
   }
   Object.assign(screenEl.style, { width: `${w}px`, height: `${h}px` });
+  // a short window (the table is limited by height): smaller rows round the table (index.html #screen.short)
+  screenEl.classList.toggle('short', h / w < CONFIG.layout.shortBelow);
   const stageW = (compare ? 2 * w + 16 : w) * scale;
   stage.style.transform = `translate(${A.x + Math.max(0, (A.w - stageW) / 2)}px, ${A.y}px) scale(${scale})`;
   const shown: ScreenId = mode !== 'live' ? mode : round.phase === 'decide' ? 'A' : 'D';
@@ -919,6 +921,10 @@ if (import.meta.env.DEV) {
     pauseOn: (kind: 'jaw' | 'pot' | 'potCue', offset: number) => { devPauseOn = { kind, offset }; devPause = null; devResume = false; },
     pause: () => devPause, resume: () => { devResume = true; },
     /** page coordinates (CSS px) of a pocket's drop circle centre, and of a point `r` metres from it (for crops) */
+    /** layout check (2026-11-27): screen box of the table incl. rails (fitEdge beyond the cushions), CSS px, and the window size */
+    tableBox: () => { const e = CONFIG.camera.fitEdge, xs: number[] = [], ys: number[] = [], c = canvas.getBoundingClientRect();
+      for (const sx of [-1, 1]) for (const sy of [-1, 1]) { const q = view3d!.project(sx * (table.halfWidth + e), sy * (table.halfLength + e)); xs.push(q.x + c.left); ys.push(q.y + c.top); }
+      return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), vw: innerWidth, vh: innerHeight, canvasH: c.height }; },
     pocketBox: (id: string) => {
       const pk = table.pockets.find((q) => q.id === id)!, c = canvas.getBoundingClientRect();
       // a square round the pocket centre on screen, 0.4 m of table wide (clipped to the canvas)
