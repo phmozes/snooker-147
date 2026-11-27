@@ -1,0 +1,4 @@
+Frame interval while the balls move (break-off + step 1), 390x844 at DPR 2, Chrome 4x CPU throttling, same seeds per look:
+club: 1243 frames, median 16.7 ms, 90% 33.5 ms, mean 26.5 ms, over 33 ms 159
+club-nomarks: 1380 frames, median 16.7 ms, 90% 33.4 ms, mean 24.8 ms, over 33 ms 158
+markings cost (club with vs without, mean frame interval): 7.2%

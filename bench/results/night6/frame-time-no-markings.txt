@@ -1,0 +1,4 @@
+Frame interval while the balls move (break-off + step 1), 390x844 at DPR 2, Chrome 4x CPU throttling, same seeds per look:
+grey: 936 frames, median 16.8 ms, 90% 66.5 ms, mean 34.6 ms, over 33 ms 224
+club: 809 frames, median 33.3 ms, 90% 66.8 ms, mean 40.9 ms, over 33 ms 270
+club vs grey (mean frame interval): 18.4% (rule: at most +20%)
