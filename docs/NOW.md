@@ -1,30 +1,30 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Nothing pushed: night-4 + night-5 commits wait on master for your word (`git log --oneline f534502..`).
-- Phone check http://192.168.1.111:5181, in this order: START -> break -> the game WAITS, SHOOT plays step 1 (no CASH OUT
-  before it); the cue (flat, on the shot line); the rail wood; "BREAK n" left under the ladder; the table size in your
-  phone's in-app browser (bigger, not yet full width).
-- 4.11p is now the default (your decision 2026-11-27) although its paired soak failed: fallback % 6 reds 54.6->57.4,
-  10 reds 53.0->57.0; shots over 3.5 s 50->52 / 37->47 / 21->28 (NIGHT-4). Marks: 2 fixed, 4 better. May be improved later.
+- Nothing pushed: night-4, 5 and 6 commits wait on master for your word (`git log --oneline f534502..`).
+- Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
+  the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
+  roll; the cue; the rail wood; "BREAK n"; the table size in your in-app browser (80-89% wide).
+- Note: 6 reds plays a little worse with the new break-off (1,000-round soak: RE-RACK 5 vs 1, long shots 67 vs 52 with
+  4.11p on the old break-off; 10 and 15 reds same or better; night6/SUMMARY.txt). Look into it? (4.11p stays the
+  default, your decision 2026-11-27, although its paired soak failed, NIGHT-4; may be improved later.)
 - Decide: the cue adds 0.25 s per shot (median 1.55 -> 1.80 s): keep? (docs/SLOW-SHOTS.md C)
-- Decide (design): the table fills 80-89% of the width in an in-app browser, not 100%; more needs a lower camera angle
-  or a smaller bottom area. Want one of those?
+- Decide (design): table 80-89% wide in an in-app browser; more needs a lower camera angle or a smaller bottom area.
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
 ## Claude's turn (waiting for the owner's answers)
 - Owner 2026-11-27: NO playback speed-up at all (faster shot end OFF, switch removed). Failure shots over 3 s are
   accepted as they are for now (66.8 per 1,000 failures, longest 4.54 s; docs/SLOW-SHOTS.md D).
-- 2026-11-27 night 5 done (see the owner's list above). Pace rule (owner 2026-11-24): docs/SPEED.md.
-- Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1, POS410=1 for the old 4.10), summary node bench/soak-night4.mjs <dir>;
-  replays bench/night4/fp.test.ts; marks bench/replay-shot.test.ts; browser checks scripts/*.mjs (puppeteer-core).
-- Dev server always on port 5181 (vite.config.ts, strictPort): phone http://192.168.1.111:5181. Never another port.
-  Page shows only BALANCE = stale Vite cache (504 Outdated Optimize Dep on three.js): restart with `npx vite --force`.
+- Night 6 done: break with the cue, table markings, break-off on the baulk line = round version v3 (v1/v2 codes keep the
+  old library; proofs + soak in bench/results/night6). Frame time: markings +7% mean, no extra slow frames (FT_AB=1).
+- Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1, POS410=1 = old 4.10, RNG=2 = old break library), summary
+  node bench/soak-night4.mjs <dir>; replays bench/night4/fp.test.ts; marks bench/replay-shot.test.ts; scripts/*.mjs.
+- Dev server: port 5181 only, phone http://192.168.1.111:5181. Only BALANCE shows = stale .vite-cache: `npx vite --host --force`.
 ## Later (waiting on others: nothing)
-- LAUNCH BLOCKER: outcomes on a server before real money (plan: docs/SERVER-OUTCOMES.md; v2 HMAC is ready for it).
+- LAUNCH BLOCKER: outcomes on a server before real money (plan: docs/SERVER-OUTCOMES.md; v2/v3 HMAC is ready for it).
 - Not now: 147-maximum bonus (keep RTP 97%, own design); 14 announcer voice files; BACK -> casino lobby.
 ## Working rules
 - Owner decides: design, money (odds, bets, RTP), publishing. Claude decides: code details, tests, commits.
 - Rules are locked in docs/RULES.md. Concept changes only after asking the owner.
-- Outcome first (seeded RNG v2), shot second; visuals never change odds. No Math.random in physics/rules/solver.
+- Outcome first (seeded RNG, HMAC), shot second; visuals never change odds. No Math.random in physics/rules/solver.
 - Free assets only, commercial-use licence, every source in docs/ASSETS.md. Costs (if any ever) go in EXPENSES.md.
-- npm test: tests/solver.test.ts runs alone after the others; it times out (60 s) when soaks run at the same time.
+- npm test: tests/solver.test.ts times out (60 s) when the PC is busy (soaks, other projects); rerun it on a quiet PC.
