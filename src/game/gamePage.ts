@@ -887,8 +887,10 @@ if (import.meta.env.DEV) {
     /** page coordinates (CSS px) of a pocket's drop circle centre, and of a point `r` metres from it (for crops) */
     pocketBox: (id: string) => {
       const pk = table.pockets.find((q) => q.id === id)!, c = canvas.getBoundingClientRect();
-      const a = view3d!.project(pk.captureCentre.x - 0.2, pk.captureCentre.y - 0.2), b = view3d!.project(pk.captureCentre.x + 0.2, pk.captureCentre.y + 0.2);
-      const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
+      // a square round the pocket centre on screen, 0.4 m of table wide (clipped to the canvas)
+      const m = view3d!.project(pk.captureCentre.x, pk.captureCentre.y), e = view3d!.project(pk.captureCentre.x + 0.2, pk.captureCentre.y);
+      const h = Math.abs(e.x - m.x);
+      const x0 = Math.max(0, m.x - h), x1 = Math.min(c.width, m.x + h), y0 = Math.max(0, m.y - h), y1 = Math.min(c.height, m.y + h);
       return { x: c.left + x0, y: c.top + y0, width: x1 - x0, height: y1 - y0 };
     },
     balanceBack: () => { round = { ...round, balance: CONFIG.money.startingBalance }; render(); },

@@ -11,8 +11,11 @@ const look = process.argv[3] ?? 'club';
 mkdirSync(out, { recursive: true });
 const POCKETS = ['topLeft', 'topRight', 'middleLeft', 'middleRight', 'bottomLeft', 'bottomRight'];
 const TYPES = { success: 'Success', jawRattle: 'Rattle', inOff: 'In-off' };
-const done = {}; // `${type}:${pocket}` -> file
-const log = [];
+const done = {}; // `${type}:${pocket}` -> file (pictures already in outDir count: a second run only adds the missing ones)
+import { existsSync, readFileSync as rf } from 'node:fs';
+for (const q of POCKETS) for (const t of Object.keys(TYPES)) if (existsSync(`${out}/${q}-${t}.png`)) done[`${t}:${q}`] = `${out}/${q}-${t}.png`;
+const oldLog = existsSync(`${out}/log.txt`) ? rf(`${out}/log.txt`, 'utf8').trim().split(String.fromCharCode(10)).filter((l) => !l.startsWith('covered')) : [];
+const log = [...oldLog];
 
 const b = await launch();
 const p = await b.newPage();
@@ -20,7 +23,7 @@ p.on('pageerror', (e) => console.log('pageerror:', e.message));
 // a big portrait window, so the pocket close-ups have enough pixels (the game uses the whole window when portrait)
 await p.setViewport({ width: 1080, height: 2340, deviceScaleFactor: 1 });
 await p.evaluateOnNewDocument((l) => { try { localStorage.setItem('snooker147.look', l); } catch {} }, look);
-await p.goto('http://localhost:5181/?level=reds15', { waitUntil: 'networkidle0', timeout: 120000 });
+await p.goto(`http://localhost:5181/?level=${process.argv[4] ?? 'reds15'}`, { waitUntil: 'networkidle0', timeout: 120000 });
 await p.waitForFunction('window.__dev && window.__dev.state().busy === null', { timeout: 120000 });
 const st = () => p.evaluate(() => window.__dev.state());
 const idle = () => p.waitForFunction('window.__dev.state().busy === null', { timeout: 300000, polling: 200 });
@@ -37,7 +40,7 @@ for (let iter = 0; iter < 160 && Object.keys(done).length < 18; iter++) {
     if (s.phase !== 'decide') continue;
   }
   // the type still missing at most pockets
-  const type = Object.keys(TYPES).sort((x, y) => POCKETS.filter((q) => done[`${x}:${q}`]).length - POCKETS.filter((q) => done[`${y}:${q}`]).length)[0];
+  const type = Object.keys(TYPES).filter((t) => POCKETS.some((q) => !done[`${t}:${q}`])).sort((x, y) => POCKETS.filter((q) => done[`${x}:${q}`]).length - POCKETS.filter((q) => done[`${y}:${q}`]).length)[0];
   await p.evaluate((f) => window.__dev.force(f), type);
   const n0 = (await p.evaluate(() => window.__dev.lastRec()?.n)) ?? 0;
   await p.evaluate(() => window.__dev.setSlow(1));

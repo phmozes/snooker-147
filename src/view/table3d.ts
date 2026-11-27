@@ -135,6 +135,13 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     return best;
   };
   let frameReq = 0;
+  const baseColour = new WeakMap<THREE.Mesh, THREE.Color>();
+  /** Darken a ball's colour by factor f (1 = its own colour). */
+  const shade = (m: THREE.Mesh, f: number) => {
+    const mat = m.material as THREE.MeshStandardMaterial;
+    if (!baseColour.has(m)) baseColour.set(m, mat.color.clone());
+    mat.color.copy(baseColour.get(m)!).multiplyScalar(f);
+  };
   let vt = 0, lastReal = performance.now() / 1000, speed = 1;
   let current: (Vec2 | null)[] = [];
   function draw(positions: (Vec2 | null)[]) {
@@ -151,6 +158,7 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
       if (!m) return;
       const was = last[i];
       if (q) {
+        shade(m, 1);
         if (was && (Math.abs(q.x - was.x) > 1e-7 || Math.abs(q.y - was.y) > 1e-7)) {
           const span = Math.max(1 / 240, now - (movedAt[i] ?? now - dt));
           moveVel[i] = { x: (q.x - was.x) / span, y: (q.y - was.y) / span };
@@ -175,6 +183,8 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
         const ax = d.from.x + d.vel.x * t * (1 - k), ay = d.from.y + d.vel.y * t * (1 - k);
         m.visible = true;
         m.position.set(ax + (d.to.x - ax) * k * k, ay + (d.to.y - ay) * k * k, z);
+        // seen from above a sinking ball hardly changes, so it also goes dark as it sinks into the hole
+        shade(m, Math.max(0.08, 1 - (r * ballScale - z) / G.dropDarkM));
         falling = true;
       } else if (!q) m.visible = false;
     });

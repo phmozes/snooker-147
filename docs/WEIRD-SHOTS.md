@@ -96,3 +96,4 @@ STILL HAPPENS. What 4.11 did (bench/results/n3-marks-replay-411.txt):
 | 2026-11-25 20:13 | reds15-3132621162 | 17 | red | success | cushionFirst | 2.91 s | reds15 | 4.10 |
 | 2026-11-25 20:13 | reds15-3132621162 | 19 | red | success | cannon | 2.95 s | reds15 | 4.10 |
 | 2026-11-25 23:23 | reds15-2764519739 | 2 | black | success | packCannon | 1.60 s | reds15 | 4.10 |
+| 2026-11-26 17:41 | reds15-136485470 | 3 | red | inOff | attempt | 4.61 s | reds15 | 4.10 |

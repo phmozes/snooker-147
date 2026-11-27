@@ -1,0 +1,23 @@
+Part 3c paired soak, OFF (4.10) vs ON (4.11p), same v2 rounds. Rule fixed before the run (docs/NIGHT-4.md).
+== reds6: rounds 1000 / 1000 (OFF / ON) ==
+  pass  stuck 0: 0 / 0
+  pass  RE-RACK not higher: 2 / 1
+  FAIL  success fallback % <= OFF + 1: 54.6% / 57.4%
+  FAIL  over 3.5 s not last resort not higher: 50 / 52
+  pass  THINKING (simulated shots per success solve, median) <= OFF x 1.10: 549 / 544
+  (info) solve ms per success shot, median: 2149 / 2431; 90% tried 1272 / 1294
+== reds10: rounds 1000 / 1000 (OFF / ON) ==
+  pass  stuck 0: 0 / 0
+  pass  RE-RACK not higher: 0 / 0
+  FAIL  success fallback % <= OFF + 1: 53.0% / 57.0%
+  FAIL  over 3.5 s not last resort not higher: 37 / 47
+  pass  THINKING (simulated shots per success solve, median) <= OFF x 1.10: 614 / 612
+  (info) solve ms per success shot, median: 2519 / 2484; 90% tried 1291 / 1288
+== reds15: rounds 1000 / 1000 (OFF / ON) ==
+  pass  stuck 0: 0 / 0
+  pass  RE-RACK not higher: 0 / 0
+  pass  success fallback % <= OFF + 1: 56.2% / 56.8%
+  FAIL  over 3.5 s not last resort not higher: 21 / 28
+  pass  THINKING (simulated shots per success solve, median) <= OFF x 1.10: 554 / 564
+  (info) solve ms per success shot, median: 2356 / 2158; 90% tried 1212 / 1195
+RESULT: FAIL

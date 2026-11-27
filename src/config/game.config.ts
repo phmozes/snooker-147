@@ -415,6 +415,7 @@ export const CONFIG = {
     look: 'club' as 'club' | 'grey',
     club: { shadowMap: 2048, maxPixelRatio: 2 }, // lamp shadow map size (px) and the highest device pixel ratio drawn
     dropSeconds: 0.2,            // a potted ball is seen falling into the hole for at most this long (visual only)
+    dropDarkM: 0.05,             // ... and goes dark as it sinks: fully dark this far (m) below its resting height
     // Night 4, Part 4: the cue (C1, approved in docs/cue-options.html; drawn by src/view/cue.ts). Shown after the SHOOT
     // press and on the automatic step-1 shot: appears, one short stroke (appear + stroke <= 0.25 s), then fades out while
     // the balls roll. Visual and timing only. ON by default, dev panel switch.

@@ -46,3 +46,19 @@ What a fix would cost (no fix made): (a) solver: when a red is frozen to a colou
 shot that moves it (pack cannon into it); changes shots, needs a paired soak; small, targeted. (b) a two-step
 look-ahead: several times the solve work (rough guess), likely too slow for the phone. (c) break library: not possible (2/3 of entries).
 (d) accept it as is: 0.13% of six-red rounds, already paid by the rules.
+
+## C. Night 4: option 1 built (faster end of a shot, playback only) — switch OFF by default
+Code: src/view/fastEnd.ts; config shot.fastEnd (rate 2.5x, ease 0.4 s, not when < 0.5 s would remain); dev panel
+"FASTER SHOT END". Rule (same for success and failure): the speed-up starts only when every ball the shot pots is down,
+the object ball has stopped or dropped, and the cue ball has touched a ball. There are no game sounds yet, so nothing
+to keep in sync (the mute switch exists; future sounds must follow the playback clock).
+Measured on the night-4 v2 soak (1,000 rounds per level, solver 4.10, bench/results/soak-n4base/night4.txt):
+
+| Level | Shots | OFF median / 90% / over 3.5 s / longest | ON median / 90% / over 3.5 s / longest | Success not last resort over 3.5 s OFF → ON |
+|---|---|---|---|---|
+| 6 reds | 6,530 | 1.60 / 2.22 / 57 / 5.56 s | 1.30 / 2.10 / 7 / 4.20 s | 45 → 0 |
+| 10 reds | 7,880 | 1.57 / 2.18 / 57 / 5.69 s | 1.28 / 2.05 / 12 / 4.30 s | 30 → 0 |
+| 15 reds | 9,208 | 1.61 / 2.18 / 45 / 5.51 s | 1.27 / 1.99 / 13 / 4.64 s | 21 → 0 |
+
+(Here "last resort" = exhibition or rescue.) Failure shots are not sped up at all (their object ball rolls until near the end, so less than 0.5 s is left): the
+ON shots still over 3.5 s are failures (5 / 7 / 8) and a few last-resort successes. About half of all shots are sped up.
