@@ -1,30 +1,30 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Read docs/NIGHT-4.md (summary table at the top). Nothing pushed; 10 commits on master wait for your word.
-- Phone check http://192.168.1.111:5181: new table look, cue, phone layout, free replay. ≡ menu = dev switches
-  (TABLE LOOK club/gray, CUE on/off, FASTER SHOT END off/on, POSITION PLAY 4.10/4.11p). Watch for stutter.
-- Decide: faster shot end ON? (removes every non-last-resort success shot over 3.5 s; docs/SLOW-SHOTS.md C).
-- Decide: the cue adds 0.25 s per shot (median 1.55 -> 1.80 s) — keep, shorten, or pair with the faster end?
-- Decide: 4.11p failed its paired soak (more fallback and long shots) but fixed/improved 6 of 12 marks. Drop or retune?
-- Failure-shot length: new rule built (prefer < 3.0 s, near in-off pocket), small gain only (docs/SLOW-SHOTS.md D). Speed up failure ends?
+- Nothing pushed: night-4 + night-5 commits wait on master for your word (`git log --oneline f534502..`).
+- Phone check http://192.168.1.111:5181, in this order: START -> break -> the game WAITS, SHOOT plays step 1 (no CASH OUT
+  before it); the cue (flat, on the shot line); the rail wood; "BREAK n" left under the ladder; the table size in your
+  phone's in-app browser (bigger, not yet full width); failure shots (a few still run over 3 s).
+- 4.11p is now the default (your decision 2026-11-27) although its paired soak failed: fallback % 6 reds 54.6->57.4,
+  10 reds 53.0->57.0; shots over 3.5 s 50->52 / 37->47 / 21->28 (NIGHT-4). Marks: 2 fixed, 4 better. May be improved later.
+- Decide: faster shot end ON? Cue time 0.25 s: keep? (both still open from night 4, docs/SLOW-SHOTS.md C)
+- Decide: failure shots over 3.0 s only fell 73.9 -> 66.8 per 1,000 failures (longest 4.54 s; your 4.61 s in-off has no
+  shorter in-off). A real 3.0 s cap needs faster playback of failure endings or other-looking failures (SLOW-SHOTS.md D).
+- Decide (design): the table fills 80-89% of the width in an in-app browser, not 100%; more needs a lower camera angle
+  or a smaller bottom area. Want one of those?
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
 ## Claude's turn (waiting for the owner's answers)
-- 2026-11-27 night 4 done: look + cue + layout in the game, generator v2 (200M PASS), free replay, 3b/3c behind switches.
-- Soak baseline v2 (bench/results/soak-n4base): stuck 0, RE-RACK 2/0/0, off table 0, success vs p within 3 sd.
-- Pace (owner 2026-11-24): median <= 1.8 s, 90% <= 2.5 s, none over 3.5 s except the last resort. docs/SPEED.md.
-- Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1 per-shot log, POS411P=1), summary node bench/soak-night4.mjs <dir>;
+- 2026-11-27 night 5 done (see the owner's list above). Pace rule (owner 2026-11-24): docs/SPEED.md.
+- Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1, POS410=1 for the old 4.10), summary node bench/soak-night4.mjs <dir>;
   replays bench/night4/fp.test.ts; marks bench/replay-shot.test.ts; browser checks scripts/*.mjs (puppeteer-core).
 - Dev server always on port 5181 (vite.config.ts, strictPort): phone http://192.168.1.111:5181. Never another port.
   Page shows only BALANCE = stale Vite cache (504 Outdated Optimize Dep on three.js): restart with `npx vite --force`.
-## Waiting on others: nothing.
-## Later
+## Later (waiting on others: nothing)
 - LAUNCH BLOCKER: outcomes on a server before real money (plan: docs/SERVER-OUTCOMES.md; v2 HMAC is ready for it).
-- Owner idea (not now): rare bonus for a 147 maximum. Must keep RTP 97%; needs its own design + RTP calc.
-- Voice files for 14 announcer slots (stage 9-10; the mute switch exists). BACK button -> casino lobby (TODO).
+- Not now: 147-maximum bonus (keep RTP 97%, own design); 14 announcer voice files; BACK -> casino lobby.
 ## Working rules
 - Owner decides: design, money (odds, bets, RTP), publishing. Claude decides: code details, tests, commits.
 - Rules are locked in docs/RULES.md. Concept changes only after asking the owner.
 - Outcome first (seeded RNG v2), shot second; visuals never change odds. No Math.random in physics/rules/solver.
 - Free assets only, commercial-use licence, every source in docs/ASSETS.md. Costs (if any ever) go in EXPENSES.md.
-- npm test: tests/solver.test.ts runs in its own group after the others (vitest.config.ts), so it does not time out.
+- npm test: tests/solver.test.ts runs alone after the others; it times out (60 s) when soaks run at the same time.
