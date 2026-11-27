@@ -4,6 +4,7 @@
 // solves both, success first (the old single-worker order, kept for tests and benchmarks).
 // The work is capped by a count of simulated shots (solver shotCaps), so every device finds exactly the same shots.
 
+import { setPos411p } from '../core/solverMode';
 import { buildTable } from '../core/table/geometry';
 import type { SolveAnswer, SolveRequest } from './presolve';
 import { solveJob } from './solveJob';
@@ -12,6 +13,7 @@ const table = buildTable();
 const post = (a: SolveAnswer) => (self as unknown as Worker).postMessage(a);
 
 self.onmessage = (e: MessageEvent<SolveRequest>) => {
+  setPos411p(!!e.data.pos411p); // Part 3c: the experiment switch travels with each request (off unless asked)
   const kinds = e.data.only ? [e.data.only] : (['success', 'failure'] as const);
   solveJob(table, e.data, kinds, () => performance.now(), post);
 };

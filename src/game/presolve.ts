@@ -5,6 +5,7 @@
 // Task P.1 (fairness of the wait): SHOOT always waits until BOTH answers exist, whatever the decided outcome, so how
 // long THINKING… shows never hints at a hit or a miss.
 
+import { pos411pOn } from '../core/solverMode';
 import type { FailureLabel, PlannedShot, ShotProvider } from '../core/round';
 import type { FrameState } from '../core/rules';
 import type { FallbackLogEntry } from '../core/solver';
@@ -13,7 +14,7 @@ import type { BallKind, Colour } from '../core/types';
 export type SolveKind = 'success' | 'failure';
 /** only: the outcome this worker solves (task P.1); without it the worker solves both, success first. */
 /** colour (task 5.4, replay by round code): on a colour step, the colour from the code instead of the automatic pick. */
-export interface SolveRequest { only?: SolveKind; id: number; frame: FrameState; target: BallKind; failure: FailureLabel; ctx: { roundCode: string; step: number }; colour?: Colour }
+export interface SolveRequest { only?: SolveKind; id: number; frame: FrameState; target: BallKind; failure: FailureLabel; ctx: { roundCode: string; step: number }; colour?: Colour; pos411p?: boolean }
 export interface SolveAnswer { id: number; kind: SolveKind; target: BallKind; planned: PlannedShot; ms: number; log: FallbackLogEntry[] }
 /** target: the ball the shot is at (on a colour step the colour the game picked, RULES B.3). */
 export interface Solved { planned: PlannedShot; ms: number; target: BallKind }
@@ -23,7 +24,7 @@ export interface SolverWorker { postMessage(req: SolveRequest): void; terminate(
 const newWorker = (): SolverWorker => new Worker(new URL('./solverWorker.ts', import.meta.url), { type: 'module' });
 
 type Job = { req: SolveRequest; key: string; answers: Partial<Record<SolveKind, Solved>>; waiting: (() => void)[] };
-const keyOf = (r: Omit<SolveRequest, 'id'>) => JSON.stringify([r.ctx.roundCode, r.ctx.step, r.target, r.failure, r.colour ?? null, r.frame]);
+const keyOf = (r: Omit<SolveRequest, 'id'>) => JSON.stringify([r.ctx.roundCode, r.ctx.step, r.target, r.failure, r.colour ?? null, r.frame, !!r.pos411p]);
 
 /**
  * onBoth (task P.2): called once both answers of the shot being decided exist, with its success answer. The page then
@@ -39,7 +40,7 @@ export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void, on
   let promoted = false; // the current job was started ahead (developer cost line)
   const both = (c: Job) => !!(c.answers.success && c.answers.failure);
   const job = (frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx'], colour?: Colour): Job => {
-    const req: SolveRequest = { id: nextId++, frame, target, failure, ctx, ...(colour ? { colour } : {}) };
+    const req: SolveRequest = { id: nextId++, frame, target, failure, ctx, ...(colour ? { colour } : {}), ...(pos411pOn() ? { pos411p: true } : {}) }; // Part 3c switch reaches the workers
     return { req, key: keyOf(req), answers: {}, waiting: [] };
   };
   const post = (j: Job) => { for (const k of ['success', 'failure'] as const) (workers[k] ?? start(k)).postMessage({ ...j.req, only: k }); };

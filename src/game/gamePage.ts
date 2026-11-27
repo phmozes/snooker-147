@@ -20,6 +20,7 @@ import { rackBalls } from '../core/table/rack';
 import { COLOURS, type Ball, type BallKind, type Colour, type Vec2 } from '../core/types';
 import { positionsAt } from '../view/playback';
 import { createTable3d, type TableLookId } from '../view/table3d';
+import { pos411pOn, setPos411p, solverVersion } from '../core/solverMode';
 import { cuePose, VARIANTS } from '../view/cue';
 import { rateAt, startOf } from '../view/fastEnd';
 import { isMuted, muteIcon, setMuted } from './sound';
@@ -103,7 +104,7 @@ const renderFlag = () => { $('flagCount').textContent = weird.length ? String(we
 async function markWeird() {
   const i = lastInfo;
   if (!i) { toast('no shot played yet'); return; }
-  const line = `${i.code} step ${i.step} · ${i.target} ${i.outcome} · ${i.type} · ${i.length.toFixed(2)} s · solver ${CONFIG.solver.version}`;
+  const line = `${i.code} step ${i.step} · ${i.target} ${i.outcome} · ${i.type} · ${i.length.toFixed(2)} s · solver ${solverVersion()}`;
   if (weird[weird.length - 1] === line) { toast('this shot is already marked'); return; }
   weird.push(line);
   saveWeird();
@@ -112,7 +113,7 @@ async function markWeird() {
   try {
     const res = await fetch('/__dev/weird', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ code: i.code, step: i.step, ball: i.target, outcome: i.outcome, type: i.type,
-        length: i.length.toFixed(2), level: i.code.split('-')[0], solver: CONFIG.solver.version }) });
+        length: i.length.toFixed(2), level: i.code.split('-')[0], solver: solverVersion() }) });
     sent = res.ok;
   } catch { /* no dev server: kept on the phone */ }
   toast(sent ? `marked: step ${i.step} (${weird.length})` : `marked on the phone only (${weird.length})`);
@@ -122,7 +123,7 @@ let shootAvailableAt = 0; // when SHOOT last became pressable (performance.now)
 let costSent = 0; let costFailed = 0; // shown in the developer panel next to the PC link
 function sendCost(line: Record<string, unknown>) {
   if (!import.meta.env.DEV) return;
-  const body = costBody(line, navigator.userAgent, CONFIG.solver.version);
+  const body = costBody(line, navigator.userAgent, solverVersion());
   const post = () => fetch('/__dev/cost', { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true })
     .then((r) => { if (!r.ok) throw new Error(String(r.status)); });
   void post().catch(() => post()).then(() => { costSent++; }, () => { costFailed++; }); // one retry, then counted as failed
@@ -156,7 +157,7 @@ if (import.meta.env.DEV) {
   void checkPcLink();
   $('flag').style.display = 'flex';
   $('flag').onclick = () => { void markWeird(); };
-  $('devVer').textContent = `solver ${CONFIG.solver.version}`; // F.1: the version a video was recorded on
+  $('devVer').textContent = `solver ${solverVersion()}`; // F.1: the version a video was recorded on
   $('devVer').style.display = 'block';
 }
 const fallbacks: FallbackLogEntry[] = [];
@@ -216,6 +217,7 @@ const readSwitch = (key: string, def: boolean) => { try { const v = localStorage
 const saveSwitch = (key: string, v: boolean) => { try { localStorage.setItem(key, v ? '1' : '0'); } catch { /* private window */ } };
 let cueOn = readSwitch('snooker147.cue', CONFIG.view3d.cue.enabled);
 let fastEndOn = readSwitch('snooker147.fastEnd', CONFIG.shot.fastEnd.enabled);
+setPos411p(readSwitch('snooker147.pos411p', CONFIG.solver.natural.pos411p.enabled));
 const CUE_TIMING = VARIANTS.C1 as unknown as { appear: number; stroke: number; added: number }; // appear + stroke = 0.25 s (approved C1)
 /** What the cue must never cover (Part 4): the object ball (the first ball on the cue ball's line) and the pocket that
  *  ball is sent towards. Worked out from the layout and the planned direction only, never from the outcome. */
@@ -741,7 +743,7 @@ function renderDev() {
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
       '<div class="opts" id="devAuto"></div>' : '') +
-    '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>FASTER SHOT END (PLAYBACK)</h3><div class="opts" id="devFast"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
+    '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>FASTER SHOT END (PLAYBACK)</h3><div class="opts" id="devFast"></div><h3>POSITION PLAY (EXPERIMENT)</h3><div class="opts" id="devPos"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
   $('devScreens').appendChild(opt('Live game', mode === 'live', () => setMode('live'), busy !== null));
@@ -805,6 +807,10 @@ function renderDev() {
   $('devCue').appendChild(opt('Off', !cueOn, () => { cueOn = false; saveSwitch('snooker147.cue', false); view3d?.hideCue(); render(); }));
   $('devFast').appendChild(opt('Off', !fastEndOn, () => { fastEndOn = false; saveSwitch('snooker147.fastEnd', false); render(); }));
   $('devFast').appendChild(opt('On', fastEndOn, () => { fastEndOn = true; saveSwitch('snooker147.fastEnd', true); render(); }));
+  // Part 3c: position-play experiment (solver 4.11p); only between shots, so a solve in progress is never mixed
+  const setPP = (v: boolean) => { setPos411p(v); saveSwitch('snooker147.pos411p', v); $('devVer').textContent = `solver ${solverVersion()}`; if (round.phase === 'decide' && !busy) { presolver.cancel(); presolveNext(); } render(); };
+  $('devPos').appendChild(opt('4.10 (off)', !pos411pOn(), () => setPP(false), busy !== null));
+  $('devPos').appendChild(opt('4.11p (on)', pos411pOn(), () => setPP(true), busy !== null));
   for (const s of CONFIG.view3d.ballScaleOptions) {
     $('devScale').appendChild(opt(`${s}x`, ballScale === s, () => { ballScale = s; view3d?.setBallScale(s); render(); draw3d(); }));
   }

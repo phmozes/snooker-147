@@ -6,6 +6,7 @@
 // a few points across the mouth, then every power and spin from the config. Flex chain (other pockets, longer time,
 // wide search) comes in task 4.5.
 
+import { pos411pOn } from './solverMode';
 import { CONFIG } from '../config/game.config';
 import { createSim, isMoving, runUntilStill, stepSim, strike, type PhysicsConfig } from './physics/sim';
 import { applyShot, judgeShot, type FrameState } from './rules';
@@ -145,6 +146,13 @@ function blackPlayCost(cue: Vec2, ball: Ball, p: TableGeometry['pockets'][number
   else c += angleCost(cut);
   if (cut > BP.thinCutFrom) c += BP.thinCutCost;
   c += pocketPrefCost(ball.kind, ball.pos, p.id);
+  // night 4, Part 3c ("solver 4.11p", switch off by default): black or pink into a black-end corner, a red in the black
+  // half into a black-end corner, the cue ball on the inner side of that ball (never cut back)
+  if (pos411pOn() && (ball.kind === 'black' || ball.kind === 'pink' || (ball.kind === 'red' && ball.pos.y > table.spots.blue.y))) {
+    const P4 = NAT.pos411p;
+    if (!(p.kind === 'corner' && p.mouthMid.y > 0)) c += P4.notBlackEndCornerCost;
+    if (cue.y > ball.pos.y - P4.innerMarginM) c += P4.cutBackCost;
+  }
   // right side: a colour while reds remain; after the pot the cue ball leaves along the tangent line
   const reds = ball.kind !== 'red' ? balls.filter((b) => b.kind === 'red') : [];
   if (reds.length && cut > 3) {

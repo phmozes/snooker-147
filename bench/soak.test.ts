@@ -12,11 +12,13 @@ import { judgeShot } from '../src/core/rules';
 import { baseCode, newRound, setLevel, shoot, start, type LevelId, type Round } from '../src/core/round';
 import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { playbackSeconds, resultVisibleAt } from '../src/view/fastEnd';
+import { setPos411p, solverVersion } from '../src/core/solverMode';
 import { classifySuccess, playFacts } from '../src/core/shotType';
 import { shotCaps } from '../src/core/solver';
 import { buildTable } from '../src/core/table/geometry';
 
 it('soak', () => {
+  if (process.env.POS411P) setPos411p(true); // night 4, Part 3c: the position-play experiment ON
   const table = buildTable();
   const level = (process.env.LEVEL ?? 'reds6') as LevelId;
   const shard = Number(process.env.SHARD ?? 0);
@@ -56,7 +58,7 @@ it('soak', () => {
   const ks = [...new Set([1, 2, 3, 5, 8, 12, Math.ceil(ladderLen / 2), ladderLen].filter((k) => k <= ladderLen))].sort((a, b) => a - b);
   const pay: Record<number, number> = Object.fromEntries(ks.map((k) => [k, 0]));
   const s = {
-    level, shard, shards, solver: CONFIG.solver.version, rounds: 0, shots: 0, success: 0, reRacks: 0, problems: 0,
+    level, shard, shards, solver: solverVersion(), rounds: 0, shots: 0, success: 0, reRacks: 0, problems: 0,
     ends: {} as Record<string, number>, flex: {} as Record<string, number>, failureKinds: {} as Record<string, number>,
     types: {} as Record<string, number>, colours: {} as Record<string, number>, lengths: {} as Record<string, number>,
     over35: 0, maxDuration: 0, maxTried: 0, cap,
