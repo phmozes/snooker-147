@@ -1,0 +1,3 @@
+reds10: redPottable 200 (10114 breaks tried), snookered 200 (2976 tried), 1027 s -> public/breaks-v3/reds10.json
+reds15: redPottable 200 (13945 breaks tried), snookered 200 (4269 tried), 1465 s -> public/breaks-v3/reds15.json
+reds6: redPottable 200 (39072 breaks tried), snookered 200 (8295 tried), 753 s -> public/breaks-v3/reds6.json
