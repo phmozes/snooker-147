@@ -26,7 +26,7 @@ import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
-import { initTableSounds, playCueStrike, playEventsBetween } from './tableSounds';
+import { breakOffMoment, initTableSounds, playCueStrike, playEventsBetween, playTap, playWin } from './tableSounds';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, FAILURE_TEXT, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
@@ -265,12 +265,13 @@ function cueProtect(balls: Ball[], C: Vec2, d: Vec2) {
   return [{ p: O, z: rs, radius: rs }, { p: pk.captureCentre, z: 0, radius: pk.captureRadius }];
 }
 /** Play a shot from `balls` on screen; resolves with its length in seconds when every ball has stopped. */
-function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target: string; pocket: string; view: PocketView } } = {}): Promise<number> {
+function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target: string; pocket: string; view: PocketView }; breakOff?: boolean } = {}): Promise<number> {
   const sim = createSim(balls, table);
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
   const slot = rec.ids.map((id) => ids.indexOf(id));
   lastPlayed = { rec, slot };
+  const breakAt = opts.breakOff ? breakOffMoment(rec) : null; // PLAN 9.1: one break sound on the opponent's break-off
   // Part 4: the cue (every shot: SHOOT, step 1 and, since 2026-11-27, the break-off). Its direction is the planned
   // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
   const cueBall = balls.find((b) => b.kind === 'cue');
@@ -334,7 +335,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
         if (devResume) { pauseAt = null; devResume = false; devPause = null; }
       }
       if (import.meta.env.DEV && devLastRec) devLastRec.simT = t;
-      playEventsBetween(rec, tPrev, t); // PLAN 9.1: the hits of this moment, at the speed shown (slow motion too)
+      playEventsBetween(rec, tPrev, t, breakAt); // PLAN 9.1: the hits of this moment, at the speed shown (slow motion too)
       const p = positionsAt(rec, t);
       rest = ids.map(() => null);
       slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
@@ -417,7 +418,7 @@ async function onStart() {
   busy = 'break';
   render();
   // owner 2026-11-27: the opponent's break-off is played with the same cue, look and timing as our shots
-  await playShot(rack.map((b) => (b.kind === 'cue' ? { ...b, pos: { ...brk.cueStart } } : b)), brk.shot, { cue: true });
+  await playShot(rack.map((b) => (b.kind === 'cue' ? { ...b, pos: { ...brk.cueStart } } : b)), brk.shot, { cue: true, breakOff: true });
   // RULES B.2 (owner 2026-11-27): the game now waits; SHOOT plays step 1 (no CASH OUT before it)
   afterShot();
 }
@@ -542,6 +543,9 @@ async function endRound() {
   showBetArea = false;
   render();
   countUpBalance(round.balance);
+  // PLAN 9.2: the applause on every paid end (CASH OUT, RE-RACK, clearance; not a failure, not a free replay). For a
+  // clearance this is after the replay, as the message appears.
+  if (round.end && round.end.type !== 'failure' && !round.free) playWin();
   if (round.end?.type === 'clearance') await clearanceMessage();
   else await wait(CONFIG.ui.wonMessageSeconds * 1000);
   showBetArea = true;
@@ -763,6 +767,11 @@ const renderMute = () => { const b = $('mute'); b.innerHTML = muteIcon(isMuted()
 $('mute').onclick = () => { setMuted(!isMuted()); renderMute(); };
 renderMute();
 initTableSounds(); // PLAN 9.1: the first tap anywhere switches the table sounds on
+// PLAN 9.2: the tap sound on every UI button (not the table, not the developer panel; disabled buttons send no click)
+document.addEventListener('click', (e) => {
+  const b = (e.target as HTMLElement).closest?.('button');
+  if (b && !b.closest('#dev') && b.id !== 'flag') playTap(); // #flag: the weird-shot marker on the table
+}, true);
 
 // ---------------- static mockup screens (developer menu, as in task 2.2) ----------------
 function staticBalls(id: ScreenId): Ball[] {

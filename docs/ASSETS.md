@@ -42,7 +42,7 @@ the original; trimmed and levelled by us (same loudness, mono 96 kbps mp3). Time
 Tools (development only, not in the game, not in the repo): ffmpeg 9 (via the pip package imageio-ffmpeg, LGPL/GPL
 binary) and numpy, in a temporary folder, for trimming, levelling and mp3 encoding.
 
-## Table sounds in the game (PLAN 9.1, public/sounds/; owner's picks 2026-11-27: B for cue, ball-ball, pocket, cushion)
+## Sounds in the game (PLAN 9.1/9.2, public/sounds/; owner's picks 2026-11-27: B for cue, ball-ball, pocket, cushion; round 2: WIN A, TAP B, BREAK-OFF C)
 The same files as the B options above (copied unchanged from mockups/sounds/). All CC0 1.0: commercial use, no credit.
 
 | File in public/sounds/ | Copy of | Source page | Author | Licence |
@@ -51,10 +51,13 @@ The same files as the B options above (copied unchanged from mockups/sounds/). A
 | ball-soft.mp3, ball-hard.mp3 | ball-B-soft, ball-B-hard | https://freesound.org/people/rvdw2004/sounds/709674/ | rvdw2004 | CC0 1.0 |
 | pocket.mp3 | pocket-B | https://freesound.org/people/Caitlin_100/sounds/365525/ | Caitlin_100 | CC0 1.0 |
 | cushion.mp3 | cushion-B | https://kenney.nl/assets/impact-sounds (impactSoft_medium_000) | Kenney | CC0 1.0 |
+| break.mp3 | break-C (round 2, owner's pick) | https://freesound.org/people/DariusOW/sounds/766411/ | DariusOW | CC0 1.0 |
+| win.mp3 | win-A (round 2, owner's pick, crowd applause) | https://freesound.org/people/miuziqa/sounds/858309/ | miuziqa | CC0 1.0 |
+| tap.mp3 | tap-B (round 2, owner's pick) | https://freesound.org/people/NenadSimic/sounds/268108/ | NenadSimic | CC0 1.0 |
 
 Played with the browser's own Web Audio (no library, so nothing to licence).
 
-## Sound options round 2 (mockups/sounds2/; not used by the game yet)
+## Sound options round 2 (mockups/sounds2/; picks WIN A, TAP B, BREAK-OFF C are in the game, see above)
 Win A/B/C and tap A/B/C were rejected in round 1. New options, all from Freesound, CC0 1.0 only (licence checked on
 each sound's own page on 2026-11-27). Not used: freesoundeffects.com (its free sounds are non-commercial only).
 Same treatment as round 1: the site's 128 kbps preview, trimmed, faded out, levelled (loudest 50 ms = -18 dB), mono 96 kbps.

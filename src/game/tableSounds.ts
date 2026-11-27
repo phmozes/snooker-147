@@ -1,4 +1,4 @@
-// PLAN 9.1: the table sounds (cue strike, ball hits ball, cushion and jaw hits, ball drops into a pocket), played from
+// PLAN 9.1 / 9.2: the table sounds (cue strike, ball hits ball, cushion and jaw hits, ball drops into a pocket), played from
 // the shot recording's events while the shot plays on screen. Sound only: it reads the recording, never changes it.
 // Web Audio (no library). Phones only allow sound after a user tap: nothing loads or plays before the first tap.
 // The mute button (sound.ts) silences everything at once and is remembered on the device.
@@ -6,8 +6,10 @@ import { CONFIG } from '../config/game.config';
 import type { Recording } from '../core/physics/sim';
 import { isMuted, onMuteChange } from './sound';
 
-type Name = 'cue' | 'ball-soft' | 'ball-hard' | 'cushion' | 'pocket';
-const NAMES: Name[] = ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket'];
+// + the opponent's break-off (one sound for the cue ball hitting the pack), the win applause and the button tap.
+type Name = 'cue' | 'ball-soft' | 'ball-hard' | 'cushion' | 'pocket' | 'break' | 'win' | 'tap';
+const NAMES: Name[] = ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket', 'break', 'win', 'tap'];
+const U = CONFIG.sound.uiSounds;
 const S = CONFIG.sound.tableHits;
 
 let ctx: AudioContext | null = null;
@@ -46,14 +48,14 @@ export function initTableSounds() {
 
 function stopAll() { for (const v of voices.splice(0)) try { v.stop(); } catch { /* already ended */ } }
 
-function play(name: Name, volume: number, key: string) {
+function play(name: Name, volume: number, key: string, ui = false) {
   if (volume <= 0 || isMuted() || !ctx || !master || ctx.state !== 'running') return;
   const buf = buffers.get(name);
   if (!buf) return;
   const now = performance.now();
   if (now - (lastAt.get(key) ?? -1e9) < S.minGapMs) return; // one contact recorded twice in a row: one sound
   lastAt.set(key, now);
-  if (voices.length >= S.maxVoices) return; // enough sounds already: the newest hit is the one left out
+  if (!ui && voices.length >= S.maxVoices) return; // enough sounds already: the newest hit is the one left out
   const src = ctx.createBufferSource();
   src.buffer = buf;
   const g = ctx.createGain();
@@ -62,7 +64,13 @@ function play(name: Name, volume: number, key: string) {
   src.onended = () => { const i = voices.indexOf(src); if (i >= 0) voices.splice(i, 1); };
   voices.push(src);
   src.start();
+  if (import.meta.env.DEV) ((window as unknown as { __soundLog?: { name: Name; at: number }[] }).__soundLog ??= []).push({ name, at: now }); // scripts/sound-check.mjs
 }
+
+/** PLAN 9.2: a paid end (CASH OUT, RE-RACK, clearance): the crowd applause. */
+export const playWin = () => play('win', U.winVolume, 'win', true);
+/** PLAN 9.2: a UI button was pressed. */
+export const playTap = () => play('tap', U.tapVolume, 'tap', true);
 
 /** The cue hits the cue ball (speed = the shot's cue speed, m/s). */
 export const playCueStrike = (speed: number) => play('cue', impactVolume(speed, S.cue), 'cue');
@@ -77,13 +85,23 @@ function dropSpeed(rec: Recording, id: string, t: number): number {
   return Math.hypot(b[2 * n]! - a[2 * n]!, b[2 * n + 1]! - a[2 * n + 1]!) / rec.frameDt;
 }
 
+/** The opponent's break-off: the moment the cue ball first hits another ball (the pack), or null. */
+export function breakOffMoment(rec: Recording): number | null {
+  const e = rec.events.find((x) => x.type === 'ball' && (x.a === 'cue' || x.b === 'cue'));
+  return e ? e.t : null;
+}
+
 /** Play every recorded event with prevT < e.t <= t (seconds of the shot). The caller moves t at the speed the shot is
- *  shown (slow motion included), so the sounds come exactly when the balls touch on screen. */
-export function playEventsBetween(rec: Recording, prevT: number, t: number) {
+ *  shown (slow motion included), so the sounds come exactly when the balls touch on screen.
+ *  breakAt (the opponent's break-off only): one break sound at that moment instead of the ball-ball hits of the next
+ *  breakOff.muteBallSeconds. */
+export function playEventsBetween(rec: Recording, prevT: number, t: number, breakAt: number | null = null) {
   if (!ctx || isMuted() || t <= prevT) return;
+  if (breakAt !== null && breakAt > prevT && breakAt <= t) play('break', S.breakOff.volume, 'break');
   for (const e of rec.events) {
     if (e.t <= prevT || e.t > t) continue;
     if (e.type === 'ball') {
+      if (breakAt !== null && e.t >= breakAt && e.t < breakAt + S.breakOff.muteBallSeconds) continue;
       const v = impactVolume(e.speed, S.ball);
       play(e.speed >= S.ball.hardFrom ? 'ball-hard' : 'ball-soft', v, e.a < e.b ? `${e.a}|${e.b}` : `${e.b}|${e.a}`);
     } else if (e.type === 'cushion' || e.type === 'jaw') play('cushion', impactVolume(e.speed, S.cushion), `${e.a}|c`);

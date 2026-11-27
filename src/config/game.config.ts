@@ -523,7 +523,12 @@ export const CONFIG = {
       pocket:  { min: 0.0,  max: 2.5, floor: 0.45 },  // ball drop, s = the ball's speed just before it drops
       maxVoices: 6,              // at most this many sounds at once (a break has many hits in the same moment)
       minGapMs: 25,              // the same pair of balls (or ball + cushion) sounds at most once in this time
+      // PLAN 9.1 round 2 (owner's pick: BREAK-OFF C): the opponent's break-off plays one break sound when the cue ball
+      // first hits the pack; ball-ball hit sounds are off for muteBallSeconds from then (cue, cushion, pocket stay on)
+      breakOff: { volume: 1.0, muteBallSeconds: 1.5 },
     },
+    // PLAN 9.2 (owner's picks: WIN A = crowd applause, TAP B). Fixed volumes 0..1 (x masterVolume); never counted in maxVoices.
+    uiSounds: { winVolume: 0.8, tapVolume: 0.5 },
     table: ['cueHit', 'ballBall', 'cushion', 'pocketDrop', 'jawRattle', 'breakOff'],
     ui: ['button', 'cashOut', 'popup'],
     voiceSlots: [                // optional, empty until the owner supplies files

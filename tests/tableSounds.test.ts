@@ -1,7 +1,10 @@
-// PLAN 9.1: the table sounds. Volume follows impact speed; sound code only reads recordings and never reaches the core.
+// PLAN 9.1 / 9.2: the table sounds, break-off, win and tap. Volume follows impact speed; sound code only reads recordings and never reaches the core.
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { impactVolume } from '../src/game/tableSounds';
+import { breakOffMoment, impactVolume } from '../src/game/tableSounds';
+import { buildTable } from '../src/core/table/geometry';
+import { newFrame } from '../src/core/rules';
+import { createSim, recordShot, strike } from '../src/core/physics/sim';
 
 const S = CONFIG.sound.tableHits;
 const SOURCES = import.meta.glob('../src/**/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
@@ -24,8 +27,21 @@ describe('table sounds', () => {
     const src = Object.entries(SOURCES).find(([f]) => f.endsWith('/game/tableSounds.ts'))![1];
     for (const line of src.split('\n').filter((l) => l.includes("from '../core/"))) expect(line).toMatch(/^import type /);
   });
-  it('the 5 sound files are in public/sounds/', async () => {
+  it('the break-off sound moment is the cue ball first touching another ball', () => {
+    const table = buildTable();
+    const balls = newFrame(15, table).balls;
+    const cue = balls.find((x) => x.kind === 'cue')!.pos;
+    const red = balls.filter((x) => x.kind === 'red').sort((p, q) => Math.hypot(p.pos.x - cue.x, p.pos.y - cue.y) - Math.hypot(q.pos.x - cue.x, q.pos.y - cue.y))[0]!.pos;
+    const sim = createSim(balls, table);
+    strike(sim, 'cue', { x: red.x - cue.x, y: red.y - cue.y }, 5, 0); // straight at the nearest red of the pack
+    const rec = recordShot(sim);
+    const t = breakOffMoment(rec);
+    expect(t).not.toBeNull();
+    const before = rec.events.filter((e) => e.type === 'ball' && e.t < t!);
+    expect(before.every((e) => e.type === 'ball' && e.a !== 'cue' && e.b !== 'cue')).toBe(true);
+  });
+  it('the 8 sound files are in public/sounds/', async () => {
     const { existsSync } = await import('node:fs');
-    for (const n of ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket']) expect(existsSync(`public/sounds/${n}.mp3`)).toBe(true);
+    for (const n of ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket', 'break', 'win', 'tap']) expect(existsSync(`public/sounds/${n}.mp3`)).toBe(true);
   });
 });
