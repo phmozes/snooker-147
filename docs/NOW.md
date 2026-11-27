@@ -4,7 +4,7 @@
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the camera at 57° (option 1: in-app about 91% wide).
 - Phone: pocket cam ~1 shot in 6 (force: menu > POCKET CAM ON NEXT SHOT); clearance replay: menu > Clearance: last ball.
-- Sounds: pocket now x0.5, cue x0.75: listen on the phone. Applause levels 1-6: pick A/B on mockups/applause/.
+- Sounds: pocket now x0.4; applause 1-6 in the game (dev menu: APPLAUSE buttons). Miss sound: pick A/B/C on mockups/miss/.
 - Hosted demo: dist/ rebuilt with camera 57°, not republished yet (publishing = your word).
 - Server: decided 2026-11-27 (B2B, docs/SERVER-OUTCOMES.md top); next = your gambling-lawyer advice before any server work.
 ## Claude's turn (waiting for the owner's answers)
@@ -23,7 +23,7 @@
 - Owner decides: design, money (odds, bets, RTP), publishing. Claude decides: code details, tests, commits.
 - Rules are locked in docs/RULES.md. Concept changes only after asking the owner.
 - Outcome first (seeded RNG, HMAC), shot second; visuals never change odds. No Math.random in physics/rules/solver.
-- Free assets only (commercial licence, docs/ASSETS.md), costs in EXPENSES.md. npm test: solver.test.ts times out only on a busy PC.
+- Free assets only (commercial licence, docs/ASSETS.md), costs in EXPENSES.md. Check code with `npm test` (tests/ only; solver.test.ts times out only on a busy PC). Never `npx vitest run` on the whole repo.
 - Any job expected to take more than 30 minutes needs the owner's OK first, or goes into the night run (owner 2026-11-27).
 - Every task ends with the full report in docs/REPORT.md (old ones: docs/reports/<date>-<hash>.md) + a short chat version.
 - Every task that changes the game: `npm run build:test` (dist-test/, dev menu, no PC posting); list its files in the report.

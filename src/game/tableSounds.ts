@@ -4,11 +4,13 @@
 // The mute button (sound.ts) silences everything at once and is remembered on the device.
 import { CONFIG } from '../config/game.config';
 import type { Recording } from '../core/physics/sim';
+import type { ApplauseLevel } from './applause';
 import { isMuted, onMuteChange } from './sound';
 
-// + the opponent's break-off (one sound for the cue ball hitting the pack), the win applause and the button tap.
-type Name = 'cue' | 'ball-soft' | 'ball-hard' | 'cushion' | 'pocket' | 'break' | 'win' | 'tap';
-const NAMES: Name[] = ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket', 'break', 'win', 'tap'];
+// + the opponent's break-off (one sound for the cue ball hitting the pack), the 6 applause levels and the button tap.
+type Name = 'cue' | 'ball-soft' | 'ball-hard' | 'cushion' | 'pocket' | 'break' | 'tap' | `applause-${ApplauseLevel}`;
+const NAMES: Name[] = ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket', 'break', 'tap',
+  'applause-1', 'applause-2', 'applause-3', 'applause-4', 'applause-5', 'applause-6'];
 const U = CONFIG.sound.uiSounds;
 const S = CONFIG.sound.tableHits;
 
@@ -48,14 +50,14 @@ export function initTableSounds() {
 
 function stopAll() { for (const v of voices.splice(0)) try { v.stop(); } catch { /* already ended */ } }
 
-function play(name: Name, volume: number, key: string, ui = false) {
-  if (volume <= 0 || isMuted() || !ctx || !master || ctx.state !== 'running') return;
+function play(name: Name, volume: number, key: string, ui = false): AudioBufferSourceNode | null {
+  if (volume <= 0 || isMuted() || !ctx || !master || ctx.state !== 'running') return null;
   const buf = buffers.get(name);
-  if (!buf) return;
+  if (!buf) return null;
   const now = performance.now();
-  if (now - (lastAt.get(key) ?? -1e9) < S.minGapMs) return; // one contact recorded twice in a row: one sound
+  if (now - (lastAt.get(key) ?? -1e9) < S.minGapMs) return null; // one contact recorded twice in a row: one sound
   lastAt.set(key, now);
-  if (!ui && voices.length >= S.maxVoices) return; // enough sounds already: the newest hit is the one left out
+  if (!ui && voices.length >= S.maxVoices) return null; // enough sounds already: the newest hit is the one left out
   const src = ctx.createBufferSource();
   src.buffer = buf;
   const g = ctx.createGain();
@@ -65,10 +67,16 @@ function play(name: Name, volume: number, key: string, ui = false) {
   voices.push(src);
   src.start();
   if (import.meta.env.DEV) ((window as unknown as { __soundLog?: { name: Name; at: number }[] }).__soundLog ??= []).push({ name, at: now }); // scripts/sound-check.mjs
+  return src;
 }
 
-/** PLAN 9.2: a paid end (CASH OUT, RE-RACK, clearance): the crowd applause. */
-export const playWin = () => play('win', U.winVolume, 'win', true);
+/** Owner 2026-11-27: applause level 1-6 (when each plays: applause.ts). Never waits for anything; a new applause stops
+ *  the one still playing; mute stops it (stopAll). */
+let applause: AudioBufferSourceNode | null = null;
+export function playApplause(level: ApplauseLevel) {
+  if (applause) { try { applause.stop(); } catch { /* already ended */ } applause = null; }
+  applause = play(`applause-${level}`, U.applauseVolume, 'applause', true);
+}
 /** PLAN 9.2: a UI button was pressed. */
 export const playTap = () => play('tap', U.tapVolume, 'tap', true);
 

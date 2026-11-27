@@ -42,7 +42,7 @@ the original; trimmed and levelled by us (same loudness, mono 96 kbps mp3). Time
 Tools (development only, not in the game, not in the repo): ffmpeg 9 (via the pip package imageio-ffmpeg, LGPL/GPL
 binary) and numpy, in a temporary folder, for trimming, levelling and mp3 encoding.
 
-## Sounds in the game (PLAN 9.1/9.2, public/sounds/; owner's picks 2026-11-27: B for cue, ball-ball, pocket, cushion; round 2: WIN A, TAP B, BREAK-OFF C)
+## Sounds in the game (PLAN 9.1/9.2, public/sounds/; owner's picks 2026-11-27: B for cue, ball-ball, pocket, cushion; round 2: TAP B, BREAK-OFF C; applause levels: B of each, copied unchanged from mockups/applause/; win.mp3 (win-A) removed 2026-11-27)
 The same files as the B options above (copied unchanged from mockups/sounds/). All CC0 1.0: commercial use, no credit.
 
 | File in public/sounds/ | Copy of | Source page | Author | Licence |
@@ -52,7 +52,12 @@ The same files as the B options above (copied unchanged from mockups/sounds/). A
 | pocket.mp3 | pocket-B | https://freesound.org/people/Caitlin_100/sounds/365525/ | Caitlin_100 | CC0 1.0 |
 | cushion.mp3 | cushion-B | https://kenney.nl/assets/impact-sounds (impactSoft_medium_000) | Kenney | CC0 1.0 |
 | break.mp3 | break-C (round 2, owner's pick) | https://freesound.org/people/DariusOW/sounds/766411/ | DariusOW | CC0 1.0 |
-| win.mp3 | win-A (round 2, owner's pick, crowd applause) | https://freesound.org/people/miuziqa/sounds/858309/ | miuziqa | CC0 1.0 |
+| applause-1.mp3 | applause 1-B (owner's pick 2026-11-27) | https://freesound.org/people/jodybruchon/sounds/433880/ | jodybruchon | CC0 1.0 |
+| applause-2.mp3 | applause 2-B | https://freesound.org/people/bowlingballout/sounds/481646/ | bowlingballout | CC0 1.0 |
+| applause-3.mp3 | applause 3-B | https://freesound.org/people/AudioSea/sounds/583130/ | AudioSea | CC0 1.0 |
+| applause-4.mp3 | applause 4-B | https://freesound.org/people/AlaskaRobotics/sounds/221567/ | AlaskaRobotics | CC0 1.0 |
+| applause-5.mp3 | applause 5-B | https://freesound.org/people/mglennsound/sounds/678543/ | mglennsound | CC0 1.0 |
+| applause-6.mp3 | applause 6-B | https://freesound.org/people/FoolBoyMedia/sounds/397434/ | FoolBoyMedia | CC0 1.0 |
 | tap.mp3 | tap-B (round 2, owner's pick) | https://freesound.org/people/NenadSimic/sounds/268108/ | NenadSimic | CC0 1.0 |
 
 Played with the browser's own Web Audio (no library, so nothing to licence).
@@ -84,7 +89,7 @@ last 35% (at least 0.5 s), mono 96 kbps), but NOT levelled the same: average lou
 |---|---|---|---|---|---|---|
 | 1-A | CASH OUT | https://freesound.org/people/Breviceps/sounds/462362/ | Breviceps | CC0 1.0 | 0.40-1.90 s | 1.5 s |
 | 1-B | CASH OUT | https://freesound.org/people/jodybruchon/sounds/433880/ | jodybruchon | CC0 1.0 | 0.45-1.95 s | 1.5 s |
-| 2-A | 50 break | https://freesound.org/people/miuziqa/sounds/858309/ | miuziqa | CC0 1.0 | 0.30-2.50 s (= current win.mp3) | 2.2 s |
+| 2-A | 50 break | https://freesound.org/people/miuziqa/sounds/858309/ | miuziqa | CC0 1.0 | 0.30-2.50 s (= the old win.mp3) | 2.2 s |
 | 2-B | 50 break | https://freesound.org/people/bowlingballout/sounds/481646/ | bowlingballout | CC0 1.0 | 0.30-2.50 s | 2.2 s |
 | 3-A | needs snookers | https://freesound.org/people/ElevatorFan2020/sounds/859009/ | ElevatorFan2020 | CC0 1.0 | 0.25-3.25 s | 3.0 s |
 | 3-B | needs snookers | https://freesound.org/people/AudioSea/sounds/583130/ | AudioSea | CC0 1.0 | 0.60-3.60 s | 3.0 s |
@@ -94,3 +99,14 @@ last 35% (at least 0.5 s), mono 96 kbps), but NOT levelled the same: average lou
 | 5-B | clearance | https://freesound.org/people/mglennsound/sounds/678543/ | mglennsound | CC0 1.0 | 11.50-16.50 s | 5.0 s |
 | 6-A | MAXIMUM | https://freesound.org/people/kyles/sounds/455660/ | kyles | CC0 1.0 | 6.50-12.50 s | 6.0 s |
 | 6-B | MAXIMUM | https://freesound.org/people/FoolBoyMedia/sounds/397434/ | FoolBoyMedia | CC0 1.0 | 1.50-7.50 s | 6.0 s |
+
+## Miss sound options (mockups/miss/; options page only, not in the game yet)
+Owner 2026-11-27: a snooker-crowd "ooh" / groan of disappointment after a miss. Freesound, CC0 1.0 only (licence checked
+on each sound's own page on 2026-11-27). Same treatment as before (trimmed, 30 ms fade-in, fade-out over the last 0.5 s,
+mono 96 kbps), all three at the same loudness (-24 dB RMS) so they can be compared.
+
+| File | Source page | Author | Licence | Part used | Length |
+|---|---|---|---|---|---|
+| miss-A (group groan) | https://freesound.org/people/CHallSmith/sounds/870630/ | CHallSmith | CC0 1.0 | 0.15-1.65 s | 1.5 s |
+| miss-B (crowd "oh", disappointed) | https://freesound.org/people/mrrap4food/sounds/619007/ | mrrap4food | CC0 1.0 | 0.20-1.70 s | 1.5 s |
+| miss-C (crowd sigh) | https://freesound.org/people/ShangusBurger/sounds/764215/ | ShangusBurger | CC0 1.0 | 0.95-2.45 s | 1.5 s |

@@ -47,10 +47,10 @@ for (let round = 1; round <= 6; round++) {
     n = (await log()).length;
     await p.click('#bCash'); await pause(800);
     const c = await since(n);
-    check(`CASH OUT (round ${round}): tap + applause (${names(c)})`, c[0]?.name === 'tap' && c.some((x) => x.name === 'win'));
+    check(`CASH OUT (round ${round}): tap + applause (${names(c)})`, c[0]?.name === 'tap' && c.some((x) => x.name === 'applause-1'));
     break;
   }
-  console.log(`     round ${round}: step 1 ended the round (${st.phase}), no win sound expected:`, (await since(n)).some((x) => x.name === 'win') ? 'FAIL: win played' : 'ok');
+  console.log(`     round ${round}: step 1 ended the round (${st.phase}), no applause expected:`, (await since(n)).some((x) => x.name.startsWith('applause')) ? 'FAIL: applause played' : 'ok');
   await pause(3500); // the end message, then the bet area
 }
 await p.waitForSelector('#bStart:not([disabled])', { timeout: 30000 });

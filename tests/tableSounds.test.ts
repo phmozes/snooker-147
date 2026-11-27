@@ -19,7 +19,7 @@ describe('table sounds', () => {
     expect(impactVolume(50, S.cushion)).toBe(1);
     expect(impactVolume(Number.NaN, S.cushion)).toBe(0);
     expect(impactVolume(0, S.pocket)).toBeCloseTo(S.pocket.floor * S.pocket.gain); // a pot is always heard
-    expect(impactVolume(S.pocket.max, S.pocket)).toBeCloseTo(0.5); // owner 2026-11-27: pocket at half volume
+    expect(impactVolume(S.pocket.max, S.pocket)).toBeCloseTo(0.4); // owner 2026-11-27: pocket x0.4
     expect(impactVolume(S.cue.max, S.cue)).toBeCloseTo(0.75); // owner 2026-11-27: cue strike x0.75
   });
   it('only the game page uses the sounds, and the sound code imports nothing from the core but types', () => {
@@ -44,6 +44,7 @@ describe('table sounds', () => {
   });
   it('the 8 sound files are in public/sounds/', async () => {
     const { existsSync } = await import('node:fs');
-    for (const n of ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket', 'break', 'win', 'tap']) expect(existsSync(`public/sounds/${n}.mp3`)).toBe(true);
+    for (const n of ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket', 'break', 'tap',
+      'applause-1', 'applause-2', 'applause-3', 'applause-4', 'applause-5', 'applause-6']) expect(existsSync(`public/sounds/${n}.mp3`)).toBe(true);
   });
 });

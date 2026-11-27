@@ -1,65 +1,83 @@
-# Report: quieter pocket and cue; applause levels options page (2026-11-27)
+# Report: clean-up, pocket x0.4, applause levels 1-6 in the game, miss sound options (2026-11-27)
 
-## Part 1: volume change (in the game)
-The old settings had no volume number of their own: the volume came from the impact speed alone (floor..1).
-So I added one setting per sound, `gain`, which multiplies the result (src/config/game.config.ts, sound.tableHits),
-plus one line in src/game/tableSounds.ts (`impactVolume` multiplies by `gain`, 1 if missing). No other sound changed.
+## Part 1: side effects of the last task
+1. **Processes:** the 5 vitest workers had already ended on their own. A search for node processes with "vitest" in
+   their command line found none (0 left), so there was nothing to close.
+2. **Restored with `git restore`** (10 files the stopped run rewrote):
+   bench/results/fairness/reds6.done, fairness/reds6.jsonl, marks-diag.txt, n3-diag.txt, n3-rerack.txt, pink-black.txt,
+   roundcode.txt, rtp-rng.txt, rtp50m/shard-0.json, soak/reds6-0-failures.txt, soak/reds6-0.json (that is 11 paths:
+   I counted 10 last time; reds6-0-failures.txt was one of them too). Also deleted one new file the run had made:
+   bench/results/camera57/replay.txt (not in git; the run's default output file).
+   `git status` after that: only `bench/results/phone-cost.jsonl` and `docs/WEIRD-SHOTS.md` changed (your phone files).
+   The untracked folders that were already there at the start of the session (rtp200m logs, night7/start-flow-dev,
+   rtp200m-speed, .claude/) were left alone.
+3. **New rule** in CLAUDE.md and NOW.md Working rules: check code with `npm test` (tests/ only), never `npx vitest run`
+   on the whole repo.
 
-| Sound | Old | New |
+## Part 2: pocket drop volume
+`sound.tableHits.pocket.gain`: **0.5 -> 0.4** (softest pot 0.18, hardest 0.4, x masterVolume 0.8). Cue stays 0.75.
+
+## Part 3: applause levels in the game (your picks: B for all 6)
+Files: mockups/applause/1-B ... 6-B copied unchanged to public/sounds/applause-1.mp3 ... applause-6.mp3.
+**win.mp3 removed** from the game (public/sounds/ and both builds). docs/ASSETS.md updated.
+
+When each level plays (rules in src/game/applause.ts, wired in src/game/gamePage.ts):
+| Level | When | Moment |
 |---|---|---|
-| Pocket drop (`pocket.gain`) | 1.0 (softest pot 0.45, hardest 1.0) | **0.5** (softest 0.225, hardest 0.5) = 50% quieter |
-| Cue strike (`cue.gain`) | 1.0 (softest 0.25, hardest 1.0) | **0.75** (softest 0.19, hardest 0.75) = 25% quieter |
+| 1 | CASH OUT, RE-RACK | as the round ends |
+| 2 | the break reaches 50 | the moment the ball that reaches it drops on screen (slow motion of the pocket cam included) |
+| 3 | the opponent needs snookers (lead > points left, RULES C.8) | same: as that ball drops |
+| 4 | the break reaches 100 | same: as that ball drops |
+| 5 | a clearance | after the clearance replay, when the big message appears |
+| 6 | the maximum (75 / 107 / 147, RULES C.9) | same as 5, instead of 5 |
+- Each level at most once a round. Several on the same shot: only the highest (example: 50 and needs-snookers on the
+  same pot plays 3). The clearance's last pot plays no milestone, only its 5 or 6.
+- A failure plays nothing. A free replay (REPLAY by round code, no bet) plays nothing either, as before with win.mp3.
+- Never delays the game (SHOOT and CASH OUT work while it plays). A new applause stops the old one. Mute stops it.
+- One volume for all six: `uiSounds.applauseVolume` 0.8 (was `winVolume` 0.8); the files themselves grow +3 dB a level.
+- In the developer jump (no animation) a level counts as heard but plays nothing.
+- **Dev panel:** new "APPLAUSE (DEV ONLY)" row with 6 buttons (1 CASH OUT ... 6 MAXIMUM). It is in the test build too.
 
-All x masterVolume 0.8, same as before. tests/tableSounds.test.ts: updated the pocket check and added two checks
-(hardest pot = 0.5, hardest cue = 0.75): 4/4 pass. Type check (tsc) clean.
-Full `npx vitest run`: NOT finished. I stopped it after 47 minutes (past the 30-minute rule); its result is unknown.
-5 of its worker processes are still running in the background (I was not allowed to force-close them); they
-stop on their own or when the PC restarts.
-The stopped run also rewrote 10 saved files in bench/results/ (fairness, soak, diag files). They are partial results of an
-unfinished run, so I did NOT commit them (left as they are). bench/results/soak/reds6-0-failures.txt got 3 lines:
-- reds6-v3-5000057 step 8: solver took 13904 ms (stuck limit 10000)
-- reds6-v3-5000094 step 10: solver took 11564 ms (stuck limit 10000)
-- reds6-v3-5000094 step 11: RE-RACK (target red)
-The two slow-solver lines are most likely the busy PC (tests running at the same time); the RE-RACK is the known 6-red one.
+## Part 4: miss sound options (mockups/miss/index.html, not in the game)
+1.5 s each, same loudness (-24 dB RMS), trimmed, fade-out, mono 96 kbps. All Freesound **CC0 1.0** (checked on each page).
+| File | What | Source | Author | Licence |
+|---|---|---|---|---|
+| miss-A | group groan | https://freesound.org/people/CHallSmith/sounds/870630/ | CHallSmith | CC0 1.0 |
+| miss-B | crowd "oh…", disappointed | https://freesound.org/people/mrrap4food/sounds/619007/ | mrrap4food | CC0 1.0 |
+| miss-C | crowd sigh of disappointment (softer, more distant) | https://freesound.org/people/ShangusBurger/sounds/764215/ | ShangusBurger | CC0 1.0 |
+Not used: two single-voice "aww" files (one person, not a crowd). C came from a quiet recording, so it may have a little
+more background hiss.
 
-## Part 2: applause levels (options page only, mockups/applause/index.html)
-12 files, 2 per level. Two big buttons play all A (or all B) from level 1 to 6, with a 0.6 s gap, so you hear the growth.
-Treatment: Freesound preview, trimmed, 30 ms fade-in, fade-out over the last 35% (at least 0.5 s), mono 96 kbps.
-Not levelled the same: average loudness goes up 3 dB each level (level 1 = -30 dB, level 6 = -15 dB).
-All CC0 1.0 (checked on each sound's page on 2026-11-27). Nothing from freesoundeffects.com.
+## Tests and checks
+- `npm test` (tests/ only): **31 files, 314 tests passed** (95 s). New: tests/applause.test.ts (5 tests, which level when);
+  tests/tableSounds.test.ts checks pocket 0.4 and the 6 applause files.
+- **Replay check** (bench/camera-replay.test.ts, every outcome and every ball path frame by frame), run before and after
+  the change: **identical** (bench/results/applause/replay-before.txt = replay-after.txt). The sounds change no round.
+- Live sound check (scripts/sound-check.mjs on the dev server): SOUND CHECK OK; CASH OUT played applause-1.
+- Live applause run (6 reds, every shot forced to succeed, a clearance): step 10 applause-3 (needs snookers),
+  step 14 applause-2 (break 50), end applause-5 (clearance, not a maximum). No page errors. Level 6 was checked by the
+  unit test only (a maximum needs black after every red).
+- No soak ran, so there is no *-failures.txt line to list.
 
-| File | Level | Length | Size | Source | Author | Licence |
-|---|---|---|---|---|---|---|
-| 1-A | 1 CASH OUT | 1.5 s | 18.8 KB | freesound.org/s/462362 | Breviceps | CC0 1.0 |
-| 1-B | 1 CASH OUT | 1.5 s | 18.8 KB | freesound.org/s/433880 | jodybruchon | CC0 1.0 |
-| 2-A | 2 break 50 | 2.2 s | 27.3 KB | freesound.org/s/858309 (= current win.mp3) | miuziqa | CC0 1.0 |
-| 2-B | 2 break 50 | 2.2 s | 27.3 KB | freesound.org/s/481646 | bowlingballout | CC0 1.0 |
-| 3-A | 3 needs snookers | 3.0 s | 36.7 KB | freesound.org/s/859009 | ElevatorFan2020 | CC0 1.0 |
-| 3-B | 3 needs snookers | 3.0 s | 36.7 KB | freesound.org/s/583130 | AudioSea | CC0 1.0 |
-| 4-A | 4 break 100 | 4.0 s | 48.9 KB | freesound.org/s/845594 | 3to1video | CC0 1.0 |
-| 4-B | 4 break 100 | 3.8 s | 46.4 KB | freesound.org/s/221567 | AlaskaRobotics | CC0 1.0 |
-| 5-A | 5 clearance | 4.5 s | 54.9 KB | freesound.org/s/221568 | AlaskaRobotics | CC0 1.0 |
-| 5-B | 5 clearance | 5.0 s | 60.8 KB | freesound.org/s/678543 | mglennsound | CC0 1.0 |
-| 6-A | 6 MAXIMUM | 6.0 s | 72.7 KB | freesound.org/s/455660 | kyles | CC0 1.0 |
-| 6-B | 6 MAXIMUM | 6.0 s | 72.7 KB | freesound.org/s/397434 | FoolBoyMedia | CC0 1.0 |
-
-The exact parts used are in docs/ASSETS.md. A headless check confirmed "Play all A" plays 1-A ... 6-A in order.
-Plan for later (not built): if several levels happen on one shot, play only the highest; levels 2-4 right after the pot.
-
-## Builds
-`npm run build` (dist/, production) and `npm run build:test` (dist-test/, developer menu) both built OK.
-
+## Builds (bytes)
+`npm run build` (dist/) and `npm run build:test` (dist-test/) both built OK.
 | File | dist/ | dist-test/ |
 |---|---|---|
 | index.html | 10,860 | 11,057 |
-| assets/index-*.js | 695,489 (index-CkykZKLM.js) | 709,163 (index-DEfLbk7u.js) |
-| assets/solverWorker-D6X530nS.js | 49,825 | 49,825 |
+| assets/index-*.js | 696,731 (index-3tAM5Qu-.js) | 710,648 (index-9yfG4XCd.js) |
+| assets/solverWorker-B34iVOky.js | 49,830 | 49,830 |
 | breaks/reds6.json | 489,861 | 489,861 |
 | breaks/reds10.json | 589,119 | 589,119 |
 | breaks/reds15.json | 712,742 | 712,742 |
 | breaks-v3/reds6.json | 488,825 | 488,825 |
 | breaks-v3/reds10.json | 589,812 | 589,812 |
 | breaks-v3/reds15.json | 712,882 | 712,882 |
+| sounds/applause-1.mp3 | 18,808 | 18,808 |
+| sounds/applause-2.mp3 | 27,271 | 27,271 |
+| sounds/applause-3.mp3 | 36,675 | 36,675 |
+| sounds/applause-4.mp3 | 46,393 | 46,393 |
+| sounds/applause-5.mp3 | 60,813 | 60,813 |
+| sounds/applause-6.mp3 | 72,724 | 72,724 |
 | sounds/ball-hard.mp3 | 4,075 | 4,075 |
 | sounds/ball-soft.mp3 | 2,507 | 2,507 |
 | sounds/break.mp3 | 21,359 | 21,359 |
@@ -67,10 +85,7 @@ Plan for later (not built): if several levels happen on one shot, play only the 
 | sounds/cushion.mp3 | 2,194 | 2,194 |
 | sounds/pocket.mp3 | 13,165 | 13,165 |
 | sounds/tap.mp3 | 1,924 | 1,924 |
-| sounds/win.mp3 | 27,315 | 27,315 |
-
-(sizes in bytes; the sound files are unchanged, the volume change is in the code)
 
 ## Your turn
-- Phone: listen to the pocket and cue sounds again (quieter now).
-- Open mockups/applause/ (on the dev server: http://192.168.1.111:5181/mockups/applause/), pick A or B for each of the 6 levels.
+- Phone: listen to the applause levels (dev menu > APPLAUSE buttons) and the quieter pocket drop.
+- Pick A, B or C for the miss sound: http://192.168.1.111:5181/mockups/miss/

@@ -1,0 +1,16 @@
+
+> snooker-147@0.0.1 test
+> vitest run tests/
+
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+(node:23104) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  31 passed (31)
+      Tests  314 passed (314)
+   Start at  21:48:50
+   Duration  94.87s (tests 98%, import 1%)
+
+npm test exit 0

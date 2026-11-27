@@ -1,0 +1,103 @@
+reds6-v2-4242 | reds6-v2-4242 | success,success,success,success,success,success,success,success,success,success,success,success,plainMiss | end {"type":"failure","label":"wrongBallFirst","step":13}
+  break 291:696cb44b
+  step1 success 91:48a8f922
+  2 pink success 95:f12171b8
+  3 red success 99:55436453
+  4 pink success 95:94ebaf30
+  5 red success 88:47835887
+  6 pink success 86:20975ca8
+  7 red success 88:2f0959db
+  8 black success 36:1762c258
+  9 red success 228:804a5afc
+  10 blue success 74:35d9120c
+  11 red success 139:c62bd376
+  12 black success 200:85315660
+  13 yellow plainMiss 109:d7da29d6
+reds6-v2-1001 | reds6-v2-1001 | success,success,success,success,success,success,success,success,success,success,success,success,jawRattle | end {"type":"failure","label":"jawRattle","step":13}
+  break 208:a941ad70
+  step1 success 71:4adae21
+  2 black success 78:3eb929f4
+  3 red success 89:921670fb
+  4 black success 107:b824667f
+  5 red success 82:88dacdd1
+  6 pink success 96:22cec0e9
+  7 red success 128:b4a91b51
+  8 blue success 102:8709ebd1
+  9 red success 93:db367445
+  10 pink success 77:60e7baea
+  11 red success 48:f945704b
+  12 blue success 81:312cdd27
+  13 yellow jawRattle 130:c38e5e11
+reds6-v2-77-C3 | reds6-v2-77 | success,success,success | end {"type":"cashOut","amount":12.7,"multiplier":1.27}
+  break 205:cb31bb02
+  step1 success 110:88333051
+  2 black success 106:563a1cf0
+  3 red success 121:efc68a23
+reds6-v2-31337-BK | reds6-v2-31337 | success,success,jawRattle | end {"type":"failure","label":"jawRattle","step":3}
+  break 262:11fc813f
+  step1 success 61:968da6ed
+  2 blue success 83:b397c9ec
+  3 red jawRattle 109:e3040791
+reds6-v3-4242 | reds6-v3-4242 | success,success,success,success,success,success,success,success,success,success,success,success,plainMiss | end {"type":"failure","label":"plainMiss","step":13}
+  break 222:ee346bd
+  step1 success 94:1e0db774
+  2 black success 61:5753b19d
+  3 red success 86:911c5a99
+  4 black success 76:7d6f4958
+  5 red success 101:17d017f1
+  6 black success 31:89a2fd9f
+  7 red success 289:481ce3fa
+  8 black success 279:7241aaca
+  9 red success 53:2ee146f8
+  10 black success 86:156b5b69
+  11 red success 51:735ca319
+  12 blue success 106:f6061b9b
+  13 yellow plainMiss 148:25b314a3
+reds6-v3-1001 | reds6-v3-1001 | success,success,success,success,success,success,success,success,success,success,success,success,jawRattle | end {"type":"failure","label":"jawRattle","step":13}
+  break 219:e5727763
+  step1 success 128:b55e565f
+  2 black success 84:87020567
+  3 red success 89:23a32201
+  4 black success 125:af8ef282
+  5 red success 112:9cc86588
+  6 blue success 88:413b1e34
+  7 red success 133:987877a9
+  8 black success 92:3a17321c
+  9 red success 134:97a18bd9
+  10 pink success 127:ca1e3ce0
+  11 red success 102:9ae5cd25
+  12 blue success 74:13f3be4a
+  13 yellow jawRattle 108:c48da7f7
+reds6-v3-77-C3 | reds6-v3-77 | success,success,success | end {"type":"cashOut","amount":12.7,"multiplier":1.27}
+  break 201:368a26e6
+  step1 success 73:e788e1a1
+  2 black success 106:5d846242
+  3 red success 47:6e67db8b
+reds6-v3-31337-BK | reds6-v3-31337 | success,success,jawRattle | end {"type":"failure","label":"jawRattle","step":3}
+  break 202:35f452ae
+  step1 success 82:429466ae
+  2 blue success 91:8d9ec72
+  3 red jawRattle 132:3554f5ff
+reds6-v3-2024 | reds6-v3-2024 | success,success,success,success,success,success,success,success,success,success,success,success,success,success,success,success,success,success | end {"type":"clearance","amount":250,"multiplier":25}
+  break 206:425c5300
+  step1 success 62:aa458c3e
+  2 black success 78:8743acda
+  3 red success 101:719d9035
+  4 black success 105:db3d174b
+  5 red success 89:cf9cf302
+  6 black success 104:15cfc5dd
+  7 red success 101:ccf4f06e
+  8 pink success 100:6a6417dd
+  9 red success 96:c067acd3
+  10 blue success 67:a2d71b84
+  11 red success 140:2b8779f9
+  12 blue success 80:64999b18
+  13 yellow success 89:3aac09d7
+  14 green success 111:694f01bb
+  15 brown success 112:1b4ecae2
+  16 blue success 76:35e336df
+  17 pink success 135:d466aaf3
+  18 black success 42:7262c8e9
+reds6-v3-9 | reds6-v3-9 | snookered | end {"type":"failure","label":"snookered","step":1}
+  break 293:d43f9f0
+  step1 snookered 141:80bb63e1

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>147 Miss Sounds</title>
+<style>
+  :root { --bg:#0f1a14; --card:#17271e; --line:#2a4234; --text:#eef3ef; --dim:#9db3a5; --btn:#2f6b47; --btn2:#3d8a5c; --on:#d9b54a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:16px; }
+  h1 { font-size:22px; margin:4px 0 4px; }
+  .intro { color:var(--dim); font-size:14px; margin:0 0 16px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:0 0 14px; }
+  h2 { font-size:17px; margin:0 0 10px; }
+  .row { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .opt { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  button { appearance:none; border:0; border-radius:12px; background:var(--btn); color:#fff; font:700 26px/1 system-ui, sans-serif;
+           min-height:72px; width:100%; cursor:pointer; touch-action:manipulation; }
+  button:active, button.playing { background:var(--on); color:#1a1a1a; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .pair button { font-size:16px; min-height:64px; }
+  .pair button.hard { background:var(--btn2); }
+  .pair button small { display:block; font-size:13px; font-weight:600; margin-top:4px; }
+  .lic { font-size:12px; color:var(--dim); overflow-wrap:anywhere; }
+  .lic b { color:var(--text); font-weight:600; }
+  footer { color:var(--dim); font-size:12px; padding:4px 2px 24px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>147 – miss sound options</h1>
+  <p class="intro">The crowd's "ooh" / groan of disappointment after a miss (1.5 s each). Tap a button to hear it, pick A, B or C.
+    All three are set to the same loudness. Not in the game yet: later it plays only once the miss is clear on screen.</p>
+
+  <section>
+    <h2>Miss</h2>
+    <p class="intro">A: a group groan. B: a crowd "oh…", let down. C: a crowd sigh of disappointment (softer, more distant).</p>
+    <div class="row">
+      <div class="opt"><button data-s="miss-A">A</button><div class="lic"><b>CC0</b> · CHallSmith · Freesound #870630</div></div>
+      <div class="opt"><button data-s="miss-B">B</button><div class="lic"><b>CC0</b> · mrrap4food · Freesound #619007</div></div>
+      <div class="opt"><button data-s="miss-C">C</button><div class="lic"><b>CC0</b> · ShangusBurger · Freesound #764215</div></div>
+    </div>
+  </section>
+
+  <footer>All sounds CC0 (public domain): free for commercial use, no credit needed. Full sources: docs/ASSETS.md.</footer>
+</main>
+<script>
+  // Nothing loads until a button is tapped. Each tap plays the file from the start.
+  var current = null, currentBtn = null;
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-s]');
+    if (!b) return;
+    if (current) { current.pause(); if (currentBtn) currentBtn.classList.remove('playing'); }
+    var a = new Audio('./' + b.getAttribute('data-s') + '.mp3');
+    current = a; currentBtn = b; b.classList.add('playing');
+    a.addEventListener('ended', function () { b.classList.remove('playing'); });
+    a.play().catch(function () { b.classList.remove('playing'); });
+  });
+</script>
+</body>
+</html>

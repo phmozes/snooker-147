@@ -26,7 +26,8 @@ import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
-import { breakOffMoment, initTableSounds, playCueStrike, playEventsBetween, playTap, playWin } from './tableSounds';
+import { breakOffMoment, initTableSounds, playApplause, playCueStrike, playEventsBetween, playTap } from './tableSounds';
+import { endLevel, milestoneLevel, type ApplauseLevel } from './applause';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, FAILURE_TEXT, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
@@ -87,6 +88,8 @@ let shownBalance = round.balance;
  *  status line. Excitement only: it never touches the money. Updated when a shot has finished playing; between
  *  rounds it shows the last break. */
 let shownBreak = 0;
+/** Owner 2026-11-27: the applause levels already heard this round (each level at most once a round, applause.ts). */
+let applauseHeard = new Set<ApplauseLevel>();
 const breakHtml = () => `<span class="brk">BREAK ${shownBreak}</span>`;
 let lastShot = '—';
 /** Dev only (owner 2026-11-25): solver cost of the last shot, to read on a real phone. */
@@ -265,13 +268,17 @@ function cueProtect(balls: Ball[], C: Vec2, d: Vec2) {
   return [{ p: O, z: rs, radius: rs }, { p: pk.captureCentre, z: 0, radius: pk.captureRadius }];
 }
 /** Play a shot from `balls` on screen; resolves with its length in seconds when every ball has stopped. */
-function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target: string; pocket: string; view: PocketView }; breakOff?: boolean } = {}): Promise<number> {
+function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target: string; pocket: string; view: PocketView }; breakOff?: boolean;
+  applause?: { ball: string; level: ApplauseLevel } } = {}): Promise<number> {
   const sim = createSim(balls, table);
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
   const slot = rec.ids.map((id) => ids.indexOf(id));
   lastPlayed = { rec, slot };
   const breakAt = opts.breakOff ? breakOffMoment(rec) : null; // PLAN 9.1: one break sound on the opponent's break-off
+  // owner 2026-11-27: a milestone applause (levels 2-4) right as the pot that reaches it drops on screen
+  let applause = opts.applause ?? null;
+  const applauseAt = applause ? rec.events.find((e) => e.type === 'pot' && e.a === applause!.ball)?.t ?? rec.duration : null;
   // Part 4: the cue (every shot: SHOOT, step 1 and, since 2026-11-27, the break-off). Its direction is the planned
   // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
   const cueBall = balls.find((b) => b.kind === 'cue');
@@ -336,6 +343,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
       }
       if (import.meta.env.DEV && devLastRec) devLastRec.simT = t;
       playEventsBetween(rec, tPrev, t, breakAt); // PLAN 9.1: the hits of this moment, at the speed shown (slow motion too)
+      if (applause && applauseAt !== null && t >= applauseAt) { playApplause(applause.level); applause = null; }
       const p = positionsAt(rec, t);
       rest = ids.map(() => null);
       slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
@@ -407,6 +415,7 @@ async function onStart() {
   round = startRound({ ...round, seed, rng, free: replay !== null }, provider, table); // RULES B.1: the bet is taken
   shownBalance = round.balance;
   shownBreak = 0; // a new break
+  applauseHeard = new Set();
   presolveNext(); // solving (of step 2) starts during the break-off animation
   // RULES B.1: the balls re-rack quickly, then the opponent breaks off (from the library)
   const rack = newFrame(level().reds, table).balls;
@@ -491,7 +500,12 @@ async function onShoot() {
     const cam = (pc || autoCut) && sh.target && sh.pocket ? { target: sh.target, pocket: sh.pocket, view: camView } : undefined;
     if (import.meta.env.DEV && pc) { devPocketCam = null; if (!cam) lastCut = 'no cut: this shot has no target pocket'; }
     const jumped = auto?.mode === 'jump';
-    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam });
+    // owner 2026-11-27: levels 2-4 (break 50, opponent needs snookers, break 100), the highest reached by this pot, once a
+    // round; a free replay plays none. A dev jump (no animation) counts the level as heard but plays nothing.
+    const ms = round.free || h.outcome !== 'success' ? null : milestoneLevel(before.frame!, round.frame!, applauseHeard);
+    if (ms) applauseHeard.add(ms);
+    const applause = ms && sh.target ? { ball: sh.target, level: ms } : undefined;
+    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam, applause });
     // PLAN 8.2 / RULES B.6: a clearance's last pot is replayed from the pocket camera, then the clearance message
     if (!jumped && round.end?.type === 'clearance' && sh.target && sh.pocket) await clearanceReplay(sh.target, sh.pocket);
     const type = (h.shot as { type?: string }).type ?? '?';
@@ -543,9 +557,10 @@ async function endRound() {
   showBetArea = false;
   render();
   countUpBalance(round.balance);
-  // PLAN 9.2: the applause on every paid end (CASH OUT, RE-RACK, clearance; not a failure, not a free replay). For a
-  // clearance this is after the replay, as the message appears.
-  if (round.end && round.end.type !== 'failure' && !round.free) playWin();
+  // owner 2026-11-27: level 1 on CASH OUT / RE-RACK, 5 on a clearance, 6 on the maximum (not a failure, not a free
+  // replay). For a clearance this is after the replay, as the big message appears. It never delays anything.
+  const lvl = endLevel(round);
+  if (lvl) { applauseHeard.add(lvl); playApplause(lvl); }
   if (round.end?.type === 'clearance') await clearanceMessage();
   else await wait(CONFIG.ui.wonMessageSeconds * 1000);
   showBetArea = true;
@@ -892,7 +907,8 @@ function renderDev() {
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
       '<div class="opts" id="devAuto"></div>' +
-      '<h3>POCKET CAM ON NEXT SHOT (DEV ONLY)</h3><div class="opts" id="devPocketCam"></div><div class="info" id="devCut"></div>' : '') +
+      '<h3>POCKET CAM ON NEXT SHOT (DEV ONLY)</h3><div class="opts" id="devPocketCam"></div><div class="info" id="devCut"></div>' +
+      '<h3>APPLAUSE (DEV ONLY)</h3><div class="opts" id="devApplause"></div>' : '') +
     '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>POSITION PLAY (EXPERIMENT)</h3><div class="opts" id="devPos"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
@@ -1000,6 +1016,9 @@ function renderTestPanel(opt: (label: string, on: boolean, click: () => void, di
   // small task 2: force a pocket-camera cut on the next SHOOT (one shot, then off again)
   for (const v of ['P1b', 'P2', 'random'] as const) $('devPocketCam').appendChild(opt(v, devPocketCam === v, () => { devPocketCam = devPocketCam === v ? null : v; render(); }));
   $('devCut').textContent = lastCut ? `last cut · ${lastCut}` : '';
+  // owner 2026-11-27: hear each applause level (works any time, even during a round)
+  const APPLAUSE_TEXT = ['', '1 CASH OUT', '2 BREAK 50', '3 SNOOKERS', '4 BREAK 100', '5 CLEARANCE', '6 MAXIMUM'];
+  for (const l of [1, 2, 3, 4, 5, 6] as const) $('devApplause').appendChild(opt(APPLAUSE_TEXT[l]!, false, () => playApplause(l)));
 }
 /** Dev: jump to the last ball and clear it on screen (the clearance replay). */
 function devClearLast() {
