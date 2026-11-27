@@ -217,7 +217,7 @@ const readSwitch = (key: string, def: boolean) => { try { const v = localStorage
 const saveSwitch = (key: string, v: boolean) => { try { localStorage.setItem(key, v ? '1' : '0'); } catch { /* private window */ } };
 let cueOn = readSwitch('snooker147.cue', CONFIG.view3d.cue.enabled);
 let fastEndOn = readSwitch('snooker147.fastEnd', CONFIG.shot.fastEnd.enabled);
-setPos411p(readSwitch('snooker147.pos411p', CONFIG.solver.natural.pos411p.enabled));
+setPos411p(readSwitch('snooker147.pos411p2', CONFIG.solver.natural.pos411p.enabled));
 const CUE_TIMING = VARIANTS.C1 as unknown as { appear: number; stroke: number; added: number }; // appear + stroke = 0.25 s (approved C1)
 /** What the cue must never cover (Part 4): the object ball (the first ball on the cue ball's line) and the pocket that
  *  ball is sent towards. Worked out from the layout and the planned direction only, never from the outcome. */
@@ -808,7 +808,7 @@ function renderDev() {
   $('devFast').appendChild(opt('Off', !fastEndOn, () => { fastEndOn = false; saveSwitch('snooker147.fastEnd', false); render(); }));
   $('devFast').appendChild(opt('On', fastEndOn, () => { fastEndOn = true; saveSwitch('snooker147.fastEnd', true); render(); }));
   // Part 3c: position-play experiment (solver 4.11p); only between shots, so a solve in progress is never mixed
-  const setPP = (v: boolean) => { setPos411p(v); saveSwitch('snooker147.pos411p', v); $('devVer').textContent = `solver ${solverVersion()}`; if (round.phase === 'decide' && !busy) { presolver.cancel(); presolveNext(); } render(); };
+  const setPP = (v: boolean) => { setPos411p(v); saveSwitch('snooker147.pos411p2', v); $('devVer').textContent = `solver ${solverVersion()}`; if (round.phase === 'decide' && !busy) { presolver.cancel(); presolveNext(); } render(); };
   $('devPos').appendChild(opt('4.10 (off)', !pos411pOn(), () => setPP(false), busy !== null));
   $('devPos').appendChild(opt('4.11p (on)', pos411pOn(), () => setPP(true), busy !== null));
   for (const s of CONFIG.view3d.ballScaleOptions) {

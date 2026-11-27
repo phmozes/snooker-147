@@ -16,6 +16,7 @@ import { classifySuccess, cutAngle, naturalCheck, playFacts } from '../src/core/
 it('replay marked shots', () => {
   const table = buildTable();
   if (process.env.POS411P) setPos411p(true); // night 4, Part 3c experiment ON
+  if (process.env.POS410) setPos411p(false); // 2026-11-27: 4.11p is the default; POS410=1 measures the old 4.10
   const out: string[] = [`solver ${solverVersion()}${process.env.OLDP ? ' (old p, before RTP option 3c)' : ''}`];
   for (const item of (process.env.SHOTS ?? '').split(',').filter(Boolean)) {
     const m = /^(reds\d+)-(?:(v2)-)?(\d+):(\d+)$/.exec(item.trim()); // night 4: v2 codes carry the marker; others are v1

@@ -19,6 +19,7 @@ import { buildTable } from '../src/core/table/geometry';
 
 it('soak', () => {
   if (process.env.POS411P) setPos411p(true); // night 4, Part 3c: the position-play experiment ON
+  if (process.env.POS410) setPos411p(false); // 2026-11-27: 4.11p is the default; POS410=1 measures the old 4.10
   const table = buildTable();
   const level = (process.env.LEVEL ?? 'reds6') as LevelId;
   const shard = Number(process.env.SHARD ?? 0);

@@ -257,11 +257,11 @@ export const CONFIG = {
         redCheckShots: 60,         // ... natural means: natural pot AND a natural red after it (like the auto pick); budget of that check
         longDisturbCost: 3.0,      // a long colour pot that moves another ball (more than disturbFrom) costs this much more
       },
-      // Night 4, Part 3c: position-play experiment "solver 4.11p" (owner's real-player patterns). OFF by default; dev
+      // Night 4, Part 3c: position-play experiment "solver 4.11p" (owner's real-player patterns). ON by default since 2026-11-27 (owner); dev
       // panel switch. Success planning only (failures never look at position). For the next ball black or pink (after
       // a red), or a red in the black half (after a colour):
       pos411p: {
-        enabled: false,
+        enabled: true,             // owner 2026-11-27: default ON (seen on the phone), despite the failed paired soak; may be improved later
         notBlackEndCornerCost: 1.0, // ... a pot not into a black-end corner pocket costs this much
         cutBackCost: 1.5,          // ... the cue ball nearer the black-end cushion than that ball (the pot is cut back)
         innerMarginM: 0.03,        // m: the cue ball must stop at least this much below the ball (inner side)

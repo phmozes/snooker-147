@@ -10,8 +10,8 @@ export default defineConfig({
   test: {
     testTimeout: 30_000,
     projects: [
-      { extends: true, test: { name: 'main', exclude: ['**/node_modules/**', ...SOLO], sequence: { groupOrder: 0 } } },
-      { extends: true, test: { name: 'solver', include: SOLO, sequence: { groupOrder: 1 } } },
+      { extends: true, test: { name: 'main', exclude: ['**/node_modules/**', '**/.claude/**', ...SOLO], sequence: { groupOrder: 0 } } },
+      { extends: true, test: { name: 'solver', include: SOLO, exclude: ['**/.claude/**'], sequence: { groupOrder: 1 } } },
     ],
   },
 });
