@@ -3,3 +3,4 @@ dist/
 *.log
 # third-party photos, shape reference only (not for the game)
 reference/
+.vite-cache/
