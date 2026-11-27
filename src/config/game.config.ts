@@ -399,7 +399,7 @@ export const CONFIG = {
     presets: {
       A: { label: 'A steep', elevationDeg: 71, fov: 38 },   // the task 2.1 angle
       B: { label: 'B flat', elevationDeg: 57, fov: 38 },    // the first config camera's angle
-      C: { label: 'C middle', elevationDeg: 64, fov: 38 },
+      C: { label: 'C middle', elevationDeg: 57, fov: 38 },  // owner 2026-11-27: 64 -> 57 (mockups/camera-angles option 1)
     },
     fitEdge: 0.16,               // metres beyond the cushion faces that must stay in view (corner pocket holes)
     fitMargin: 0.02,             // share of the view kept free at the tightest edge

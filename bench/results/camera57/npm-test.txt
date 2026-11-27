@@ -1,0 +1,13 @@
+
+> snooker-147@0.0.1 test
+> vitest run tests/
+
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+
+ Test Files  28 passed (28)
+      Tests  294 passed (294)
+   Start at  15:34:45
+   Duration  93.68s (tests 99%, import 1%)
+

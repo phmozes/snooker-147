@@ -1,0 +1,5 @@
+full-390x844.png: table 382x480 px = 98% of the width; 6 pockets fully in view; cue elevation 4°; bottom line "BREAK 1BLACK · NEXT x1.14"
+inapp-390x664.png: table 357x433 px = 91% of the width; 6 pockets fully in view; cue elevation 4°; bottom line "BREAK 1BLACK · NEXT x1.14"
+inapp-390x664-cue1.png: table 357x433 px = 91% of the width; 6 pockets fully in view; cue elevation 12.4°; bottom line "BREAK 1BLACK · NEXT x1.14"
+inapp-390x664-cue2.png: table 357x433 px = 91% of the width; 6 pockets fully in view; cue elevation 4°; bottom line "BREAK 1BLACK · NEXT x1.14"
+short-360x640.png: table 337x410 px = 94% of the width; 6 pockets fully in view; cue elevation 4°; bottom line "BREAK 1BLACK · NEXT x1.14"

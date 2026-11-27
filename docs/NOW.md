@@ -4,8 +4,8 @@
 - Pushed to origin/master (github.com/phmozes/snooker-147, private) on 2026-11-27; push again only on your word.
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
-  roll; the cue; the rail wood; "BREAK n"; the table size in your in-app browser (80-89% wide).
-- Decide (design): camera option 0-3 from mockups/camera-angles/index.html (in-app width 80 / 91 / 98 / 85%).
+  roll; the cue; the rail wood; "BREAK n"; the camera at 57° (option 1: in-app about 91% wide).
+- Hosted demo: dist/ rebuilt with camera 57°, not republished yet (publishing = your word).
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
 ## Claude's turn (waiting for the owner's answers)
 - Owner 2026-11-27: NO playback speed-up at all (faster shot end OFF, switch removed). Failure shots over 3 s are
