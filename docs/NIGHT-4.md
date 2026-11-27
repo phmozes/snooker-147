@@ -26,8 +26,10 @@ c. Seen vs physics: the drawn hole edge of all six pockets IS the physics drop c
    hole-vs-drop-circle.txt, difference < 1e-15 m) and the drawn jaws lie on the physics jaws (self-check in the code,
    throws otherwise). A potted ball now falls into the hole (keeps its speed, drops, and goes dark as it sinks; before it
    just vanished). Pictures with the dev test panel (forced Success / Rattle / In-off, playback frozen at the jaw touch
-   or 0.12 s after the drop): bench/results/night4/pockets/ (+ log.txt). See the log for which pockets were caught:
-   the solver rarely chooses the near (bottom) and some side pockets, so not every pocket/outcome pair turned up.
+   or 0.12 s after the drop): bench/results/night4/pockets/ (+ log.txt, each with a full-screen picture). Caught in the
+   final game: 5 of 6 pockets (top-left success + rattle, top-right success + rattle, middle-left in-off, middle-right
+   in-off, bottom-left success). NOT caught: bottom-right (the solver rarely plays into the near pockets; three
+   automatic runs of 160 shots each). For bottom-right only the geometry check above stands.
    Found and fixed on the way: a ball dropping at a middle pocket looked as if it stopped at the mouth (seen from above a
    sinking ball hardly changes) -> it now darkens as it sinks.
 d. Phone smoothness (bench/results/night4/frame-time.txt; 390x844, DPR 2, Chrome 4x CPU throttling, the same 3 rounds,
@@ -123,7 +125,6 @@ the RTP text moved into the Rules box (RTP per level). Pictures and the automati
   Failure length: median 2.14-2.17 s, 90% 2.58-2.89 s, longest 3.80 / 4.30 / 4.64 s; the longest are in-offs and rattles.
 
 ## Not done / open
-- Pocket pictures: not every pocket x outcome appeared in the automatic run (see pockets/log.txt); the geometry check
-  covers all six.
+- Pocket pictures: 5 of 6 pockets photographed in the game; bottom-right not (the geometry check covers all six).
 - The cue ON/OFF "200 rounds per level" proof is by code separation + the core replays, not a browser run.
 - Frame time measured on the PC with throttling, not on a real phone.
