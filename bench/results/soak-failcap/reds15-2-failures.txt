@@ -1,0 +1,4 @@
+reds15-v2-5000002 step 14: solver took 13454 ms (stuck limit 10000)
+reds15-v2-5000053 step 7: solver took 12373 ms (stuck limit 10000)
+reds15-v2-5000239 step 7: solver took 11256 ms (stuck limit 10000)
+reds15-v2-5000278 step 11: solver took 11285 ms (stuck limit 10000)

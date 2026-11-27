@@ -62,3 +62,33 @@ Measured on the night-4 v2 soak (1,000 rounds per level, solver 4.10, bench/resu
 
 (Here "last resort" = exhibition or rescue.) Failure shots are not sped up at all (their object ball rolls until near the end, so less than 0.5 s is left): the
 ON shots still over 3.5 s are failures (5 / 7 / 8) and a few last-resort successes. About half of all shots are sped up.
+
+## D. 2026-11-27: failure shots — prefer under 3.0 s, in-off into a pocket near the shot (owner task)
+Code: src/core/solverFailure.ts, config solver.failure.natural (enabled, maxSeconds 3.0, inOffNearPocket 0.35 m).
+The failure TYPE still comes only from the seed; only the shot that shows it changes. New rule, among shots of the
+chosen type: (1) under 3.0 s first, (2) for an in-off, the cue ball's pocket within 0.35 m of the shot's path
+(cue ball -> object ball -> aimed pocket), (3) then the shortest. If only too long (or far-pocket) shots were found, a
+second pass uses the unused plain-miss budget (in-between powers, softest first; then less natural pots). The shot cap
+is unchanged (shotCaps().failure). If nothing under 3.0 s exists, the best one found is kept ("ON over 3.0 s" below);
+the type and the fallback never change (0 differences).
+Measured: soak with POS411P=1 (the new default), 9 shards, same seeds; FAILCMP=1 solves each failure again with the
+switch the other way on the same frame (bench/results/soak-failcap; `node bench/failcap-sum.mjs <dir>`). One failure
+ends a round, so "Rounds" = rounds that ended in a failure = failure shots; per 1,000 = per 1,000 failure shots.
+
+| Level | Rounds (failures) | Failure shots over 3.0 s OFF -> ON (per 1,000) | Length median / 90% / longest s OFF -> ON | In-offs: pocket distance median / 90%, near (<= 0.35 m) OFF -> ON | Shot changed | Fallback differs |
+|---|---|---|---|---|---|---|
+| reds6 | 691 | 61 (88.3) -> 58 (83.9) | 2.17 / 2.97 / 4.54 -> 2.17 / 2.96 / 4.54 | 18: 1.31 / 1.79 m, near 2 -> 1.31 / 1.79 m, near 3; over 3 s 10 -> 9 | 47 | 0 |
+| reds10 | 481 | 35 (72.8) -> 30 (62.4) | 2.17 / 2.90 / 3.99 -> 2.17 / 2.83 / 3.94 | 15: 0.97 / 1.49 m, near 6 -> 0.97 / 2.54 m, near 6; over 3 s 8 -> 5 | 26 | 0 |
+| reds15 | 385 | 19 (49.4) -> 16 (41.6) | 2.15 / 2.65 / 3.38 -> 2.15 / 2.63 / 3.38 | 13: 1.23 / 1.75 m, near 2 -> 1.23 / 1.75 m, near 2; over 3 s 7 -> 6 | 17 | 0 |
+| all | 1557 | 115 (73.9) -> 104 (66.8) | 2.17 / 2.89 / 4.54 -> 2.17 / 2.86 / 4.54 | 46: 1.17 / 1.77 m, near 10 -> 1.17 / 1.79 m, near 11; over 3 s 25 -> 20 | 90 | 0 |
+
+- Still over 3.0 s with the new rule (no shorter shot of the type found), by type: plain miss 61, jaw rattle 19,
+  in-off 20, foul 4 (of 104). Most are plain misses at 2.5 m/s whose ball rolls on after missing.
+- The owner's mark reds15-136485470:3 is still 4.61 s: 500 tries found no shorter in-off there.
+- Failure solve time (new rule, PC fully loaded): median 0.53 s, 90% 1.87 s.
+- Outcomes unchanged (bench/night4/fp.test.ts CMP=outcomes): 300 stored rounds (after3c 40 per level, v1-roundcode 60
+  per level) replay with identical outcomes, ends, balances and success shots; the failure shot moved in 39 of them
+  (bench/results/soak-failcap/replay-compare.txt).
+- Verdict: small gain (over 3.0 s: 73.9 -> 66.8 per 1,000 failures; longest unchanged). The search grid simply has no
+  shorter shot of the type in most of these frames. A bigger cut needs an owner decision, e.g. speed up the end of
+  failure shots in playback too (section C), or allow a different-looking failure of the same type.

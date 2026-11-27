@@ -7,7 +7,7 @@
 - Decide: faster shot end ON? (removes every non-last-resort success shot over 3.5 s; docs/SLOW-SHOTS.md C).
 - Decide: the cue adds 0.25 s per shot (median 1.55 -> 1.80 s) — keep, shorten, or pair with the faster end?
 - Decide: 4.11p failed its paired soak (more fallback and long shots) but fixed/improved 6 of 12 marks. Drop or retune?
-- Decide: cap the length of failure shots (newest mark: a 4.61 s in-off, cause in NIGHT-4 "Extra").
+- Failure-shot length: new rule built (prefer < 3.0 s, near in-off pocket), small gain only (docs/SLOW-SHOTS.md D). Speed up failure ends?
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
 ## Claude's turn (waiting for the owner's answers)
 - 2026-11-27 night 4 done: look + cue + layout in the game, generator v2 (200M PASS), free replay, 3b/3c behind switches.

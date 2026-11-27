@@ -1,0 +1,6 @@
+bench/results/night4/after3c-reds6.jsonl [reds6]: 40 identical (outcomes + success shots; failure shot moved in 7), 0 different 
+bench/results/night4/after3c-reds10.jsonl [reds10]: 40 identical (outcomes + success shots; failure shot moved in 6), 0 different 
+bench/results/night4/after3c-reds15.jsonl [reds15]: 40 identical (outcomes + success shots; failure shot moved in 4), 0 different 
+bench/results/night4/v1-roundcode-reds6.jsonl [reds6]: 60 identical (outcomes + success shots; failure shot moved in 5), 0 different 
+bench/results/night4/v1-roundcode-reds10.jsonl [reds10]: 60 identical (outcomes + success shots; failure shot moved in 6), 0 different 
+bench/results/night4/v1-roundcode-reds15.jsonl [reds15]: 60 identical (outcomes + success shots; failure shot moved in 11), 0 different 
