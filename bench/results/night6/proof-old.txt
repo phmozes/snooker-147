@@ -1,0 +1,4 @@
+bench/results/night6/old-v2-reds6.jsonl [reds6]: 100 identical, 0 different 
+bench/results/night6/old-v2-reds10.jsonl [reds10]: 100 identical, 0 different 
+bench/results/night6/old-marks.jsonl [reds6,reds10,reds15]: 16 identical, 0 different 
+bench/results/night6/old-v2-reds15.jsonl [reds15]: 100 identical, 0 different 

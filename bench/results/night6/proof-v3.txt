@@ -1,0 +1,3 @@
+bench/results/night6/v3-reds6.jsonl [reds6]: 100 identical, 0 different 
+bench/results/night6/v3-reds10.jsonl [reds10]: 100 identical, 0 different 
+bench/results/night6/v3-reds15.jsonl [reds15]: 100 identical, 0 different 

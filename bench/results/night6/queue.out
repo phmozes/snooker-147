@@ -1,0 +1,14 @@
+09:13 started soak/reds10-3.log
+09:17 started soak/reds15-0.log
+09:17 started soak/reds15-1.log
+09:17 started soak/reds15-2.log
+09:18 started soak/reds15-3.log
+09:33 started rec-v3-reds6.log
+09:34 started rec-v3-reds10.log
+09:39 started rec-v3-reds15.log
+09:42 started cmp-v2-reds15.log
+09:46 started cmp-marks.log
+09:47 started cmp-v3-reds6.log
+09:51 started cmp-v3-reds10.log
+09:55 started cmp-v3-reds15.log
+10:07 all done
