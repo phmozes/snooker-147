@@ -306,6 +306,26 @@ function noiseTexture(base, amount, size = 256, grain = false) {
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
+// Table markings (owner 2026-11-27): baulk line, the D (towards the baulk cushion) and the six spots, painted into
+// one transparent picture laid over the bed with the same metre-based mapping as the edge shading. Positions come from
+// the table geometry (the spots the rules use). The picture is drawn at CONFIG.view3d.markings.pxPerM with mipmaps
+// and anisotropy, so a line a few millimetres wide stays smooth and steady at phone size.
+function markingsTexture(maxAniso) {
+  const M = CONFIG.view3d.markings, W = Math.round(2 * hw * M.pxPerM), Hh = Math.round(2 * hl * M.pxPerM);
+  const c = document.createElement('canvas'); c.width = W; c.height = Hh;
+  const g = c.getContext('2d');
+  const px = (x) => (x + hw) * M.pxPerM, py = (y) => (hl - y) * M.pxPerM; // canvas top = the black end (+y)
+  g.strokeStyle = g.fillStyle = `rgba(${M.colour}, ${M.alpha})`;
+  g.lineWidth = M.lineWidth * M.pxPerM;
+  g.beginPath(); g.moveTo(0, py(table.baulkY)); g.lineTo(W, py(table.baulkY)); g.stroke(); // baulk line, cushion to cushion
+  // the D: half circle on the baulk line, on the baulk-cushion side (-y = down on the canvas)
+  g.beginPath(); g.arc(px(table.dCentre.x), py(table.dCentre.y), table.dRadius * M.pxPerM, 0, Math.PI, false); g.stroke();
+  for (const s of Object.values(table.spots)) { g.beginPath(); g.arc(px(s.x), py(s.y), M.spotRadius * M.pxPerM, 0, 2 * Math.PI); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.anisotropy = maxAniso;
+  t.repeat.set(1 / (2 * hw), 1 / (2 * hl)); t.offset.set(0.5, 0.5);
+  return t;
+}
 function vignette(strength) {
   const c = document.createElement('canvas'); c.width = c.height = 256;
   const g = c.getContext('2d'); const gr = g.createRadialGradient(128, 128, 40, 128, 128, 180);
@@ -458,6 +478,10 @@ function buildNew(mode, sc, withLamp = true) {
   // the same darkening towards the edges lies on the bed AND on the cushion tops, so they stay one colour
   const vt = vignette(EDGE_DARK); vt.repeat.set(1 / (2 * hw), 1 / (2 * hl)); vt.offset.set(0.5, 0.5);
   const vigMat = new THREE.MeshBasicMaterial({ map: vt, transparent: true, depthWrite: false });
+  // table markings: between the cloth and the edge shading (so the shading and the ball shadows lie on them too)
+  const markMat = new THREE.MeshStandardMaterial({ map: markingsTexture(8), transparent: true, depthWrite: false, roughness: 0.95,
+    polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  const marks = new THREE.Mesh(bedGeo, markMat); marks.position.z = 0.0002; marks.receiveShadow = true; marks.renderOrder = 0.5; sc.add(marks);
   const vig = new THREE.Mesh(bedGeo, vigMat); vig.position.z = 0.0005; vig.renderOrder = 1; sc.add(vig);
 
   const extrude = (pts, depth, mat, z0, bevel = 0) => {

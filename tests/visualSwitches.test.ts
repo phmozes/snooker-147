@@ -37,3 +37,22 @@ describe('owner 2026-11-27: no playback speed-up', () => {
     expect(CONFIG.shot.playbackTimeScale).toBe(1);
   });
 });
+
+describe('table markings (owner 2026-11-27): drawn from the same spots the rules use, real proportions', () => {
+  it('baulk line 737 mm, D 292 mm, black 324 mm from the top cushion, pink midway between blue and the top cushion', async () => {
+    const { buildTable } = await import('../src/core/table/geometry');
+    const t = buildTable();
+    const near = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThan(1e-9);
+    near(t.baulkY + t.halfLength, 0.737);
+    near(t.dRadius, 0.292);
+    near(t.halfLength - t.spots.black.y, 0.324);
+    near(t.spots.pink.y, (t.spots.blue.y + t.halfLength) / 2);
+    near(t.spots.brown.y, t.baulkY); near(t.spots.yellow.y, t.baulkY); near(t.spots.green.y, t.baulkY);
+    near(Math.abs(t.spots.yellow.x), t.dRadius); near(Math.abs(t.spots.green.x), t.dRadius); near(t.spots.brown.x, 0);
+    near(t.spots.blue.x, 0); near(t.spots.blue.y, 0);
+    const look = SOURCES['../src/view/tableLook.ts']!;
+    expect(look).toContain('Object.values(table.spots)'); // the spots: the rules' own positions, no second copy
+    expect(look).toContain('table.baulkY');
+    expect(look).toContain('table.dRadius');
+  });
+});

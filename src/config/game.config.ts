@@ -432,6 +432,11 @@ export const CONFIG = {
     // the cue ball (clear = air in m between the cue and what it passes over), never above maxElevation. These are the
     // numbers of the approved mockup (docs/cue-options.html); both use cueAxis() in src/view/cue.ts.
     cue: { enabled: true, minElevation: 4, maxElevation: 40, clear: 0.006 },
+    // Table markings on the cloth (owner 2026-11-27): baulk line, D and the six colour spots, thin and slightly
+    // off-white. Positions are NOT set here: they come from the table geometry (table.baulkLineFromBottom, dRadius,
+    // blackFromTop; pink midway between blue and the top cushion), the same spots the rules use for the colours.
+    // Drawn into one texture over the bed (pxPerM pixels per metre, with mipmaps) so the lines stay smooth at phone size.
+    markings: { lineWidth: 0.005, spotRadius: 0.006, colour: '236, 235, 222', alpha: 0.55, pxPerM: 600 },
   },
 
   // Game screen layout from mockups A/C/D (share of the screen height, top to bottom). Used by the replay check page

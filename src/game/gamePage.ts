@@ -917,6 +917,8 @@ if (import.meta.env.DEV) {
       replay = p; pendingSeed = p.seed; pendingRng = p.rng; void onStart(); return true; },
     lastRec: () => devLastRec && { n: devLastRec.n, t0: devLastRec.t0, scale: devLastRec.scale, duration: devLastRec.rec.duration, events: devLastRec.rec.events, ids: devLastRec.rec.ids, simT: devLastRec.simT ?? 0 },
     setSlow: (x: number) => { devSlow = x; },
+    /** pictures of the bare cloth (markings check): hide every ball until the next draw of a frame */
+    hideBalls: () => { showBalls([]); },
     pauseOn: (kind: 'jaw' | 'pot' | 'potCue', offset: number) => { devPauseOn = { kind, offset }; devPause = null; devResume = false; },
     pause: () => devPause, resume: () => { devResume = true; },
     /** page coordinates (CSS px) of a pocket's drop circle centre, and of a point `r` metres from it (for crops) */
