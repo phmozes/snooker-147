@@ -124,4 +124,25 @@ function phoneCost(): Plugin {
 // cacheDir (2026-11-27): the dependency cache lives in this folder, not in node_modules/.vite. Helper copies of the
 // project (git worktrees) link to the same node_modules; a dev server started there rewrote the shared cache and the
 // phone page showed only BALANCE (504 Outdated Optimize Dep).
-export default defineConfig({ plugins: [weirdShots(), phoneCost()], cacheDir: '.vite-cache', server: { host: true, port: 5181, strictPort: true } });
+// Night 7: the real build drops the developer-only elements from index.html (the weird-shot flag, the dev tags, the
+// developer panel and the mockup picture); the code that uses them is compiled out (import.meta.env.DEV).
+const DEV_ONLY_HTML = [/<button id="flag"[\s\S]*?<\/button>/, /<div id="devTag"><\/div>/, /<div id="devVer"><\/div>/,
+  /<div id="dev"><\/div>/, /<img id="mockup"[^>]*>/];
+function stripDevHtml(): Plugin {
+  return {
+    name: 'strip-dev-html',
+    apply: 'build',
+    transformIndexHtml(html) {
+      for (const re of DEV_ONLY_HTML) {
+        if (!re.test(html)) throw new Error(`index.html: developer element not found (${re})`);
+        html = html.replace(re, '');
+      }
+      return html;
+    },
+  };
+}
+
+// base (night 7): the build uses relative URLs ('./'), so dist/ can be hosted from any folder; the dev server keeps '/'.
+// Only index.html is built (replay.html and debug.html are developer pages).
+export default defineConfig(({ command }) => ({ plugins: [weirdShots(), phoneCost(), stripDevHtml()], cacheDir: '.vite-cache',
+  base: command === 'build' ? './' : '/', server: { host: true, port: 5181, strictPort: true } }));

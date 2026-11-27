@@ -42,9 +42,12 @@ const wait = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 /** A new round seed. The page (not the core) picks it; the core only ever uses the seed it is given. */
 const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0]!;
 
-let ballScale: number = Number(params.get('scale')) || CONFIG.view3d.ballScale;
-let mode: Mode = (['D', 'A', 'C'] as const).find((s) => s === params.get('screen')) ?? 'live';
-let compare = params.get('compare') === '1';
+// production build (night 7): the developer URL switches (?scale, ?screen, ?compare, ?seed, ?size) are compiled out;
+// only ?level stays. A player must never pick the seed of a round.
+const DEV = import.meta.env.DEV;
+let ballScale: number = (DEV && Number(params.get('scale'))) || CONFIG.view3d.ballScale;
+let mode: Mode = (DEV && (['D', 'A', 'C'] as const).find((s) => s === params.get('screen'))) || 'live';
+let compare = DEV && params.get('compare') === '1';
 
 // ---------------- round state ----------------
 let round: Round = newRound(newSeed());
@@ -52,7 +55,7 @@ const startLevel = CONFIG.levels.find((l) => l.id === params.get('level'))?.id;
 if (startLevel) round = setLevel(round, startLevel);
 let pendingSeed: number | null = null; // developer menu: the next START uses this seed
 let pendingRng: RngVersion = RNG_VERSION_NEW; // ...with this generator (a code without the v2 marker = v1, docs/FAIRNESS.md)
-const seedParam = parseRoundCode(params.get('seed') ?? '');
+const seedParam = DEV ? parseRoundCode(params.get('seed') ?? '') : null;
 if (seedParam) { pendingSeed = seedParam.seed; pendingRng = seedParam.rng; if (seedParam.levelId) round = setLevel(round, seedParam.levelId); }
 let seedText = '';
 // task 5.4: a round being replayed from its round code (the shots, colours and cash-out step come from the code)
@@ -93,7 +96,7 @@ const TYPE_TEXT: Record<string, string> = {
 };
 // the weird-shot list: kept in this browser (localStorage) so a reload does not lose it
 const WEIRD_KEY = 'snooker147.weird';
-let weird: string[] = (() => { try { return JSON.parse(localStorage.getItem(WEIRD_KEY) ?? '[]') as string[]; } catch { return []; } })();
+let weird: string[] = !DEV ? [] : (() => { try { return JSON.parse(localStorage.getItem(WEIRD_KEY) ?? '[]') as string[]; } catch { return []; } })();
 const saveWeird = () => { try { localStorage.setItem(WEIRD_KEY, JSON.stringify(weird)); } catch { /* private window: list lives until reload */ } };
 
 // ---- the flag button (developer only, owner 2026-11-24): one tap marks the LAST shot played. The mark is sent to
@@ -106,8 +109,9 @@ function toast(text: string) {
   clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => el.classList.remove('show'), 1500);
 }
-const renderFlag = () => { $('flagCount').textContent = weird.length ? String(weird.length) : ''; };
+const renderFlag = () => { if (!DEV) return; $('flagCount').textContent = weird.length ? String(weird.length) : ''; };
 async function markWeird() {
+  if (!DEV) return; // the weird-shot marks need the dev server (vite.config.ts); compiled out of the real build
   const i = lastInfo;
   if (!i) { toast('no shot played yet'); return; }
   const line = `${i.code} step ${i.step} · ${i.target} ${i.outcome} · ${i.type} · ${i.length.toFixed(2)} s · solver ${solverVersion()}`;
@@ -139,12 +143,14 @@ function sendCost(line: Record<string, unknown>) {
 let pcLink = 'PC link: checking…';
 let weirdStatus = '';
 async function checkPcLink() {
+  if (!DEV) return;
   let ok = false;
   try { const res = await fetch('/__dev/weird/ping'); ok = res.ok && (await res.text()) === 'ok'; } catch { /* no server */ }
   pcLink = ok ? 'PC link: OK' : 'PC link: NOT CONNECTED (restart the dev server on the PC)';
   renderDev();
 }
 async function sendWeirdList() {
+  if (!DEV) return;
   weirdStatus = 'sending…';
   renderDev();
   try {
@@ -185,7 +191,7 @@ let view3d: ReturnType<typeof createTable3d> | null = null;
 let rest: (Vec2 | null)[] = []; // what is drawn when nothing moves
 // night 4: the table look ('club' = the approved look, 'grey' = the old gray box), dev panel switch, kept on this device
 const LOOK_KEY = 'snooker147.look';
-let tableLook: TableLookId = (() => { try { const v = localStorage.getItem(LOOK_KEY); return v === 'grey' || v === 'club' ? v : CONFIG.view3d.look; } catch { return CONFIG.view3d.look; } })();
+let tableLook: TableLookId = !DEV ? CONFIG.view3d.look : (() => { try { const v = localStorage.getItem(LOOK_KEY); return v === 'grey' || v === 'club' ? v : CONFIG.view3d.look; } catch { return CONFIG.view3d.look; } })();
 let kinds: BallKind[] = [];
 function buildView(balls: Ball[]) {
   ids = balls.map((b) => b.id);
@@ -221,7 +227,7 @@ let devPauseOn: { kind: 'jaw' | 'pot' | 'potCue'; offset: number } | null = null
 let devPause: { at: number; event: unknown; paused: boolean } | null = null;
 let devResume = false;
 // Part 4 / 3b switches (dev panel; kept on this device so the owner can compare on the phone)
-const readSwitch = (key: string, def: boolean) => { try { const v = localStorage.getItem(key); return v === null ? def : v === '1'; } catch { return def; } };
+const readSwitch = (key: string, def: boolean) => { if (!DEV) return def; try { const v = localStorage.getItem(key); return v === null ? def : v === '1'; } catch { return def; } };
 const saveSwitch = (key: string, v: boolean) => { try { localStorage.setItem(key, v ? '1' : '0'); } catch { /* private window */ } };
 let cueOn = readSwitch('snooker147.cue', CONFIG.view3d.cue.enabled);
 const fastEndOn = CONFIG.shot.fastEnd.enabled; // owner 2026-11-27: no playback speed-up at all; OFF and not offered (no dev switch, a stored phone value is ignored)
@@ -315,7 +321,8 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise
 async function loadLibrary(id: LevelId, rng: RngVersion) {
   const library = libraryFor(rng);
   if (library[id]) return;
-  const res = await fetch(`/${breakFilesFor(rng)[id]}`);
+  // BASE_URL: '/' on the dev server, './' in the build (night 7: the build loads from any folder, relative URLs only)
+  const res = await fetch(`${import.meta.env.BASE_URL}${breakFilesFor(rng)[id]}`);
   if (!res.ok) throw new Error(`no break-off library for ${id} (npm run breaks)`);
   library[id] = await res.json();
 }
@@ -748,13 +755,14 @@ function layout() {
   const stageW = (compare ? 2 * w + 16 : w) * scale;
   stage.style.transform = `translate(${A.x + Math.max(0, (A.w - stageW) / 2)}px, ${A.y}px) scale(${scale})`;
   const shown: ScreenId = mode !== 'live' ? mode : round.phase === 'decide' ? 'A' : 'D';
-  ($('mockup') as HTMLImageElement).src = `/mockups/${shown}.png`;
+  if (DEV && compare) ($('mockup') as HTMLImageElement).src = `/mockups/${shown}.png`;
   draw3d();
   fitTop();
 }
 
 // ---------------- developer panel ----------------
 function renderDev() {
+  if (!DEV) return; // the developer panel exists only in the dev build
   const dev = $('dev');
   if (!dev.classList.contains('open')) return; // rebuilt when opened
   const opt = (label: string, on: boolean, click: () => void, disabled = false) => {
@@ -951,11 +959,12 @@ if (import.meta.env.DEV) {
     setBalance: (v: number) => { round = { ...round, balance: v }; shownBalance = v; render(); }, // layout check: a long balance
   };
 }
-$('menu').onclick = () => { $('dev').classList.toggle('open'); renderDev(); };
+if (DEV) $('menu').onclick = () => { $('dev').classList.toggle('open'); renderDev(); };
+else $('menu').style.visibility = 'hidden'; // no developer menu in the real build (the space stays, so the layout is the same)
 
 // ---------------- start ----------------
 // for automatic checks in a browser (developer only): the round and what is drawn
-(window as unknown as { __game: unknown }).__game = () => ({ round, drawn: rest, ids, busy });
+if (DEV) (window as unknown as { __game: unknown }).__game = () => ({ round, drawn: rest, ids, busy });
 if (mode === 'live') { const rack = newFrame(level().reds, table).balls; buildView(rack); showBalls(rack); } else setMode(mode);
 render();
 renderFlag();
