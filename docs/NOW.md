@@ -5,9 +5,8 @@
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the table size in your in-app browser (80-89% wide).
-- Note: 6 reds plays a little worse with the new break-off (1,000-round soak: RE-RACK 5 vs 1, long shots 67 vs 52 with
-  4.11p on the old break-off; 10 and 15 reds same or better; night6/SUMMARY.txt). Look into it? (4.11p stays the
-  default, your decision 2026-11-27, although its paired soak failed, NIGHT-4; may be improved later.)
+- Decide: 6 reds worse with the new break-off. Cause: the apex red stays against the pink (92% of breaks vs 68%) and
+  can't be potted when it is the last red (bench/results/night7/SUMMARY.txt). Pick a fix: A library rule, B solver, C keep.
 - Decide: the cue adds 0.25 s per shot (median 1.55 -> 1.80 s): keep? (docs/SLOW-SHOTS.md C)
 - Decide (design): table 80-89% wide in an in-app browser; more needs a lower camera angle or a smaller bottom area.
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
@@ -27,4 +26,4 @@
 - Rules are locked in docs/RULES.md. Concept changes only after asking the owner.
 - Outcome first (seeded RNG, HMAC), shot second; visuals never change odds. No Math.random in physics/rules/solver.
 - Free assets only, commercial-use licence, every source in docs/ASSETS.md. Costs (if any ever) go in EXPENSES.md.
-- npm test: tests/solver.test.ts times out (60 s) when the PC is busy (soaks, other projects); rerun it on a quiet PC.
+- npm test: 294/294 on a quiet PC (2026-11-27); tests/solver.test.ts times out (60 s) only when the PC is busy.

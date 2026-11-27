@@ -1,0 +1,40 @@
+
+reds6-v3-5000520: break entry 163 (yellow side, speed 5.34, packed 0, red on pink 1, pottable 2); steps 2:black 3:red 4:black 5:red 6:black 7:red 8:black 9:red 10:blue; step 11 red: reRack
+  last red red1 at (0.00, 0.95); nearest pink gap 2.0 mm; cushion gap 812 mm; moved since the break 0.0 cm (break: (0.00, 0.95)); locked (no pocket open): YES
+  cue ball (-0.05, -0.09); colours off spot: none
+  all: cue(-0.055,-0.094) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(0.000,0.947) black(0.000,1.460) blue(0.000,0.000)
+
+reds6-v3-5000094: break entry 163 (yellow side, speed 5.34, packed 0, red on pink 1, pottable 2); steps 2:black 3:red 4:black 5:red 6:black 7:red 8:black 9:red 10:blue; step 11 red: reRack
+  last red red1 at (0.00, 0.95); nearest pink gap 2.0 mm; cushion gap 812 mm; moved since the break 0.0 cm (break: (0.00, 0.95)); locked (no pocket open): YES
+  cue ball (-0.05, -0.09); colours off spot: none
+  all: cue(-0.055,-0.094) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(0.000,0.947) black(0.000,1.460) blue(0.000,0.000)
+
+reds6-v3-5000282: break entry 27 (green side, speed 5.66, packed 0, red on pink 1, pottable 2); steps 2:black 3:red 4:black 5:red 6:blue 7:red 8:black 9:red 10:black; step 11 red: reRack
+  last red red1 at (0.00, 0.95); nearest pink gap 2.0 mm; cushion gap 812 mm; moved since the break 0.0 cm (break: (0.00, 0.95)); locked (no pocket open): YES
+  cue ball (0.06, 1.46); colours off spot: none
+  all: cue(0.063,1.457) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(0.000,0.947) blue(0.000,0.000) black(0.000,1.460)
+
+reds6-v3-5000510: break entry 128 (yellow side, speed 5.57, packed 0, red on pink 1, pottable 2); steps 2:black 3:red 4:black 5:red 6:black 7:red 8:blue 9:red 10:black; step 11 red: reRack
+  last red red1 at (0.00, 0.95); nearest pink gap 2.0 mm; cushion gap 812 mm; moved since the break 0.0 cm (break: (0.00, 0.95)); locked (no pocket open): YES
+  cue ball (0.10, 1.56); colours off spot: none
+  all: cue(0.096,1.564) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(0.000,0.947) blue(0.000,0.000) black(0.000,1.460)
+
+reds6-v3-5000347: break entry 163 (yellow side, speed 5.34, packed 0, red on pink 1, pottable 2); steps 2:black 3:red 4:black 5:red 6:black 7:red 8:black 9:red 10:blue; step 11 red: reRack
+  last red red1 at (0.00, 0.95); nearest pink gap 2.0 mm; cushion gap 812 mm; moved since the break 0.0 cm (break: (0.00, 0.95)); locked (no pocket open): YES
+  cue ball (-0.05, -0.09); colours off spot: none
+  all: cue(-0.055,-0.094) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.000,0.892) red1(0.000,0.947) black(0.000,1.460) blue(0.000,0.000)
+
+reds6-v2-5000766: break entry 88 (green side, speed 5.66, packed 0, red on pink 1, pottable 2); steps 2:black 3:red 4:black 5:red 6:black 7:red 8:pink 9:red 10:blue; step 11 red: reRack
+  last red red1 at (0.00, 0.95); nearest pink gap 2.0 mm; cushion gap 812 mm; moved since the break 0.0 cm (break: (0.00, 0.95)); locked (no pocket open): YES
+  cue ball (0.47, -0.91); colours off spot: none
+  all: cue(0.468,-0.913) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) red1(0.000,0.947) black(0.000,1.460) pink(0.000,0.892) blue(0.000,0.000)
+
+reds6-v2-5000188: break entry 4 (green side, speed 4.63, packed 0, red on pink 1, pottable 3); steps 2:black 3:red 4:black 5:red 6:blue 7:red 8:blue 9:red 10:black; step 11 red: success
+  last red red1 at (-0.01, 0.94); nearest black gap 465.2 mm; cushion gap 815 mm; moved since the break 0.8 cm (break: (0.00, 0.95)); locked (no pocket open): no
+  cue ball (-0.82, 0.75); colours off spot: pink 60 cm
+  all: cue(-0.821,0.754) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) pink(0.002,0.296) red1(-0.007,0.943) blue(0.000,0.000) black(0.000,1.460)
+
+reds6-v2-5000865: break entry 141 (yellow side, speed 5.86, packed 0, red on pink 1, pottable 2); steps 2:black 3:red 4:black 5:red 6:black 7:red 8:pink 9:red 10:pink; step 11 red: success
+  last red red2 at (-0.12, -0.01); nearest blue gap 67.9 mm; cushion gap 743 mm; moved since the break 0.0 cm (break: (-0.12, -0.01)); locked (no pocket open): no
+  cue ball (0.13, 0.61); colours off spot: none
+  all: cue(0.134,0.608) yellow(0.292,-1.048) green(-0.292,-1.048) brown(0.000,-1.048) blue(0.000,0.000) red2(-0.120,-0.012) black(0.000,1.460) pink(0.000,0.892)

@@ -1,0 +1,37 @@
+== Break libraries, 6 reds (redPottable: the breaks used when step 1 succeeds) ==
+old: 200 breaks | packed reds after break med 0 mean 0.04 of 6 | pottable reds at step 1 med 2 mean 2.44 | red touching pink 68%, black 0%, cushion 1% | locked reds (no pocket) mean 1.05, breaks with one 93% | reds above the pink mean 5.14 | cue ball end y med 0.24 (top half 67%) | pink moved med 0.00 m, black 0.11 m | start side green 101 / yellow 99 | speed 4.52-5.99
+v3 : 200 breaks | packed reds after break med 0 mean 0.00 of 6 | pottable reds at step 1 med 2 mean 2.39 | red touching pink 92%, black 0%, cushion 3% | locked reds (no pocket) mean 1.09, breaks with one 97% | reds above the pink mean 4.95 | cue ball end y med 0.36 (top half 77%) | pink moved med 0.00 m, black 0.09 m | start side green 94 / yellow 106 | speed 4.50-5.99
+old snookered: 200 breaks | packed reds after break med 4 mean 3.52 of 6 | pottable reds at step 1 med 0 mean 0.00 | red touching pink 98%, black 0%, cushion 4% | locked reds (no pocket) mean 3.86, breaks with one 100% | reds above the pink mean 5.96 | cue ball end y med -0.55 (top half 25%) | pink moved med 0.00 m, black 0.13 m | start side green 90 / yellow 110 | speed 4.51-5.99
+v3  snookered: 200 breaks | packed reds after break med 4 mean 3.40 of 6 | pottable reds at step 1 med 0 mean 0.00 | red touching pink 98%, black 1%, cushion 3% | locked reds (no pocket) mean 3.75, breaks with one 99% | reds above the pink mean 5.95 | cue ball end y med -0.59 (top half 24%) | pink moved med 0.00 m, black 0.13 m | start side green 98 / yellow 102 | speed 4.50-6.00
+old by side / speed: green 101 breaks: red on pink 66%, a locked red 91% | yellow 99 breaks: red on pink 70%, a locked red 94% | slow 66 breaks: red on pink 71%, a locked red 91% | mid 67 breaks: red on pink 58%, a locked red 94% | fast 67 breaks: red on pink 75%, a locked red 93%
+v3 by side / speed: green 94 breaks: red on pink 95%, a locked red 100% | yellow 106 breaks: red on pink 90%, a locked red 94% | slow 66 breaks: red on pink 88%, a locked red 94% | mid 67 breaks: red on pink 93%, a locked red 99% | fast 67 breaks: red on pink 96%, a locked red 99%
+
+old library (soak soak-n4pos, rounds whose break came from the redPottable list):
+  all            923 rounds, 6534 shots: long 48 (7.35 per 1,000 shots), RE-RACK 1, success with a fallback 50%, steps 2-3 natural 49%
+  green side     470 rounds, 3340 shots: long 16 (4.79 per 1,000 shots), RE-RACK 1, success with a fallback 49%, steps 2-3 natural 50%
+  yellow side    453 rounds, 3194 shots: long 32 (10.02 per 1,000 shots), RE-RACK 0, success with a fallback 50%, steps 2-3 natural 48%
+  speed < 4.85    304 rounds, 2198 shots: long 15 (6.82 per 1,000 shots), RE-RACK 0, success with a fallback 48%, steps 2-3 natural 58%
+  speed mid      310 rounds, 2099 shots: long 12 (5.72 per 1,000 shots), RE-RACK 0, success with a fallback 52%, steps 2-3 natural 38%
+  speed >= 5.29   309 rounds, 2237 shots: long 21 (9.39 per 1,000 shots), RE-RACK 1, success with a fallback 49%, steps 2-3 natural 52%
+  red on pink    647 rounds, 4523 shots: long 47 (10.39 per 1,000 shots), RE-RACK 1, success with a fallback 49%, steps 2-3 natural 55%
+  a locked red   862 rounds, 6076 shots: long 48 (7.90 per 1,000 shots), RE-RACK 1, success with a fallback 50%, steps 2-3 natural 49%
+  no locked red  61 rounds, 458 shots: long 0 (0.00 per 1,000 shots), RE-RACK 0, success with a fallback 48%, steps 2-3 natural 53%
+  no red on pink 276 rounds, 2011 shots: long 1 (0.50 per 1,000 shots), RE-RACK 0, success with a fallback 51%, steps 2-3 natural 36%
+  packed >= 3    0 rounds, 0 shots: long 0 (0.00 per 1,000 shots), RE-RACK 0, success with a fallback 0%, steps 2-3 natural 0%
+  packed < 3     923 rounds, 6534 shots: long 48 (7.35 per 1,000 shots), RE-RACK 1, success with a fallback 50%, steps 2-3 natural 49%
+  RE-RACK rounds: {"side":"green","speed":"5.66","packed":0,"redOnPink":1,"pottable":2}
+
+v3 library (soak night6/soak, rounds whose break came from the redPottable list):
+  all            923 rounds, 6521 shots: long 65 (9.97 per 1,000 shots), RE-RACK 5, success with a fallback 50%, steps 2-3 natural 51%
+  green side     461 rounds, 3234 shots: long 39 (12.06 per 1,000 shots), RE-RACK 1, success with a fallback 50%, steps 2-3 natural 52%
+  yellow side    462 rounds, 3287 shots: long 26 (7.91 per 1,000 shots), RE-RACK 4, success with a fallback 50%, steps 2-3 natural 50%
+  speed < 4.82    305 rounds, 2058 shots: long 24 (11.66 per 1,000 shots), RE-RACK 0, success with a fallback 50%, steps 2-3 natural 47%
+  speed mid      310 rounds, 2264 shots: long 15 (6.63 per 1,000 shots), RE-RACK 0, success with a fallback 51%, steps 2-3 natural 54%
+  speed >= 5.31   308 rounds, 2199 shots: long 26 (11.82 per 1,000 shots), RE-RACK 5, success with a fallback 49%, steps 2-3 natural 51%
+  red on pink    850 rounds, 5932 shots: long 64 (10.79 per 1,000 shots), RE-RACK 5, success with a fallback 49%, steps 2-3 natural 50%
+  a locked red   897 rounds, 6332 shots: long 65 (10.27 per 1,000 shots), RE-RACK 5, success with a fallback 50%, steps 2-3 natural 50%
+  no locked red  26 rounds, 189 shots: long 0 (0.00 per 1,000 shots), RE-RACK 0, success with a fallback 49%, steps 2-3 natural 66%
+  no red on pink 73 rounds, 589 shots: long 1 (1.70 per 1,000 shots), RE-RACK 0, success with a fallback 53%, steps 2-3 natural 56%
+  packed >= 3    0 rounds, 0 shots: long 0 (0.00 per 1,000 shots), RE-RACK 0, success with a fallback 0%, steps 2-3 natural 0%
+  packed < 3     923 rounds, 6521 shots: long 65 (9.97 per 1,000 shots), RE-RACK 5, success with a fallback 50%, steps 2-3 natural 51%
+  RE-RACK rounds: {"side":"yellow","speed":"5.34","packed":0,"redOnPink":1,"pottable":2} {"side":"yellow","speed":"5.34","packed":0,"redOnPink":1,"pottable":2} {"side":"green","speed":"5.66","packed":0,"redOnPink":1,"pottable":2} {"side":"yellow","speed":"5.57","packed":0,"redOnPink":1,"pottable":2} {"side":"yellow","speed":"5.34","packed":0,"redOnPink":1,"pottable":2}

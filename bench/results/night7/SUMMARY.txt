@@ -1,0 +1,27 @@
+Night 7 (2026-11-27): why 6 reds plays worse with the v3 break-off. Diagnosis only, nothing in the game changed.
+Script: bench/night7/reds6-diag.test.ts (PART=lib -> reds6-lib.txt, PART=rerack -> reds6-rerack.txt).
+
+1. The 5 RE-RACK rounds (v3 soak) all share one thing: the last red (step 11) is the apex red, 2 mm in front of the
+   pink, on the centre line, where the break left it. It never moved during the round (0.0 cm). With the pink behind
+   it no pocket can take it (allRedsLocked = YES), so the solver finds no shot. Only 3 different breaks: entry 163
+   (yellow side, speed 5.34) 3 times, entry 128 (yellow, 5.57) and entry 27 (green, 5.66) once each.
+   Night 4 (old library): of its 3 RE-RACK rounds, 1 still repeats today, with the same picture (apex red on the pink);
+   the other 2 no longer happen with today's solver (4.11p, night-5 failure shots).
+2. Old vs v3 6-red library (200 red-pottable breaks each):
+   pack after the break: fully open in both (packed reds mean 0.04 vs 0.00 of 6)
+   pottable reds at step 1: mean 2.44 vs 2.39; natural success shots at steps 2-3: 49% vs 51% (soak)
+   a red touching the pink: 68% vs 92% of breaks; a red no pocket can take: 93% vs 97%
+   cue ball ends in the top half: 67% vs 77% (median y 0.24 vs 0.36 m)
+   Long shots: all 48 (old) and all 65 (v3) come from rounds with a locked red; 0 in rounds without one. Most are
+   "overLong" colours at steps 8-10 (v3: blue at step 10, 19 times; old: 2).
+3. Start side and break speed: no clear effect. Red on pink by side: v3 green 95% / yellow 90%; by speed slow 88%,
+   mid 93%, fast 96% (old: 58-75%). Long shots per side flip between the libraries (old: yellow worse, v3: green worse),
+   so that is chance. All 5 RE-RACKs had a fast break (5.34-5.66), but they are only 3 different breaks.
+Cause: from the baulk line the break hits the outer red and leaves the apex red resting against the pink more often
+(92% vs 68%). That red is usually freed later by a cannon, but sometimes it is the last red, and then RE-RACK. 3 of
+the 5 came from one break entry, so part of the 5-vs-1 gap is chance.
+
+npm test on a quiet PC (other project: only its idle dev server, CPU about 20% of one core): first run 293/294,
+tests/breaks.test.ts "same seed builds the same breaks" timed out (36 s > 30 s; 13 s alone; 6-red baulk-line breaks
+are accepted only about 1 in 200). Its time limit is now 120 s; second run 294/294. tests/solver.test.ts passed both
+times (slowest test 36.8 s, limit 60 s).
