@@ -144,5 +144,10 @@ function stripDevHtml(): Plugin {
 
 // base (night 7): the build uses relative URLs ('./'), so dist/ can be hosted from any folder; the dev server keeps '/'.
 // Only index.html is built (replay.html and debug.html are developer pages).
-export default defineConfig(({ command }) => ({ plugins: [weirdShots(), phoneCost(), stripDevHtml()], cacheDir: '.vite-cache',
-  base: command === 'build' ? './' : '/', server: { host: true, port: 5181, strictPort: true } }));
+// 2026-11-27 test build (npm run build:test = scripts/build-test.mjs, mode 'devbuild'): the developer menu and dev
+// tools stay in (NODE_ENV=development -> import.meta.env.DEV), so the developer HTML is kept; output dist-test/.
+// `npm run build` (production) is unchanged.
+export default defineConfig(({ command, mode }) => ({
+  plugins: [weirdShots(), phoneCost(), ...(mode === 'devbuild' ? [] : [stripDevHtml()])], cacheDir: '.vite-cache',
+  base: command === 'build' ? './' : '/', server: { host: true, port: 5181, strictPort: true },
+  ...(mode === 'devbuild' ? { build: { outDir: 'dist-test', emptyOutDir: true } } : {}) }));

@@ -46,6 +46,8 @@ const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0]!;
 // production build (night 7): the developer URL switches (?scale, ?screen, ?compare, ?seed, ?size) are compiled out;
 // only ?level stays. A player must never pick the seed of a round.
 const DEV = import.meta.env.DEV;
+/** Test build (npm run build:test): developer menu included, but no dev server, so nothing is posted to the PC. */
+const PC_LINK = DEV && !import.meta.env.VITE_TEST_BUILD;
 let ballScale: number = (DEV && Number(params.get('scale'))) || CONFIG.view3d.ballScale;
 let mode: Mode = (DEV && (['D', 'A', 'C'] as const).find((s) => s === params.get('screen'))) || 'live';
 let compare = DEV && params.get('compare') === '1';
@@ -125,7 +127,7 @@ async function markWeird() {
   saveWeird();
   renderFlag();
   let sent = false;
-  try {
+  if (PC_LINK) try {
     const res = await fetch('/__dev/weird', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ code: i.code, step: i.step, ball: i.target, outcome: i.outcome, type: i.type,
         length: i.length.toFixed(2), level: i.code.split('-')[0], solver: solverVersion() }) });
@@ -137,7 +139,7 @@ async function markWeird() {
 let shootAvailableAt = 0; // when SHOOT last became pressable (performance.now)
 let costSent = 0; let costFailed = 0; // shown in the developer panel next to the PC link
 function sendCost(line: Record<string, unknown>) {
-  if (!import.meta.env.DEV) return;
+  if (!PC_LINK) return;
   const body = costBody(line, navigator.userAgent, solverVersion());
   const post = () => fetch('/__dev/cost', { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true })
     .then((r) => { if (!r.ok) throw new Error(String(r.status)); });
@@ -148,14 +150,14 @@ function sendCost(line: Record<string, unknown>) {
 let pcLink = 'PC link: checking…';
 let weirdStatus = '';
 async function checkPcLink() {
-  if (!DEV) return;
+  if (!PC_LINK) { pcLink = DEV ? 'PC link: none (test build, nothing is sent)' : ''; return; }
   let ok = false;
   try { const res = await fetch('/__dev/weird/ping'); ok = res.ok && (await res.text()) === 'ok'; } catch { /* no server */ }
   pcLink = ok ? 'PC link: OK' : 'PC link: NOT CONNECTED (restart the dev server on the PC)';
   renderDev();
 }
 async function sendWeirdList() {
-  if (!DEV) return;
+  if (!PC_LINK) { toast('test build: no PC link, the list stays on this phone'); return; }
   weirdStatus = 'sending…';
   renderDev();
   try {

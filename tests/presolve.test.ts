@@ -140,10 +140,12 @@ describe('task P.1: phone cost lines (dev only)', () => {
     expect(j.ua).not.toContain('<');
     expect(() => costLine({ code: '../x' }, '', 't')).toThrow();
   });
-  it('the game sends them only in the dev build', async () => {
+  it('the game sends them only in the dev build, never in the test build (npm run build:test)', async () => {
     const src = (await import('../src/game/gamePage.ts?raw')).default;
     const fn = src.slice(src.indexOf('function sendCost('), src.indexOf('// PC link (2026-11-25)'));
-    expect(fn).toContain('if (!import.meta.env.DEV) return;');
+    expect(fn).toContain('if (!PC_LINK) return;');
+    expect(src).toContain('const PC_LINK = DEV && !import.meta.env.VITE_TEST_BUILD;');
+    expect(src).toContain('const DEV = import.meta.env.DEV;');
   });
 });
 

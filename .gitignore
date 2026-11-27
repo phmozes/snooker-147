@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-test/
 *.log
 # third-party photos, shape reference only (not for the game)
 reference/
