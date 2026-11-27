@@ -21,7 +21,7 @@ function replay(balls: Parameters<typeof createSim>[0], s: { dir: { x: number; y
 describe('task 4.6: break-off library', () => {
   it('the same seed builds the same breaks', () => {
     expect(buildBreaks(6, 'redPottable', 2, table, 5).entries).toEqual(buildBreaks(6, 'redPottable', 2, table, 5).entries);
-  });
+  }, 120_000); // night 7: 13 s alone, 36 s in the full npm test (6-red baulk-line breaks are rarely accepted: about 1 in 200)
   it('a red-pottable break: replaying it gives the stored table; its step-1 success pots a red and its miss is a plain miss (D.1)', () => {
     const [e] = buildBreaks(10, 'redPottable', 1, table, 9).entries;
     const rack = rackBalls(10, table).map((b) => (b.kind === 'cue' ? { ...b, pos: { ...e!.cueStart } } : b));
