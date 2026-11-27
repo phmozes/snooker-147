@@ -7,16 +7,16 @@ import { parseRoundCode } from '../src/core/roundCode';
 import { costLine } from '../src/game/costLine';
 import { parseListLine } from '../vite.config';
 
-const CODES = ['reds6-123', 'reds10-v2-123', 'reds15-v3-123'];
+const CODES = ['reds6-123', 'reds10-v2-123', 'reds15-v3-123', 'reds6-v4-123']; // night 8: v4 (6 reds)
 
-describe('night 6: round code formats (v1, v2, v3)', () => {
+describe('night 6: round code formats (v1, v2, v3, v4)', () => {
   it('parseRoundCode reads all three versions', () => {
-    expect(CODES.map((c) => parseRoundCode(c)!.rng)).toEqual([1, 2, 3]);
-    expect(parseRoundCode('reds6-v4-123')).toBeNull();
+    expect(CODES.map((c) => parseRoundCode(c)!.rng)).toEqual([1, 2, 3, 4]);
+    expect(parseRoundCode('reds6-v5-123')).toBeNull();
   });
   it('a phone cost line accepts all three', () => {
     for (const code of CODES) expect(JSON.parse(costLine({ code, step: 2 }, '', 't')).code).toBe(code);
-    expect(() => costLine({ code: 'reds6-v4-123' }, '', 't')).toThrow();
+    expect(() => costLine({ code: 'reds6-v5-123' }, '', 't')).toThrow();
   });
   it("the weird-shot mark list reads a v3 line (parseListLine)", () => {
     for (const code of CODES) {
@@ -26,7 +26,7 @@ describe('night 6: round code formats (v1, v2, v3)', () => {
   });
   it('vite.config.ts: every round-code check (cleanMark, existingKeys, parseListLine) allows the v3 marker', () => {
     const src = readFileSync('vite.config.ts', 'utf8');
-    expect(src.match(/reds\\d\+-\(\?:v\[23\]-\)\?\\d\+/g)).toHaveLength(3);
+    expect(src.match(/reds\\d\+-\(\?:v\[234\]-\)\?\\d\+/g)).toHaveLength(3);
     expect(src).not.toContain('(?:v2-)?');
   });
 });

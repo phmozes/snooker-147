@@ -3,7 +3,7 @@
 import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { newFrame } from '../src/core/rules';
 import { mulberry32 } from '../src/core/rng';
-import { cashOut, newRound, setLevel, shoot, start, type LevelId, type Round, type ShotProvider } from '../src/core/round';
+import { cashOut, newRound, setLevel, shoot, start, type LevelId, type Round, type RngVersion, type ShotProvider } from '../src/core/round';
 import type { TableGeometry } from '../src/core/table/geometry';
 import type { Ball, Colour } from '../src/core/types';
 import { CONFIG } from '../src/config/game.config';
@@ -46,9 +46,9 @@ export function recording(base: ShotProvider, table: TableGeometry, level: Level
 
 /** A round with random choices (a test RNG, never the round's own): cash out at a random step or never, and on one
  *  colour step in five a random colour from black / pink / blue instead of the automatic pick. */
-export function playRandomRound(level: LevelId, seed: number, provider: ShotProvider, table: TableGeometry, salt: number) {
+export function playRandomRound(level: LevelId, seed: number, provider: ShotProvider, table: TableGeometry, salt: number, rng?: RngVersion) {
   const rnd = mulberry32((seed ^ Math.imul(salt + 1, 2654435761)) >>> 0);
-  let r: Round = start(setLevel(newRound(seed), level), provider, table);
+  let r: Round = start(setLevel(newRound(seed, undefined, rng), level), provider, table); // rng: night 8 (v4 rounds)
   const cashAt = rnd() < 0.5 ? 1 + Math.floor(rnd() * r.ladder.length) : Infinity;
   let notAuto = false;
   while (r.phase === 'decide') {

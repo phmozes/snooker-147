@@ -40,11 +40,16 @@ Every random number of a round is u = f(seed, stream, k) in [0, 1): stream = 'ou
   (cue ball on the baulk line, RULES B.1); v1 and v2 rounds keep the old public/breaks. The library pick uses the same
   'variety' value as before, so a v3 round has the same outcomes (success / failure per step, failure type) as the v2
   round of that seed; only the shots differ. The 200M v2 result below therefore still stands for v3.
+- **v4 (every new 6-red round since night 8; 10 and 15 reds stay v3):** the same v2 HMAC generator again (a test
+  checks every stream value v4 == v3). Only the 6-red break-off library changed: public/breaks-v4/reds6.json, whose
+  redPottable breaks leave no red within 2 mm of the pink and no red that no pocket can take (RE-RACK fix A, night 8).
+  The library pick and every outcome stay as for v3, so the 200M v2 result still stands for v4.
 ## Round codes
 A v3 code carries the marker `v3` before the seed: `reds6-v3-48213-BKPK-C7`; a v2 code (night 4 to 6) `v2`. A code
 without a marker (`reds6-48213-BKPK-C7`, every code from before night 4, all owner marks) is v1 and replays with the old
 generator. v1 and v2 codes replay on the old break-off library; the v3 library files carry `version: 3` and the
-provider refuses them for a v1 / v2 round (night 6 proof: bench/results/night6/).
+provider refuses them for a v1 / v2 round (night 6 proof: bench/results/night6/). A v4 code (`reds6-v4-48213`) plays
+the v4 6-red file (`version: 4`); a v4 code at 10 or 15 reds would use the v3 files (night 8 proof: bench/results/night8/).
 ## The v1 failure (night 3) and the v2 result (night 4)
 - v1, 50M rounds per level (bench/results/rtp-rng-50M.txt): failed its rule (|z| < 3 every cash-out step) on reds6
   steps 13, 14, 18 (all below 97%, worst z -3.45). Cause not proven; the light hash was the suspect.

@@ -25,7 +25,7 @@ const nowText = () => {
 };
 const cleanMark = (m: Record<string, unknown>): Mark => {
   const code = String(m.code);
-  if (!/^reds\d+-(?:v[23]-)?\d+$/.test(code)) throw new Error('bad round code');
+  if (!/^reds\d+-(?:v[234]-)?\d+$/.test(code)) throw new Error('bad round code');
   return { code, step: clean(m.step, 4), ball: clean(m.ball), outcome: clean(m.outcome), type: clean(m.type),
     length: clean(m.length, 8), solver: clean(m.solver, 8) };
 };
@@ -37,7 +37,7 @@ const existingKeys = (): Set<string> => {
   for (const line of readFileSync(FILE, 'utf8').split('\n')) {
     const c = line.split('|').map((s) => s.trim());
     // | time | code | step | ball | outcome | type | length | level | solver |
-    if (c.length >= 10 && /^reds\d+-(?:v[23]-)?\d+$/.test(c[2]!)) keys.add([c[2], c[3], c[4], c[5], c[6], c[9]].join('|'));
+    if (c.length >= 10 && /^reds\d+-(?:v[234]-)?\d+$/.test(c[2]!)) keys.add([c[2], c[3], c[4], c[5], c[6], c[9]].join('|'));
   }
   return keys;
 };
@@ -57,7 +57,7 @@ function addMarks(marks: Mark[], time: string): number {
 }
 /** A line of the phone's list: "reds15-123 step 10 · blue success · long · 1.68 s · solver 4.9". */
 export function parseListLine(line: string): Mark | null {
-  const m = /^(reds\d+-(?:v[23]-)?\d+) step (\d+) · (\w+) (\w+) · (\w+) · ([\d.]+) s · solver (\S+)$/.exec(line.trim());
+  const m = /^(reds\d+-(?:v[234]-)?\d+) step (\d+) · (\w+) (\w+) · (\w+) · ([\d.]+) s · solver (\S+)$/.exec(line.trim());
   if (!m) return null;
   return cleanMark({ code: m[1], step: m[2], ball: m[3], outcome: m[4], type: m[5], length: m[6], solver: m[7] });
 }

@@ -381,6 +381,12 @@ export const CONFIG = {
     files: { reds6: 'breaks/reds6.json', reds10: 'breaks/reds10.json', reds15: 'breaks/reds15.json' }, // in public/ (v1, v2 rounds)
     // night 6 (owner): the library of v3 rounds (every new round): the cue ball starts ON the baulk line (RULES B.1)
     filesV3: { reds6: 'breaks-v3/reds6.json', reds10: 'breaks-v3/reds10.json', reds15: 'breaks-v3/reds15.json' },
+    // night 8 (owner, 6-red RE-RACK fix A): v4 rounds = 6 reds only (10 / 15 reds stay on v3). Same baulk-line break,
+    // plus two library rules for the redPottable breaks: no red within redPinkMinGap (m, ball surface to surface) of the
+    // pink, and no red that no pocket can take (path or ghost-ball spot blocked, the other balls as blockers).
+    filesV4: { reds6: 'breaks-v4/reds6.json' } as Partial<Record<'reds6' | 'reds10' | 'reds15', string>>,
+    v4Levels: ['reds6'] as readonly string[],
+    v4Rules: { redPinkMinGap: 0.002, noLockedRed: true },
     // the v3 break-off start: cue ball centre at y = baulk line, |x| from xMin to xMax (m), on the yellow side (x > 0)
     // or the green side (x < 0). Brown is at x = 0 and yellow / green at |x| = 0.292 (the D radius); a ball is 0.0525
     // wide, so 0.11 leaves 5.75 cm of cloth to the brown and 0.19 leaves 4.95 cm to the yellow / green.

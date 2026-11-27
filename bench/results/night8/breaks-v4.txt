@@ -1,0 +1,1 @@
+reds6 v4: redPottable 200 (attempt indices 0..673412, i.e. 673413 breaks tried; 1248 accepted in 0..4399999); rejected by the v4 rules in 0..4399999: red within 2 mm of the pink 101327, a red no pocket can take 1186; snookered 200 = the v3 list; CPU 31092 s in 11 chunks -> public/breaks-v4/reds6.json

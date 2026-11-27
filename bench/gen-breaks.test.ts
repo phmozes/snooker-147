@@ -2,6 +2,7 @@
 // cue ball ON the baulk line (RULES B.1), in public/breaks-v3/<level>.json, tagged version 3.
 // START=d rebuilds the old library instead (cue ball anywhere in the D; v1 / v2 rounds), to public/breaks/<level>.json.
 // LEVELS=reds6,reds10 builds only those levels (one process per level runs them in parallel).
+// Night 8: the v4 6-red library is built by bench/night8/gen-v4.sh (11 parallel chunks) + bench/night8/merge-v4.mjs.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { it } from 'vitest';

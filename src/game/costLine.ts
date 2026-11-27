@@ -8,7 +8,7 @@ const frac = (v: unknown) => (typeof v === 'number' && v >= 0 && v <= 1 ? +v.toF
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
 export function costLine(m: Record<string, unknown>, uaHeader: string, time: string) {
   const code = String(m.code);
-  if (!/^reds\d+-(?:v[23]-)?\d+$/.test(code)) throw new Error('bad round code');
+  if (!/^reds\d+-(?:v[234]-)?\d+$/.test(code)) throw new Error('bad round code');
   return JSON.stringify({ time, line: num(m.line), code, step: num(m.step), target: clean(m.target, 10), outcome: clean(m.outcome, 16),
     forced: m.forced === true, auto: m.auto === true, ahead: m.ahead === true, presolve: clean(m.presolve, 8),
     successMs: num(m.successMs), successTried: num(m.successTried), failureMs: num(m.failureMs), failureTried: num(m.failureTried),

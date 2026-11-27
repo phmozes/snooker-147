@@ -63,8 +63,11 @@ export interface Round {
 /** Round version (docs/FAIRNESS.md). 1 = the old light hash, kept only so that old round codes (without a marker)
  *  replay exactly as before; 2 = HMAC-SHA256 with the old break-off library; 3 (night 6, every new round) = the same
  *  v2 HMAC generator with the new break-off library (cue ball on the baulk line, RULES B.1). */
-export type RngVersion = 1 | 2 | 3;
+export type RngVersion = 1 | 2 | 3 | 4;
 export const RNG_VERSION_NEW: RngVersion = 3;
+/** Night 8: the version of a NEW round at this level. 4 (= v3 generator + the v4 break library, docs/FAIRNESS.md) for
+ *  the levels in config breakLibrary.v4Levels (6 reds), else RNG_VERSION_NEW (3). */
+export const newRngFor = (levelId: string): RngVersion => (CONFIG.breakLibrary.v4Levels.includes(levelId) ? 4 : RNG_VERSION_NEW);
 
 /** v1 (until 2026-11-26): FNV-1a of seed + `${stream}#${k}` feeding one mulberry32 draw. Replay of old codes only. */
 export function streamValueV1(seed: number, stream: string, k: number): number {
@@ -98,7 +101,7 @@ export function pocketCamDraw(seed: number, k: number, version: RngVersion = RNG
   if ((CONFIG.rng.streams as readonly string[]).includes(stream)) throw new Error(`pocket camera stream ${stream} is a game stream`);
   return streamValue(seed, stream, k, version);
 }
-/** The round code of a round that has just started (no colour letters yet): v2 / v3 codes carry the marker `v2` / `v3`. */
+/** The round code of a round that has just started (no colour letters yet): v2 / v3 / v4 codes carry the marker `v2` / `v3` / `v4`. */
 export const baseCode = (levelId: string, seed: number, rng: RngVersion): string => `${levelId}-${rng === 1 ? '' : `v${rng}-`}${seed}`;
 
 /** The balance after a win is paid (a free replay pays nothing; its end still shows what the real round paid). */

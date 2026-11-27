@@ -9,7 +9,7 @@ import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
 import { breakFilesFor, createPhysicsProvider } from '../src/core/physicsProvider';
 import { judgeShot } from '../src/core/rules';
-import { baseCode, newRound, nextOutcome, nextTarget, RNG_VERSION_NEW, setLevel, shoot, start, type LevelId, type Round, type RngVersion } from '../src/core/round';
+import { baseCode, newRound, nextOutcome, nextTarget, newRngFor, setLevel, shoot, start, type LevelId, type Round, type RngVersion } from '../src/core/round';
 import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { playbackSeconds, resultVisibleAt } from '../src/view/fastEnd';
 import { addedSeconds, planCut } from '../src/view/pocketCam';
@@ -86,7 +86,7 @@ it('soak', () => {
 `);
   };
   // night 6: the library of the rounds played (new rounds are v3: the baulk-line break-off; RNG=2: the old library)
-  const rngV = (process.env.RNG ? Number(process.env.RNG) : RNG_VERSION_NEW) as RngVersion;
+  const rngV = (process.env.RNG ? Number(process.env.RNG) : newRngFor(level)) as RngVersion; // night 8: 6 reds -> v4
   const lib = JSON.parse(readFileSync(`public/${breakFilesFor(rngV)[level]}`, 'utf8'));
   const provider = createPhysicsProvider(table, { [level]: lib });
   const cap = shotCaps().decision;

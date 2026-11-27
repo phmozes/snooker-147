@@ -10,7 +10,7 @@ import { CONFIG } from '../config/game.config';
 import { createSim, runUntilStill, strike, type PhysicsConfig } from './physics/sim';
 import { mulberry32 } from './rng';
 import { applyShot, judgeShot, newFrame, type FrameState } from './rules';
-import { clusteredReds } from './shotType';
+import { allRedsLocked, clusteredReds } from './shotType';
 import { isNaturalShot, nextShotCost, solveFailure, solveSuccess } from './solver';
 import type { TableGeometry } from './table/geometry';
 import type { Ball, Vec2 } from './types';
@@ -155,12 +155,32 @@ export function topColoursMovedByBreak(after: Ball[], table: TableGeometry): num
  * Build `count` breaks of one kind for a level. Breaks that pot a ball, or that do not hit a red first, are skipped;
  * so are breaks whose step-1 shots cannot be found (D.1: step 1 must never need a fallback).
  */
+export interface V4Rules { redPinkMinGap: number; noLockedRed: boolean }
+/** Night 8 (6-red RE-RACK fix A, v4 library): does this table after the break break a v4 rule? A red within
+ *  redPinkMinGap of the pink (surface to surface), or a red that no pocket can take (path or ghost-ball spot blocked;
+ *  every other ball, the other reds too, counts as a blocker; the same measure as bench/night7/reds6-diag). */
+export function v4Rejects(after: Ball[], table: TableGeometry, rules: V4Rules): 'redOnPink' | 'lockedRed' | null {
+  const R = table.ballRadius;
+  const reds = after.filter((b) => b.kind === 'red');
+  const pink = after.find((b) => b.kind === 'pink');
+  if (pink && reds.some((r) => Math.hypot(r.pos.x - pink.pos.x, r.pos.y - pink.pos.y) - 2 * R <= rules.redPinkMinGap)) return 'redOnPink';
+  if (rules.noLockedRed && reds.some((r) => allRedsLocked(after.map((b) => (b.kind === 'red' && b.id !== r.id ? { ...b, kind: 'black' as const } : b)), table)))
+    return 'lockedRed';
+  return null;
+}
+
+/** extra (night 8): v4 rules for the redPottable breaks; from / to = try only the attempt indices [from, to) and keep
+ *  every accepted one (the parallel v4 build: merged in index order, the first `count` are exactly what one process
+ *  trying 0, 1, 2 ... would keep). `indices` = the attempt index of each entry. */
 export function buildBreaks(reds: number, kind: BreakKind, count: number, table: TableGeometry, baseSeed: number,
-  cfg: PhysicsConfig = CONFIG.physics, maxAttempts = count * 1000, start: BreakStart = 'baulkLine'): { entries: BreakEntry[]; attempts: number } {
+  cfg: PhysicsConfig = CONFIG.physics, maxAttempts = count * 1000, start: BreakStart = 'baulkLine',
+  extra: { rules?: V4Rules; from?: number; to?: number; rejected?: Record<string, number> } = {}): { entries: BreakEntry[]; attempts: number; indices: number[] } {
   const now = () => 0; // the solver stops on a shot count, so no clock is needed
   const entries: BreakEntry[] = [];
+  const indices: number[] = [];
   let attempts = 0;
-  for (let i = 0; entries.length < count && i < maxAttempts; i++) {
+  const ranged = extra.to !== undefined;
+  for (let i = extra.from ?? 0; ranged ? i < extra.to! : entries.length < count && i < maxAttempts; i++) {
     attempts++;
     const seed = (baseSeed * 1_000_003 + i * 7919) >>> 0;
     const b = breakAttempt(seed, reds, table, cfg, start);
@@ -173,10 +193,15 @@ export function buildBreaks(reds: number, kind: BreakKind, count: number, table:
       if (!esc) continue;
       entries.push({ kind, seed, cueStart: b.cueStart, breakShot: b.breakShot, after: b.after, pottableReds: 0,
         step1Success: null, step1Miss: null, step1Escape: esc });
+      indices.push(i);
       continue;
     }
     const pottable = pottableReds(state, table);
     if (pottable < L.minPottableRedsForRedPottable) continue;
+    if (extra.rules) {
+      const why = v4Rejects(b.after, table, extra.rules);
+      if (why) { if (extra.rejected) extra.rejected[why] = (extra.rejected[why] ?? 0) + 1; continue; }
+    }
     // task 4.7: the break must really open the pack (a closed pack later leaves no natural pot, even no pot at all)
     const packed = clusteredReds(b.after, table.ballRadius).size;
     if (packed > (L.maxPackedShare[`reds${reds}` as keyof typeof L.maxPackedShare] ?? 1) * reds) continue;
@@ -211,6 +236,7 @@ export function buildBreaks(reds: number, kind: BreakKind, count: number, table:
     if (!miss || miss.fallback) continue;
     entries.push({ kind, seed, cueStart: b.cueStart, breakShot: b.breakShot, after: b.after, pottableReds: pottable,
       step1Success: shotOf(ok), step1Miss: shotOf(miss), step1Escape: null });
+    indices.push(i);
   }
-  return { entries, attempts };
+  return { entries, attempts, indices };
 }

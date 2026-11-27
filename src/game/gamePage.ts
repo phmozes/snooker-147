@@ -10,7 +10,7 @@
 import { CONFIG } from '../config/game.config';
 import { createSim, recordShot, strike } from '../core/physics/sim';
 import { breakFilesFor, breakLibraryOf, createPhysicsProvider, type BreakLibrary } from '../core/physicsProvider';
-import { awaitingStep1, peekStep1, startRound, cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, RNG_VERSION_NEW, type RngVersion, type ForcedOutcome,
+import { awaitingStep1, peekStep1, startRound, cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, RNG_VERSION_NEW, newRngFor, type RngVersion, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
 import { ladderForLevel, rtpText } from '../core/ladder';
@@ -187,7 +187,7 @@ if (import.meta.env.DEV) {
 }
 const fallbacks: FallbackLogEntry[] = [];
 // night 6: v3 rounds play the new break-off library (cue ball on the baulk line), v1 / v2 codes the old one
-const libraries: Record<'old' | 'v3', BreakLibrary> = { old: {}, v3: {} };
+const libraries: Record<'old' | 'v3' | 'v4', BreakLibrary> = { old: {}, v3: {}, v4: {} }; // night 8: v4 = 6 reds
 const libraryFor = (rng: RngVersion): BreakLibrary => libraries[breakLibraryOf(rng)];
 const presolver = createPresolver((entries) => {
   fallbacks.push(...entries);
@@ -411,7 +411,7 @@ async function onStart() {
   busy = 'rerack';
   showBetArea = false;
   render();
-  const rng = pendingSeed !== null ? pendingRng : RNG_VERSION_NEW;
+  const rng = pendingSeed !== null ? pendingRng : newRngFor(round.levelId); // night 8: 6 reds -> v4
   try { await loadLibrary(round.levelId, rng); } catch (e) { busy = null; showBetArea = true; lastShot = String(e); render(); return; }
   const seed = pendingSeed ?? newSeed();
   pendingSeed = null;

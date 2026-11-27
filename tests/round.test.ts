@@ -2,8 +2,8 @@
 // (it only reports what the physics would: which ball was hit first and what dropped).
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { breakLibraryOf } from '../src/core/physicsProvider';
-import { awaitingStep1, baseCode, RNG_VERSION_NEW, streamValue, cashOut, FORCED_OUTCOMES, newRound, setBet, setLevel, shoot, shootForced, start, startRound, stepSucceeds, type FailureLabel, type Round, type ShotProvider } from '../src/core/round';
+import { breakFilesFor, breakLibraryOf, libraryTagFor } from '../src/core/physicsProvider';
+import { awaitingStep1, baseCode, newRngFor, RNG_VERSION_NEW, streamValue, cashOut, FORCED_OUTCOMES, newRound, setBet, setLevel, shoot, shootForced, start, startRound, stepSucceeds, type FailureLabel, type Round, type ShotProvider } from '../src/core/round';
 import type { FrameState, ShotResult } from '../src/core/rules';
 import { buildTable } from '../src/core/table/geometry';
 import type { BallKind } from '../src/core/types';
@@ -295,5 +295,20 @@ describe('night 6: round version 3 = the v2 generator + the new break-off librar
     expect(breakLibraryOf(1)).toBe('old');
     expect(breakLibraryOf(2)).toBe('old');
     expect(breakLibraryOf(3)).toBe('v3');
+  });
+  it('night 8: new 6-red rounds are v4 (v3 generator + the v4 break library), 10 / 15 reds stay v3', () => {
+    expect(newRngFor('reds6')).toBe(4);
+    expect(newRngFor('reds10')).toBe(3);
+    expect(newRngFor('reds15')).toBe(3);
+    for (let seed = 1; seed <= 200; seed++) for (const stream of ['outcome', 'failureType', 'break', 'variety'])
+      for (let k = 0; k <= 20; k++) expect(streamValue(seed, stream, k, 4)).toBe(streamValue(seed, stream, k, 3));
+    expect(baseCode('reds6', 42, 4)).toBe('reds6-v4-42');
+    expect(breakLibraryOf(4)).toBe('v4');
+    expect(breakFilesFor(4).reds6).toBe('breaks-v4/reds6.json');
+    expect(breakFilesFor(4).reds10).toBe(breakFilesFor(3).reds10);
+    expect(breakFilesFor(3).reds6).toBe('breaks-v3/reds6.json');
+    expect(libraryTagFor(4, 'reds6')).toBe(4);
+    expect(libraryTagFor(4, 'reds10')).toBe(3);
+    expect(libraryTagFor(3, 'reds6')).toBe(3);
   });
 });
