@@ -70,6 +70,11 @@ const forcedNow = (): ForcedOutcome | null => (!import.meta.env.DEV ? null : aut
 let busy: null | 'rerack' | 'break' | 'step1' | 'shot' | 'solving' = null;
 let showBetArea = true; // after a round ends the bet area returns after ui.wonMessageSeconds
 let shownBalance = round.balance;
+/** Owner 2026-11-27: the current break in snooker points (red 1 ... black 7), shown as "BREAK 24" at the left of the
+ *  status line. Excitement only: it never touches the money. Updated when a shot has finished playing; between
+ *  rounds it shows the last break. */
+let shownBreak = 0;
+const breakHtml = () => `<span class="brk">BREAK ${shownBreak}</span>`;
 let lastShot = '—';
 /** Dev only (owner 2026-11-25): solver cost of the last shot, to read on a real phone. */
 let lastCost = '—';
@@ -361,6 +366,7 @@ async function onStart() {
   } };
   round = startRound({ ...round, seed, rng, free: replay !== null }, provider, table); // RULES B.1: the bet is taken
   shownBalance = round.balance;
+  shownBreak = 0; // a new break
   presolveNext(); // solving (of step 2) starts during the break-off animation
   // RULES B.1: the balls re-rack quickly, then the opponent breaks off (from the library)
   const rack = newFrame(level().reds, table).balls;
@@ -454,6 +460,7 @@ function onCashOut() {
 /** After a shot has played: balls settle where the rules put them (a potted colour back on its spot). */
 function afterShot() {
   busy = null;
+  shownBreak = round.frame?.score ?? 0; // the pot has dropped: the break counts it now
   shootAvailableAt = performance.now();
   if (round.frame) showBalls(round.frame.balls);
   if (round.phase === 'over') endRound(); else render();
@@ -555,26 +562,26 @@ function render() {
   const bottom = $('bottom');
   if (busy) {
     const what = { rerack: 'RACKING', break: 'OPPONENT BREAKS OFF', step1: 'STEP 1 · RED', shot: '', solving: 'THINKING…' }[busy];
-    bottom.innerHTML = `<div class="hint">${what}</div><button class="big" disabled>SHOOT</button>`;
+    bottom.innerHTML = `<div class="hint">${breakHtml()}${what}</div><button class="big" disabled>SHOOT</button>`;
   } else if (awaitingStep1(round)) {
     // RULES B.2: before step 1 nothing has been won yet: only SHOOT
-    bottom.innerHTML = `<div class="hint">${hintText(round)}</div><button class="big" id="bShoot">SHOOT</button>`;
+    bottom.innerHTML = `<div class="hint">${breakHtml()}${hintText(round)}</div><button class="big" id="bShoot">SHOOT</button>`;
     $('bShoot').onclick = () => { void onShoot(); };
   } else if (round.phase === 'decide') {
     const amount = (cashOut(round).end as { amount: number }).amount; // exactly what CASH OUT pays
     // a free replay pays nothing: CASH OUT shows the multiplier, never an amount that looks like money
     const cashText = round.free ? `${formatMult(ladder()[round.step - 1]!.multiplier)} · REPLAY` : money(amount);
     bottom.innerHTML = `<button class="cash" id="bCash">CASH OUT<b>${cashText}</b></button>` +
-      `<div class="hint">${hintText(round, presolver.target())}</div><button class="big" id="bShoot">SHOOT</button>`;
+      `<div class="hint">${breakHtml()}${hintText(round, presolver.target())}</div><button class="big" id="bShoot">SHOOT</button>`;
     $('bCash').onclick = onCashOut;
     $('bShoot').onclick = () => { void onShoot(); };
   } else if (!showBetArea) {
-    bottom.innerHTML = `<div class="hint"></div><button class="big" disabled>START</button>`;
+    bottom.innerHTML = `<div class="hint">${breakHtml()}</div><button class="big" disabled>START</button>`;
   } else {
     const bet = round.bet;
     const can = round.balance >= bet;
     // night 4 (Part 5): one row with - BET + and the quick amounts, then START (the RTP text moved into the Rules)
-    bottom.innerHTML = `
+    bottom.innerHTML = `${round.roundCode ? `<div class="hint">${breakHtml()}</div>` : ''}
       <div class="row betrow"><button class="sq" id="bMinus">−</button><div class="bet">BET<b>${money(bet)}</b></div><button class="sq" id="bPlus">+</button>${CONFIG.money.quickBets.map((q) => `<button class="quick${q === bet ? ' on' : ''}" data-q="${q}">${q}</button>`).join('')}</div>
       <button class="big" id="bStart" ${can ? '' : 'disabled'}>${can ? `START · ${money(bet)}` : 'BALANCE TOO LOW'}</button>`;
     const setB = (b: number) => { round = setBet(round, b); render(); };

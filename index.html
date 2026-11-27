@@ -110,6 +110,9 @@
             font-size: 12px; letter-spacing: .1em; color: #aab5b1; }
     .cash b { font-size: 16px; letter-spacing: 0; color: var(--text); margin-left: 10px; }
     .hint { text-align: center; font-size: 12px; letter-spacing: .08em; color: #aab5b1; height: 14px; margin: -2px 0; }
+    /* the current break (owner 2026-11-27): left end of the status line, the centred text stays centred */
+    .hint { position: relative; flex: none; }
+    .hint .brk { position: absolute; left: 0; top: 0; color: var(--yellow); font-weight: 700; }
     .big { height: 66px; border-radius: 18px; border: none; background: var(--yellow); color: #111;
            font-size: 24px; font-weight: 800; letter-spacing: .04em; }
     .row { display: flex; gap: 10px; }
