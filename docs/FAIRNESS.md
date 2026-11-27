@@ -35,9 +35,16 @@ Every random number of a round is u = f(seed, stream, k) in [0, 1): stream = 'ou
   The server (docs/SERVER-OUTCOMES.md) will use the same function with a 32-byte server seed as the key.
 - **v1 (until night 4):** FNV-1a of seed and `stream#k` feeding one mulberry32 draw (a light hash). Kept only as
   streamValueV1 so that old round codes replay exactly as before.
+- **v3 (every new round since night 6):** the SAME v2 HMAC generator (streamValue for v3 is streamValueV2; a test checks
+  every stream value v3 == v2). Only the break-off library changed: v3 rounds take their break from public/breaks-v3
+  (cue ball on the baulk line, RULES B.1); v1 and v2 rounds keep the old public/breaks. The library pick uses the same
+  'variety' value as before, so a v3 round has the same outcomes (success / failure per step, failure type) as the v2
+  round of that seed; only the shots differ. The 200M v2 result below therefore still stands for v3.
 ## Round codes
-A v2 code carries the marker `v2` before the seed: `reds6-v2-48213-BKPK-C7`. A code without it (`reds6-48213-BKPK-C7`,
-every code from before night 4, all owner marks) is v1 and replays with the old generator.
+A v3 code carries the marker `v3` before the seed: `reds6-v3-48213-BKPK-C7`; a v2 code (night 4 to 6) `v2`. A code
+without a marker (`reds6-48213-BKPK-C7`, every code from before night 4, all owner marks) is v1 and replays with the old
+generator. v1 and v2 codes replay on the old break-off library; the v3 library files carry `version: 3` and the
+provider refuses them for a v1 / v2 round (night 6 proof: bench/results/night6/).
 ## The v1 failure (night 3) and the v2 result (night 4)
 - v1, 50M rounds per level (bench/results/rtp-rng-50M.txt): failed its rule (|z| < 3 every cash-out step) on reds6
   steps 13, 14, 18 (all below 97%, worst z -3.45). Cause not proven; the light hash was the suspect.

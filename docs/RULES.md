@@ -22,6 +22,11 @@
    Every break in the library: pots no ball, hits a red first, opens the pack; it moves the yellow, green, brown
    and blue at most 2 cm from their spots (owner 2026-11-24) and the pink and the black each at most 30 cm
    (owner 2026-11-25; config breakLibrary.maxColourMove / maxTopColourMove). Later shots (e.g. a missed black) are not limited.
+   Break-off start (owner, night 6): the cue ball starts ON the baulk line, inside the D, between the brown and the
+   yellow or between the brown and the green, with a clear gap from both (centre 11-19 cm from the brown; config
+   breakLibrary.baulkStart), and is played at the outer red on its own side, like a real break-off. This is the v3
+   library (public/breaks-v3, every new round); old v1 / v2 round codes replay with the old library (cue ball
+   anywhere in the D) so that they stay exactly the same (docs/FAIRNESS.md).
 2. Step 1 (our first red) is played by SHOOT, like every other step (owner 2026-11-27; until then it played by itself).
    Before step 1 there is no CASH OUT (nothing has been won yet): only SHOOT. Step 1 is still decided by seed + step
    only, so old round codes (v1 and v2) give the same rounds; a replay presses SHOOT by itself.
