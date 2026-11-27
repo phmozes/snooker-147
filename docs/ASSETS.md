@@ -100,7 +100,15 @@ last 35% (at least 0.5 s), mono 96 kbps), but NOT levelled the same: average lou
 | 6-A | MAXIMUM | https://freesound.org/people/kyles/sounds/455660/ | kyles | CC0 1.0 | 6.50-12.50 s | 6.0 s |
 | 6-B | MAXIMUM | https://freesound.org/people/FoolBoyMedia/sounds/397434/ | FoolBoyMedia | CC0 1.0 | 1.50-7.50 s | 6.0 s |
 
-## Miss sound options (mockups/miss/; options page only, not in the game yet)
+## Miss sound in the game: public/sounds/miss.mp3 (owner's pick 2026-11-27: B)
+| File | Source page | Author | Licence | Part used | Length |
+|---|---|---|---|---|---|
+| public/sounds/miss.mp3 (= mockups/miss/miss-B.mp3, crowd "oh", disappointed) | https://freesound.org/people/mrrap4food/sounds/619007/ | mrrap4food | CC0 1.0 (checked on the sound's page 2026-11-27) | 0.20-1.70 s | 1.5 s |
+
+Played once per failed shot when the failure is clear on screen (src/game/tableSounds.ts missMoment); volume
+CONFIG.sound.uiSounds.missVolume.
+
+## Miss sound options (mockups/miss/; the options page, B is now in the game)
 Owner 2026-11-27: a snooker-crowd "ooh" / groan of disappointment after a miss. Freesound, CC0 1.0 only (licence checked
 on each sound's own page on 2026-11-27). Same treatment as before (trimmed, 30 ms fade-in, fade-out over the last 0.5 s,
 mono 96 kbps), all three at the same loudness (-24 dB RMS) so they can be compared.

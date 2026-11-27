@@ -1,0 +1,9 @@
+
+ RUN  v5.1.1 C:/Users/phmoz/Desktop/snooker-147
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  23:40:33
+   Duration  27.07s (tests 100%)
+

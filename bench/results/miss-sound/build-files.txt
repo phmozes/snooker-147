@@ -1,0 +1,50 @@
+== dist
+    698066  dist/assets/index-xW3gUeMq.js
+     49844  dist/assets/solverWorker-BwuWRXjn.js
+    589119  dist/breaks/reds10.json
+    712742  dist/breaks/reds15.json
+    489861  dist/breaks/reds6.json
+    589812  dist/breaks-v3/reds10.json
+    712882  dist/breaks-v3/reds15.json
+    488825  dist/breaks-v3/reds6.json
+     10860  dist/index.html
+     18808  dist/sounds/applause-1.mp3
+     27271  dist/sounds/applause-2.mp3
+     36675  dist/sounds/applause-3.mp3
+     46393  dist/sounds/applause-4.mp3
+     60813  dist/sounds/applause-5.mp3
+     72724  dist/sounds/applause-6.mp3
+      4075  dist/sounds/ball-hard.mp3
+      2507  dist/sounds/ball-soft.mp3
+     21359  dist/sounds/break.mp3
+      5015  dist/sounds/cue.mp3
+      2194  dist/sounds/cushion.mp3
+     18808  dist/sounds/miss.mp3
+     13165  dist/sounds/pocket.mp3
+      1924  dist/sounds/tap.mp3
+total: 4673742 bytes, 23 files
+== dist-test
+    712142  dist-test/assets/index-DYa7vNDm.js
+     49844  dist-test/assets/solverWorker-BwuWRXjn.js
+    589119  dist-test/breaks/reds10.json
+    712742  dist-test/breaks/reds15.json
+    489861  dist-test/breaks/reds6.json
+    589812  dist-test/breaks-v3/reds10.json
+    712882  dist-test/breaks-v3/reds15.json
+    488825  dist-test/breaks-v3/reds6.json
+     11057  dist-test/index.html
+     18808  dist-test/sounds/applause-1.mp3
+     27271  dist-test/sounds/applause-2.mp3
+     36675  dist-test/sounds/applause-3.mp3
+     46393  dist-test/sounds/applause-4.mp3
+     60813  dist-test/sounds/applause-5.mp3
+     72724  dist-test/sounds/applause-6.mp3
+      4075  dist-test/sounds/ball-hard.mp3
+      2507  dist-test/sounds/ball-soft.mp3
+     21359  dist-test/sounds/break.mp3
+      5015  dist-test/sounds/cue.mp3
+      2194  dist-test/sounds/cushion.mp3
+     18808  dist-test/sounds/miss.mp3
+     13165  dist-test/sounds/pocket.mp3
+      1924  dist-test/sounds/tap.mp3
+total: 4688015 bytes, 23 files

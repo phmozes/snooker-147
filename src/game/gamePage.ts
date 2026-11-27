@@ -26,7 +26,7 @@ import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
-import { breakOffMoment, initTableSounds, lastSoundAt, playApplause, playCueStrike, playEventsBetween, playTap, potHeardAt } from './tableSounds';
+import { breakOffMoment, initTableSounds, lastSoundAt, missMoment, playApplause, playCueStrike, playEventsBetween, playMiss, playTap, potHeardAt } from './tableSounds';
 import { endLevel, milestoneLevel, type ApplauseLevel } from './applause';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
@@ -269,7 +269,7 @@ function cueProtect(balls: Ball[], C: Vec2, d: Vec2) {
 }
 /** Play a shot from `balls` on screen; resolves with its length in seconds when every ball has stopped. */
 function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target: string; pocket: string; view: PocketView }; breakOff?: boolean;
-  applause?: { ball: string; level: ApplauseLevel } } = {}): Promise<number> {
+  applause?: { ball: string; level: ApplauseLevel }; miss?: { label: string; target?: string } } = {}): Promise<number> {
   const sim = createSim(balls, table);
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
@@ -282,6 +282,10 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
   let applause = opts.applause ?? null;
   const potEv = applause ? rec.events.find((e) => e.type === 'pot' && e.a === applause!.ball) : undefined;
   const applauseAt = applause ? (potEv ? potHeardAt(rec, potEv.t, potEv.a, rs) : rec.duration) : null;
+  // owner 2026-11-27: the miss sound, once, when the failure is clear on screen (tableSounds.ts missMoment); it follows
+  // the playback clock, so the pocket-camera slow motion delays it like every other sound
+  let miss = opts.miss ?? null;
+  const missAt = miss ? missMoment(rec, miss.label, miss.target, rs) : null;
   // Part 4: the cue (every shot: SHOOT, step 1 and, since 2026-11-27, the break-off). Its direction is the planned
   // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
   const cueBall = balls.find((b) => b.kind === 'cue');
@@ -302,7 +306,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
   let camOn = false;
   // the recording's end, or later while a cut holds the still table, or until a ball potted at the very end is seen
   // dropping (its sound and applause come then; at most about 0.1 s more)
-  const end = Math.max(playbackEnd(rec.duration, cut), lastSoundAt(rec, rs), applauseAt ?? 0);
+  const end = Math.max(playbackEnd(rec.duration, cut), lastSoundAt(rec, rs), applauseAt ?? 0, missAt ?? 0);
   return new Promise((res) => {
     const t0 = performance.now();
     let tau = 0; // seconds since the cue appeared (the cue's own clock)
@@ -349,6 +353,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
       if (import.meta.env.DEV && devLastRec) devLastRec.simT = t;
       playEventsBetween(rec, tPrev, t, rs, breakAt); // PLAN 9.1: the hits of this moment, at the speed shown (slow motion too)
       if (applause && applauseAt !== null && t >= applauseAt) { playApplause(applause.level); applause = null; }
+      if (miss && missAt !== null && t >= missAt) { playMiss(); miss = null; }
       const p = positionsAt(rec, t);
       rest = ids.map(() => null);
       slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
@@ -437,6 +442,15 @@ async function onStart() {
   afterShot();
 }
 
+/** Owner 2026-11-27: the miss sound for a failed SHOOT shot (step 1 included), or none: a success, a RE-RACK, a free
+ *  replay by round code. The break-off never gets one (it is not passed there). */
+function missFor(h: { outcome: string; shot?: unknown }): { label: string; target?: string } | undefined {
+  if (round.free || h.outcome === 'success' || h.outcome === 'reRack') return undefined;
+  // the label of what was really played: a failure the solver could not find falls back to a plain miss or a foul,
+  // and only the round's end says so (the history keeps the drawn outcome)
+  const label = round.end?.type === 'failure' ? round.end.label : h.outcome;
+  return { label, target: (h.shot as { target?: string } | undefined)?.target };
+}
 /** RULES B.2: the first SHOOT plays step 1 (from the break-off library, decided at START, no solve). */
 async function onShootStep1() {
   const before = round;
@@ -445,7 +459,7 @@ async function onShootStep1() {
   presolveNext(); // keeps the step-2 solve that began during the break
   busy = 'step1';
   render();
-  const len = await playShot(before.frame!.balls, round.history[0]!.shot as Shot, { cue: true });
+  const len = await playShot(before.frame!.balls, round.history[0]!.shot as Shot, { cue: true, miss: missFor(round.history[0]!) });
   lastShot = `step 1: red · ${round.history[0]!.outcome} · from the break-off library · ${len.toFixed(2)} s long`;
   lastCost = 'step 1: from the break-off library, no solve';
   if (import.meta.env.DEV) lastDraw = `step 1 ${drawText(outcomeDraw(round, 1), null)}`;
@@ -510,7 +524,7 @@ async function onShoot() {
     const ms = round.free || h.outcome !== 'success' ? null : milestoneLevel(before.frame!, round.frame!, applauseHeard);
     if (ms) applauseHeard.add(ms);
     const applause = ms && sh.target ? { ball: sh.target, level: ms } : undefined;
-    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam, applause });
+    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam, applause, miss: missFor(h) });
     // PLAN 8.2 / RULES B.6: a clearance's last pot is replayed from the pocket camera, then the clearance message
     if (!jumped && round.end?.type === 'clearance' && sh.target && sh.pocket) await clearanceReplay(sh.target, sh.pocket);
     const type = (h.shot as { type?: string }).type ?? '?';
@@ -913,7 +927,7 @@ function renderDev() {
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
       '<div class="opts" id="devAuto"></div>' +
       '<h3>POCKET CAM ON NEXT SHOT (DEV ONLY)</h3><div class="opts" id="devPocketCam"></div><div class="info" id="devCut"></div>' +
-      '<h3>APPLAUSE (DEV ONLY)</h3><div class="opts" id="devApplause"></div>' : '') +
+      '<h3>APPLAUSE / MISS (DEV ONLY)</h3><div class="opts" id="devApplause"></div>' : '') +
     '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>POSITION PLAY (EXPERIMENT)</h3><div class="opts" id="devPos"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
@@ -1024,6 +1038,7 @@ function renderTestPanel(opt: (label: string, on: boolean, click: () => void, di
   // owner 2026-11-27: hear each applause level (works any time, even during a round)
   const APPLAUSE_TEXT = ['', '1 CASH OUT', '2 BREAK 50', '3 SNOOKERS', '4 BREAK 100', '5 CLEARANCE', '6 MAXIMUM'];
   for (const l of [1, 2, 3, 4, 5, 6] as const) $('devApplause').appendChild(opt(APPLAUSE_TEXT[l]!, false, () => playApplause(l)));
+  $('devApplause').appendChild(opt('MISS', false, () => playMiss())); // owner 2026-11-27: hear the miss sound
 }
 /** Dev: jump to the last ball and clear it on screen (the clearance replay). */
 function devClearLast() {

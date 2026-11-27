@@ -4,7 +4,7 @@
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the camera at 57° (option 1: in-app about 91% wide).
 - Phone: pocket cam ~1 shot in 6 (force: menu > POCKET CAM ON NEXT SHOT); clearance replay: menu > Clearance: last ball.
-- Sounds: pocket x0.4, now heard as the ball is SEEN dropping (also cut + replay); applause 1-6 in the game. Miss sound: pick A/B/C on mockups/miss/.
+- Sounds: pocket x0.4 (heard as the ball is SEEN dropping); applause 1-6; miss sound B in the game (vol 0.7, dev: MISS button).
 - Hosted demo: dist/ rebuilt with camera 57°, not republished yet (publishing = your word).
 - Server: decided 2026-11-27 (B2B, docs/SERVER-OUTCOMES.md top); next = your gambling-lawyer advice before any server work.
 ## Claude's turn (waiting for the owner's answers)

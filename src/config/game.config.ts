@@ -531,7 +531,7 @@ export const CONFIG = {
     // PLAN 9.2 (owner's pick TAP B) + applause levels 1-6 (owner 2026-11-27: option B of each, src/game/applause.ts).
     // Fixed volumes 0..1 (x masterVolume); never counted in maxVoices. The applause files themselves get louder level by
     // level (+3 dB a level, docs/ASSETS.md), so one volume serves all six.
-    uiSounds: { applauseVolume: 0.8, tapVolume: 0.5 },
+    uiSounds: { applauseVolume: 0.8, tapVolume: 0.5, missVolume: 0.7 }, // missVolume: the crowd "oh" after a failed shot
     table: ['cueHit', 'ballBall', 'cushion', 'pocketDrop', 'jawRattle', 'breakOff'],
     ui: ['button', 'cashOut', 'popup'],
     voiceSlots: [                // optional, empty until the owner supplies files

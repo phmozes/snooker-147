@@ -9,8 +9,8 @@ import type { ApplauseLevel } from './applause';
 import { isMuted, onMuteChange } from './sound';
 
 // + the opponent's break-off (one sound for the cue ball hitting the pack), the 6 applause levels and the button tap.
-type Name = 'cue' | 'ball-soft' | 'ball-hard' | 'cushion' | 'pocket' | 'break' | 'tap' | `applause-${ApplauseLevel}`;
-const NAMES: Name[] = ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket', 'break', 'tap',
+type Name = 'cue' | 'ball-soft' | 'ball-hard' | 'cushion' | 'pocket' | 'break' | 'tap' | 'miss' | `applause-${ApplauseLevel}`;
+const NAMES: Name[] = ['cue', 'ball-soft', 'ball-hard', 'cushion', 'pocket', 'break', 'tap', 'miss',
   'applause-1', 'applause-2', 'applause-3', 'applause-4', 'applause-5', 'applause-6'];
 const U = CONFIG.sound.uiSounds;
 const S = CONFIG.sound.tableHits;
@@ -77,6 +77,33 @@ let applause: AudioBufferSourceNode | null = null;
 export function playApplause(level: ApplauseLevel) {
   if (applause) { try { applause.stop(); } catch { /* already ended */ } applause = null; }
   applause = play(`applause-${level}`, U.applauseVolume, 'applause', true);
+}
+/** Owner 2026-11-27 (pick B): the crowd "oh" after a failed shot, once, at missMoment. Mute stops it (stopAll). */
+export const playMiss = () => play('miss', U.missVolume, 'miss', true);
+
+/** The shot time at which a failed shot's failure is clear on screen, so the miss sound gives nothing away early
+ *  (owner 2026-11-27). label = the shot's failure label (round history):
+ *  - jawRattle: when the target ball comes to rest outside the pocket for good (after the rattle has been seen);
+ *  - inOff: when the cue ball is seen dropping (potHeardAt: the same moment as its pocket sound);
+ *  - every other failure (plain miss, wrong ball first / foul, snookered escape): when all balls have stopped.
+ *  Falls back to "all balls stopped" if the recording does not show what the label says. */
+export function missMoment(rec: Recording, label: string, target: string | undefined, drawnRadius: number): number {
+  if (label === 'inOff') {
+    const e = rec.events.find((x) => x.type === 'pot' && x.a === 'cue');
+    if (e) return potHeardAt(rec, e.t, 'cue', drawnRadius);
+  }
+  if (label === 'jawRattle' && target) {
+    const n = rec.ids.indexOf(target);
+    const jaw = rec.events.find((x) => x.type === 'jaw' && x.a === target);
+    if (n >= 0 && jaw && !rec.events.some((x) => x.type === 'pot' && x.a === target)) {
+      // the last recorded frame in which the target still moves; from the next one on it is at rest for good
+      let f = rec.frames.length - 1;
+      const at = (i: number) => rec.frames[i]!;
+      while (f > 0 && Math.abs(at(f)[2 * n]! - at(f - 1)[2 * n]!) < 1e-9 && Math.abs(at(f)[2 * n + 1]! - at(f - 1)[2 * n + 1]!) < 1e-9) f--;
+      return Math.min(rec.duration, Math.max(jaw.t, f * rec.frameDt));
+    }
+  }
+  return rec.duration;
 }
 /** PLAN 9.2: a UI button was pressed. */
 export const playTap = () => play('tap', U.tapVolume, 'tap', true);
