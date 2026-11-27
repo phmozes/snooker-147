@@ -95,7 +95,7 @@ describe('F.1: the outcome depends on the seed and the step only', () => {
   it('the game page asks the solver for both outcomes before SHOOT, giving it only the failure type', () => {
     const src = source('src/game/gamePage.ts');
     const pre = src.slice(src.indexOf('function presolveNext()'), src.indexOf('async function onStart()'));
-    expect(pre).toContain('const { step, failure } = nextOutcome(round);');
+    expect(pre).toContain('const { step, failure } = nextOutcome(r);'); // r: the round (after step 1 while it waits for SHOOT, RULES B.2)
     expect(pre).not.toMatch(/\.outcome\b/);
     expect(source('src/game/solverWorker.ts')).toContain("['success', 'failure']"); // both, success first
     expect(source('src/game/presolve.ts')).toContain("for (const k of ['success', 'failure'] as const) (workers[k] ?? start(k)).postMessage({ ...j.req, only: k });"); // task P.1: one worker per outcome, both asked every time
