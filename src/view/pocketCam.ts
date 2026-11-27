@@ -46,6 +46,8 @@ export const stepGroup = (step: number): number => [...(PC.stepGroups as readonl
 /** The chance that a CUTTABLE shot of this level / step / outcome gets the automatic cut (0 on step 1). */
 export function cutChance(levelId: string, step: number, outcome: string): number {
   if (step < PC.fromStep || outcome === 'reRack') return 0;
+  const last = CONFIG.levels.find((l) => l.id === levelId)?.steps;
+  if (last !== undefined && step >= last) return 0; // the last ball: never cut (the clearance replay comes instead)
   const c = PC.cutChance[levelId];
   if (!c) return 0;
   return Math.min(1, outcome === 'success' ? c.success : c.failure[(PC.stepGroups as readonly number[]).indexOf(stepGroup(step))]!);
@@ -80,6 +82,19 @@ export function planCut(rec: Pick<Recording, 'events' | 'frames' | 'frameDt' | '
   // slow motion would hint at the result. If the balls stop first, the still table is held until `to`.
   const to = Math.min(arrival + PC.secondsAfterArrival, from + PC.maxSeconds * CONFIG.camera.slowMotionScale);
   return { pocket: pocketId, view, from, to, arrival };
+}
+
+/** The clearance replay window (shot time) for the last pot: around the target ball's arrival at its pocket, at most
+ *  clearanceReplay.maxSeconds on screen. Null if the ball never reaches that pocket (then no replay). */
+export function clearanceReplayWindow(rec: Pick<Recording, 'events' | 'frames' | 'frameDt' | 'ids' | 'duration'>, table: TableGeometry,
+  target: string, pocketId: PocketId): { from: number; to: number; pocket: PocketId } | null {
+  const c = planCut(rec, table, target, pocketId, 'P1b');
+  if (!c) return null;
+  const R = PC.clearanceReplay;
+  const from = Math.max(0, c.arrival - R.secondsBeforeArrival);
+  // not cut short by the end of the recording: the ball's drop into the pocket must still be seen (positions hold)
+  const to = Math.min(c.arrival + R.secondsAfterArrival, from + R.maxSeconds * R.slowMotionScale);
+  return to > from ? { from, to, pocket: pocketId } : null;
 }
 
 /** Playback rate (shot seconds per real second) at shot time t: slow motion inside the cut, 1 outside. */

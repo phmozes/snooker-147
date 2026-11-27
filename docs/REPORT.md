@@ -1,63 +1,68 @@
-# Report: owner's working rules, test build, backup push (2026-11-27)
+# Report: clearance replay (rest of PLAN 8.2, RULES B.6), 2026-11-27
 
-## Rules added (CLAUDE.md and docs/NOW.md, Working rules)
-1. **Reports:** every task ends with the full report in `docs/REPORT.md` (overwritten each time; the previous one moves
-   to `docs/reports/<date>-<commit hash>.md`) and a short version in chat. This is the first REPORT.md, so there was
-   no older one to move.
-2. **Test build:** `npm run build:test` at the end of every task that changes the game; its files with sizes go in the
-   report. `npm run build` (production) is unchanged.
-3. **Backup push (standing approval):** after each task the owner approved, push master to origin (private GitHub
-   repo) without asking. Never other branches. Never publish or share anything without the owner's word.
+## What was built
+- **The replay:** when a round clears the table, the last pot plays from the main camera as before. Then the same
+  recording plays once more from the pocket camera P1b of the pocket the last ball went into (mirrored and rotated
+  for that pocket), in slow motion, with a small "REPLAY" tag at the top. After that comes the clearance message
+  ("TOTAL CLEARANCE n" / "MAXIMUM n").
+  - Nothing is solved or simulated again; the replay reuses the recording just played.
+  - The replay window is 0.7 s of shot time before the ball reaches the pocket and 0.35 s after it (the drop).
+    It is not cut short if the balls stop right after the pot, so the drop is always seen.
+- **Tap to skip:** a tap during the replay ends it and the message comes up at once. A tap on the message closes it,
+  as before. Each tap skips the part on screen; one tap does not skip both.
+  - Taps inside the developer panel do not count.
+- **No cut on the last ball:** the last step never gets an automatic pocket cut, for a success or a failure alike.
+  If only a failure on the last ball could be cut, a cut would give away the miss (RULES B.6). With 0 on both sides
+  the two cut rates stay equal at every step.
+  - The developer "pocket cam on next shot" switch still works on the last ball.
+  - Effect on the 1-in-6 average: one step per round (the last ball) now has no cut.
+- **Dev panel button "Clearance: last ball"** (TEST PANEL, NEXT SHOT row; also `__dev.clearLast()`). It jumps to the
+  last ball without animation, then plays the last ball on screen as a forced success: shot, replay, message.
+  - In the test build and on the dev server only, not in production.
+  - Files: src/game/gamePage.ts (clearanceReplay, devClearLast), src/view/pocketCam.ts (clearanceReplayWindow,
+    no cut on the last step), src/config/game.config.ts (pocketCut.clearanceReplay).
 
-Also added earlier today and kept: any job expected to take more than 30 minutes needs the owner's OK first, or goes
-into the night run.
+## Config values (CONFIG.pocketCut.clearanceReplay)
+| Value | Setting |
+|---|---|
+| view | P1b |
+| secondsBeforeArrival | 0.7 (shot time) |
+| secondsAfterArrival | 0.35 (shot time) |
+| slowMotionScale | 0.35 (1.05 s of shot time = 3.0 s on screen) |
+| maxSeconds | 3 (never longer on screen) |
+| label | REPLAY |
 
-## How the test build works
-- `npm run build:test` = `tsc --noEmit && node scripts/build-test.mjs`. The script sets `NODE_ENV=development` (keeps
-  the developer menu, test panel, pocket-cam switch, `window.__dev`) and `VITE_TEST_BUILD=1`, then builds with mode
-  `devbuild` into `dist-test/` (vite.config.ts keeps the developer HTML in that mode only).
-- No posting to the PC: phone-cost lines, weird-shot marks, "Send list to PC" and the PC-link check are off
-  (`PC_LINK = DEV && !VITE_TEST_BUILD` in gamePage.ts). The panel says "PC link: none (test build, nothing is sent)";
-  marks stay on the phone. A test (tests/presolve.test.ts) checks this.
-- Relative paths (`./`), no external requests: checked in a headless browser on `vite preview` of dist-test/. Only
-  `localhost/`, `/assets/` and `/breaks-v3/` were requested. Played step 1 and step 2 with a forced P1b cut:
-  no errors.
-- `dist-test/` is in .gitignore.
-- On the way: the first commit attempt was blocked by Claude Code's safety check because it contained a settings
-  file named `.env.devbuild`. It held no secrets, only the two settings above. I moved them into
-  `scripts/build-test.mjs` so no `.env` file is committed.
+## How to trigger it (phone, test build or dev server http://192.168.1.111:5181)
+1. START a round and press SHOOT once (step 1).
+2. Menu (☰) > TEST PANEL > **Clearance: last ball**.
+3. It jumps to the last ball, plays it, then shows the replay and the message.
 
-## Push
-- Pushed range: **be151ac..506bb9f** (9 commits: camera mockups, camera 57°, STATUS.md, pocket-camera mockups,
-  pocket camera in the game, automatic cuts, NOW.md, these rules).
-- This report's own commit is pushed on top of it. After that: `git status` = up to date with origin/master (only
-  the owner's phone files `bench/results/phone-cost.jsonl`, `docs/WEIRD-SHOTS.md` and untracked bench logs stay
-  local, never committed).
+The old "Clearance" button still plays every shot on screen up to the clearance, so it ends with the same replay.
 
-## Tests
-- npm test: 303 / 303 passed (after the change to tests/presolve.test.ts).
+## Checks
+- **Live game** (dev server, headless browser, phone size 390x844), no page errors:
+  - 6 reds: replay on screen 2.98 s, message right after. Pictures: P1b view of the black dropping into the top-left
+    corner with the REPLAY tag, then "TOTAL CLEARANCE 73".
+  - 10 reds: replay 2.90 s, then the message.
+  - Tap test: a tap during the replay removed it at once, and the message was showing 150 ms later.
+- **Replay check** (bench/camera-replay.test.ts, 10 round codes, every outcome and ball path): **identical** to
+  bench/results/pocketcam/replay-before.txt.
+- **npm test:** 305 / 305 passed. New tests: no cut on the last ball at every level; the replay window sits around the
+  arrival and is at most 3 s on screen.
+  - While writing them, one older test had to change: it checked that step 36 can be cut at every level, but step 36
+    is the last step of 15 reds and beyond the end of 6 and 10 reds.
 
-## Soak failures (owner: list every one, even known ones)
-No soak ran in this task. The previous task's quick soak (bench/results/pocketcut-quick, 5,335 shots) had these 7
-lines, which my previous report left out:
-- reds6-v3-5000094 step 11: RE-RACK (target red)
-- reds6-v3-5000282 step 11: RE-RACK (target red)
-- reds15-v3-5000060 step 11: solver took 10631 ms (stuck limit 10000)
-- reds15-v3-5000152 step 11: solver took 16631 ms
-- reds15-v3-5000059 step 9: solver took 11219 ms
-- reds15-v3-5000107 step 5: solver took 14447 ms
-- reds15-v3-5000123 step 7: solver took 10249 ms
-
-The 2 RE-RACKs are the known 6-red problem (last red against the pink, docs night7/SUMMARY.txt; fix A in the next
-night run). The 5 slow solves happened while 12 soak workers shared the PC.
+## Soak failures
+No soak ran in this task (none needed: visual only). Nothing new to list. The quick-soak failures from earlier are in
+docs/reports/2026-11-27-24c22ca.md.
 
 ## Build files
-`npm run build` (production, dist/):
+`npm run build` (production, dist/). It contains the replay but not the dev button:
 
 | File | Size |
 |---|---|
-| dist/assets/index-uWrZUvhI.js | 674.8 kB |
-| dist/assets/solverWorker-DWrQaJTT.js | 48.3 kB |
+| dist/assets/index-BGS2uRYQ.js | 676.4 kB |
+| dist/assets/solverWorker-CiMzzEyv.js | 48.4 kB |
 | dist/breaks/reds10.json | 575.3 kB |
 | dist/breaks/reds15.json | 696.0 kB |
 | dist/breaks/reds6.json | 478.4 kB |
@@ -65,14 +70,14 @@ night run). The 5 slow solves happened while 12 soak workers shared the PC.
 | dist/breaks-v3/reds15.json | 696.2 kB |
 | dist/breaks-v3/reds6.json | 477.4 kB |
 | dist/index.html | 10.6 kB |
-| total (9 files) | 4232.9 kB |
+| total (9 files) | 4234.7 kB |
 
-`npm run build:test` (dist-test/):
+`npm run build:test` (dist-test/). It contains the replay and the "Clearance: last ball" button:
 
 | File | Size |
 |---|---|
-| dist-test/assets/index-usTjgDZC.js | 687.7 kB |
-| dist-test/assets/solverWorker-DWrQaJTT.js | 48.3 kB |
+| dist-test/assets/index-B2jYtnbG.js | 689.7 kB |
+| dist-test/assets/solverWorker-CiMzzEyv.js | 48.4 kB |
 | dist-test/breaks/reds10.json | 575.3 kB |
 | dist-test/breaks/reds15.json | 696.0 kB |
 | dist-test/breaks/reds6.json | 478.4 kB |
@@ -80,7 +85,7 @@ night run). The 5 slow solves happened while 12 soak workers shared the PC.
 | dist-test/breaks-v3/reds15.json | 696.2 kB |
 | dist-test/breaks-v3/reds6.json | 477.4 kB |
 | dist-test/index.html | 10.8 kB |
-| total (9 files) | 4246.1 kB |
+| total (9 files) | 4248.2 kB |
 
-Nothing was published: dist/ was only rebuilt (it now has the automatic pocket-camera cuts); the hosted demo is
-unchanged until the owner's word.
+## Push
+Committed and pushed to origin/master (standing approval). Nothing was published; the hosted demo is unchanged.

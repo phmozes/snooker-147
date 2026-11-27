@@ -346,6 +346,18 @@ export const CONFIG = {
     } as Record<string, { success: number; failure: number[] }>,
     stepGroups: [2, 5, 9, 13, 21], // first step of each group: 2-4, 5-8, 9-12, 13-20, 21+
     fromStep: 2,                 // no cut on step 1 (nor on the break-off, which is not a SHOOT shot)
+    // ... nor on the LAST step (the last ball), success or failure alike: a clearance plays its last pot from the main
+    // camera and then gets the replay below, so a cut there could only mean a failure (RULES B.6). Both rates stay equal.
+    // Clearance replay (PLAN 8.2, owner 2026-11-27): after the last pot of a clearance, the same recording is played
+    // again from the pocket camera of that pot, in slow motion, then the clearance message. A tap skips it.
+    clearanceReplay: {
+      view: 'P1b' as 'P1b' | 'P2',
+      secondsBeforeArrival: 0.7, // shot time shown before the ball reaches the pocket ...
+      secondsAfterArrival: 0.35, // ... and after (the drop)
+      slowMotionScale: 0.35,     // 1.05 s of shot time / 0.35 = 3.0 s on screen
+      maxSeconds: 3,             // never longer than this on screen (real seconds)
+      label: 'REPLAY',           // small tag shown during the replay
+    },
     cutStream: 'pocketCamCut',   // seeded stream for the cut / no-cut draw (visual only, not a game stream)
     secondsBeforeArrival: 0.5,   // cut happens this long before the ball reaches the pocket
     maxSeconds: 3,               // the pocket camera stays on screen at most this long (real seconds, slow motion included)

@@ -7,7 +7,7 @@ import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { pocketRollStart, classifyRoll } from '../src/core/physics/testShots';
 import { streamValue } from '../src/core/round';
 import { buildTable, type PocketId } from '../src/core/table/geometry';
-import { addedSeconds, autoCutDraw, cutChance, cutRateAt, pickView, planCut, pocketCamPose, stepGroup, type PocketView } from '../src/view/pocketCam';
+import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutChance, cutRateAt, pickView, planCut, pocketCamPose, stepGroup, type PocketView } from '../src/view/pocketCam';
 
 const table = buildTable();
 const PHONE = 390 / 844;
@@ -113,7 +113,8 @@ describe('automatic cut draw (owner 2026-11-27: 1 in 6, same on success and fail
       expect(cutChance(L, 1, 'success')).toBe(0);
       expect(cutChance(L, 1, 'jawRattle')).toBe(0);
       expect(cutChance(L, 5, 'reRack')).toBe(0);
-      for (const st of [2, 4, 5, 9, 13, 21, 36]) for (const o of ['success', 'plainMiss']) {
+      const last = CONFIG.levels.find((l) => l.id === L)!.steps;
+      for (const st of [2, 4, 5, 9, 13, 21, 35].filter((x) => x < last)) for (const o of ['success', 'plainMiss']) {
         expect(cutChance(L, st, o)).toBeGreaterThan(0);
         expect(cutChance(L, st, o)).toBeLessThanOrEqual(1);
       }
@@ -130,5 +131,27 @@ describe('automatic cut draw (owner 2026-11-27: 1 in 6, same on success and fail
     }
     const p = cutChance('reds10', 6, 'jawRattle');
     expect(Math.abs(hit / N - p)).toBeLessThan(4 * Math.sqrt(p * (1 - p) / N));
+  });
+});
+
+describe('clearance replay (PLAN 8.2)', () => {
+  it('the last ball is never cut (success or failure), so the replay is the only pocket view of a clearance', () => {
+    for (const L of CONFIG.levels) {
+      expect(cutChance(L.id, L.steps, 'success')).toBe(0);
+      expect(cutChance(L.id, L.steps, 'jawRattle')).toBe(0);
+      expect(cutChance(L.id, L.steps - 1, 'success')).toBeGreaterThan(0);
+    }
+  });
+  it('the replay window is around the arrival and at most maxSeconds on screen', () => {
+    const R = CONFIG.pocketCut.clearanceReplay;
+    for (const id of ['topRight', 'middleLeft', 'bottomLeft'] as PocketId[]) {
+      const r = roll(id, 0);
+      const w = clearanceReplayWindow(r.rec, table, 'red1', id)!;
+      const c = planCut(r.rec, table, 'red1', id, 'P1b')!;
+      expect(w.from).toBeCloseTo(Math.max(0, c.arrival - R.secondsBeforeArrival), 9);
+      expect(w.to).toBeGreaterThan(c.arrival);
+      expect((w.to - w.from) / R.slowMotionScale).toBeLessThanOrEqual(R.maxSeconds + 1e-9);
+    }
+    expect(clearanceReplayWindow(roll('topRight', 0).rec, table, 'red1', 'bottomLeft')).toBeNull();
   });
 });

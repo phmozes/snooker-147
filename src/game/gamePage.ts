@@ -24,7 +24,7 @@ import { pos411pOn, setPos411p, solverVersion } from '../core/solverMode';
 import { cuePose, VARIANTS } from '../view/cue';
 import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
-import { addedSeconds, autoCutDraw, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
+import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
@@ -67,7 +67,9 @@ let replay: RoundCode | null = null;
 const replayColour = (r: Round) => (replay && r.frame?.phase === 'colour' ? codeColour(replay, colourSteps(r).length) : undefined);
 // ---- developer test panel (task 5.3). Only a dev build (import.meta.env.DEV) can set these; the real game never does.
 let force: ForcedOutcome | null = null; // the NEXT shot's outcome, forced (then back to null)
-let auto: null | { mode: 'round' | 'jump' | 'clearance'; to: number } = null; // play shots by itself
+let auto: null | { mode: 'round' | 'jump' | 'clearance'; to: number; thenClear?: boolean } = null; // play shots by itself
+/** The recording of the last shot played on screen (the clearance replay plays it again). */
+let lastPlayed: { rec: ReturnType<typeof recordShot>; slot: number[] } | null = null;
 let jumpText = '';
 /** 2026-11-27: "pocket cam on next shot" (dev only): forces a cut on the next SHOOT shot. The real game cuts by itself
  *  (owner: about 1 shot in 6, same chance on success and failure, pocketCam.ts autoCutDraw). Null outside a dev build. */
@@ -267,6 +269,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
   const slot = rec.ids.map((id) => ids.indexOf(id));
+  lastPlayed = { rec, slot };
   // Part 4: the cue (every shot: SHOOT, step 1 and, since 2026-11-27, the break-off). Its direction is the planned
   // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
   const cueBall = balls.find((b) => b.kind === 'cue');
@@ -482,7 +485,10 @@ async function onShoot() {
     const camView = pc && pc !== 'random' ? pc : pickView(round.seed, step, round.rng);
     const cam = (pc || autoCut) && sh.target && sh.pocket ? { target: sh.target, pocket: sh.pocket, view: camView } : undefined;
     if (import.meta.env.DEV && pc) { devPocketCam = null; if (!cam) lastCut = 'no cut: this shot has no target pocket'; }
-    const len = auto?.mode === 'jump' ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam });
+    const jumped = auto?.mode === 'jump';
+    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam });
+    // PLAN 8.2 / RULES B.6: a clearance's last pot is replayed from the pocket camera, then the clearance message
+    if (!jumped && round.end?.type === 'clearance' && sh.target && sh.pocket) await clearanceReplay(sh.target, sh.pocket);
     const type = (h.shot as { type?: string }).type ?? '?';
     lastShot = `step ${step}: ${h.target} · ${h.outcome} · ${TYPE_TEXT[type] ?? type} · ${len.toFixed(2)} s long · ${work}`;
     lastInfo = { code: round.roundCode, step, type, target: h.target, outcome: h.outcome, length: len };
@@ -514,7 +520,13 @@ function afterShot() {
   }
   // developer panel: auto play goes on by itself
   if (import.meta.env.DEV && auto && round.phase === 'decide') {
-    if (auto.mode === 'jump' && round.step >= auto.to) { auto = null; render(); return; }
+    if (auto.mode === 'jump' && round.step >= auto.to) {
+      const clear = auto.thenClear;
+      auto = null; render();
+      // dev "Clearance: last ball": after the jump, the last ball is played on screen and forced to succeed
+      if (clear) setTimeout(() => { if (!busy && round.phase === 'decide') { force = 'success'; void onShoot(); } }, 400);
+      return;
+    }
     setTimeout(() => { if (auto && !busy && round.phase === 'decide') void onShoot(); }, auto.mode === 'jump' ? 50 : 600);
   }
 }
@@ -530,6 +542,54 @@ async function endRound() {
   else await wait(CONFIG.ui.wonMessageSeconds * 1000);
   showBetArea = true;
   render();
+}
+
+/** PLAN 8.2: the last pot of a clearance again, from the pocket camera (P1b of that pocket), in slow motion, at most
+ *  CONFIG.pocketCut.clearanceReplay.maxSeconds. The same recording as the shot just played (nothing is solved or
+ *  simulated again). A tap skips it (the clearance message comes next and has its own tap). */
+function clearanceReplay(target: string, pocket: string): Promise<void> {
+  const R = CONFIG.pocketCut.clearanceReplay;
+  const lp = lastPlayed;
+  const win = lp && clearanceReplayWindow(lp.rec, table, target, pocket as Parameters<typeof clearanceReplayWindow>[3]);
+  if (!lp || !win || !view3d) return Promise.resolve();
+  const pose = pocketCamPose(table.pockets.find((p) => p.id === win.pocket)!, R.view);
+  const tag = document.createElement('div');
+  tag.id = 'clearReplayTag';
+  tag.textContent = R.label;
+  tag.style.cssText = 'position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:3;padding:3px 10px;border-radius:8px;' +
+    'background:rgba(0,0,0,.55);color:#fff;font:700 12px system-ui,sans-serif;letter-spacing:.15em;pointer-events:none';
+  canvas.parentElement?.appendChild(tag);
+  view3d.setCameraOverride(pose);
+  view3d.setSpeed(R.slowMotionScale);
+  const before = rest; // the balls as the shot left them
+  return new Promise((res) => {
+    let t = win.from, prev = performance.now(), stop = false;
+    const t0 = prev;
+    const done = () => {
+      if (stop) return;
+      stop = true;
+      document.removeEventListener('pointerdown', skip, true);
+      tag.remove();
+      view3d?.setCameraOverride(null);
+      view3d?.setSpeed(CONFIG.shot.playbackTimeScale);
+      rest = before; draw3d();
+      res();
+    };
+    const skip = (e: Event) => { if (!(e.target as HTMLElement).closest?.('#dev')) done(); };
+    document.addEventListener('pointerdown', skip, true);
+    const tick = () => {
+      if (stop) return;
+      const now = performance.now();
+      t = Math.min(win.to, t + ((now - prev) / 1000) * R.slowMotionScale);
+      prev = now;
+      const p = positionsAt(lp.rec, t);
+      rest = ids.map(() => null);
+      lp.slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
+      draw3d();
+      if (t < win.to && now - t0 < R.maxSeconds * 1000) requestAnimationFrame(tick); else done();
+    };
+    tick();
+  });
 }
 
 /** RULES B.4: big message on the empty cloth, at most clearanceMessageMaxSeconds, tap to skip. */
@@ -904,6 +964,8 @@ function renderTestPanel(opt: (label: string, on: boolean, click: () => void, di
   $('devForce').appendChild(opt('Clearance', auto?.mode === 'clearance', () => {
     force = null; auto = { mode: 'clearance', to: round.ladder.length }; void onShoot();
   }, !inRound));
+  // PLAN 8.2: jump (no animation) to the last ball, then play it on screen as a success: the clearance replay + message
+  $('devForce').appendChild(opt('Clearance: last ball', !!auto?.thenClear, devClearLast, !inRound));
   const jump = $('devJump') as HTMLInputElement;
   jump.value = jumpText;
   jump.oninput = () => { jumpText = jump.value; };
@@ -921,6 +983,13 @@ function renderTestPanel(opt: (label: string, on: boolean, click: () => void, di
   // small task 2: force a pocket-camera cut on the next SHOOT (one shot, then off again)
   for (const v of ['P1b', 'P2', 'random'] as const) $('devPocketCam').appendChild(opt(v, devPocketCam === v, () => { devPocketCam = devPocketCam === v ? null : v; render(); }));
   $('devCut').textContent = lastCut ? `last cut · ${lastCut}` : '';
+}
+/** Dev: jump to the last ball and clear it on screen (the clearance replay). */
+function devClearLast() {
+  if (round.phase !== 'decide' || busy) return;
+  const last = round.ladder.length;
+  if (round.step >= last - 1) { force = 'success'; void onShoot(); return; }
+  force = null; auto = { mode: 'jump', to: last - 1, thenClear: true }; void onShoot();
 }
 /** The red tag on the table whenever an outcome is forced or the game plays by itself (developer only). */
 function renderDevTag() {
@@ -966,6 +1035,8 @@ if (import.meta.env.DEV) {
     hideBalls: () => { showBalls([]); },
     /** small task 2: pocket cam on the next shot ('P1b' | 'P2' | 'random' | null), and what the last cut did */
     pocketCam: (v: null | PocketView | 'random') => { devPocketCam = v; render(); }, lastCut: () => lastCut,
+    /** PLAN 8.2: jump to the last ball and clear it on screen (as the panel's "Clearance: last ball") */
+    clearLast: () => devClearLast(),
     pauseOn: (kind: 'jaw' | 'pot' | 'potCue', offset: number) => { devPauseOn = { kind, offset }; devPause = null; devResume = false; },
     pause: () => devPause, resume: () => { devResume = true; },
     /** page coordinates (CSS px) of a pocket's drop circle centre, and of a point `r` metres from it (for crops) */
