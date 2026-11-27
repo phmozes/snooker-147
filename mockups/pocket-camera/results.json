@@ -196,5 +196,149 @@
    }
   ],
   "errs": []
+ },
+ {
+  "option": "P1b",
+  "moment": "before",
+  "red": {
+   "x": 0.7954026157425846,
+   "y": 1.6076713402770566
+  },
+  "distToMouth": 20,
+  "cam": [
+   1.242,
+   2.271,
+   0.4
+  ],
+  "heightCm": 40,
+  "tilt": 20,
+  "openingInView": true,
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ },
+ {
+  "option": "P1b",
+  "moment": "jaws",
+  "red": {
+   "x": 0.9070874932167775,
+   "y": 1.7735824253303902
+  },
+  "distToMouth": 2,
+  "cam": [
+   1.242,
+   2.271,
+   0.4
+  ],
+  "heightCm": 40,
+  "tilt": 20,
+  "openingInView": true,
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ },
+ {
+  "option": "P1c",
+  "moment": "before",
+  "red": {
+   "x": 0.7954026157425846,
+   "y": 1.6076713402770566
+  },
+  "distToMouth": 20,
+  "cam": [
+   1.326,
+   2.396,
+   0.55
+  ],
+  "heightCm": 55,
+  "tilt": 20,
+  "openingInView": true,
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ },
+ {
+  "option": "P1c",
+  "moment": "jaws",
+  "red": {
+   "x": 0.9070874932167775,
+   "y": 1.7735824253303902
+  },
+  "distToMouth": 2,
+  "cam": [
+   1.326,
+   2.396,
+   0.55
+  ],
+  "heightCm": 55,
+  "tilt": 20,
+  "openingInView": true,
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
  }
 ]

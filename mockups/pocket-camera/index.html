@@ -6,70 +6,95 @@
 <title>Pocket cameras</title>
 <link rel="icon" href="data:,">
 <style>
-  :root { color-scheme: dark; --bg: #0f1513; --panel: #18211e; --text: #e8ece9; --dim: #9aa7a2; --yellow: #f2c94c; --ok: #7bd389; }
+  :root { color-scheme: dark; --bg: #0f1513; --panel: #18211e; --text: #e8ece9; --dim: #9aa7a2; --yellow: #f2c94c; --ok: #7bd389; --no: #ef8a7a; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 900px; margin: 0 auto; padding: 16px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
   h1 { font-size: 20px; margin: 0 0 6px; }
   .intro { color: var(--dim); margin: 0 0 18px; }
   .intro b { color: var(--text); }
   section { background: var(--panel); border-radius: 14px; padding: 12px; margin-bottom: 18px; }
   h2 { font-size: 16px; margin: 0 0 4px; }
+  h3 { font-size: 15px; margin: 0 0 4px; }
   .what { margin: 0 0 6px; color: var(--dim); }
-  .ui { margin: 0 0 10px; color: var(--ok); }
+  .ok { color: var(--ok); } .no { color: var(--no); }
+  .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: start; }
+  .row3 .what { font-size: 12px; min-height: 5.8em; }
+  .stack { display: grid; gap: 8px; }
   .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
   figure { margin: 0; }
   img { width: 100%; height: auto; display: block; border-radius: 8px; }
   figcaption { font-size: 12px; color: var(--dim); margin-top: 4px; }
   figcaption b { color: var(--yellow); }
+  @media (max-width: 640px) { .row3 { grid-template-columns: 1fr; } .row3 .what { min-height: 0; } .row3 .stack { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Pocket camera: 3 options</h1>
-  <p class="intro">Pictures only, the game is not changed. Real game look (look A, T1 pockets, markings) on a
-    <b>full screen 390×844</b>, mid-round (step 1 played). The pocket is the <b>black-end corner on the right</b>.
-    The same red is potted in every picture: it comes from the middle of the black end at an angle; the cue ball
-    has stopped behind it (near the pink). Left: <b>the red 20 cm before the pocket</b>. Right: <b>the red in the
-    jaws</b>. The cue C1 is not in these pictures: in the game it has already faded out when the ball reaches the
-    pocket.
-    <br>The pocket camera only changes what is drawn inside the table area; the top bar, the ladder strip and the
-    CASH OUT / SHOOT buttons stay where they are (checked in every picture: all inside the 390×844 screen).</p>
+  <h1>Pocket camera: P1 and two raised versions</h1>
+  <p class="intro">Pictures only, the game is not changed. Owner's choice: <b>P1 as the main view, P2 sometimes</b>.
+    Real game look (look A, T1 pockets, markings), <b>full screen 390×844</b>, mid-round. Black-end corner on the
+    right, the same red in every picture: on top <b>20 cm before the pocket</b>, below it <b>in the jaws</b>.
+    "Opening in view" is measured: a 10 cm circle round the pocket's drop hole (the hole and its leather rim), at
+    cloth height and at rim height, must be fully inside the table area in the jaws picture.
+    Tilt = how far the camera looks down below level. The top bar, ladder, CASH OUT and SHOOT stay on screen in
+    every picture.</p>
 
   <section>
-    <h2>P1 · low, behind the pocket</h2>
-    <p class="what">The camera is 30 cm behind the pocket, 30 cm above the cloth, looking back along the red's path.
-      It sees the open pocket mouth at the bottom, the red rolling straight at the viewer, and the cue ball and most of
-      the table behind it. The top quarter of the table area is dark (the room above the table).</p>
-    <p class="ui">Whole UI on screen: yes (top bar, ladder, CASH OUT, SHOOT).</p>
+    <h2>P1 and the raised versions</h2>
+    <div class="row3">
+      <div>
+        <h3>P1 · as before</h3>
+        <p class="what">Height <b>30 cm</b>, 30 cm behind the jaws, tilt <b>22°</b>.
+          <span class="no">Opening in view: no.</span> The jaws picture cuts the opening and the net at the bottom edge.</p>
+        <div class="stack">
+          <figure><img src="P1-before.jpg" alt="P1, red 20 cm before the pocket" loading="lazy"><figcaption><b>20 cm before</b></figcaption></figure>
+          <figure><img src="P1-jaws.jpg" alt="P1, red in the jaws" loading="lazy"><figcaption><b>In the jaws</b> · opening cut</figcaption></figure>
+        </div>
+      </div>
+      <div>
+        <h3>P1b · a little higher</h3>
+        <p class="what">Height <b>40 cm</b>, 60 cm behind the jaws, tilt <b>20°</b>.
+          <span class="ok">Opening in view: yes.</span> Red rolls toward you with the cue ball and the table behind it;
+          the pocket is a bit smaller than in P1. Top third dark (the room).</p>
+        <div class="stack">
+          <figure><img src="P1b-before.jpg" alt="P1b, red 20 cm before the pocket" loading="lazy"><figcaption><b>20 cm before</b></figcaption></figure>
+          <figure><img src="P1b-jaws.jpg" alt="P1b, red in the jaws" loading="lazy"><figcaption><b>In the jaws</b> · opening and net whole</figcaption></figure>
+        </div>
+      </div>
+      <div>
+        <h3>P1c · higher again</h3>
+        <p class="what">Height <b>55 cm</b>, 75 cm behind the jaws, tilt <b>20°</b>.
+          <span class="ok">Opening in view: yes.</span> More of the table behind (the black at the right edge);
+          the pocket and the red are smaller. Top quarter dark (the room).</p>
+        <div class="stack">
+          <figure><img src="P1c-before.jpg" alt="P1c, red 20 cm before the pocket" loading="lazy"><figcaption><b>20 cm before</b></figcaption></figure>
+          <figure><img src="P1c-jaws.jpg" alt="P1c, red in the jaws" loading="lazy"><figcaption><b>In the jaws</b> · opening and net whole</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <p class="what" style="margin-top:10px">Why the raised versions also stand further back: raising the camera
+      alone (still 30 cm behind the jaws) needed a tilt of 52-55° to get the opening in view, and then the table
+      behind the red left the picture (no cue ball, no "rolling toward you"). Moving back keeps the tilt about the
+      same as P1.</p>
+  </section>
+
+  <section>
+    <h2>P2 · high above the pocket (used sometimes)</h2>
+    <p class="what">Height 75 cm, almost straight over the pocket, looking down. Both jaws, the leather and the net
+      from above, and the last part of the red's path. Only the space behind the pocket is dark (the floor).</p>
     <div class="pair">
-      <figure><img src="P1-before.jpg" alt="P1, red 20 cm before the pocket" loading="lazy"><figcaption><b>20 cm before</b> · red in the middle, jaws at the bottom</figcaption></figure>
-      <figure><img src="P1-jaws.jpg" alt="P1, red in the jaws" loading="lazy"><figcaption><b>In the jaws</b> · red large, between the two jaws</figcaption></figure>
+      <figure><img src="P2-before.jpg" alt="P2, red 20 cm before the pocket" loading="lazy"><figcaption><b>20 cm before</b></figcaption></figure>
+      <figure><img src="P2-jaws.jpg" alt="P2, red in the jaws" loading="lazy"><figcaption><b>In the jaws</b> · opening in view: yes</figcaption></figure>
     </div>
   </section>
 
   <section>
-    <h2>P2 · high above the pocket</h2>
-    <p class="what">The camera is 75 cm above the cloth, almost straight over the pocket, looking down. It sees both
-      jaws, the leather and the net from above, and the last part of the red's path. Only the space behind
-      the pocket is dark (the floor).</p>
-    <p class="ui">Whole UI on screen: yes (top bar, ladder, CASH OUT, SHOOT).</p>
+    <h2>P3 · from the side (not chosen)</h2>
+    <p class="what">9 cm above the cloth, inside the cushions, about 45° off square to the path. Kept for reference.</p>
     <div class="pair">
-      <figure><img src="P2-before.jpg" alt="P2, red 20 cm before the pocket" loading="lazy"><figcaption><b>20 cm before</b> · red on the cloth below the jaws</figcaption></figure>
-      <figure><img src="P2-jaws.jpg" alt="P2, red in the jaws" loading="lazy"><figcaption><b>In the jaws</b> · red at the mouth, net behind it</figcaption></figure>
-    </div>
-  </section>
-
-  <section>
-    <h2>P3 · from the side, at cloth height</h2>
-    <p class="what">The camera is 9 cm above the cloth, to the side of the path. In a corner a camera square to the
-      path would stand behind the rail, so it stands inside the cushions, about 45° off square. It sees the pocket
-      and net from the side and the red rolling across the last 30 cm. The pocket is small on screen: the top
-      third is dark (the room) and the bottom third is empty cloth.</p>
-    <p class="ui">Whole UI on screen: yes (top bar, ladder, CASH OUT, SHOOT).</p>
-    <div class="pair">
-      <figure><img src="P3-before.jpg" alt="P3, red 20 cm before the pocket" loading="lazy"><figcaption><b>20 cm before</b> · red right of the pocket</figcaption></figure>
-      <figure><img src="P3-jaws.jpg" alt="P3, red in the jaws" loading="lazy"><figcaption><b>In the jaws</b> · red in front of the net</figcaption></figure>
+      <figure><img src="P3-before.jpg" alt="P3, red 20 cm before the pocket" loading="lazy"><figcaption><b>20 cm before</b></figcaption></figure>
+      <figure><img src="P3-jaws.jpg" alt="P3, red in the jaws" loading="lazy"><figcaption><b>In the jaws</b></figcaption></figure>
     </div>
   </section>
 </main>

@@ -1,7 +1,7 @@
 // 2026-11-27: pocket-camera options as still pictures (mockups/pocket-camera, PLAN 8.2 small task 1). The game is NOT
 // changed: the screenshot browser gets edited copies of two modules (table3d.ts exposes its camera and scene,
 // cueExamples.ts gets the frozen ball position). node scripts/pocket-camera.mjs [baseUrl]
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { launch } from './shot.mjs';
 const base = process.argv[2] ?? 'http://localhost:5181';
 const out = 'mockups/pocket-camera';
@@ -13,7 +13,12 @@ const CUE = '{ x: 0.05, y: 0.62 }'; // cue ball where it stopped after hitting t
 const POCKET = 'topRight'; // black-end corner, right side
 
 const MOMENTS = [{ key: 'before', what: 'red 20 cm before the pocket' }, { key: 'jaws', what: 'red in the jaws' }];
-const OPTIONS = ['P1', 'P2', 'P3'];
+// P1b / P1c (2026-11-27, owner chose P1 + P2): P1 raised; the tilt is solved so the pocket opening (with its
+// leather rim) sits just above the bottom edge of the table area in the jaws moment. height m, back m behind the jaws.
+// Raised alone (back 0.30 as P1) the tilt had to be 52-55° and the table behind left the picture, so they also move back.
+const RAISED = { P1b: { h: 0.40, back: 0.60 }, P1c: { h: 0.55, back: 0.75 } };
+if (process.env.RAISED) Object.assign(RAISED, JSON.parse(process.env.RAISED)); // tuning only
+const OPTIONS = (process.env.ONLY ?? 'P1,P1b,P1c,P2,P3').split(',');
 
 const b = await launch();
 const results = [];
@@ -51,7 +56,7 @@ const results = [];
   await new Promise((r) => setTimeout(r, 2500)); // messages and count-ups finished
   await p.evaluate(() => window.__dev.cueExample(0, 0.2));
   for (const o of OPTIONS) for (const m of MOMENTS) {
-  const info = await p.evaluate(({ o, mk, pocket }) => {
+  const info = await p.evaluate(({ o, mk, pocket, raised }) => {
     const T = window.__t3, THREE_V = T.camera.position.constructor; // THREE.Vector3 without importing three
     const V = (x, y, z) => new THREE_V(x, y, z);
     const pk = T.table.pockets.find((q) => q.id === pocket), rs = T.rs();
@@ -68,7 +73,19 @@ const results = [];
     const J = at(sM); // the jaws point on the path
     const C = { x: cue.position.x, y: cue.position.y };
     const cam = T.camera;
-    if (o === 'P1') { // low behind the pocket, looking back along the path toward the cue ball
+    const H = T.renderer.domElement.clientHeight, W = T.renderer.domElement.clientWidth;
+    // the pocket opening: the slate cut and the leather rim round it (radius 0.10 m), at cloth and at rim height
+    const ring = [];
+    for (let i = 0; i < 32; i++) for (const z of [0, 0.04]) { const a = i / 32 * 2 * Math.PI; ring.push(V(E.x + 0.10 * Math.cos(a), E.y + 0.10 * Math.sin(a), z)); }
+    const proj = () => { cam.updateMatrixWorld(); return ring.map((v) => { const q = v.clone().project(cam); return { x: (q.x + 1) / 2 * W, y: (1 - q.y) / 2 * H }; }); };
+    if (raised) { // P1 raised: tilt solved by halving until the lowest point of the opening is 5% above the bottom
+      const pos = { x: J.x + u.x * raised.back, y: J.y + u.y * raised.back };
+      cam.fov = 55; cam.position.set(pos.x, pos.y, raised.h); cam.updateProjectionMatrix();
+      const aim = (deg) => { const r = deg * Math.PI / 180; cam.lookAt(V(pos.x - u.x * Math.cos(r), pos.y - u.y * Math.cos(r), raised.h - Math.sin(r))); };
+      let lo = 0, hi = 89;
+      for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; aim(mid); (Math.max(...proj().map((q) => q.y)) > H * 0.95 ? (lo = mid) : (hi = mid)); }
+      aim(hi);
+    } else if (o === 'P1') { // low behind the pocket, looking back along the path toward the cue ball
       const A = at(sM - 0.45); cam.fov = 55; cam.position.set(J.x + u.x * 0.30, J.y + u.y * 0.30, 0.30); cam.lookAt(V(A.x, A.y, 0));
     } else if (o === 'P2') { // high above the pocket, looking down at the jaws and the net
       cam.fov = 40; cam.position.set(J.x - u.x * 0.12, J.y - u.y * 0.12, 0.75); cam.lookAt(V(J.x + u.x * 0.02, J.y + u.y * 0.02, 0));
@@ -85,8 +102,10 @@ const results = [];
     }
     cam.updateProjectionMatrix();
     T.renderer.render(T.scene, cam);
-    return { red: q, distToMouth: Math.round(Math.hypot(q.x - M.x, q.y - M.y) * 100), cam: cam.position.toArray().map((v) => +v.toFixed(3)) };
-  }, { o, mk: m.key, pocket: POCKET });
+    const pts = proj(), inView = pts.every((q) => q.x >= 0 && q.x <= W && q.y >= 0 && q.y <= H);
+    const dir = cam.getWorldDirection(V(0, 0, 0)), tilt = Math.round(Math.asin(-dir.z) * 180 / Math.PI);
+    return { red: q, distToMouth: Math.round(Math.hypot(q.x - M.x, q.y - M.y) * 100), cam: cam.position.toArray().map((v) => +v.toFixed(3)), heightCm: Math.round(cam.position.z * 100), tilt, openingInView: inView };
+  }, { o, mk: m.key, pocket: POCKET, raised: RAISED[o] });
   await new Promise((r) => setTimeout(r, 300));
   // whole UI on screen: top bar, ladder, CASH OUT / SHOOT and the canvas all inside the 390x844 window
   const ui = await p.evaluate(() => ['top', 'ladder', 'bShoot', 'bCash'].map((id) => { const e = document.getElementById(id); if (!e) return { id, missing: true };
@@ -99,4 +118,6 @@ const results = [];
   await p.close();
 }
 await b.close();
-writeFileSync(`${out}/results.json`, JSON.stringify(results, null, 1));
+// options not taken this time keep their earlier entries
+const old = existsSync(`${out}/results.json`) ? JSON.parse(readFileSync(`${out}/results.json`, 'utf8')) : [];
+writeFileSync(`${out}/results.json`, JSON.stringify([...old.filter((x) => !OPTIONS.includes(x.option)), ...results], null, 1));
