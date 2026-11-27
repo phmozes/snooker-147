@@ -14,7 +14,7 @@ import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { playbackSeconds, resultVisibleAt } from '../src/view/fastEnd';
 import { setPos411p, solverVersion } from '../src/core/solverMode';
 import { classifySuccess, playFacts } from '../src/core/shotType';
-import { shotCaps } from '../src/core/solver';
+import { shotCaps, solveFailure, type SolvedFailure } from '../src/core/solver';
 import { buildTable } from '../src/core/table/geometry';
 
 it('soak', () => {
@@ -47,6 +47,20 @@ it('soak', () => {
       Object.assign(line, { d: Math.round(rec.duration * 1000) / 1000, vis: vis === null ? null : Math.round(vis * 1000) / 1000,
         play: Math.round(playbackSeconds(rec, FE) * 1000) / 1000, fallback: shot.fallback ?? null, speed: Math.round(shot.speed * 100) / 100,
         pots: rec.events.filter((e) => e.type === 'pot').length });
+    }
+    // 2026-11-27 FAILCMP=1: for a failure shot, also solve it again with failure.natural switched the other way (same
+    // frame, same type) and log both: length, in-off pocket distance, fallback (off = the old rule, on = the new one)
+    const f = h.shot as SolvedFailure | undefined;
+    if (process.env.FAILCMP && before && h.outcome !== 'success' && h.outcome !== 'reRack' && f?.kind) {
+      const NF = CONFIG.solver.failure.natural as { enabled: boolean };
+      const on = NF.enabled;
+      NF.enabled = !on;
+      const o = solveFailure(before, h.target, f.kind, table, () => performance.now());
+      NF.enabled = on;
+      const r3 = (x: number | undefined | null) => (x == null ? null : Math.round(x * 1000) / 1000);
+      const a = on ? o : f, b = on ? f : o;
+      Object.assign(line, { fk: f.kind, offD: r3(a?.duration), offIn: r3(a?.inOffDist), offFb: a?.fallback ?? null,
+        onD: r3(b?.duration), onIn: r3(b?.inOffDist), onFb: b?.fallback ?? null });
     }
     appendFileSync(`${file}-shots.jsonl`, `${JSON.stringify(line)}\n`);
   };

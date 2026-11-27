@@ -4,6 +4,7 @@ import { judgeShot } from '../src/core/rules';
 import { mulberry32 } from '../src/core/rng';
 import { randomLayout, shotCaps, solveFailure, type FailureKind } from '../src/core/solver';
 import { buildTable } from '../src/core/table/geometry';
+import { CONFIG } from '../src/config/game.config';
 
 const table = buildTable();
 const now = () => performance.now();
@@ -54,4 +55,24 @@ describe('task 4.2: failure shots', () => {
     expect(s).not.toBeNull();
     expect(['softFoul', 'tap']).toContain(s!.fallback);
   });
+  it('2026-11-27 failure.natural: same type and fallback as the old rule, never longer past maxSeconds, in-off near when it can', () => {
+    const NF = CONFIG.solver.failure.natural as { enabled: boolean };
+    const rng = mulberry32(11);
+    for (let i = 0; i < 6; i++) {
+      const L = randomLayout(rng, 10, 'red', table);
+      for (const kind of ['inOff', 'jawRattle'] as const) {
+        NF.enabled = false;
+        const off = solveFailure(L, 'red', kind, table, now);
+        NF.enabled = true;
+        const on = solveFailure(L, 'red', kind, table, now);
+        expect(on!.fallback).toBe(off!.fallback); // the shown type never changes
+        expect(on!.tried).toBeLessThanOrEqual(shotCaps().failure);
+        // over maxSeconds only if the old rule was too (the new search sees every shot the old one saw)
+        if (off!.duration <= CONFIG.solver.failure.natural.maxSeconds) expect(on!.duration).toBeLessThanOrEqual(CONFIG.solver.failure.natural.maxSeconds);
+        if (kind === 'inOff' && !on!.fallback && on!.duration <= CONFIG.solver.failure.natural.maxSeconds
+          && (off!.inOffDist ?? 0) <= CONFIG.solver.failure.natural.inOffNearPocket && off!.duration <= CONFIG.solver.failure.natural.maxSeconds)
+          expect(on!.inOffDist!).toBeLessThanOrEqual(CONFIG.solver.failure.natural.inOffNearPocket);
+      }
+    }
+  }, 120_000);
 });

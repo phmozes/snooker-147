@@ -53,13 +53,23 @@ it('round fingerprints', () => {
     }
   } else {
     const lines = readFileSync(process.env.IN!, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
-    let same = 0, diff: string[] = [];
+    let same = 0, failMoved = 0, diff: string[] = [];
+    // 2026-11-27 CMP=outcomes: everything must match except the trajectory of failure shots (the failure-shot choice
+    // changed on purpose); their label (step, target, outcome) must still match. NMAX: only the first NMAX per level.
+    const outcomesOnly = process.env.CMP === 'outcomes';
+    const strip = (fp: { tracks: string }) => ({ ...fp, tracks: fp.tracks.split('|')
+      .map((t) => (/ (success|RE-RACK)/.test(t) || t.startsWith('break') || t.startsWith('step1') ? t : t.replace(/ [0-9a-f:]+$/, ' (failure shot)'))).join('|') });
+    const nmax = Number(process.env.NMAX ?? Infinity);
+    const per: Record<string, number> = {};
     for (const l of lines) {
-      if (!levels.includes(parseRoundCode(l.code)!.levelId!)) continue;
+      const lv = parseRoundCode(l.code)!.levelId!;
+      if (!levels.includes(lv) || (per[lv] = (per[lv] ?? 0) + 1) > nmax) continue;
       const b = replay(l.code);
-      if (JSON.stringify(b.fp) === JSON.stringify(l.fp) && b.codeAfter === l.codeAfter) same++; else diff.push(l.code);
+      const A = outcomesOnly ? strip(b.fp) : b.fp, B = outcomesOnly ? strip(l.fp) : l.fp;
+      if (JSON.stringify(A) === JSON.stringify(B) && b.codeAfter === l.codeAfter) same++; else diff.push(l.code);
+      if (outcomesOnly && b.fp.tracks !== l.fp.tracks) failMoved++;
     }
-    const msg = `${process.env.IN} [${levels}]: ${same} identical, ${diff.length} different ${diff.slice(0, 20).join(' ')}`;
+    const msg = `${process.env.IN} [${levels}]: ${same} identical${outcomesOnly ? ` (outcomes + success shots; failure shot moved in ${failMoved})` : ''}, ${diff.length} different ${diff.slice(0, 20).join(' ')}`;
     console.log(msg);
     if (process.env.OUT) appendFileSync(process.env.OUT, msg + '\n');
     expect(diff).toEqual([]);

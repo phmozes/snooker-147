@@ -163,6 +163,14 @@ export const CONFIG = {
       potMargin: 1.0,            // ... and a pot whose naturalness cost is within this of the most natural one
       maxSpeed: 4.5,             // m/s: no smashes
       softFoulMaxShots: 40,      // cap on the soft-foul attempts (fixed, whatever the number of balls)
+      // owner 2026-11-27 (mark reds15-136485470:3, a 4.61 s in-off): which failure shot shows the decided type. Only the
+      // SHOT changes, never the type (that comes from the seed). Off = the old rule (shortest found, stop at <= 2.2 s).
+      natural: {
+        enabled: true,
+        maxSeconds: 3.0,         // a failure shot should end within this (playback); a longer one only if none shorter is found
+        inOffNearPocket: 0.35,   // m: an in-off is "near" when the cue ball's pocket is this close to the shot's path
+                                 // (cue ball -> object ball -> aimed pocket); near in-offs are preferred
+      },
     },
     powerSamples: 8,
     spinSamples: [-0.8, -0.3, 0, 0.4, 0.8],

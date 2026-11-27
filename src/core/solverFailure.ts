@@ -23,7 +23,10 @@ const Sv = CONFIG.solver;
 export type FailureKind = 'plainMiss' | 'jawRattle' | 'inOff' | 'wrongBallFirst';
 /** null = the chosen type was found; otherwise which RULES D.2 fallback was used. */
 export type FailureFallback = null | 'plainMiss' | 'softFoul' | 'tap';
-export interface SolvedFailure extends SolvedShot { kind: FailureKind; fallback: FailureFallback }
+export interface SolvedFailure extends SolvedShot {
+  kind: FailureKind; fallback: FailureFallback;
+  inOffDist?: number; // in-off only: m from the cue ball's pocket to the shot's path (inOffPocketDistance)
+}
 
 const FAIL = CONFIG.solver.failure;
 
@@ -40,9 +43,23 @@ function firstHitOf(sim: ReturnType<typeof createSim>): string | null {
   return first && first.type === 'ball' ? (first.a === 'cue' ? first.b : first.a) : null;
 }
 
-/** The chosen failure type only (no fallback). */
+/** Distance (m) from point q to the segment a-b. */
+function segDist(q: Vec2, a: Vec2, b: Vec2): number {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const L2 = dx * dx + dy * dy;
+  const t = L2 < 1e-12 ? 0 : Math.max(0, Math.min(1, ((q.x - a.x) * dx + (q.y - a.y) * dy) / L2));
+  return Math.hypot(q.x - a.x - t * dx, q.y - a.y - t * dy);
+}
+
+/** In-off: how far (m) the cue ball's pocket is from the shot's path (cue ball -> object ball -> aimed pocket). 0 = on it. */
+export function inOffPocketDistance(cueStart: Vec2, ball: Vec2, aimed: Vec2, cuePocket: Vec2): number {
+  return Math.min(segDist(cuePocket, cueStart, ball), segDist(cuePocket, ball, aimed));
+}
+
+/** The chosen failure type only (no fallback). `extraBudget`: shots it may spend on a second pass of less natural pots
+ *  when the first pass found the type but only too long (or, for an in-off, only far-pocket) shots (natural switch on). */
 function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, table: TableGeometry, now: () => number,
-  cfg: PhysicsConfig, shotBudget: number, count: { tried: number }): SolvedFailure | null {
+  cfg: PhysicsConfig, shotBudget: number, count: { tried: number }, extraBudget = 0): SolvedFailure | null {
   const t0 = now();
   const r = table.ballRadius;
   const cue = state.balls.find((b) => b.kind === 'cue')!;
@@ -72,21 +89,44 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
   // the most natural pots first (stable sort: aim points keep their order); only pots close to the best one
   attempts.sort((a, b) => a.score - b.score);
   const bestPot = attempts[0]?.score ?? 0;
+  const rest = kind !== 'wrongBallFirst' ? attempts.filter((a) => a.score > bestPot + FAIL.potMargin) : [];
   if (kind !== 'wrongBallFirst') attempts.splice(0, attempts.length, ...attempts.filter((a) => a.score <= bestPot + FAIL.potMargin));
+  const NF = FAIL.natural;
+  // natural switch on: rank = (over maxSeconds?, in-off into a far pocket?, length); lower is better
+  const over = (f: SolvedFailure) => f.duration > NF.maxSeconds;
+  const far = (f: SolvedFailure) => kind === 'inOff' && !over(f) && (f.inOffDist ?? 0) > NF.inOffNearPocket;
+  const better = (a: SolvedFailure, b: SolvedFailure) =>
+    Number(over(a)) - Number(over(b)) || Number(far(a)) - Number(far(b)) || a.duration - b.duration;
+  const goodEnough = (f: SolvedFailure) => f.duration <= CONFIG.shot.maxDurationFlex && (!NF.enabled || !far(f));
   let best: SolvedFailure | null = null;
   let tried = 0;
-  search: for (const { ball, pocket, dir } of attempts) {
+  let budget = shotBudget;
+  let done = false;
+  // natural switch on: when the type was found but only too long (or an in-off only into a far pocket), a second pass
+  // with extraBudget more shots: the in-between powers (softest first: a gentler attempt ends sooner), on the natural
+  // pots first, then the less natural ones (beyond potMargin)
+  const sorted = [...powers].filter((v) => v <= FAIL.maxSpeed).sort((a, b) => a - b);
+  const finePowers = sorted.slice(1).map((v, i) => Math.sqrt(v * sorted[i]!));
+  const passes = [{ list: attempts, pw: powers }, { list: [...attempts, ...rest], pw: finePowers }];
+  for (let pass = 0; pass < 2 && !done; pass++) {
+    if (pass === 1) {
+      if (!(NF.enabled && extraBudget > 0 && best && (over(best) || far(best)))) break;
+      budget += extraBudget;
+    }
+  search: for (const { ball, pocket, dir } of passes[pass]!.list) {
     const p = table.pockets.find((q) => q.id === pocket)!;
-    for (const speed of powers) {
+    for (const speed of passes[pass]!.pw) {
       if (speed > FAIL.maxSpeed) continue; // medium power: a real attempt, not a smash
       for (const spin of Sv.spinSamples) {
-        if (tried >= shotBudget) break search; // a shot count: same on every device
+        if (tried >= budget) break search; // a shot count: same on every device
         tried++;
         const sim = createSim(state.balls, table, cfg);
         strike(sim, 'cue', dir, speed, spin);
         let closest = Infinity;
         const tb = sim.balls.find((b) => b.id === ball.id)!;
-        const limit = Math.ceil((best ? best.duration : cfg.maxSimSeconds) / cfg.timestep);
+        // a far-pocket in-off under maxSeconds can still lose to a near one up to maxSeconds
+        const limitS = !best ? cfg.maxSimSeconds : NF.enabled && far(best) ? NF.maxSeconds : best.duration;
+        const limit = Math.ceil(limitS / cfg.timestep);
         for (let n = 0; n < limit && isMoving(sim); n++) {
           stepSim(sim);
           closest = Math.min(closest, Math.hypot(tb.pos.x - p.mouthMid.x, tb.pos.y - p.mouthMid.y));
@@ -102,12 +142,20 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
           : kind === 'inOff' ? v.type === 'inOff' && firstHit === ball.id
           : v.type === 'wrongBallFirst';
         if (!ok) continue;
-        best = { target: ball.id, pocket, dir, speed, spin, duration: sim.time, computeMs: 0, tried: 0, kind, fallback: null,
+        const cand: SolvedFailure = { target: ball.id, pocket, dir, speed, spin, duration: sim.time, computeMs: 0, tried: 0, kind, fallback: null,
           type: 'attempt', natural: 0, whyNot: null,
           score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos } };
-        if (best.duration <= CONFIG.shot.maxDurationFlex) break search; // good enough: a failure need not be the quickest
+        if (kind === 'inOff') {
+          const cp = sim.events.find((e) => e.type === 'pot' && e.a === 'cue');
+          const cpm = cp && cp.type === 'pot' ? table.pockets.find((q) => q.id === cp.pocket)?.mouthMid : undefined;
+          if (cpm) cand.inOffDist = inOffPocketDistance(cue.pos, ball.pos, p.mouthMid, cpm);
+        }
+        if (NF.enabled && best && better(cand, best) >= 0) continue;
+        best = cand;
+        if (goodEnough(best)) { done = true; break search; } // good enough: a failure need not be the quickest
       }
     }
+  }
   }
   if (best) { best.computeMs = now() - t0; best.tried = tried; }
   count.tried += tried;
@@ -167,7 +215,9 @@ export function solveFailure(state: FrameState, target: BallKind, kind: FailureK
   const count = { tried: 0 }; // every shot simulated for this failure, all stages (never above shotCaps().failure)
   const done = (s: SolvedFailure | null, fallback: FailureFallback): SolvedFailure | null =>
     s && { ...s, kind, fallback, computeMs: now() - t0, tried: count.tried };
-  const found = searchFailure(state, target, kind, table, now, cfg, shotBudget, count);
+  // the second shotBudget (normally for the plain-miss fallback) may go to a second pass when the type was found
+  // but only too long: shotCaps().failure stays the same
+  const found = searchFailure(state, target, kind, table, now, cfg, shotBudget, count, shotBudget);
   if (found) return done(found, null);
   if (kind !== 'plainMiss') {
     const miss = searchFailure(state, target, 'plainMiss', table, now, cfg, shotBudget, count);
