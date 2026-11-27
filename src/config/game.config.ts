@@ -419,7 +419,11 @@ export const CONFIG = {
     // Night 4, Part 4: the cue (C1, approved in docs/cue-options.html; drawn by src/view/cue.ts). Shown after the SHOOT
     // press and on the automatic step-1 shot: appears, one short stroke (appear + stroke <= 0.25 s), then fades out while
     // the balls roll. Visual and timing only. ON by default, dev panel switch.
-    cue: { enabled: true },
+    // Night 5: the cue lies on the shot line (through the cue ball's centre, along the planned cue direction), flat at
+    // minElevation degrees in the open; raised only as much as needed to clear the cushion, the rail or a ball behind
+    // the cue ball (clear = air in m between the cue and what it passes over), never above maxElevation. These are the
+    // numbers of the approved mockup (docs/cue-options.html); both use cueAxis() in src/view/cue.ts.
+    cue: { enabled: true, minElevation: 4, maxElevation: 40, clear: 0.006 },
   },
 
   // Game screen layout from mockups A/C/D (share of the screen height, top to bottom). Used by the replay check page

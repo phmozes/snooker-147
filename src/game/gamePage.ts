@@ -22,6 +22,7 @@ import { positionsAt } from '../view/playback';
 import { createTable3d, type TableLookId } from '../view/table3d';
 import { pos411pOn, setPos411p, solverVersion } from '../core/solverMode';
 import { cuePose, VARIANTS } from '../view/cue';
+import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { isMuted, muteIcon, setMuted } from './sound';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
@@ -249,7 +250,9 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise
   // Part 4: the cue (after SHOOT and on step 1, never on the break-off). Its direction is the planned
   // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
   const cueBall = balls.find((b) => b.kind === 'cue');
-  const cuePlan = opts.cue && cueOn && cueBall && view3d ? view3d.planCue(cueBall.pos, s.dir, balls.filter((b) => b.kind !== 'cue').map((b) => b.pos), cueProtect(balls, cueBall.pos, s.dir)) : null;
+  // the solver's shot direction is ghost ball - cue ball (metres, not unit length): the cue needs the unit direction
+  const dl = Math.hypot(s.dir.x, s.dir.y) || 1, cueDir = { x: s.dir.x / dl, y: s.dir.y / dl };
+  const cuePlan = opts.cue && cueOn && cueBall && view3d ? view3d.planCue(cueBall.pos, cueDir, balls.filter((b) => b.kind !== 'cue').map((b) => b.pos), cueProtect(balls, cueBall.pos, cueDir)) : null;
   const lead = cuePlan ? CUE_TIMING.added : 0;
   const fastFrom = fastEndOn ? startOf(rec, { ...CONFIG.shot.fastEnd, enabled: true }) : null;
   const FE = { ...CONFIG.shot.fastEnd, enabled: true };
@@ -916,6 +919,16 @@ if (import.meta.env.DEV) {
       const h = Math.abs(e.x - m.x);
       const x0 = Math.max(0, m.x - h), x1 = Math.min(c.width, m.x + h), y0 = Math.max(0, m.y - h), y1 = Math.min(c.height, m.y + h);
       return { x: c.left + x0, y: c.top + y0, width: x1 - x0, height: y1 - y0 };
+    },
+    /** Night 5 cue check: the mockup's example position i (docs/cue-options.html, src/view/cueExamples.ts) with the cue
+     *  drawn by the game's own code at `tau` s after the SHOOT press. Returns the cue's elevation in degrees. */
+    cueExample: (i: number, tau: number) => {
+      const rs = table.ballRadius * ballScale, ex = cueExampleShot(table, rs, i);
+      buildView(ex.balls); showBalls(ex.balls);
+      const C = ex.balls[0]!.pos, plan = view3d!.planCue(C, ex.dir, ex.balls.slice(1).map((b) => b.pos), cueProtect(ex.balls, C, ex.dir));
+      const { gap, alpha } = cuePose(CUE_TIMING, tau);
+      view3d!.showCue(C, plan, gap, alpha); draw3d();
+      return Math.round(plan.el * 1800 / Math.PI) / 10;
     },
     balanceBack: () => { round = { ...round, balance: CONFIG.money.startingBalance }; render(); },
     setBalance: (v: number) => { round = { ...round, balance: v }; shownBalance = v; render(); }, // layout check: a long balance

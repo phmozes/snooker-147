@@ -12,7 +12,8 @@ const RS = (table) => table.ballRadius * CONFIG.view3d.ballScale; // drawn ball 
 // MOTION AND TIMING: approved by the owner with C1. Do not change these numbers.
 export const CUE = {
   length: 1.47, tipR: 0.0065, buttR: 0.019,      // m. The OLD cue's thickness. Also used for the raised-butt angle of both cues.
-  minElevation: 4, maxElevation: 40, clear: 0.006, // degrees; `clear` = air (m) between the cue and a rail or ball under it
+  // elevation numbers live in game.config.ts (view3d.cue): the same numbers for the mockup page and the game
+  minElevation: CONFIG.view3d.cue.minElevation, maxElevation: CONFIG.view3d.cue.maxElevation, clear: CONFIG.view3d.cue.clear,
   pull: 0.10,                                    // tip starts this far (m) behind the cue ball
   follow: 0.03, followTime: 0.12,                // tip goes on this far after the hit
   fadeOutDelay: 0.05, fadeOut: 0.35,             // after the hit, while the balls roll
@@ -190,8 +191,12 @@ export function cuePose(V, tau) { // gap between tip and cue ball, and opacity. 
 /** The cue's axis (from the tip towards the butt): it points at the middle of the cue ball along the shot direction
  *  `d`, raised just enough to clear the cushion, the rail and any ball under it (others: positions of the other
  *  balls). env: hw, hl, cw (cushion width), cushionZ, railZ, rs (drawn ball radius). */
-export function cueAxis(C, d, others, env) {
+export function cueAxis(C, dIn, others, env) {
   const { hw, hl, cw, cushionZ, railZ, rs } = env;
+  // The game's shot direction is NOT a unit vector (the solver gives ghost ball - cue ball, in metres). Without this the
+  // distances below come out in the wrong units and the axis has the wrong length: the cue was drawn tilted, too high
+  // or lying far outside the table (night 5 fix). The mockup always passed a unit vector, so it was right there.
+  const d = unit(dIn);
   const exitAt = (from, dir, bx, by) => { let s = Infinity;
     if (dir.x > 1e-9) s = Math.min(s, (bx - from.x) / dir.x); if (dir.x < -1e-9) s = Math.min(s, (-bx - from.x) / dir.x);
     if (dir.y > 1e-9) s = Math.min(s, (by - from.y) / dir.y); if (dir.y < -1e-9) s = Math.min(s, (-by - from.y) / dir.y);

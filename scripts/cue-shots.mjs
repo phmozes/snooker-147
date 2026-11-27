@@ -1,15 +1,16 @@
 // Night 4, Part 4: pictures of the cue in the real game during the stroke (slow motion), for a few shots.
-// node scripts/cue-shots.mjs [outDir] [shots]
+// node scripts/cue-shots.mjs [outDir] [shots] [baseUrl]
 import { mkdirSync } from 'node:fs';
 import { launch } from './shot.mjs';
 const out = process.argv[2] ?? 'bench/results/night4/cue';
 const n = Number(process.argv[3] ?? 4);
+const base = process.argv[4] ?? process.env.BASE_URL ?? 'http://localhost:5181'; // night 5: a worktree's own server
 mkdirSync(out, { recursive: true });
 const b = await launch();
 const p = await b.newPage();
 p.on('pageerror', (e) => console.log('pageerror', e.message));
 await p.setViewport({ width: 390, height: 844, deviceScaleFactor: 2 });
-await p.goto('http://localhost:5181/?level=reds15', { waitUntil: 'networkidle0', timeout: 120000 });
+await p.goto(`${base}/?level=reds15`, { waitUntil: 'networkidle0', timeout: 120000 });
 await p.waitForFunction('window.__dev && window.__dev.state().busy === null', { timeout: 120000 });
 const idle = () => p.waitForFunction('window.__dev.state().busy === null', { timeout: 300000, polling: 200 });
 for (let i = 0; i < n; i++) {
