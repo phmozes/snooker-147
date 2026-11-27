@@ -25,3 +25,15 @@ describe('visual switches stay out of the outcome', () => {
     for (const f of files) expect(SOURCES[f]).not.toMatch(/Math\.random\s*\(/);
   });
 });
+
+describe('owner 2026-11-27: no playback speed-up', () => {
+  it('the faster shot end is off and the game page offers no switch for it', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { CONFIG } = await import('../src/config/game.config');
+    expect(CONFIG.shot.fastEnd.enabled).toBe(false);
+    const src = readFileSync('src/game/gamePage.ts', 'utf8');
+    expect(src).toContain('const fastEndOn = CONFIG.shot.fastEnd.enabled;');
+    expect(src).not.toContain('devFast');
+    expect(CONFIG.shot.playbackTimeScale).toBe(1);
+  });
+});

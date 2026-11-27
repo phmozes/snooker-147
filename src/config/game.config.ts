@@ -122,7 +122,7 @@ export const CONFIG = {
     // Night 4, Part 3b (docs/SLOW-SHOTS.md option 1): play the END of a shot faster, playback only (src/view/fastEnd.ts).
     // Starts only once the result is visible (every pot down, the object ball at rest or dropped), the same rule on
     // success and failure shots; eases from 1x to `rate` over `ease` s; not when less than `minRest` s would remain.
-    // OFF by default (owner decides after a phone check); dev panel switch.
+    // Owner 2026-11-27: NO playback speed-up at all. Stays OFF and is not offered (the dev switch was removed).
     fastEnd: { enabled: false, rate: 2.5, ease: 0.4, minRest: 0.5 },
     preferLowestPower: true,
     buttonsReturnDelay: 0.1,

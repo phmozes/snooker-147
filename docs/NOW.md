@@ -4,16 +4,16 @@
 - Nothing pushed: night-4 + night-5 commits wait on master for your word (`git log --oneline f534502..`).
 - Phone check http://192.168.1.111:5181, in this order: START -> break -> the game WAITS, SHOOT plays step 1 (no CASH OUT
   before it); the cue (flat, on the shot line); the rail wood; "BREAK n" left under the ladder; the table size in your
-  phone's in-app browser (bigger, not yet full width); failure shots (a few still run over 3 s).
+  phone's in-app browser (bigger, not yet full width).
 - 4.11p is now the default (your decision 2026-11-27) although its paired soak failed: fallback % 6 reds 54.6->57.4,
   10 reds 53.0->57.0; shots over 3.5 s 50->52 / 37->47 / 21->28 (NIGHT-4). Marks: 2 fixed, 4 better. May be improved later.
-- Decide: faster shot end ON? Cue time 0.25 s: keep? (both still open from night 4, docs/SLOW-SHOTS.md C)
-- Decide: failure shots over 3.0 s only fell 73.9 -> 66.8 per 1,000 failures (longest 4.54 s; your 4.61 s in-off has no
-  shorter in-off). A real 3.0 s cap needs faster playback of failure endings or other-looking failures (SLOW-SHOTS.md D).
+- Decide: the cue adds 0.25 s per shot (median 1.55 -> 1.80 s): keep? (docs/SLOW-SHOTS.md C)
 - Decide (design): the table fills 80-89% of the width in an in-app browser, not 100%; more needs a lower camera angle
   or a smaller bottom area. Want one of those?
 - Answer the 5 open decisions at the top of docs/SERVER-OUTCOMES.md (before any real money).
 ## Claude's turn (waiting for the owner's answers)
+- Owner 2026-11-27: NO playback speed-up at all (faster shot end OFF, switch removed). Failure shots over 3 s are
+  accepted as they are for now (66.8 per 1,000 failures, longest 4.54 s; docs/SLOW-SHOTS.md D).
 - 2026-11-27 night 5 done (see the owner's list above). Pace rule (owner 2026-11-24): docs/SPEED.md.
 - Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1, POS410=1 for the old 4.10), summary node bench/soak-night4.mjs <dir>;
   replays bench/night4/fp.test.ts; marks bench/replay-shot.test.ts; browser checks scripts/*.mjs (puppeteer-core).

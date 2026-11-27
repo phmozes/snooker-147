@@ -222,7 +222,7 @@ let devResume = false;
 const readSwitch = (key: string, def: boolean) => { try { const v = localStorage.getItem(key); return v === null ? def : v === '1'; } catch { return def; } };
 const saveSwitch = (key: string, v: boolean) => { try { localStorage.setItem(key, v ? '1' : '0'); } catch { /* private window */ } };
 let cueOn = readSwitch('snooker147.cue', CONFIG.view3d.cue.enabled);
-let fastEndOn = readSwitch('snooker147.fastEnd', CONFIG.shot.fastEnd.enabled);
+const fastEndOn = CONFIG.shot.fastEnd.enabled; // owner 2026-11-27: no playback speed-up at all; OFF and not offered (no dev switch, a stored phone value is ignored)
 setPos411p(readSwitch('snooker147.pos411p2', CONFIG.solver.natural.pos411p.enabled));
 const CUE_TIMING = VARIANTS.C1 as unknown as { appear: number; stroke: number; added: number }; // appear + stroke = 0.25 s (approved C1)
 /** What the cue must never cover (Part 4): the object ball (the first ball on the cue ball's line) and the pocket that
@@ -774,7 +774,7 @@ function renderDev() {
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
       '<div class="opts" id="devAuto"></div>' : '') +
-    '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>FASTER SHOT END (PLAYBACK)</h3><div class="opts" id="devFast"></div><h3>POSITION PLAY (EXPERIMENT)</h3><div class="opts" id="devPos"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
+    '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>POSITION PLAY (EXPERIMENT)</h3><div class="opts" id="devPos"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
   $('devScreens').appendChild(opt('Live game', mode === 'live', () => setMode('live'), busy !== null));
@@ -836,8 +836,6 @@ function renderDev() {
   $('devLook').appendChild(opt('Gray box (old)', tableLook === 'grey', () => { setTableLook('grey'); render(); }, busy !== null));
   $('devCue').appendChild(opt('On', cueOn, () => { cueOn = true; saveSwitch('snooker147.cue', true); render(); }));
   $('devCue').appendChild(opt('Off', !cueOn, () => { cueOn = false; saveSwitch('snooker147.cue', false); view3d?.hideCue(); render(); }));
-  $('devFast').appendChild(opt('Off', !fastEndOn, () => { fastEndOn = false; saveSwitch('snooker147.fastEnd', false); render(); }));
-  $('devFast').appendChild(opt('On', fastEndOn, () => { fastEndOn = true; saveSwitch('snooker147.fastEnd', true); render(); }));
   // Part 3c: position-play experiment (solver 4.11p); only between shots, so a solve in progress is never mixed
   const setPP = (v: boolean) => { setPos411p(v); saveSwitch('snooker147.pos411p2', v); $('devVer').textContent = `solver ${solverVersion()}`; if (round.phase === 'decide' && !busy) { presolver.cancel(); presolveNext(); } render(); };
   $('devPos').appendChild(opt('4.10 (off)', !pos411pOn(), () => setPP(false), busy !== null));
