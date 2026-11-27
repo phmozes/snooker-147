@@ -22,3 +22,32 @@ Expected failures = sum of 1 - p(step). chi2 p: failures vs p(step) for good and
 Reading: every p-value is above 0.05, so no difference beyond chance. 15 reds bad positions show a few more misses (180 vs 154),
 but p 0.09 is not significant, and part 1 proves the outcome is fixed by the seed before the shot, whatever the position.
 Note: seed and ladder live in the browser, so a player with developer tools could compute outcomes. Launch blocker in NOW.md.
+
+
+# Outcome generator (night 4, 2026-11-27)
+## How u is made
+Every random number of a round is u = f(seed, stream, k) in [0, 1): stream = 'outcome' (success when u < p of step k),
+'failureType', 'break', 'variety'. Nothing else in physics, rules or solver is random (no Math.random).
+- **v2 (every new round since night 4):** u = first 52 bits of HMAC-SHA256(key = seed, message = `stream#k`) / 2^52.
+  key = the 32-bit seed as 4 bytes, big-endian; message = UTF-8 text, e.g. `outcome#7`. Own SHA-256 code
+  (src/core/sha256.ts), synchronous, the same in the browser and in Node; tested against the FIPS 180-2 examples, RFC 4231
+  test cases 1-4, 6, 7, Node's crypto for every length 0-200, and u itself against Node's HMAC (tests/sha256.test.ts).
+  The server (docs/SERVER-OUTCOMES.md) will use the same function with a 32-byte server seed as the key.
+- **v1 (until night 4):** FNV-1a of seed and `stream#k` feeding one mulberry32 draw (a light hash). Kept only as
+  streamValueV1 so that old round codes replay exactly as before.
+## Round codes
+A v2 code carries the marker `v2` before the seed: `reds6-v2-48213-BKPK-C7`. A code without it (`reds6-48213-BKPK-C7`,
+every code from before night 4, all owner marks) is v1 and replays with the old generator.
+## The v1 failure (night 3) and the v2 result (night 4)
+- v1, 50M rounds per level (bench/results/rtp-rng-50M.txt): failed its rule (|z| < 3 every cash-out step) on reds6
+  steps 13, 14, 18 (all below 97%, worst z -3.45). Cause not proven; the light hash was the suspect.
+- v2, 200M rounds per level, seeds 1..200,000,000 (bench/results/rtp-rng-v2-200M.txt). Rule fixed before the run, run
+  once: every cash-out step |z| < 4 AND every "step k+1 ok given 1..k ok" |z| < 4 AND every single step |z| < 4.
+  **PASS.** Worst |z|: cash-out 1.44 / 1.84 / 1.50, conditional 2.07 / 2.37 / 3.67, single 2.44 / 2.64 / 2.66
+  (6 / 10 / 15 reds). Cash-out steps above vs below the formula: 17/1, 12/14, 11/25 (no one-sided drift: reds6 above,
+  reds15 below; the cash-out cells of one level share the same rounds, so they move together).
+  The worst cell, 3.67, is reds15 step 36 conditional (83.62% vs 83.53%, 1.9M rounds reached it).
+  By simulation (20,000 runs of this exact rule) a PERFECT generator fails it in 1.28% of runs.
+  Note: a 1.2M-round speed test of the same code (seeds 1..1.2M) was run before the real run (bench/results/rtp200m-speed),
+  to time it, and the summary script was tried on it (it passed; these seeds are part of the 200M). The 200M run itself
+  was started once and its result read only when all 12 parts had finished.

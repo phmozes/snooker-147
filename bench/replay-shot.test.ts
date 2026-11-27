@@ -3,26 +3,28 @@
 // (round code : step; the same solver version is needed, see config solver.version). Marks made before RTP option 3c
 // (2026-11-25) replay on the old chance: add OLDP=1. The round is replayed from its
 // seed with the real provider; the player's cash-out choices do not matter (shots depend only on seed and step).
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
 import { linearLadderForLevel } from '../src/core/ladder';
 import { createPhysicsProvider } from '../src/core/physicsProvider';
 import { newRound, setLevel, shoot, start, type LevelId } from '../src/core/round';
+import { setPos411p, solverVersion } from '../src/core/solverMode';
 import { buildTable } from '../src/core/table/geometry';
 import { classifySuccess, cutAngle, naturalCheck, playFacts } from '../src/core/shotType';
 
 it('replay marked shots', () => {
   const table = buildTable();
-  const out: string[] = [`solver ${CONFIG.solver.version}${process.env.OLDP ? ' (old p, before RTP option 3c)' : ''}`];
+  if (process.env.POS411P) setPos411p(true); // night 4, Part 3c experiment ON
+  const out: string[] = [`solver ${solverVersion()}${process.env.OLDP ? ' (old p, before RTP option 3c)' : ''}`];
   for (const item of (process.env.SHOTS ?? '').split(',').filter(Boolean)) {
-    const m = /^(reds\d+)-(\d+):(\d+)$/.exec(item.trim());
+    const m = /^(reds\d+)-(?:(v2)-)?(\d+):(\d+)$/.exec(item.trim()); // night 4: v2 codes carry the marker; others are v1
     if (!m) { out.push(`? ${item}`); continue; }
     const level = m[1] as LevelId;
-    const step = Number(m[3]);
+    const step = Number(m[4]);
     const lib = JSON.parse(readFileSync(`${process.env.LIB_DIR ?? 'public'}/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
     const provider = createPhysicsProvider(table, { [level]: lib });
-    const r0 = setLevel(newRound(Number(m[2])), level);
+    const r0 = setLevel(newRound(Number(m[3]), undefined, m[2] ? 2 : 1), level);
     let r = start(process.env.OLDP ? { ...r0, ladder: linearLadderForLevel(level) } : r0, provider, table);
     while (r.phase === 'decide' && r.step + 1 < step) r = shoot(r, provider, table);
     if (step === 1) { out.push(`${item}: step 1 comes from the break-off library`); continue; }
@@ -48,4 +50,5 @@ it('replay marked shots', () => {
     out.push(`  before: ${before.balls.map((b) => `${b.id}(${b.pos.x.toFixed(3)},${b.pos.y.toFixed(3)})`).join(' ')}`);
   }
   process.stdout.write(out.join('\n') + '\n');
+  if (process.env.OUT) writeFileSync(process.env.OUT, out.join('\n') + '\n');
 }, 3_600_000);

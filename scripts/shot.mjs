@@ -5,7 +5,7 @@ import puppeteer from 'puppeteer-core';
 
 export const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 export async function launch() {
-  return puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] });
+  return puppeteer.launch({ executablePath: CHROME, headless: 'new', protocolTimeout: 900000, args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] });
 }
 
 if (import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop())) {
