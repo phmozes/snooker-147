@@ -4,3 +4,4 @@ Rules of the game: `docs/RULES.md`. Build plan: `docs/PLAN.md`. Every tunable nu
 Invoke the `project-discipline` skill at the start and end of every session.
 Reply to the owner in simple English (the owner is a programming beginner).
 Separate project from pingpong-crash: never touch files there.
+Any job expected to take more than 30 minutes needs the owner's OK first, or goes into the night run.

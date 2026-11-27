@@ -48,7 +48,7 @@ export const CONFIG = {
     algorithm: 'mulberry32',     // seeded, fast; one independent stream per purpose
     // outcome of step k = f(seed, 'outcome', k) -> never depends on colour choices or visuals
     streams: ['outcome', 'break', 'failureType', 'variety', 'solver', 'messages'],
-    // visual only, kept OUT of this list on purpose: 'pocketCam' (pocket-camera pick, round.ts pocketCamDraw)
+    // visual only, kept OUT of this list on purpose: 'pocketCam', 'pocketCamCut' (pocket camera, round.ts pocketCamDraw)
   },
 
   // ---------------- TABLE GEOMETRY (real snooker table) ----------------
@@ -328,15 +328,28 @@ export const CONFIG = {
   },
 
   // ---------------- POCKET-CAMERA CUT (must never reveal the result, RULES B.6) ----------------
-  // From step 2. To reveal nothing: P(cut | success) must equal P(cut | failure)
-  //   = rattleCutRate * failures.later.jawRattle = 0.40 * 0.25 = 0.10. A test checks this.
+  // Owner 2026-11-27: automatic cuts, random, on average 1 shot in 6, from step 2 on (step 1 and the break never cut),
+  // with the SAME chance on success and on failure: P(cut | success) = P(cut | failure) = rate.
+  // Only a "cuttable" shot can be cut (the target ball reaches its pocket; a plain miss usually does not), so a
+  // cuttable shot is cut with chance = rate / P(cuttable | outcome), per level (cutChance, from the calibration soak
+  // bench/results/pocketcut, bench/pocketcut-sum.test.ts). The draw: visual-only stream cutStream (round seed, step).
   pocketCut: {
-    rattleCutRate: 0.40,         // share of jaw rattles that get the cut
-    successCutRate: 0.10,        // share of successful pots that get the same cut
+    rate: 1 / 6,
+    // chance that a CUTTABLE shot gets the cut; failure: one value per step group (stepGroups: from step 2, 5, 9, 13, 21)
+    // 2026-11-27 (bench/results/pocketcut-quick/calib.txt): every success is cuttable -> 1/6; a failure is cuttable
+    // when it is a rattle (99%) or an in-off (90%), almost never otherwise, so 22-33% of failures by step group (failure
+    // mix from bench/results/night6/soak). reds6 has no step 21+ (its value = all steps). Redo after 6-red fix A.
+    cutChance: {
+      reds6:  { success: 0.1667, failure: [0.6407, 0.6131, 0.5113, 0.7300, 0.6078] },
+      reds10: { success: 0.1667, failure: [0.6787, 0.6690, 0.5412, 0.7338, 0.6654] },
+      reds15: { success: 0.1667, failure: [0.6667, 0.5939, 0.5403, 0.7346, 0.7365] },
+    } as Record<string, { success: number; failure: number[] }>,
+    stepGroups: [2, 5, 9, 13, 21], // first step of each group: 2-4, 5-8, 9-12, 13-20, 21+
+    fromStep: 2,                 // no cut on step 1 (nor on the break-off, which is not a SHOOT shot)
+    cutStream: 'pocketCamCut',   // seeded stream for the cut / no-cut draw (visual only, not a game stream)
     secondsBeforeArrival: 0.5,   // cut happens this long before the ball reaches the pocket
     maxSeconds: 3,               // the pocket camera stays on screen at most this long (real seconds, slow motion included)
-    // 2026-11-27 small task 2 (src/view/pocketCam.ts). DEV ONLY for now: a cut happens only when the developer panel
-    // forces it ("pocket cam on next shot"); the real game has no automatic cuts yet (rattleCutRate/successCutRate unused).
+    // the developer panel can still force a cut on the next shot ("pocket cam on next shot", dev build only)
     secondsAfterArrival: 0.5,    // the pocket camera stays this long (shot time) after the ball arrives, then back to main
     arriveRadius: 0.06,          // "arrives" = the target ball's centre first comes this close to the mouth middle (m),
                                  // or its first jaw / pot event at that pocket, whichever is first (same rule pot or rattle)

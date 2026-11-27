@@ -7,7 +7,7 @@ import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { pocketRollStart, classifyRoll } from '../src/core/physics/testShots';
 import { streamValue } from '../src/core/round';
 import { buildTable, type PocketId } from '../src/core/table/geometry';
-import { addedSeconds, cutRateAt, pickView, planCut, pocketCamPose, type PocketView } from '../src/view/pocketCam';
+import { addedSeconds, autoCutDraw, cutChance, cutRateAt, pickView, planCut, pocketCamPose, stepGroup, type PocketView } from '../src/view/pocketCam';
 
 const table = buildTable();
 const PHONE = 390 / 844;
@@ -104,5 +104,31 @@ describe('the cut: same rule for a pot and a rattle', () => {
   it('no cut when the ball never comes near that pocket', () => {
     const r = roll('topRight', 0);
     expect(planCut(r.rec, table, 'red1', 'bottomLeft', 'P2')).toBeNull();
+  });
+});
+
+describe('automatic cut draw (owner 2026-11-27: 1 in 6, same on success and failure)', () => {
+  it('never on step 1 or a RE-RACK; every chance is between 0 and 1', () => {
+    for (const L of ['reds6', 'reds10', 'reds15']) {
+      expect(cutChance(L, 1, 'success')).toBe(0);
+      expect(cutChance(L, 1, 'jawRattle')).toBe(0);
+      expect(cutChance(L, 5, 'reRack')).toBe(0);
+      for (const st of [2, 4, 5, 9, 13, 21, 36]) for (const o of ['success', 'plainMiss']) {
+        expect(cutChance(L, st, o)).toBeGreaterThan(0);
+        expect(cutChance(L, st, o)).toBeLessThanOrEqual(1);
+      }
+    }
+    expect([2, 4, 5, 8, 9, 12, 13, 20, 21, 36].map(stepGroup)).toEqual([2, 2, 5, 5, 9, 9, 13, 13, 21, 21]);
+  });
+  it('the draw matches its chance, and the same round and step always give the same answer', () => {
+    const N = 6000;
+    let hit = 0;
+    for (let s = 1; s <= N; s++) {
+      const a = autoCutDraw('reds10', 6, 'jawRattle', s * 104729, 3);
+      expect(autoCutDraw('reds10', 6, 'jawRattle', s * 104729, 3)).toBe(a);
+      if (a) hit++;
+    }
+    const p = cutChance('reds10', 6, 'jawRattle');
+    expect(Math.abs(hit / N - p)).toBeLessThan(4 * Math.sqrt(p * (1 - p) / N));
   });
 });

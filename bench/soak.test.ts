@@ -9,9 +9,11 @@ import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
 import { breakFilesFor, createPhysicsProvider } from '../src/core/physicsProvider';
 import { judgeShot } from '../src/core/rules';
-import { baseCode, newRound, RNG_VERSION_NEW, setLevel, shoot, start, type LevelId, type Round, type RngVersion } from '../src/core/round';
+import { baseCode, newRound, nextOutcome, nextTarget, RNG_VERSION_NEW, setLevel, shoot, start, type LevelId, type Round, type RngVersion } from '../src/core/round';
 import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { playbackSeconds, resultVisibleAt } from '../src/view/fastEnd';
+import { addedSeconds, planCut } from '../src/view/pocketCam';
+import type { PocketId } from '../src/core/table/geometry';
 import { setPos411p, solverVersion } from '../src/core/solverMode';
 import { classifySuccess, playFacts } from '../src/core/shotType';
 import { shotCaps, solveFailure, type SolvedFailure } from '../src/core/solver';
@@ -47,6 +49,11 @@ it('soak', () => {
       Object.assign(line, { d: Math.round(rec.duration * 1000) / 1000, vis: vis === null ? null : Math.round(vis * 1000) / 1000,
         play: Math.round(playbackSeconds(rec, FE) * 1000) / 1000, fallback: shot.fallback ?? null, speed: Math.round(shot.speed * 100) / 100,
         pots: rec.events.filter((e) => e.type === 'pot').length });
+      // 2026-11-27 pocket camera (PLAN 8.2): can this shot be cut (target ball reaches its pocket)? cc 1/0, add = the
+      // seconds a cut would add. The cut decision itself is replayed offline (bench/pocketcut-sum.test.ts).
+      const tp = h.shot as { target?: string; pocket?: PocketId };
+      const c = tp.target && tp.pocket ? planCut(rec, table, tp.target, tp.pocket, 'P1b') : null;
+      Object.assign(line, { cc: c ? 1 : 0, add: c ? Math.round(addedSeconds(c) * 1000) / 1000 : 0, fk: (h.shot as { kind?: string }).kind ?? null });
     }
     // 2026-11-27 FAILCMP=1: for a failure shot, also solve it again with failure.natural switched the other way (same
     // frame, same type) and log both: length, in-off pocket distance, fallback (off = the old rule, on = the new one)
@@ -63,6 +70,20 @@ it('soak', () => {
         onD: r3(b?.duration), onIn: r3(b?.inOffDist), onFb: b?.fallback ?? null });
     }
     appendFileSync(`${file}-shots.jsonl`, `${JSON.stringify(line)}\n`);
+  };
+  type PairedShot = { dir: { x: number; y: number }; speed: number; spin: number; target?: string; pocket?: PocketId; fallback?: string | null };
+  if (process.env.PAIRED && !process.env.START_I) writeFileSync(`${file}-paired.jsonl`, '');
+  const pairedLine = (code: string, before: Round['frame'], step: number, failure: string, shot: PairedShot | undefined, p: number) => {
+    let cc = 0, add = 0;
+    if (shot && before && shot.dir) {
+      const sim = createSim(before.balls, table);
+      strike(sim, 'cue', shot.dir, shot.speed, shot.spin);
+      const rec = recordShot(sim);
+      const c = shot.target && shot.pocket ? planCut(rec, table, shot.target, shot.pocket, 'P1b') : null;
+      if (c) { cc = 1; add = Math.round(addedSeconds(c) * 1000) / 1000; }
+    }
+    appendFileSync(`${file}-paired.jsonl`, `${JSON.stringify({ code, step, outcome: failure, fallback: shot?.fallback ?? null, cc, add, w: Math.round((1 - p) * 1e6) / 1e6 })}
+`);
   };
   // night 6: the library of the rounds played (new rounds are v3: the baulk-line break-off; RNG=2: the old library)
   const rngV = (process.env.RNG ? Number(process.env.RNG) : RNG_VERSION_NEW) as RngVersion;
@@ -114,6 +135,19 @@ it('soak', () => {
       stepCount(rd, 1);
       while (rd.phase === 'decide') {
         const before = rd.frame!;
+        // 2026-11-27 PAIRED=1 (pocket camera, RULES B.6): when this step succeeds, also solve the failure shot the game
+        // would have played had it failed (the game solves both before SHOOT) and log whether it is cuttable, weighted
+        // later by the step's failure chance 1 - p. Gives a failure sample at every step reached (bench/pocketcut-sum).
+        if (process.env.PAIRED) {
+          const no = nextOutcome(rd);
+          if (no.outcome === 'success' && no.step >= 2) {
+            const auto = before.phase === 'colour' && provider.autoColour;
+            const tg = nextTarget(rd, auto ? provider.autoColour!(before, { roundCode: rd.roundCode, step: no.step }) : undefined);
+            const pf = provider.shot(before, tg, no.failure, { roundCode: rd.roundCode, step: no.step });
+            seen = provider.log.length; // its fallbacks are not this round's
+            pairedLine(code, before, no.step, no.failure, pf.shot as PairedShot | undefined, rd.ladder[no.step - 1]!.p);
+          }
+        }
         const t0 = performance.now();
         rd = shoot(rd, provider, table);
         const ms = performance.now() - t0;

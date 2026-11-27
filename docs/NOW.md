@@ -11,9 +11,9 @@
 ## Claude's turn (waiting for the owner's answers)
 - Owner 2026-11-27: NO playback speed-up at all (faster shot end OFF, switch removed). Failure shots over 3 s are
   accepted as they are for now (66.8 per 1,000 failures, longest 4.54 s; docs/SLOW-SHOTS.md D).
-- Owner 2026-11-27: KEEP the cue's extra 0.25 s per shot. Pocket cam P1b/P2 70/30, dev-forced only; auto cuts: owner's word.
-- Next night run (not before): 6-red RE-RACK fix A = library rule dropping 6-red breaks that leave a red against the
-  pink, new round marker v4 (v3 codes keep their library). Until then kept as is (owner 2026-11-27; night7/SUMMARY.txt).
+- Owner 2026-11-27: KEEP the cue's extra 0.25 s. Pocket cam AUTO ON: 1 in 6 (success = failure), P1b/P2 70/30, +0.32 s/shot.
+- Next night run (not before): 6-red RE-RACK fix A (library rule: no 6-red break leaving a red against the pink, marker
+  v4), THEN the big pocket-cut soak (SHOTS=1 PAIRED=1, bench/pocketcut-sum.test.ts) and new cutChance for v4.
 - Night 6 done: round version v3 (break with the cue, markings, baulk-line break-off); proofs in bench/results/night6.
 - Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1, POS410=1 = old 4.10, RNG=2 = old break library), summary
   node bench/soak-night4.mjs <dir>; replays bench/night4/fp.test.ts; marks bench/replay-shot.test.ts; scripts/*.mjs.
@@ -26,5 +26,5 @@
 - Owner decides: design, money (odds, bets, RTP), publishing. Claude decides: code details, tests, commits.
 - Rules are locked in docs/RULES.md. Concept changes only after asking the owner.
 - Outcome first (seeded RNG, HMAC), shot second; visuals never change odds. No Math.random in physics/rules/solver.
-- Free assets only, commercial-use licence, every source in docs/ASSETS.md. Costs (if any ever) go in EXPENSES.md.
-- npm test: 294/294 on a quiet PC (2026-11-27); tests/solver.test.ts times out (60 s) only when the PC is busy.
+- Free assets only (commercial licence, docs/ASSETS.md), costs in EXPENSES.md. npm test: solver.test.ts times out only on a busy PC.
+- Any job expected to take more than 30 minutes needs the owner's OK first, or goes into the night run (owner 2026-11-27).

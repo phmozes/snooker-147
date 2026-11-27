@@ -90,11 +90,11 @@ export function streamValueV2(seed: number, stream: string, k: number): number {
 export function streamValue(seed: number, stream: string, k: number, version: RngVersion = RNG_VERSION_NEW): number {
   return version === 1 ? streamValueV1(seed, stream, k) : streamValueV2(seed, stream, k);
 }
-/** Small task 2 (2026-11-27): the VISUAL-ONLY draw for the pocket-camera pick (P1b or P2) of step k. Its own stream
- *  (CONFIG.pocketCut.stream), never one of the game streams (outcome, break, failure type, solver ...), so it cannot
- *  change or reveal a result; it is read only after the outcome is fixed and the shot is planned. */
-export function pocketCamDraw(seed: number, k: number, version: RngVersion = RNG_VERSION_NEW): number {
-  const stream = CONFIG.pocketCut.stream;
+/** 2026-11-27: the VISUAL-ONLY draws of the pocket camera for step k: 'view' = P1b or P2 (CONFIG.pocketCut.stream),
+ *  'cut' = cut or not (CONFIG.pocketCut.cutStream). Their own streams, never one of the game streams (outcome, break,
+ *  failure type, solver ...), so they cannot change a result; read only after the outcome is fixed and the shot planned. */
+export function pocketCamDraw(seed: number, k: number, version: RngVersion = RNG_VERSION_NEW, part: 'view' | 'cut' = 'view'): number {
+  const stream = part === 'view' ? CONFIG.pocketCut.stream : CONFIG.pocketCut.cutStream;
   if ((CONFIG.rng.streams as readonly string[]).includes(stream)) throw new Error(`pocket camera stream ${stream} is a game stream`);
   return streamValue(seed, stream, k, version);
 }

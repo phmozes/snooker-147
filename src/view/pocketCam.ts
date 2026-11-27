@@ -35,6 +35,30 @@ export function pickView(seed: number, step: number, rng: RngVersion): PocketVie
   return pocketCamDraw(seed, step, rng) < PC.p1bShare ? 'P1b' : 'P2';
 }
 
+/** The step groups of CONFIG.pocketCut.stepGroups (the failure mix changes a little with the step). */
+export const STEP_GROUPS = PC.stepGroups.map((from, i) => {
+  const next = PC.stepGroups[i + 1];
+  return { from, label: next === undefined ? `${from}+` : `${from}-${next - 1}` };
+});
+/** The first step of the group that `step` belongs to. */
+export const stepGroup = (step: number): number => [...(PC.stepGroups as readonly number[])].reverse().find((f) => step >= f) ?? PC.stepGroups[0]!;
+
+/** The chance that a CUTTABLE shot of this level / step / outcome gets the automatic cut (0 on step 1). */
+export function cutChance(levelId: string, step: number, outcome: string): number {
+  if (step < PC.fromStep || outcome === 'reRack') return 0;
+  const c = PC.cutChance[levelId];
+  if (!c) return 0;
+  return Math.min(1, outcome === 'success' ? c.success : c.failure[(PC.stepGroups as readonly number[]).indexOf(stepGroup(step))]!);
+}
+
+/** The automatic cut draw for this shot (visual-only stream; same round code = same answer). The shot is cut when
+ *  this is true AND it is cuttable (planCut is not null). Outcome classes get different chances so that, over all
+ *  shots, P(cut | success) = P(cut | failure) = CONFIG.pocketCut.rate (RULES B.6). */
+export function autoCutDraw(levelId: string, step: number, outcome: string, seed: number, rng: RngVersion): boolean {
+  const p = cutChance(levelId, step, outcome);
+  return p > 0 && pocketCamDraw(seed, step, rng, 'cut') < p;
+}
+
 /** The cut for this recording (target ball sent to `pocketId`), or null when the ball never comes near that pocket. */
 export function planCut(rec: Pick<Recording, 'events' | 'frames' | 'frameDt' | 'ids' | 'duration'>, table: TableGeometry,
   target: string, pocketId: PocketId, view: PocketView): PocketCut | null {

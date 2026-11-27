@@ -24,7 +24,7 @@ import { pos411pOn, setPos411p, solverVersion } from '../core/solverMode';
 import { cuePose, VARIANTS } from '../view/cue';
 import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
-import { addedSeconds, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
+import { addedSeconds, autoCutDraw, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
@@ -67,8 +67,8 @@ const replayColour = (r: Round) => (replay && r.frame?.phase === 'colour' ? code
 let force: ForcedOutcome | null = null; // the NEXT shot's outcome, forced (then back to null)
 let auto: null | { mode: 'round' | 'jump' | 'clearance'; to: number } = null; // play shots by itself
 let jumpText = '';
-/** Small task 2 (2026-11-27): "pocket cam on next shot" (dev only). The ONLY way a cut happens for now: the real game
- *  has no automatic cuts (this stays null outside a dev build, so the cut code never runs there). */
+/** 2026-11-27: "pocket cam on next shot" (dev only): forces a cut on the next SHOOT shot. The real game cuts by itself
+ *  (owner: about 1 shot in 6, same chance on success and failure, pocketCam.ts autoCutDraw). Null outside a dev build. */
 let devPocketCam: null | PocketView | 'random' = null;
 let lastCut = ''; // dev panel: what the last forced cut did
 const FORCE_TEXT: Record<ForcedOutcome, string> = { success: 'Success', plainMiss: 'Miss', jawRattle: 'Rattle', inOff: 'In-off',
@@ -274,9 +274,9 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
   const lead = cuePlan ? CUE_TIMING.added : 0;
   const fastFrom = fastEndOn ? startOf(rec, { ...CONFIG.shot.fastEnd, enabled: true }) : null;
   const FE = { ...CONFIG.shot.fastEnd, enabled: true };
-  // small task 2: the pocket-camera cut (dev-forced only). Playback only: the same recording, part of it from the
+  // the pocket-camera cut (automatic, or forced from the dev panel). Playback only: the same recording, part of it from the
   // pocket camera in slow motion. Same rule for a pot and a rattle (pocketCam.ts).
-  const cut: PocketCut | null = import.meta.env.DEV && opts.cam
+  const cut: PocketCut | null = opts.cam
     ? planCut(rec, table, opts.cam.target, opts.cam.pocket as PocketCut['pocket'], opts.cam.view) : null;
   const cutPose = cut ? pocketCamPose(table.pockets.find((p) => p.id === cut.pocket)!, cut.view) : null;
   if (import.meta.env.DEV && opts.cam) lastCut = cut
@@ -474,9 +474,11 @@ async function onShoot() {
   } else {
     // developer jump: no animation, the balls just move to where the shot leaves them
     const pc = import.meta.env.DEV ? devPocketCam : null; // dev only: "pocket cam on next shot"
+    // the automatic cut (owner 2026-11-27): a visual-only draw; it happens only if the shot is also cuttable (planCut)
+    const autoCut = autoCutDraw(round.levelId, step, h.outcome, round.seed, round.rng);
     const sh = h.shot as { target?: string; pocket?: string };
-    const cam = pc && sh.target && sh.pocket
-      ? { target: sh.target, pocket: sh.pocket, view: pc === 'random' ? pickView(round.seed, step, round.rng) : pc } : undefined;
+    const camView = pc && pc !== 'random' ? pc : pickView(round.seed, step, round.rng);
+    const cam = (pc || autoCut) && sh.target && sh.pocket ? { target: sh.target, pocket: sh.pocket, view: camView } : undefined;
     if (import.meta.env.DEV && pc) { devPocketCam = null; if (!cam) lastCut = 'no cut: this shot has no target pocket'; }
     const len = auto?.mode === 'jump' ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam });
     const type = (h.shot as { type?: string }).type ?? '?';
