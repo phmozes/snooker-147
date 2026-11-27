@@ -517,10 +517,11 @@ export const CONFIG = {
     // Files in public/sounds/ (owner's picks 2026-11-27: option B of each, docs/ASSETS.md).
     tableHits: {
       curve: 0.6,                // < 1: soft hits are still audible, hard hits do not get much louder
-      cue:     { min: 0.05, max: 6.0, floor: 0.25 },  // cue strike, s = the shot's cue speed
+      // gain: extra volume factor on the result (owner 2026-11-27: cue 1.0 -> 0.75, pocket 1.0 -> 0.5)
+      cue:     { min: 0.05, max: 6.0, floor: 0.25, gain: 0.75 },  // cue strike, s = the shot's cue speed
       ball:    { min: 0.08, max: 4.0, floor: 0.10, hardFrom: 1.2 }, // s = closing speed; hard file from hardFrom m/s
       cushion: { min: 0.12, max: 3.5, floor: 0.10 },  // cushions and pocket jaws, s = speed into the cushion
-      pocket:  { min: 0.0,  max: 2.5, floor: 0.45 },  // ball drop, s = the ball's speed just before it drops
+      pocket:  { min: 0.0,  max: 2.5, floor: 0.45, gain: 0.5 },  // ball drop, s = the ball's speed just before it drops
       maxVoices: 6,              // at most this many sounds at once (a break has many hits in the same moment)
       minGapMs: 25,              // the same pair of balls (or ball + cushion) sounds at most once in this time
       // PLAN 9.1 round 2 (owner's pick: BREAK-OFF C): the opponent's break-off plays one break sound when the cue ball

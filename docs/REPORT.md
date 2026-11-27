@@ -1,77 +1,76 @@
-# Report: WIN, TAP and BREAK-OFF sounds in the game (PLAN 9.1 / 9.2, 2026-11-27)
+# Report: quieter pocket and cue; applause levels options page (2026-11-27)
 
-Your round-2 picks: WIN = A (crowd applause), TAP = B, BREAK-OFF = C. Copied unchanged from mockups/sounds2/ to
-`public/sounds/` as win.mp3, tap.mp3, break.mp3. All CC0 1.0 (public domain, commercial use, no credit); sources in
-docs/ASSETS.md (win: miuziqa, Freesound #858309; tap: NenadSimic, #268108; break: DariusOW, #766411).
+## Part 1: volume change (in the game)
+The old settings had no volume number of their own: the volume came from the impact speed alone (floor..1).
+So I added one setting per sound, `gain`, which multiplies the result (src/config/game.config.ts, sound.tableHits),
+plus one line in src/game/tableSounds.ts (`impactVolume` multiplies by `gain`, 1 if missing). No other sound changed.
 
-## What plays when
-- **WIN (applause):** on every paid end: CASH OUT, RE-RACK and clearance. For a clearance it plays when the big
-  clearance message appears, which is after the pocket-camera replay. Not on a failure, and not at the end of a free
-  replay of a round code (it pays nothing).
-- **TAP:** on every button on the page: START, SHOOT, CASH OUT, bet buttons (- / + / quick bets), level balls, BACK,
-  menu, mute, Rules (and colour buttons, if any appear later). Not on the table (also not the small weird-shot flag
-  on the table) and not inside the developer panel. A greyed-out button gives no tap.
-- **BREAK-OFF:** on the opponent's break-off only. The break sound plays at the moment the cue ball first touches a
-  ball of the pack. From that moment, ball-hits-ball sounds are off for 1.5 s; the cue, cushion and pocket sounds
-  stay on. Later ball hits play as usual. All other shots (step 1, our shots) are unchanged.
-- **Same rules as the table sounds:** nothing before the first tap on the page; the mute button stops everything;
-  the break sound follows the playback clock (the moment comes from the recording, like the other hits).
-- WIN and TAP are never left out because of the 6-sound limit (only table hits count for that).
+| Sound | Old | New |
+|---|---|---|
+| Pocket drop (`pocket.gain`) | 1.0 (softest pot 0.45, hardest 1.0) | **0.5** (softest 0.225, hardest 0.5) = 50% quieter |
+| Cue strike (`cue.gain`) | 1.0 (softest 0.25, hardest 1.0) | **0.75** (softest 0.19, hardest 0.75) = 25% quieter |
 
-## Config values added (src/config/game.config.ts, `sound`)
-| Value | Meaning |
-|---|---|
-| `tableHits.breakOff.volume: 1.0` | volume of the break sound (0..1, x master volume 0.8) |
-| `tableHits.breakOff.muteBallSeconds: 1.5` | ball-ball sounds are off this long after the cue ball hits the pack |
-| `uiSounds.winVolume: 0.8` | volume of the applause |
-| `uiSounds.tapVolume: 0.5` | volume of the button tap (kept low: it plays often) |
+All x masterVolume 0.8, same as before. tests/tableSounds.test.ts: updated the pocket check and added two checks
+(hardest pot = 0.5, hardest cue = 0.75): 4/4 pass. Type check (tsc) clean.
+Full `npx vitest run`: NOT finished. I stopped it after 47 minutes (past the 30-minute rule); its result is unknown.
+5 of its worker processes are still running in the background (I was not allowed to force-close them); they
+stop on their own or when the PC restarts.
+The stopped run also rewrote 10 saved files in bench/results/ (fairness, soak, diag files). They are partial results of an
+unfinished run, so I did NOT commit them (left as they are). bench/results/soak/reds6-0-failures.txt got 3 lines:
+- reds6-v3-5000057 step 8: solver took 13904 ms (stuck limit 10000)
+- reds6-v3-5000094 step 10: solver took 11564 ms (stuck limit 10000)
+- reds6-v3-5000094 step 11: RE-RACK (target red)
+The two slow-solver lines are most likely the busy PC (tests running at the same time); the RE-RACK is the known 6-red one.
 
-## Checks
-- **Replay check** (bench/camera-replay.test.ts, 10 round codes, every outcome and ball path frame by frame):
-  **identical** before and after this task, and identical to the file from before any sound work
-  (bench/results/sounds/replay-before.txt = replay-before2.txt = replay-after2.txt).
-- **npm test: 309 / 309 passed** (30 files; the 2 sound test files were run again after the last small dev-only edit: 9 / 9). tests/tableSounds.test.ts now also checks that the break moment is the cue ball's first
-  touch of the pack, and that all 8 files exist.
-- **Live check** (scripts/sound-check.mjs, real clicks in headless Chrome at phone size; in a developer build the
-  game keeps a list of the sounds it started, by name):
-  - no sound before the first tap; a tap on the table: no sound
-  - START: tap sound. Break-off: exactly one break sound, 0 ball-ball sounds in the 1.5 s after it
-    (sounds heard: tap, cue, break, cushion, cushion, cushion)
-  - SHOOT: tap, then step 1 (cue, ball-hard, pocket, cushion). CASH OUT: tap + applause
-  - mute on: START and a whole break-off with no sound at all; no page errors
-  - Not live-checked: the applause at a clearance (the code plays it at the same place as for CASH OUT, right
-    before the clearance message, after the replay), and the RE-RACK end.
-  The check counts sounds; it cannot judge how they sound.
+## Part 2: applause levels (options page only, mockups/applause/index.html)
+12 files, 2 per level. Two big buttons play all A (or all B) from level 1 to 6, with a 0.6 s gap, so you hear the growth.
+Treatment: Freesound preview, trimmed, 30 ms fade-in, fade-out over the last 35% (at least 0.5 s), mono 96 kbps.
+Not levelled the same: average loudness goes up 3 dB each level (level 1 = -30 dB, level 6 = -15 dB).
+All CC0 1.0 (checked on each sound's page on 2026-11-27). Nothing from freesoundeffects.com.
 
-## Soak failures
-No soak ran (sound only; outcomes proven unchanged by the replay check). Nothing new to list.
+| File | Level | Length | Size | Source | Author | Licence |
+|---|---|---|---|---|---|---|
+| 1-A | 1 CASH OUT | 1.5 s | 18.8 KB | freesound.org/s/462362 | Breviceps | CC0 1.0 |
+| 1-B | 1 CASH OUT | 1.5 s | 18.8 KB | freesound.org/s/433880 | jodybruchon | CC0 1.0 |
+| 2-A | 2 break 50 | 2.2 s | 27.3 KB | freesound.org/s/858309 (= current win.mp3) | miuziqa | CC0 1.0 |
+| 2-B | 2 break 50 | 2.2 s | 27.3 KB | freesound.org/s/481646 | bowlingballout | CC0 1.0 |
+| 3-A | 3 needs snookers | 3.0 s | 36.7 KB | freesound.org/s/859009 | ElevatorFan2020 | CC0 1.0 |
+| 3-B | 3 needs snookers | 3.0 s | 36.7 KB | freesound.org/s/583130 | AudioSea | CC0 1.0 |
+| 4-A | 4 break 100 | 4.0 s | 48.9 KB | freesound.org/s/845594 | 3to1video | CC0 1.0 |
+| 4-B | 4 break 100 | 3.8 s | 46.4 KB | freesound.org/s/221567 | AlaskaRobotics | CC0 1.0 |
+| 5-A | 5 clearance | 4.5 s | 54.9 KB | freesound.org/s/221568 | AlaskaRobotics | CC0 1.0 |
+| 5-B | 5 clearance | 5.0 s | 60.8 KB | freesound.org/s/678543 | mglennsound | CC0 1.0 |
+| 6-A | 6 MAXIMUM | 6.0 s | 72.7 KB | freesound.org/s/455660 | kyles | CC0 1.0 |
+| 6-B | 6 MAXIMUM | 6.0 s | 72.7 KB | freesound.org/s/397434 | FoolBoyMedia | CC0 1.0 |
 
-## Build files
-`npm run build` (production, dist/):
-| File | Size |
-|---|---|
-| index.html | 10.6 KB |
-| assets/index-CIe8NIcf.js | 679.2 KB |
-| assets/solverWorker-OK6aZ2BX.js | 48.6 KB |
-| sounds/ball-hard.mp3 | 4.0 KB |
-| sounds/ball-soft.mp3 | 2.4 KB |
-| sounds/break.mp3 | 20.9 KB |
-| sounds/cue.mp3 | 4.9 KB |
-| sounds/cushion.mp3 | 2.1 KB |
-| sounds/pocket.mp3 | 12.9 KB |
-| sounds/tap.mp3 | 1.9 KB |
-| sounds/win.mp3 | 26.7 KB |
-| breaks/reds6.json, reds10.json, reds15.json | 478.4 / 575.3 / 696.0 KB |
-| breaks-v3/reds6.json, reds10.json, reds15.json | 477.4 / 576.0 / 696.2 KB |
+The exact parts used are in docs/ASSETS.md. A headless check confirmed "Play all A" plays 1-A ... 6-A in order.
+Plan for later (not built): if several levels happen on one shot, play only the highest; levels 2-4 right after the pot.
 
-`npm run build:test` (dist-test/: developer menu, no PC posting): the same files, except
-| File | Size |
-|---|---|
-| index.html | 10.8 KB |
-| assets/index-CC726PFd.js | 692.5 KB |
+## Builds
+`npm run build` (dist/, production) and `npm run build:test` (dist-test/, developer menu) both built OK.
 
-## Owner's turn
-Listen on the phone (tap once first): table sounds, break-off, applause, tap. Say what is too loud, too quiet or
-wrong; each volume is one number. The hosted demo is not republished (your word).
+| File | dist/ | dist-test/ |
+|---|---|---|
+| index.html | 10,860 | 11,057 |
+| assets/index-*.js | 695,489 (index-CkykZKLM.js) | 709,163 (index-DEfLbk7u.js) |
+| assets/solverWorker-D6X530nS.js | 49,825 | 49,825 |
+| breaks/reds6.json | 489,861 | 489,861 |
+| breaks/reds10.json | 589,119 | 589,119 |
+| breaks/reds15.json | 712,742 | 712,742 |
+| breaks-v3/reds6.json | 488,825 | 488,825 |
+| breaks-v3/reds10.json | 589,812 | 589,812 |
+| breaks-v3/reds15.json | 712,882 | 712,882 |
+| sounds/ball-hard.mp3 | 4,075 | 4,075 |
+| sounds/ball-soft.mp3 | 2,507 | 2,507 |
+| sounds/break.mp3 | 21,359 | 21,359 |
+| sounds/cue.mp3 | 5,015 | 5,015 |
+| sounds/cushion.mp3 | 2,194 | 2,194 |
+| sounds/pocket.mp3 | 13,165 | 13,165 |
+| sounds/tap.mp3 | 1,924 | 1,924 |
+| sounds/win.mp3 | 27,315 | 27,315 |
 
-Committed and pushed to origin/master (standing approval). Nothing published.
+(sizes in bytes; the sound files are unchanged, the volume change is in the code)
+
+## Your turn
+- Phone: listen to the pocket and cue sounds again (quieter now).
+- Open mockups/applause/ (on the dev server: http://192.168.1.111:5181/mockups/applause/), pick A or B for each of the 6 levels.

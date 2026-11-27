@@ -73,3 +73,24 @@ Same treatment as round 1: the site's 128 kbps preview, trimmed, faded out, leve
 | break-A (break-off) | https://freesound.org/people/reg7783/sounds/204187/ | reg7783 | CC0 1.0 | 0.45-2.25 s, 0.5 s fade-out |
 | break-B (break-off) | https://freesound.org/people/LewisEmmott5/sounds/732672/ | LewisEmmott5 | CC0 1.0 | 0.25-1.95 s, 0.5 s fade-out |
 | break-C (break-off) | https://freesound.org/people/DariusOW/sounds/766411/ | DariusOW | CC0 1.0 | 0.05-1.75 s, 0.4 s fade-out |
+
+## Applause levels options (mockups/applause/; options page only, not in the game yet)
+Owner 2026-11-27: 6 applause levels, 2 options each. All from Freesound, CC0 1.0 only (licence checked on each sound's
+own page on 2026-11-27). Same treatment as before (site's 128 kbps preview, trimmed, 30 ms fade-in, fade-out over the
+last 35% (at least 0.5 s), mono 96 kbps), but NOT levelled the same: average loudness rises 3 dB a level
+(level 1 = -30 dB ... level 6 = -15 dB RMS; soft limit at -1 dB).
+
+| File | Level | Source page | Author | Licence | Part used | Length |
+|---|---|---|---|---|---|---|
+| 1-A | CASH OUT | https://freesound.org/people/Breviceps/sounds/462362/ | Breviceps | CC0 1.0 | 0.40-1.90 s | 1.5 s |
+| 1-B | CASH OUT | https://freesound.org/people/jodybruchon/sounds/433880/ | jodybruchon | CC0 1.0 | 0.45-1.95 s | 1.5 s |
+| 2-A | 50 break | https://freesound.org/people/miuziqa/sounds/858309/ | miuziqa | CC0 1.0 | 0.30-2.50 s (= current win.mp3) | 2.2 s |
+| 2-B | 50 break | https://freesound.org/people/bowlingballout/sounds/481646/ | bowlingballout | CC0 1.0 | 0.30-2.50 s | 2.2 s |
+| 3-A | needs snookers | https://freesound.org/people/ElevatorFan2020/sounds/859009/ | ElevatorFan2020 | CC0 1.0 | 0.25-3.25 s | 3.0 s |
+| 3-B | needs snookers | https://freesound.org/people/AudioSea/sounds/583130/ | AudioSea | CC0 1.0 | 0.60-3.60 s | 3.0 s |
+| 4-A | 100 break | https://freesound.org/people/3to1video/sounds/845594/ | 3to1video | CC0 1.0 | 0.60-4.60 s | 4.0 s |
+| 4-B | 100 break | https://freesound.org/people/AlaskaRobotics/sounds/221567/ | AlaskaRobotics | CC0 1.0 | 0.25-4.05 s | 3.8 s |
+| 5-A | clearance | https://freesound.org/people/AlaskaRobotics/sounds/221568/ | AlaskaRobotics | CC0 1.0 | 1.00-5.50 s | 4.5 s |
+| 5-B | clearance | https://freesound.org/people/mglennsound/sounds/678543/ | mglennsound | CC0 1.0 | 11.50-16.50 s | 5.0 s |
+| 6-A | MAXIMUM | https://freesound.org/people/kyles/sounds/455660/ | kyles | CC0 1.0 | 6.50-12.50 s | 6.0 s |
+| 6-B | MAXIMUM | https://freesound.org/people/FoolBoyMedia/sounds/397434/ | FoolBoyMedia | CC0 1.0 | 1.50-7.50 s | 6.0 s |

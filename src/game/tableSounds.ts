@@ -19,10 +19,10 @@ const voices: AudioBufferSourceNode[] = [];
 const lastAt = new Map<string, number>();
 
 /** Volume 0..1 for impact speed s (0 = silent). The rule is in game.config.ts sound.tableHits. */
-export function impactVolume(s: number, r: { min: number; max: number; floor: number }): number {
+export function impactVolume(s: number, r: { min: number; max: number; floor: number; gain?: number }): number {
   if (!(s >= r.min)) return 0; // also NaN
   const k = Math.min(1, Math.max(0, (s - r.min) / (r.max - r.min)));
-  return Math.min(1, r.floor + (1 - r.floor) * k ** S.curve);
+  return Math.min(1, r.floor + (1 - r.floor) * k ** S.curve) * (r.gain ?? 1);
 }
 
 function unlock() {

@@ -18,7 +18,9 @@ describe('table sounds', () => {
     expect(impactVolume(S.ball.max, S.ball)).toBe(1);
     expect(impactVolume(50, S.cushion)).toBe(1);
     expect(impactVolume(Number.NaN, S.cushion)).toBe(0);
-    expect(impactVolume(0, S.pocket)).toBeCloseTo(S.pocket.floor); // a pot is always heard
+    expect(impactVolume(0, S.pocket)).toBeCloseTo(S.pocket.floor * S.pocket.gain); // a pot is always heard
+    expect(impactVolume(S.pocket.max, S.pocket)).toBeCloseTo(0.5); // owner 2026-11-27: pocket at half volume
+    expect(impactVolume(S.cue.max, S.cue)).toBeCloseTo(0.75); // owner 2026-11-27: cue strike x0.75
   });
   it('only the game page uses the sounds, and the sound code imports nothing from the core but types', () => {
     for (const [f, s] of Object.entries(SOURCES)) {
