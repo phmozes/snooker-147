@@ -1,0 +1,64 @@
+== night-3 style summary ==
+reds6: 1000 rounds, 6521 SHOOT shots | stuck 0 (over shot cap 0, crash 0) | solves over 10 s wall time 1, slowest 10.5 s (PC fully loaded) | RE-RACK 5 | off table/overlap 0 | fallback: success 57.5% any flex step, last resort 3.8% (exhibition 92, rescue 120), failure 15.1% | over 3.5 s 89 (not last resort 67), longest 5.31 s | pace red med 1.57 p90 2.19, colour med 1.56 p90 2.16 | success vs p: 18 steps, worst |z| 2.12, outside 3 sd 0
+reds10: 1000 rounds, 7880 SHOOT shots | stuck 0 (over shot cap 0, crash 0) | solves over 10 s wall time 8, slowest 14.8 s (PC fully loaded) | RE-RACK 0 | off table/overlap 0 | fallback: success 57.0% any flex step, last resort 1.7% (exhibition 77, rescue 41), failure 15.4% | over 3.5 s 51 (not last resort 35), longest 5.07 s | pace red med 1.53 p90 2.04, colour med 1.6 p90 2.16 | success vs p: 25 steps, worst |z| 2.47, outside 3 sd 0
+reds15: 1000 rounds, 9201 SHOOT shots | stuck 0 (over shot cap 0, crash 0) | solves over 10 s wall time 5, slowest 12.0 s (PC fully loaded) | RE-RACK 1 | off table/overlap 0 | fallback: success 56.4% any flex step, last resort 1.3% (exhibition 86, rescue 18), failure 14.8% | over 3.5 s 30 (not last resort 21), longest 5.07 s | pace red med 1.53 p90 2.06, colour med 1.59 p90 2.14 | success vs p: 29 steps, worst |z| 3.00, outside 3 sd 0
+
+== reds6: 6521 SHOOT shots (5648 success, 868 failure, 5 RE-RACK) ==
+Part 3b playback, all shots    OFF: median 1.63 s, 90% 2.34 s, over 3.5 s 93, longest 5.31 s (6516 shots)
+                               ON : median 1.27 s, 90% 2.14 s, over 3.5 s 5, longest 4.06 s (6516 shots)
+  success shots                OFF: median 1.57 s, 90% 2.17 s, over 3.5 s 89, longest 5.31 s (5648 shots)
+                               ON : median 1.21 s, 90% 1.75 s, over 3.5 s 2, longest 3.93 s (5648 shots)
+  success, not last resort     OFF over 3.5 s 65, ON over 3.5 s 0
+  failure shots                OFF: median 2.17 s, 90% 2.95 s, over 3.5 s 4, longest 4.06 s (868 shots)
+                               ON : median 2.17 s, 90% 2.95 s, over 3.5 s 3, longest 4.06 s (868 shots)
+  shots sped up: 3525 of 6516; result never visible (no speed-up): 0
+Part 4 pace (red), cue OFF: median 1.60 s, 90% 2.27 s, over 3.5 s 39, longest 4.85 s (2637 shots)
+                 cue ON : median 1.85 s, 90% 2.52 s, over 3.5 s 47, longest 5.10 s (2637 shots) (cue lead 0.25 s before the balls roll)
+Part 4 pace (colour), cue OFF: median 1.65 s, 90% 2.37 s, over 3.5 s 54, longest 5.31 s (3879 shots)
+                 cue ON : median 1.90 s, 90% 2.62 s, over 3.5 s 90, longest 5.56 s (3879 shots) (cue lead 0.25 s before the balls roll)
+Failure types: plainMiss 508 (58.5%), jawRattle 234 (27.0%), inOff 84 (9.7%), wrongBallFirst 42 (4.8%)
+  jawRattle length: median 2.12 s, 90% 2.72 s, over 3.5 s 1, longest 4.06 s (234 shots)
+  plainMiss length: median 2.19 s, 90% 2.96 s, over 3.5 s 1, longest 3.52 s (508 shots)
+  inOff length: median 2.23 s, 90% 3.36 s, over 3.5 s 2, longest 3.87 s (84 shots)
+  wrongBallFirst length: median 2.18 s, 90% 2.52 s, over 3.5 s 0, longest 2.97 s (42 shots)
+Solve time (success shots, ms, PC under load): median 731, 90% 1805, max 10472
+
+== reds10: 7880 SHOOT shots (6978 success, 902 failure, 0 RE-RACK) ==
+Part 3b playback, all shots    OFF: median 1.61 s, 90% 2.20 s, over 3.5 s 55, longest 5.08 s (7880 shots)
+                               ON : median 1.28 s, 90% 2.01 s, over 3.5 s 5, longest 5.08 s (7880 shots)
+  success shots                OFF: median 1.56 s, 90% 2.12 s, over 3.5 s 51, longest 5.08 s (6978 shots)
+                               ON : median 1.23 s, 90% 1.70 s, over 3.5 s 1, longest 5.08 s (6978 shots)
+  success, not last resort     OFF over 3.5 s 35, ON over 3.5 s 0
+  failure shots                OFF: median 2.15 s, 90% 2.64 s, over 3.5 s 4, longest 4.37 s (902 shots)
+                               ON : median 2.15 s, 90% 2.64 s, over 3.5 s 4, longest 4.37 s (902 shots)
+  shots sped up: 4259 of 7880; result never visible (no speed-up): 0
+Part 4 pace (red), cue OFF: median 1.56 s, 90% 2.15 s, over 3.5 s 26, longest 5.08 s (3530 shots)
+                 cue ON : median 1.81 s, 90% 2.40 s, over 3.5 s 41, longest 5.33 s (3530 shots) (cue lead 0.25 s before the balls roll)
+Part 4 pace (colour), cue OFF: median 1.69 s, 90% 2.24 s, over 3.5 s 29, longest 4.78 s (4350 shots)
+                 cue ON : median 1.94 s, 90% 2.49 s, over 3.5 s 42, longest 5.03 s (4350 shots) (cue lead 0.25 s before the balls roll)
+Failure types: plainMiss 536 (59.4%), jawRattle 237 (26.3%), inOff 93 (10.3%), wrongBallFirst 36 (4.0%)
+  jawRattle length: median 2.04 s, 90% 2.54 s, over 3.5 s 1, longest 4.37 s (237 shots)
+  plainMiss length: median 2.18 s, 90% 2.63 s, over 3.5 s 0, longest 3.34 s (536 shots)
+  inOff length: median 2.21 s, 90% 3.22 s, over 3.5 s 3, longest 4.06 s (93 shots)
+  wrongBallFirst length: median 1.96 s, 90% 2.47 s, over 3.5 s 0, longest 3.22 s (36 shots)
+Solve time (success shots, ms, PC under load): median 903, 90% 2017, max 14796
+
+== reds15: 9201 SHOOT shots (8284 success, 916 failure, 1 RE-RACK) ==
+Part 3b playback, all shots    OFF: median 1.61 s, 90% 2.18 s, over 3.5 s 35, longest 5.07 s (9200 shots)
+                               ON : median 1.26 s, 90% 2.00 s, over 3.5 s 6, longest 4.53 s (9200 shots)
+  success shots                OFF: median 1.55 s, 90% 2.12 s, over 3.5 s 30, longest 5.07 s (8284 shots)
+                               ON : median 1.22 s, 90% 1.69 s, over 3.5 s 3, longest 4.04 s (8284 shots)
+  success, not last resort     OFF over 3.5 s 21, ON over 3.5 s 0
+  failure shots                OFF: median 2.16 s, 90% 2.76 s, over 3.5 s 5, longest 4.53 s (916 shots)
+                               ON : median 2.16 s, 90% 2.76 s, over 3.5 s 3, longest 4.53 s (916 shots)
+  shots sped up: 5120 of 9200; result never visible (no speed-up): 0
+Part 4 pace (red), cue OFF: median 1.56 s, 90% 2.15 s, over 3.5 s 16, longest 5.07 s (4297 shots)
+                 cue ON : median 1.81 s, 90% 2.40 s, over 3.5 s 39, longest 5.32 s (4297 shots) (cue lead 0.25 s before the balls roll)
+Part 4 pace (colour), cue OFF: median 1.66 s, 90% 2.19 s, over 3.5 s 19, longest 4.33 s (4903 shots)
+                 cue ON : median 1.91 s, 90% 2.44 s, over 3.5 s 34, longest 4.58 s (4903 shots) (cue lead 0.25 s before the balls roll)
+Failure types: plainMiss 549 (59.9%), jawRattle 230 (25.1%), inOff 96 (10.5%), wrongBallFirst 41 (4.5%)
+  jawRattle length: median 2.10 s, 90% 2.72 s, over 3.5 s 1, longest 4.53 s (230 shots)
+  plainMiss length: median 2.17 s, 90% 2.76 s, over 3.5 s 0, longest 3.47 s (549 shots)
+  wrongBallFirst length: median 2.13 s, 90% 2.44 s, over 3.5 s 0, longest 3.44 s (41 shots)
+  inOff length: median 2.24 s, 90% 3.13 s, over 3.5 s 4, longest 4.21 s (96 shots)
+Solve time (success shots, ms, PC under load): median 1070, 90% 2332, max 12019

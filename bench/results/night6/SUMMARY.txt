@@ -1,0 +1,28 @@
+Night 6: v3 rounds = v2 HMAC generator + break-off library v3 (cue ball on the baulk line). 2026-11-27.
+
+== Library (public/breaks-v3, breaks-v3.txt) ==
+200 redPottable + 200 snookered per level, same rules (pots nothing, red first, colours <= maxColourMove /
+maxTopColourMove, pack opened, natural step-1 chain). Breaks tried: reds6 39,072 / 8,295, reds10 10,114 / 2,976,
+reds15 13,945 / 4,269. Old public/breaks untouched (START=d rebuilds its first reds6 break exactly: tests/breaks.test.ts).
+
+== Replay proofs (fp = every trajectory frame by frame + end + balance + code; bench/night4/fp.test.ts) ==
+Baseline recorded from commit 1dd46f8 (just before the change, solver 4.11p default), then replayed after the change:
+  owner's marks (16 v1 codes in docs/WEIRD-SHOTS.md):  16 identical, 0 different   (old-marks.jsonl)
+  100 v2 rounds per level (seeds 7,000,000 + i*7919, random cash-outs / colours):
+    reds6 100 identical, reds10 100 identical, reds15 100 identical, 0 different     (old-v2-*.jsonl, proof-old.txt)
+New v3 rounds, recorded and then replayed from their codes alone (separate process):
+    reds6 100 identical, reds10 100 identical, reds15 100 identical, 0 different     (v3-*.jsonl, proof-v3.txt)
+Note: the night-4 stored v2 fingerprints (night4/after3c-*.jsonl) no longer match today's code even BEFORE this change
+(4.11p became the default and the failure-shot choice changed on night 5: only 48/40/24 of 100/98/67 compared were
+identical at 1dd46f8). That is why the baseline was recorded at 1dd46f8.
+
+== Soak (soak/night4.txt): 1,000 v3 rounds per level, solver 4.11p, 4 shards per level, the night-4 seeds ==
+New (v3, 4.11p) vs night-4 baseline soak-n4base (v2, solver 4.10!) [and night-4 paired 4.11p run, v2, same seeds]
+| level | stuck | off table | RE-RACK | worst z (outside 3 sd) | over 3.5 s success (not last resort) | red med / 90% | colour med / 90% | fallback % |
+| 6     | 0 / 0 | 0 / 0 | 5 / 2 [1] | 2.12 (0) / 2.12 | 89 (67) / 52 (50) [ (52) ] | 1.57 / 2.19 vs 1.50 / 2.08 | 1.56 / 2.16 vs 1.57 / 2.12 | 57.5 / 54.6 [57.4] |
+| 10    | 0 / 0 | 0 / 0 | 0 / 0 [0] | 2.47 (0) / 2.47 | 51 (35) / 50 (37) [ (47) ] | 1.53 / 2.04 vs 1.48 / 2.04 | 1.60 / 2.16 vs 1.56 / 2.12 | 57.0 / 53.0 [57.0] |
+| 15    | 0 / 0 | 0 / 0 | 1 / 0 [0] | 3.00 (0) / 3.00 | 30 (21) / 37 (21) [ (28) ] | 1.53 / 2.06 vs 1.53 / 2.11 | 1.59 / 2.14 vs 1.59 / 2.13 | 56.4 / 56.2 [56.8] |
+Success vs p is the same as night 4 because the outcomes are the same (same seeds, same generator).
+Failure shots: median 2.17 / 2.15 / 2.16 s, 90% 2.95 / 2.64 / 2.76 s, over 3.5 s 4 / 4 / 5.
+soak/*-failures.txt: 20 lines, all "solver took > 10 s wall time" with 8 processes on a shared PC (none over the shot cap,
+no crash); night 4 had 386 such lines.
