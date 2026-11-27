@@ -1,0 +1,200 @@
+[
+ {
+  "option": "P1",
+  "moment": "before",
+  "red": {
+   "x": 0.7954026157425846,
+   "y": 1.6076713402770566
+  },
+  "distToMouth": 20,
+  "cam": [
+   1.075,
+   2.022,
+   0.3
+  ],
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ },
+ {
+  "option": "P1",
+  "moment": "jaws",
+  "red": {
+   "x": 0.9070874932167775,
+   "y": 1.7735824253303902
+  },
+  "distToMouth": 2,
+  "cam": [
+   1.075,
+   2.022,
+   0.3
+  ],
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ },
+ {
+  "option": "P2",
+  "moment": "before",
+  "red": {
+   "x": 0.7954026157425846,
+   "y": 1.6076713402770566
+  },
+  "distToMouth": 20,
+  "cam": [
+   0.84,
+   1.674,
+   0.75
+  ],
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ },
+ {
+  "option": "P2",
+  "moment": "jaws",
+  "red": {
+   "x": 0.9070874932167775,
+   "y": 1.7735824253303902
+  },
+  "distToMouth": 2,
+  "cam": [
+   0.84,
+   1.674,
+   0.75
+  ],
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ },
+ {
+  "option": "P3",
+  "moment": "before",
+  "red": {
+   "x": 0.7954026157425846,
+   "y": 1.6076713402770566
+  },
+  "distToMouth": 20,
+  "cam": [
+   0.279,
+   1.557,
+   0.09
+  ],
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ },
+ {
+  "option": "P3",
+  "moment": "jaws",
+  "red": {
+   "x": 0.9070874932167775,
+   "y": 1.7735824253303902
+  },
+  "distToMouth": 2,
+  "cam": [
+   0.279,
+   1.557,
+   0.09
+  ],
+  "ui": [
+   {
+    "id": "top",
+    "inside": true
+   },
+   {
+    "id": "ladder",
+    "inside": true
+   },
+   {
+    "id": "bShoot",
+    "inside": true
+   },
+   {
+    "id": "bCash",
+    "inside": true
+   }
+  ],
+  "errs": []
+ }
+]
