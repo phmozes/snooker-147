@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { buildBreaks, isSnookered } from '../src/core/breakLibrary';
+import { baulkLineStart, buildBreaks, isSnookered } from '../src/core/breakLibrary';
+import { CONFIG } from '../src/config/game.config';
+import oldReds6 from '../public/breaks/reds6.json';
 import { createSim, runUntilStill, strike } from '../src/core/physics/sim';
 import { judgeShot, newFrame } from '../src/core/rules';
 import { buildTable } from '../src/core/table/geometry';
@@ -44,4 +46,20 @@ describe('task 4.6: break-off library', () => {
     expect(v.result).toBe('failure');
     expect(esc.potted.filter((id) => id !== 'cue')).toEqual([]);
   }, 60_000);
+  it('night 6: the break-off starts on the baulk line between the brown and the yellow / green (both sides)', () => {
+    const S = CONFIG.breakLibrary.baulkStart;
+    for (const [u, side] of [[0, 0.9], [1 - 1e-12, 0.9], [0.5, 0.1], [0, 0.4]] as const) {
+      const p = baulkLineStart(u, side, table);
+      expect(p.y).toBe(table.baulkY);
+      expect(Math.abs(p.x)).toBeGreaterThanOrEqual(S.xMin);
+      expect(Math.abs(p.x)).toBeLessThanOrEqual(S.xMax);
+      expect(Math.sign(p.x)).toBe(side < 0.5 ? -1 : 1);
+    }
+    const [e] = buildBreaks(6, 'redPottable', 1, table, 21).entries;
+    expect(e!.cueStart.y).toBe(table.baulkY);
+  }, 60_000);
+  it("night 6: start 'd' still rebuilds the old library exactly (its first reds6 break, seed included)", () => {
+    const [e] = buildBreaks(6, 'redPottable', 1, table, CONFIG.breakLibrary.seed + 6, undefined, undefined, 'd').entries;
+    expect(e).toEqual(oldReds6.redPottable[0]);
+  }, 120_000);
 });

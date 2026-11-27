@@ -7,9 +7,9 @@
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { createPhysicsProvider } from '../src/core/physicsProvider';
+import { breakFilesFor, createPhysicsProvider } from '../src/core/physicsProvider';
 import { judgeShot } from '../src/core/rules';
-import { baseCode, newRound, setLevel, shoot, start, type LevelId, type Round } from '../src/core/round';
+import { baseCode, newRound, RNG_VERSION_NEW, setLevel, shoot, start, type LevelId, type Round, type RngVersion } from '../src/core/round';
 import { createSim, recordShot, strike } from '../src/core/physics/sim';
 import { playbackSeconds, resultVisibleAt } from '../src/view/fastEnd';
 import { setPos411p, solverVersion } from '../src/core/solverMode';
@@ -64,7 +64,9 @@ it('soak', () => {
     }
     appendFileSync(`${file}-shots.jsonl`, `${JSON.stringify(line)}\n`);
   };
-  const lib = JSON.parse(readFileSync(`public/${CONFIG.breakLibrary.files[level]}`, 'utf8'));
+  // night 6: the library of the rounds played (new rounds are v3: the baulk-line break-off; RNG=2: the old library)
+  const rngV = (process.env.RNG ? Number(process.env.RNG) : RNG_VERSION_NEW) as RngVersion;
+  const lib = JSON.parse(readFileSync(`public/${breakFilesFor(rngV)[level]}`, 'utf8'));
   const provider = createPhysicsProvider(table, { [level]: lib });
   const cap = shotCaps().decision;
   const r = table.ballRadius;
@@ -105,8 +107,8 @@ it('soak', () => {
   // START_I: continue a shard after an earlier run (its seeds 0..START_I-1 were already played)
   for (let i = Number(process.env.START_I ?? 0); s.success < target && s.rounds < maxRounds && Date.now() < until; i++) {
     const seed = 5_000_000 + shard + i * shards; // never the bench seeds (seed * 7 + 3, small)
-    let rd: Round = setLevel(newRound(seed), level);
-    const code = baseCode(level, seed, rd.rng); // night 4: v2 rounds carry the v2 marker
+    let rd: Round = setLevel(newRound(seed, undefined, rngV), level);
+    const code = baseCode(level, seed, rd.rng); // night 4: v2 rounds carry the v2 marker (night 6: v3)
     try {
       rd = start(rd, provider, table);
       stepCount(rd, 1);

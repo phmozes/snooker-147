@@ -2,7 +2,8 @@
 // (it only reports what the physics would: which ball was hit first and what dropped).
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { awaitingStep1, cashOut, FORCED_OUTCOMES, newRound, setBet, setLevel, shoot, shootForced, start, startRound, stepSucceeds, type FailureLabel, type Round, type ShotProvider } from '../src/core/round';
+import { breakLibraryOf } from '../src/core/physicsProvider';
+import { awaitingStep1, baseCode, RNG_VERSION_NEW, streamValue, cashOut, FORCED_OUTCOMES, newRound, setBet, setLevel, shoot, shootForced, start, startRound, stepSucceeds, type FailureLabel, type Round, type ShotProvider } from '../src/core/round';
 import type { FrameState, ShotResult } from '../src/core/rules';
 import { buildTable } from '../src/core/table/geometry';
 import type { BallKind } from '../src/core/types';
@@ -265,7 +266,7 @@ describe('night 4, Part 3a: a replay is free (no bet, no pay; the balance is the
 describe('RULES B.2 (owner 2026-11-27): step 1 waits for SHOOT, outcomes unchanged', () => {
   it('START takes the bet and stops at step 0; no CASH OUT; the first SHOOT gives exactly the old start()', () => {
     for (let seed = 1; seed <= 300; seed++) {
-      for (const rng of [1, 2] as const) {
+      for (const rng of [1, 2, 3] as const) {
         const r0 = newRound(seed, undefined, rng);
         const waiting = startRound(r0, fake(), table);
         expect(waiting.phase).toBe('decide');
@@ -280,5 +281,19 @@ describe('RULES B.2 (owner 2026-11-27): step 1 waits for SHOOT, outcomes unchang
         expect(pressed.history[0]!.outcome === 'success').toBe(stepSucceeds(pressed, 1));
       }
     }
+  });
+});
+
+describe('night 6: round version 3 = the v2 generator + the new break-off library', () => {
+  it('v3 draws every stream value exactly as v2 (no change to the generator); only the code marker differs', () => {
+    for (let seed = 1; seed <= 500; seed++) for (const stream of ['outcome', 'failureType', 'break', 'variety'])
+      for (let k = 0; k <= 20; k++) expect(streamValue(seed, stream, k, 3)).toBe(streamValue(seed, stream, k, 2));
+    expect(RNG_VERSION_NEW).toBe(3);
+    expect(baseCode('reds6', 42, 1)).toBe('reds6-42');
+    expect(baseCode('reds6', 42, 2)).toBe('reds6-v2-42');
+    expect(baseCode('reds6', 42, 3)).toBe('reds6-v3-42');
+    expect(breakLibraryOf(1)).toBe('old');
+    expect(breakLibraryOf(2)).toBe('old');
+    expect(breakLibraryOf(3)).toBe('v3');
   });
 });

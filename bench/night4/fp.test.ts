@@ -8,23 +8,24 @@
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 import { CONFIG } from '../../src/config/game.config';
-import { createPhysicsProvider } from '../../src/core/physicsProvider';
-import { type LevelId, type Round } from '../../src/core/round';
+import { breakFilesFor, createPhysicsProvider } from '../../src/core/physicsProvider';
+import { RNG_VERSION_NEW, type LevelId, type Round, type RngVersion } from '../../src/core/round';
 import { parseRoundCode, replayRound, roundCodeOf } from '../../src/core/roundCode';
 import { buildTable } from '../../src/core/table/geometry';
 import { playRandomRound, recording } from '../../tests/roundCodeLib';
 
 const table = buildTable();
 const libs: Record<string, unknown> = {};
-const lib = (level: LevelId) => (libs[level] ??= JSON.parse(readFileSync(`public/${CONFIG.breakLibrary.files[level]}`, 'utf8')));
-const provider = (level: LevelId) => recording(createPhysicsProvider(table, { [level]: lib(level) } as never), table, level);
+// night 6: the library of the round's version (v1 / v2 codes: the old one, v3: the baulk-line break-off)
+const lib = (level: LevelId, rng: RngVersion) => (libs[`${level}-${breakFilesFor(rng)[level]}`] ??= JSON.parse(readFileSync(`public/${breakFilesFor(rng)[level]}`, 'utf8')));
+const provider = (level: LevelId, rng: RngVersion = RNG_VERSION_NEW) => recording(createPhysicsProvider(table, { [level]: lib(level, rng) } as never), table, level);
 const fpOf = (r: Round, tracks: string[]) => ({ tracks: tracks.join('|'), end: JSON.stringify(r.end), balance: r.balance, step: r.step,
   outcomes: r.history.map((h) => `${h.step}:${h.target}:${h.outcome}`).join(' ') });
 
 function replay(code: string) {
   const c = parseRoundCode(code)!;
   const level = c.levelId!;
-  const p = provider(level);
+  const p = provider(level, c.rng);
   const r = replayRound(c, p, table);
   return { code, fp: fpOf(r, p.tracks), codeAfter: roundCodeOf(r) };
 }
@@ -38,7 +39,7 @@ it('round fingerprints', () => {
     writeFileSync(out, '');
     const n = Number(process.env.N ?? 200), from = Number(process.env.FROM ?? 1);
     if (set === 'marks') {
-      const codes = [...new Set(readFileSync('docs/WEIRD-SHOTS.md', 'utf8').match(/reds\d+-\d+(?:-[YGNBPK]+)?(?:-C\d+)?/g) ?? [])];
+      const codes = [...new Set(readFileSync('docs/WEIRD-SHOTS.md', 'utf8').match(/reds\d+-(?:v[23]-)?\d+(?:-[YGNBPK]+)?(?:-C\d+)?/g) ?? [])];
       for (const code of codes) if (levels.includes(parseRoundCode(code)!.levelId!)) appendFileSync(out, JSON.stringify(replay(code)) + '\n');
     }
     for (const level of levels) {

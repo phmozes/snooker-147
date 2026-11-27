@@ -3,6 +3,8 @@
 // Kinds: 'redPottable' (at least minPottableRedsForRedPottable reds have an open pocket) with a step-1 success shot
 // and a step-1 plain miss; 'snookered' (no red can be hit straight) with a failed escape (FOUL / missed every ball).
 // Pure and seeded: the same seed always builds the same library. The generator is run by `npm run breaks`.
+// Night 6: v3 rounds use a library whose break-off starts ON the baulk line (public/breaks-v3); the old library
+// (public/breaks, cue ball anywhere in the D) stays for v1 / v2 round codes (start 'd').
 
 import { CONFIG } from '../config/game.config';
 import { createSim, runUntilStill, strike, type PhysicsConfig } from './physics/sim';
@@ -32,18 +34,36 @@ const r2 = (v: number) => Math.round(v * 1e6) / 1e6; // keep the JSON small (mic
 const shotOf = (s: { dir: Vec2; speed: number; spin: number; duration: number }): StoredShot =>
   ({ dir: { x: s.dir.x, y: s.dir.y }, speed: s.speed, spin: s.spin, duration: r2(s.duration) }); // full precision: replays must match
 
-/** The opponent's break: cue ball somewhere in the D, aimed at the side of the pack, varied power and spin. */
-function breakAttempt(seed: number, reds: number, table: TableGeometry, cfg: PhysicsConfig) {
+/** Where the break-off starts. 'baulkLine' (night 6, owner; v3 rounds): ON the baulk line between the brown and the
+ *  yellow or green (config breakLibrary.baulkStart), played at the same side of the pack. 'd' (the old library of
+ *  v1 / v2 rounds, kept so it can be rebuilt): anywhere in the D half circle, either side of the pack. */
+export type BreakStart = 'baulkLine' | 'd';
+
+/** The v3 break-off start for the draws (u, sideDraw) in [0, 1): on the baulk line, xMin <= |x| <= xMax. */
+export function baulkLineStart(u: number, sideDraw: number, table: TableGeometry): Vec2 {
+  const S = L.baulkStart;
+  return { x: (sideDraw < 0.5 ? -1 : 1) * (S.xMin + (S.xMax - S.xMin) * u), y: table.baulkY };
+}
+
+/** The opponent's break: cue ball on the baulk line (or anywhere in the D: old library), aimed at the side of the
+ *  pack, varied power and spin. */
+function breakAttempt(seed: number, reds: number, table: TableGeometry, cfg: PhysicsConfig, start: BreakStart) {
   const rng = mulberry32(seed);
   const B = L.breakShot;
   const rack = newFrame(reds, table);
   const balls = rack.balls.map((b) => ({ ...b, pos: { ...b.pos } }));
   const cue = balls.find((b) => b.kind === 'cue')!;
-  const a = Math.PI * rng(); // a point in the D (half circle below the baulk line)
-  const d = table.dRadius * (0.3 + 0.65 * rng());
-  cue.pos = { x: table.dCentre.x + Math.cos(a) * d * (rng() < 0.5 ? -1 : 1), y: table.dCentre.y - Math.sin(a) * d };
+  let side: number;
+  if (start === 'd') {
+    const a = Math.PI * rng(); // a point in the D (half circle below the baulk line)
+    const d = table.dRadius * (0.3 + 0.65 * rng());
+    cue.pos = { x: table.dCentre.x + Math.cos(a) * d * (rng() < 0.5 ? -1 : 1), y: table.dCentre.y - Math.sin(a) * d };
+    side = rng() < 0.5 ? -1 : 1;
+  } else {
+    cue.pos = baulkLineStart(rng(), rng(), table);
+    side = Math.sign(cue.pos.x); // from beside the yellow: the right side of the pack; beside the green: the left
+  }
   const redsOn = balls.filter((b) => b.kind === 'red');
-  const side = rng() < 0.5 ? -1 : 1;
   const outer = redsOn.reduce((m, b) => (b.pos.x * side > m.pos.x * side ? b : m));
   const back = redsOn.reduce((m, b) => (b.pos.y > m.pos.y ? b : m));
   const aimY = outer.pos.y + (back.pos.y - outer.pos.y) * rng() * 0.5 - table.ballRadius * 2 * rng();
@@ -136,14 +156,14 @@ export function topColoursMovedByBreak(after: Ball[], table: TableGeometry): num
  * so are breaks whose step-1 shots cannot be found (D.1: step 1 must never need a fallback).
  */
 export function buildBreaks(reds: number, kind: BreakKind, count: number, table: TableGeometry, baseSeed: number,
-  cfg: PhysicsConfig = CONFIG.physics, maxAttempts = count * 1000): { entries: BreakEntry[]; attempts: number } {
+  cfg: PhysicsConfig = CONFIG.physics, maxAttempts = count * 1000, start: BreakStart = 'baulkLine'): { entries: BreakEntry[]; attempts: number } {
   const now = () => 0; // the solver stops on a shot count, so no clock is needed
   const entries: BreakEntry[] = [];
   let attempts = 0;
   for (let i = 0; entries.length < count && i < maxAttempts; i++) {
     attempts++;
     const seed = (baseSeed * 1_000_003 + i * 7919) >>> 0;
-    const b = breakAttempt(seed, reds, table, cfg);
+    const b = breakAttempt(seed, reds, table, cfg, start);
     if (!b.valid) continue;
     const state: FrameState = { ...newFrame(reds, table), balls: b.after };
     const snookered = isSnookered(state, table);

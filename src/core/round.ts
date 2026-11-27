@@ -20,7 +20,8 @@ export type FailureLabel = 'plainMiss' | 'jawRattle' | 'inOff' | 'wrongBallFirst
 export interface PlannedShot { result: ShotResult; shot?: unknown; reRack?: boolean; label?: FailureLabel; tried?: number }
 export interface ShotProvider {
   /** Step 1: the opponent's break and our first shot, both from the library (RULES B.1, B.2, D.1). */
-  breakAndStep1(levelId: LevelId, outcome: 'success' | 'plainMiss' | 'snookered', pick: number, frame: FrameState):
+  /** rng: the round's generator version; it also names the break-off library (v1/v2: the old one, v3: night 6). */
+  breakAndStep1(levelId: LevelId, outcome: 'success' | 'plainMiss' | 'snookered', pick: number, frame: FrameState, rng?: RngVersion):
     { afterBreak: FrameState; step1: PlannedShot; breakShot?: unknown };
   /** A later shot. For a success the provider may answer reRack (RULES D.4); a failure always exists (D.2). */
   shot(frame: FrameState, target: BallKind, outcome: 'success' | FailureLabel, ctx: { roundCode: string; step: number }): PlannedShot;
@@ -59,10 +60,11 @@ export interface Round {
 
 // ---------------- seeded streams (RULES A.5, config rng.streams) ----------------
 
-/** Outcome generator version (docs/FAIRNESS.md). 2 = HMAC-SHA256 (every new round); 1 = the old light hash, kept only
- *  so that old round codes (without the version marker) replay exactly as before. */
-export type RngVersion = 1 | 2;
-export const RNG_VERSION_NEW: RngVersion = 2;
+/** Round version (docs/FAIRNESS.md). 1 = the old light hash, kept only so that old round codes (without a marker)
+ *  replay exactly as before; 2 = HMAC-SHA256 with the old break-off library; 3 (night 6, every new round) = the same
+ *  v2 HMAC generator with the new break-off library (cue ball on the baulk line, RULES B.1). */
+export type RngVersion = 1 | 2 | 3;
+export const RNG_VERSION_NEW: RngVersion = 3;
 
 /** v1 (until 2026-11-26): FNV-1a of seed + `${stream}#${k}` feeding one mulberry32 draw. Replay of old codes only. */
 export function streamValueV1(seed: number, stream: string, k: number): number {
@@ -88,8 +90,8 @@ export function streamValueV2(seed: number, stream: string, k: number): number {
 export function streamValue(seed: number, stream: string, k: number, version: RngVersion = RNG_VERSION_NEW): number {
   return version === 1 ? streamValueV1(seed, stream, k) : streamValueV2(seed, stream, k);
 }
-/** The round code of a round that has just started (no colour letters yet): v2 codes carry the marker `v2`. */
-export const baseCode = (levelId: string, seed: number, rng: RngVersion): string => `${levelId}-${rng === 2 ? 'v2-' : ''}${seed}`;
+/** The round code of a round that has just started (no colour letters yet): v2 / v3 codes carry the marker `v2` / `v3`. */
+export const baseCode = (levelId: string, seed: number, rng: RngVersion): string => `${levelId}-${rng === 1 ? '' : `v${rng}-`}${seed}`;
 
 /** The balance after a win is paid (a free replay pays nothing; its end still shows what the real round paid). */
 const paid = (r: Round, amount: number) => (r.free ? r.balance : money(r.balance + amount));
@@ -139,7 +141,7 @@ export function startRound(r: Round, provider: ShotProvider, table: TableGeometr
     roundCode: baseCode(r.levelId, r.seed, r.rng), frame: newFrame(reds, table) };
   const ok = stepSucceeds(round, 1);
   const outcome = ok ? 'success' : streamValue(r.seed, 'break', 1, r.rng) < CONFIG.failures.step1.plainMiss ? 'plainMiss' : 'snookered';
-  const { afterBreak, step1, breakShot } = provider.breakAndStep1(r.levelId, outcome, streamValue(r.seed, 'variety', 0, r.rng), round.frame!);
+  const { afterBreak, step1, breakShot } = provider.breakAndStep1(r.levelId, outcome, streamValue(r.seed, 'variety', 0, r.rng), round.frame!, r.rng);
   return { ...round, frame: afterBreak, breakShot, step1: { outcome, planned: step1 } };
 }
 

@@ -84,7 +84,7 @@ export const CONFIG = {
   rack: {
     redGap: 0.0002,              // gap between touching reds in the triangle
     pinkToApexGap: 0.002,        // gap between pink and the front red
-    cueStart: [0.12, -1.15],     // cue ball in the D before the break-off (x, y); break library may override
+    cueStart: [0.15, -1.0475],   // cue ball before the break-off (x, y): on the baulk line (night 6, RULES B.1); the library sets the real one
   },
   ballValues: { red: 1, yellow: 2, green: 3, brown: 4, blue: 5, pink: 6, black: 7 },
   respotPriority: ['black', 'pink', 'blue', 'brown', 'green', 'yellow'],
@@ -345,7 +345,14 @@ export const CONFIG = {
   // ---------------- BREAK-OFF LIBRARY ----------------
   breakLibrary: {
     perLevelPerKind: 200,        // kinds: 'redPottable', 'snookered'
-    files: { reds6: 'breaks/reds6.json', reds10: 'breaks/reds10.json', reds15: 'breaks/reds15.json' }, // in public/
+    files: { reds6: 'breaks/reds6.json', reds10: 'breaks/reds10.json', reds15: 'breaks/reds15.json' }, // in public/ (v1, v2 rounds)
+    // night 6 (owner): the library of v3 rounds (every new round): the cue ball starts ON the baulk line (RULES B.1)
+    filesV3: { reds6: 'breaks-v3/reds6.json', reds10: 'breaks-v3/reds10.json', reds15: 'breaks-v3/reds15.json' },
+    // the v3 break-off start: cue ball centre at y = baulk line, |x| from xMin to xMax (m), on the yellow side (x > 0)
+    // or the green side (x < 0). Brown is at x = 0 and yellow / green at |x| = 0.292 (the D radius); a ball is 0.0525
+    // wide, so 0.11 leaves 5.75 cm of cloth to the brown and 0.19 leaves 4.95 cm to the yellow / green.
+    // The break is played at the outer red on the same side (as a real break-off from beside the yellow or green).
+    baulkStart: { xMin: 0.11, xMax: 0.19 },
     minPottableRedsForRedPottable: 2,
     seed: 147,
     // the opponent's break-off: cue ball in the D, aimed this many ball radii outside the outer red of the pack

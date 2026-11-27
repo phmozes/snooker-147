@@ -9,7 +9,7 @@
 
 import { CONFIG } from '../config/game.config';
 import { createSim, recordShot, strike } from '../core/physics/sim';
-import { createPhysicsProvider, type BreakLibrary } from '../core/physicsProvider';
+import { breakFilesFor, breakLibraryOf, createPhysicsProvider, type BreakLibrary } from '../core/physicsProvider';
 import { awaitingStep1, peekStep1, startRound, cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, RNG_VERSION_NEW, type RngVersion, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
@@ -167,7 +167,9 @@ if (import.meta.env.DEV) {
   $('devVer').style.display = 'block';
 }
 const fallbacks: FallbackLogEntry[] = [];
-const library: BreakLibrary = {};
+// night 6: v3 rounds play the new break-off library (cue ball on the baulk line), v1 / v2 codes the old one
+const libraries: Record<'old' | 'v3', BreakLibrary> = { old: {}, v3: {} };
+const libraryFor = (rng: RngVersion): BreakLibrary => libraries[breakLibraryOf(rng)];
 const presolver = createPresolver((entries) => {
   fallbacks.push(...entries);
   for (const e of entries) console.info(`[fallback] ${e.roundCode} step ${e.step} ${e.target}: ${e.level} (${e.tried} shots)`);
@@ -310,9 +312,10 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise
 }
 
 // ---------------- the game loop ----------------
-async function loadLibrary(id: LevelId) {
+async function loadLibrary(id: LevelId, rng: RngVersion) {
+  const library = libraryFor(rng);
   if (library[id]) return;
-  const res = await fetch(`/${CONFIG.breakLibrary.files[id]}`);
+  const res = await fetch(`/${breakFilesFor(rng)[id]}`);
   if (!res.ok) throw new Error(`no break-off library for ${id} (npm run breaks)`);
   library[id] = await res.json();
 }
@@ -353,12 +356,12 @@ async function onStart() {
   busy = 'rerack';
   showBetArea = false;
   render();
-  try { await loadLibrary(round.levelId); } catch (e) { busy = null; showBetArea = true; lastShot = String(e); render(); return; }
-  const seed = pendingSeed ?? newSeed();
   const rng = pendingSeed !== null ? pendingRng : RNG_VERSION_NEW;
+  try { await loadLibrary(round.levelId, rng); } catch (e) { busy = null; showBetArea = true; lastShot = String(e); render(); return; }
+  const seed = pendingSeed ?? newSeed();
   pendingSeed = null;
   let afterBreak: FrameState | null = null;
-  const base = createPhysicsProvider(table, library);
+  const base = createPhysicsProvider(table, libraryFor(rng));
   const provider = { ...base, breakAndStep1: (...a: Parameters<typeof base.breakAndStep1>) => {
     const x = base.breakAndStep1(...a);
     afterBreak = x.afterBreak;
@@ -387,7 +390,7 @@ async function onStart() {
 async function onShootStep1() {
   const before = round;
   const pressAfterMs = performance.now() - shootAvailableAt;
-  round = shoot(round, createPhysicsProvider(table, library), table);
+  round = shoot(round, createPhysicsProvider(table, libraryFor(round.rng)), table);
   presolveNext(); // keeps the step-2 solve that began during the break
   busy = 'step1';
   render();
@@ -424,7 +427,7 @@ async function onShoot() {
     answers: both, pressAfterMs: t0 - shootAvailableAt, thinkingMs: thinking ? waited : 0 }));
   const before = round;
   const target = solved.target; // on a colour step: the colour the game picked (RULES B.3)
-  const prov = solvedProvider(createPhysicsProvider(table, library), solved.planned, { target, outcome });
+  const prov = solvedProvider(createPhysicsProvider(table, libraryFor(round.rng)), solved.planned, { target, outcome });
   const colour = colourStep ? (target as Colour) : undefined;
   round = forced ? shootForced(round, prov, table, forced, colour) : shoot(round, prov, table, colour);
   if (forced) { force = null; toast(`forced: ${FORCE_TEXT[forced]}`); }
@@ -784,7 +787,7 @@ function renderDev() {
   }
   $('devRound').innerHTML = `Round code: <b>${code}</b>${round.phase === 'decide' ? ` · step ${round.step}` : round.phase === 'over' ? ' · replays this whole round' : ''}<br>` +
     (replay ? `Replaying code <b>${seedText || code}</b><br>` : '') +
-    `${pendingSeed !== null ? `Next START uses seed <b>${pendingRng === 2 ? 'v2-' : ''}${pendingSeed}</b>` : 'Next START: new random seed'}<br>` +
+    `${pendingSeed !== null ? `Next START uses seed <b>${pendingRng === 1 ? '' : `v${pendingRng}-`}${pendingSeed}</b>` : 'Next START: new random seed'}<br>` +
     `Fallbacks this session: ${fallbacks.length}${fallbacks.length ? ' (details in the browser console)' : ''}`;
   const input = $('devSeed') as HTMLInputElement;
   input.value = seedText;

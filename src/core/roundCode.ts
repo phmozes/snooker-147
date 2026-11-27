@@ -5,7 +5,9 @@
 // Old codes without letters (`reds6-48213`) still parse: then every colour is the automatic pick (RULES B.3).
 // Generator version (night 4, docs/FAIRNESS.md): a code of a v2 round (HMAC-SHA256, every new round) carries the marker
 // `v2` before the seed: `reds6-v2-48213-BKPK-C7` (or `v2-48213` without the level). A code without the marker is a v1
-// round (the old light hash) and replays with the old generator exactly as before.
+// round (the old light hash) and replays with the old generator exactly as before. Night 6: new rounds carry `v3`
+// (`reds6-v3-48213`): the same v2 generator with the new break-off library (cue ball on the baulk line, RULES B.1);
+// v1 and v2 codes keep the old library.
 // Pure: no rendering, no Math.random.
 
 import { baseCode, cashOut, newRound, setLevel, shoot, start, type LevelId, type Round, type RngVersion, type ShotProvider } from './round';
@@ -33,10 +35,10 @@ export function roundCodeOf(r: Round): string {
 
 /** "reds6-12345", "12345" (the level stays as it is), "reds6-12345-BKP-C7". null if it is not a round code. */
 export function parseRoundCode(text: string): RoundCode | null {
-  const m = /^\s*(?:(reds\d+)\s*-\s*)?(?:(v2)\s*-\s*)?(\d{1,10})(?:\s*-\s*([YGNBPK]+))?(?:\s*-\s*C(\d{1,3}))?\s*$/i.exec(text);
+  const m = /^\s*(?:(reds\d+)\s*-\s*)?(?:v([23])\s*-\s*)?(\d{1,10})(?:\s*-\s*([YGNBPK]+))?(?:\s*-\s*C(\d{1,3}))?\s*$/i.exec(text);
   if (!m) return null;
   const seed = Number(m[3]);
-  const rng: RngVersion = m[2] ? 2 : 1;
+  const rng: RngVersion = m[2] ? (Number(m[2]) as RngVersion) : 1;
   if (seed > 0xffffffff) return null;
   const levelId = m[1] ? (CONFIG.levels.find((l) => l.id === m[1]!.toLowerCase())?.id ?? null) : null;
   if (m[1] && !levelId) return null;

@@ -23,6 +23,6 @@ describe('round with real physics (6 reds)', () => {
       for (const h of r.history) expect(['success', 'reRack', 'plainMiss', 'jawRattle', 'inOff', 'wrongBallFirst', 'snookered']).toContain(h.outcome);
     }
     expect(ends.length).toBe(6);
-    for (const e of provider.log) expect(e.roundCode).toMatch(/^reds6-v2-\d+$/);
+    for (const e of provider.log) expect(e.roundCode).toMatch(/^reds6-v3-\d+$/);
   }, 300_000);
 });

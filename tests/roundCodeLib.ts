@@ -27,8 +27,8 @@ export function recording(base: ShotProvider, table: TableGeometry, level: Level
   return {
     tracks,
     autoColour: base.autoColour?.bind(base),
-    breakAndStep1(levelId, outcome, pick, frame) {
-      const x = base.breakAndStep1(levelId, outcome, pick, frame);
+    breakAndStep1(levelId, outcome, pick, frame, rng) {
+      const x = base.breakAndStep1(levelId, outcome, pick, frame, rng);
       const b = x.breakShot as { cueStart: { x: number; y: number }; shot: Strike };
       const rack = newFrame(CONFIG.levels.find((l) => l.id === level)!.reds, table).balls
         .map((q) => (q.kind === 'cue' ? { ...q, pos: { ...b.cueStart } } : q));
