@@ -16,7 +16,7 @@ ball-ball sounds on the opponent's break-off only.
 | C | 1.7 s | https://freesound.org/people/DariusOW/sounds/766411/ ("Pool Break") | DariusOW | CC0 1.0 | 0.05-1.75 s |
 
 CC0 = public domain: commercial use allowed, no credit needed. Licence checked on each sound's own page. Nothing from
-freesoundeffects.com. Freesound only: Kenney has no break sound, Mixkit was not searched. A fourth candidate
+freesoundeffects.com. I searched Freesound only (Kenney and Mixkit were not searched this time). A fourth candidate
 (RossJuterbock #543482) was left out: it has bar noise under it. Sources also in docs/ASSETS.md.
 
 ## Please note
