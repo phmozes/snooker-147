@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 
 ## Owner's turn
-- Nothing pushed: 24 commits wait on master (`git log --oneline f534502..`); no git remote is set up yet.
+- Pushed to origin/master (github.com/phmozes/snooker-147, private) on 2026-11-27; push again only on your word.
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the table size in your in-app browser (80-89% wide).
