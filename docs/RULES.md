@@ -17,11 +17,14 @@
    - 15 reds: RTP 97% (between 96.42% and 97%, depending on the cash-out step)
 
 ## B. Round flow
-1. START -> balls re-rack quickly -> the OPPONENT plays the break-off (taken from the pre-computed library).
+1. START takes the bet -> balls re-rack quickly -> the OPPONENT plays the break-off ("OPPONENT BREAKS OFF", taken from
+   the pre-computed library) -> the game waits for SHOOT (owner 2026-11-27).
    Every break in the library: pots no ball, hits a red first, opens the pack; it moves the yellow, green, brown
    and blue at most 2 cm from their spots (owner 2026-11-24) and the pink and the black each at most 30 cm
    (owner 2026-11-25; config breakLibrary.maxColourMove / maxTopColourMove). Later shots (e.g. a missed black) are not limited.
-2. Step 1 (our first red) plays automatically, no button.
+2. Step 1 (our first red) is played by SHOOT, like every other step (owner 2026-11-27; until then it played by itself).
+   Before step 1 there is no CASH OUT (nothing has been won yet): only SHOOT. Step 1 is still decided by seed + step
+   only, so old round codes (v1 and v2) give the same rounds; a replay presses SHOOT by itself.
    - Success: break was of kind "red pottable"; we pot a red.
    - Failure: 80% plain miss after the break, 20% "snookered" (break leaves us snookered, our escape fails = foul).
 3. From step 2: SHOOT / CASH OUT before every shot. On colour steps (while reds remain) the player picks a colour.

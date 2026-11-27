@@ -2,7 +2,7 @@
 // (it only reports what the physics would: which ball was hit first and what dropped).
 import { describe, expect, it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
-import { cashOut, FORCED_OUTCOMES, newRound, setBet, setLevel, shoot, shootForced, start, stepSucceeds, type FailureLabel, type Round, type ShotProvider } from '../src/core/round';
+import { awaitingStep1, cashOut, FORCED_OUTCOMES, newRound, setBet, setLevel, shoot, shootForced, start, startRound, stepSucceeds, type FailureLabel, type Round, type ShotProvider } from '../src/core/round';
 import type { FrameState, ShotResult } from '../src/core/rules';
 import { buildTable } from '../src/core/table/geometry';
 import type { BallKind } from '../src/core/types';
@@ -259,5 +259,26 @@ describe('night 4, Part 3a: a replay is free (no bet, no pay; the balance is the
   it('a replay may start with a balance below the bet', () => {
     expect(() => start({ ...newRound(5, 3), free: true }, fake(), table)).not.toThrow();
     expect(() => start({ ...newRound(5, 3), free: false }, fake(), table)).toThrow();
+  });
+});
+
+describe('RULES B.2 (owner 2026-11-27): step 1 waits for SHOOT, outcomes unchanged', () => {
+  it('START takes the bet and stops at step 0; no CASH OUT; the first SHOOT gives exactly the old start()', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      for (const rng of [1, 2] as const) {
+        const r0 = newRound(seed, undefined, rng);
+        const waiting = startRound(r0, fake(), table);
+        expect(waiting.phase).toBe('decide');
+        expect(waiting.step).toBe(0);
+        expect(waiting.history).toEqual([]);
+        expect(waiting.balance).toBe(r0.balance - r0.bet); // the bet is taken at START
+        expect(awaitingStep1(waiting)).toBe(true);
+        expect(() => cashOut(waiting)).toThrow();
+        const pressed = shoot(waiting, fake(), table);
+        expect(pressed).toEqual(start(r0, fake(), table)); // same outcome, same shot, same balance, same code
+        expect(awaitingStep1(pressed)).toBe(false);
+        expect(pressed.history[0]!.outcome === 'success').toBe(stepSucceeds(pressed, 1));
+      }
+    }
   });
 });

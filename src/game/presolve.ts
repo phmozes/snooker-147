@@ -74,6 +74,7 @@ export function createPresolver(onLog: (entries: FallbackLogEntry[]) => void, on
     /** The next shot (both outcomes, one worker each). If it was already started ahead (task P.2), that is kept. */
     request(frame: FrameState, target: BallKind, failure: FailureLabel, ctx: SolveRequest['ctx'], colour?: Colour) {
       const j = job(frame, target, failure, ctx, colour);
+      if (current && current.key === j.key) return; // already solving (or solved) this one: keep it (RULES B.2 wait)
       if (next && next.key === j.key) {
         drop(current);
         current = next; next = null; promoted = true;

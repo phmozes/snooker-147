@@ -1,5 +1,5 @@
 // Task 5.2: the portrait game page, connected to the round state machine (gray-box). START -> quick re-rack -> the
-// opponent's break-off -> step 1 automatically -> SHOOT / CASH OUT before every shot -> end line in the ladder strip,
+// opponent's break-off -> the game waits: SHOOT plays step 1 (RULES B.2, no CASH OUT yet) -> SHOOT / CASH OUT before every later shot -> end line in the ladder strip,
 // balance counts up, bet area returns. RE-RACK as RULES D.4. Black is picked automatically (no colour buttons yet).
 // The next shot is solved for both outcomes in a Web Worker while the player decides (presolve.ts), so SHOOT plays at
 // once. The menu button opens the developer panel: live game or the static mockup screens D / A / C, compare, ball
@@ -10,7 +10,7 @@
 import { CONFIG } from '../config/game.config';
 import { createSim, recordShot, strike } from '../core/physics/sim';
 import { createPhysicsProvider, type BreakLibrary } from '../core/physicsProvider';
-import { cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, RNG_VERSION_NEW, type RngVersion, type ForcedOutcome,
+import { awaitingStep1, peekStep1, startRound, cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, RNG_VERSION_NEW, type RngVersion, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
 import { ladderForLevel, rtpText } from '../core/ladder';
@@ -246,7 +246,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean } = {}): Promise
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
   const slot = rec.ids.map((id) => ids.indexOf(id));
-  // Part 4: the cue (after SHOOT and on the automatic step 1, never on the break-off). Its direction is the planned
+  // Part 4: the cue (after SHOOT and on step 1, never on the break-off). Its direction is the planned
   // shot's cue direction; nothing about the outcome is used. Part 3b: the faster end (playback only, off by default).
   const cueBall = balls.find((b) => b.kind === 'cue');
   const cuePlan = opts.cue && cueOn && cueBall && view3d ? view3d.planCue(cueBall.pos, s.dir, balls.filter((b) => b.kind !== 'cue').map((b) => b.pos), cueProtect(balls, cueBall.pos, s.dir)) : null;
@@ -310,12 +310,16 @@ async function loadLibrary(id: LevelId) {
 }
 
 /** Start solving the next shot (both outcomes) while the player decides. */
+/** RULES B.2: while the round waits for the SHOOT of step 1, the round the solver plans for is the one after step 1
+ *  (step 1 itself comes from the break-off library and needs no solve). Nothing of it is shown before SHOOT. */
+const planRound = (): Round => (awaitingStep1(round) ? peekStep1(round, table) : round);
 function presolveNext() {
-  if (round.phase !== 'decide') { presolver.cancel(); return; } // the step failed or the round ended: drop the step ahead
-  const { step, failure } = nextOutcome(round);
+  const r = planRound();
+  if (r.phase !== 'decide') { presolver.cancel(); return; } // the step failed or the round ended: drop the step ahead
+  const { step, failure } = nextOutcome(r);
   const f = forcedNow(); // developer panel: a forced failure type is solved instead of the decided one
   const fail = f && f !== 'success' && f !== 'reRack' ? f : failure;
-  presolver.request(round.frame!, nextTarget(round), fail, { roundCode: round.roundCode, step }, replayColour(round));
+  presolver.request(r.frame!, nextTarget(r), fail, { roundCode: r.roundCode, step }, replayColour(r));
 }
 
 /**
@@ -324,8 +328,9 @@ function presolveNext() {
  * decided outcome; presolveNext() keeps it when the success comes, and it is dropped on a failure or a cash out.
  */
 function presolveAhead(req: SolveRequest, success: Solved) {
-  if (round.phase !== 'decide' || round.roundCode !== req.ctx.roundCode || round.step + 1 !== req.ctx.step) return;
-  const after = successEnd(round, success.target, success.planned, table);
+  const cur = planRound();
+  if (cur.phase !== 'decide' || cur.roundCode !== req.ctx.roundCode || cur.step + 1 !== req.ctx.step) return;
+  const after = successEnd(cur, success.target, success.planned, table);
   if (after.phase !== 'decide') return; // a re-rack or the last step: no step after it
   const { step, failure } = nextOutcome(after);
   const f = forcedNow(); // developer panel, as in presolveNext()
@@ -351,10 +356,10 @@ async function onStart() {
     afterBreak = x.afterBreak;
     return x;
   } };
-  round = start({ ...round, seed, rng, free: replay !== null }, provider, table);
+  round = startRound({ ...round, seed, rng, free: replay !== null }, provider, table); // RULES B.1: the bet is taken
   shownBalance = round.balance;
-  presolveNext(); // solving starts during the break-off animation
-  // RULES B.1: the balls re-rack quickly, then the opponent breaks off (from the library), then step 1 plays itself
+  presolveNext(); // solving (of step 2) starts during the break-off animation
+  // RULES B.1: the balls re-rack quickly, then the opponent breaks off (from the library)
   const rack = newFrame(level().reds, table).balls;
   buildView(rack);
   showBalls(rack);
@@ -364,22 +369,32 @@ async function onStart() {
   busy = 'break';
   render();
   await playShot(rack.map((b) => (b.kind === 'cue' ? { ...b, pos: { ...brk.cueStart } } : b)), brk.shot);
-  showBalls(afterBreak!.balls);
+  // RULES B.2 (owner 2026-11-27): the game now waits; SHOOT plays step 1 (no CASH OUT before it)
+  afterShot();
+}
+
+/** RULES B.2: the first SHOOT plays step 1 (from the break-off library, decided at START, no solve). */
+async function onShootStep1() {
+  const before = round;
+  const pressAfterMs = performance.now() - shootAvailableAt;
+  round = shoot(round, createPhysicsProvider(table, library), table);
+  presolveNext(); // keeps the step-2 solve that began during the break
   busy = 'step1';
   render();
-  const len = await playShot(afterBreak!.balls, round.history[0]!.shot as Shot, { cue: true });
+  const len = await playShot(before.frame!.balls, round.history[0]!.shot as Shot, { cue: true });
   lastShot = `step 1: red · ${round.history[0]!.outcome} · from the break-off library · ${len.toFixed(2)} s long`;
   lastCost = 'step 1: from the break-off library, no solve';
   if (import.meta.env.DEV) lastDraw = `step 1 ${drawText(outcomeDraw(round, 1), null)}`;
-  // step 1 comes from the break-off library: no solve and no SHOOT press, so its cost fields are null
+  // step 1 comes from the break-off library: no solve, so its solve fields are null
   sendCost(stepCost(round, 1, { target: 'red', outcome: round.history[0]!.outcome, forced: false, auto: !!auto, ahead: false,
-    answers: null, pressAfterMs: null, thinkingMs: null }));
+    answers: null, pressAfterMs, thinkingMs: null }));
   lastInfo = { code: round.roundCode, step: 1, type: 'library', target: 'red', outcome: round.history[0]!.outcome, length: len };
   afterShot();
 }
 
 async function onShoot() {
   if (busy || round.phase !== 'decide') return;
+  if (awaitingStep1(round)) return onShootStep1();
   const decided = nextOutcome(round);
   const step = decided.step;
   const forced = forcedNow(); // developer panel only (null in the real game)
@@ -427,7 +442,7 @@ async function onShoot() {
 }
 
 function onCashOut() {
-  if (busy || round.phase !== 'decide') return;
+  if (busy || round.phase !== 'decide' || round.step < 1) return; // RULES B.2: no CASH OUT before step 1
   presolver.cancel(); // RULES B.5: the next shot is never shown
   round = cashOut(round);
   endRound();
@@ -444,7 +459,7 @@ function afterShot() {
     const r = replay;
     setTimeout(() => {
       if (replay !== r || busy || round.phase !== 'decide') return;
-      if (r.cashOutAfter !== null && round.step >= r.cashOutAfter) onCashOut(); else void onShoot();
+      if (r.cashOutAfter !== null && round.step >= 1 && round.step >= r.cashOutAfter) onCashOut(); else void onShoot(); // at step 0 it presses SHOOT (B.2)
     }, 600);
   }
   // developer panel: auto play goes on by itself
@@ -538,6 +553,10 @@ function render() {
   if (busy) {
     const what = { rerack: 'RACKING', break: 'OPPONENT BREAKS OFF', step1: 'STEP 1 · RED', shot: '', solving: 'THINKING…' }[busy];
     bottom.innerHTML = `<div class="hint">${what}</div><button class="big" disabled>SHOOT</button>`;
+  } else if (awaitingStep1(round)) {
+    // RULES B.2: before step 1 nothing has been won yet: only SHOOT
+    bottom.innerHTML = `<div class="hint">${hintText(round)}</div><button class="big" id="bShoot">SHOOT</button>`;
+    $('bShoot').onclick = () => { void onShoot(); };
   } else if (round.phase === 'decide') {
     const amount = (cashOut(round).end as { amount: number }).amount; // exactly what CASH OUT pays
     // a free replay pays nothing: CASH OUT shows the multiplier, never an amount that looks like money
@@ -879,7 +898,12 @@ if (import.meta.env.DEV) {
   (window as unknown as Record<string, unknown>).__dev = {
     force: (f: ForcedOutcome | null) => { force = f; if (round.phase === 'decide' && !busy) { presolver.cancel(); presolveNext(); } render(); },
     shoot: () => onShoot(), start: () => onStart(),
-    state: () => ({ busy, phase: round.phase, step: round.step, balance: round.balance, code: round.roundCode, mode }),
+    state: () => ({ busy, phase: round.phase, step: round.step, balance: round.balance, code: round.roundCode, mode,
+      waiting: awaitingStep1(round), cash: !!document.getElementById('bCash'), shootBtn: !!document.getElementById('bShoot'),
+      hist: round.history.map((h) => h.outcome).join(','), end: round.end ? JSON.stringify(round.end) : null, replaying: replay !== null }),
+    /** replay a round code, as the menu's REPLAY button does */
+    replay: (code: string) => { const p = parseRoundCode(code); if (!p) return false; if (p.levelId && p.levelId !== round.levelId) changeLevel(p.levelId);
+      replay = p; pendingSeed = p.seed; pendingRng = p.rng; void onStart(); return true; },
     lastRec: () => devLastRec && { n: devLastRec.n, t0: devLastRec.t0, scale: devLastRec.scale, duration: devLastRec.rec.duration, events: devLastRec.rec.events, ids: devLastRec.rec.ids, simT: devLastRec.simT ?? 0 },
     setSlow: (x: number) => { devSlow = x; },
     pauseOn: (kind: 'jaw' | 'pot' | 'potCue', offset: number) => { devPauseOn = { kind, offset }; devPause = null; devResume = false; },

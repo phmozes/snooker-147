@@ -52,6 +52,9 @@ export interface Round {
   breakShot?: unknown; // the opponent's break-off of this round (opaque, for playback)
   forced?: boolean; // developer test panel (task 5.3): at least one outcome of this round was forced, not decided
   free?: boolean; // a replay (night 4, owner): takes no bet and pays nothing, the balance stays as it was
+  /** RULES B.2 (owner 2026-11-27): step 1 waits for SHOOT. Decided and planned at START (same seed, same library
+   *  pick as before), played by the SHOOT press at step 0. Cleared once played. */
+  step1?: { outcome: 'success' | 'plainMiss' | 'snookered'; planned: PlannedShot };
 }
 
 // ---------------- seeded streams (RULES A.5, config rng.streams) ----------------
@@ -125,19 +128,39 @@ function pickFailure(r: Round, k: number): FailureLabel {
   return 'plainMiss';
 }
 
-/** RULES B.1 / B.2: START takes the bet, the opponent breaks, step 1 is played automatically. */
-export function start(r: Round, provider: ShotProvider, table: TableGeometry): Round {
+/** RULES B.1 / B.2 (owner 2026-11-27): START takes the bet and the opponent breaks; the round then waits at step 0
+ *  for SHOOT (no CASH OUT: nothing won yet). Step 1 is decided here exactly as before (seed + step 1, the same
+ *  library pick), so every old round code gives the same round. */
+export function startRound(r: Round, provider: ShotProvider, table: TableGeometry): Round {
   if (r.phase !== 'betting' && r.phase !== 'over') throw new Error('START only between rounds');
   if (!r.free && r.balance < r.bet) throw new Error('balance too low for this bet');
   const reds = CONFIG.levels.find((l) => l.id === r.levelId)!.reds;
-  let round: Round = { ...r, phase: 'decide', balance: r.free ? r.balance : money(r.balance - r.bet), step: 0, end: null, history: [], forced: false,
+  const round: Round = { ...r, phase: 'decide', balance: r.free ? r.balance : money(r.balance - r.bet), step: 0, end: null, history: [], forced: false,
     roundCode: baseCode(r.levelId, r.seed, r.rng), frame: newFrame(reds, table) };
   const ok = stepSucceeds(round, 1);
   const outcome = ok ? 'success' : streamValue(r.seed, 'break', 1, r.rng) < CONFIG.failures.step1.plainMiss ? 'plainMiss' : 'snookered';
   const { afterBreak, step1, breakShot } = provider.breakAndStep1(r.levelId, outcome, streamValue(r.seed, 'variety', 0, r.rng), round.frame!);
-  round = { ...round, frame: afterBreak, breakShot };
-  return playShot(round, 'red', ok ? 'success' : outcome, step1, table);
+  return { ...round, frame: afterBreak, breakShot, step1: { outcome, planned: step1 } };
 }
+
+/** SHOOT at step 0: plays the step 1 shot planned at START (from the break-off library, no solve). */
+function shootStep1(r: Round, table: TableGeometry): Round {
+  const s = r.step1!;
+  const rest: Round = { ...r };
+  delete rest.step1;
+  return playShot(rest, 'red', s.outcome, s.planned, table);
+}
+
+/** START and the first SHOOT in one call (the rounds of every test and bench; the same round as the game plays). */
+export function start(r: Round, provider: ShotProvider, table: TableGeometry): Round {
+  return shootStep1(startRound(r, provider, table), table);
+}
+
+/** The round as it will be after the step 1 SHOOT (the game page plans the next solve from it; never shown). */
+export const peekStep1 = (r: Round, table: TableGeometry): Round => shootStep1(r, table);
+
+/** True while the round waits for the SHOOT of step 1 (RULES B.2): no CASH OUT, no solve. */
+export const awaitingStep1 = (r: Round): boolean => r.phase === 'decide' && r.step === 0 && !!r.step1;
 
 /** Apply a planned shot to the round: success = one step up; failure = round over (bet lost). */
 function playShot(r: Round, target: BallKind, outcome: 'success' | FailureLabel, planned: PlannedShot, table: TableGeometry): Round {
@@ -183,7 +206,8 @@ export function nextOutcome(r: Round): { step: number; outcome: 'success' | Fail
 
 /** RULES A.3: SHOOT. The outcome is decided first, then the provider finds a matching shot. */
 export function shoot(r: Round, provider: ShotProvider, table: TableGeometry, colourChoice?: Colour): Round {
-  if (r.phase !== 'decide' || r.step < 1) throw new Error('SHOOT is only possible during a round, after step 1');
+  if (awaitingStep1(r)) return shootStep1(r, table); // RULES B.2: the first SHOOT plays step 1
+  if (r.phase !== 'decide' || r.step < 1) throw new Error('SHOOT is only possible during a round');
   const { step: k, outcome } = nextOutcome(r);
   const auto = !colourChoice && r.frame!.phase === 'colour' && provider.autoColour; // RULES B.3
   const target = nextTarget(r, auto ? provider.autoColour!(r.frame!, { roundCode: r.roundCode, step: k }) : colourChoice);

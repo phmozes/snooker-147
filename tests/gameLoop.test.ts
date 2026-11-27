@@ -80,7 +80,7 @@ describe('night 4, Part 3a: the game page plays a replay free', () => {
   it('START of a replay passes free, CASH OUT and the end line show no money, a REPLAY label shows', async () => {
     const { readFileSync } = await import('node:fs');
     const src = readFileSync('src/game/gamePage.ts', 'utf8');
-    expect(src).toContain('round = start({ ...round, seed, rng, free: replay !== null }, provider, table);');
+    expect(src).toContain('round = startRound({ ...round, seed, rng, free: replay !== null }, provider, table);');
     expect(src).toContain("if (!replay && round.balance < round.bet) return;");
     expect(src).toContain("const cashText = round.free ? `${formatMult(ladder()[round.step - 1]!.multiplier)} · REPLAY` : money(amount);");
     expect(src).toContain("$('replayTag').classList.toggle('show', !!round.free && (round.phase === 'decide' || busy !== null));");
