@@ -1,0 +1,1439 @@
+{
+ "seed": "reds15-v3-3191475780",
+ "level": "reds15",
+ "fps": 30,
+ "variants": {
+  "V1": {
+   "back": 0.5,
+   "h": 0.16,
+   "ahead": 1.2,
+   "fov": 50
+  },
+  "V2": {
+   "back": 1.05,
+   "h": 0.55,
+   "ahead": 0.9,
+   "fov": 52
+  },
+  "V3": {
+   "back": 0.5,
+   "h": 0.16,
+   "ahead": 1.2,
+   "fov": 50,
+   "rise": 1
+  }
+ },
+ "clips": [
+  {
+   "name": "cut-now",
+   "step": 33,
+   "cfg": {
+    "v": "now"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 146,
+   "seconds": 4.87,
+   "kb": 35.1,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.39999999999936,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "cut-V1F1",
+   "step": 33,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 159,
+   "seconds": 5.3,
+   "kb": 85.3,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.83333333333263,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "brown",
+     "endH": 0.16,
+     "endDist": 1.63,
+     "slid": 0.57,
+     "fov": 37.1,
+     "endAngle": 5.6
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "cut-V1F2",
+   "step": 33,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 159,
+   "seconds": 5.3,
+   "kb": 88.1,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.83333333333263,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "brown",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 0.61,
+     "fov": 40.1,
+     "endAngle": 30
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "cut-V2F1",
+   "step": 33,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 159,
+   "seconds": 5.3,
+   "kb": 80.4,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.83333333333263,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "brown",
+     "endH": 0.55,
+     "endDist": 1.76,
+     "slid": 0.8,
+     "fov": 34.3,
+     "endAngle": 18.2
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "cut-V2F2",
+   "step": 33,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 158,
+   "seconds": 5.27,
+   "kb": 82.5,
+   "ballsStopAt": 4.400000000000379,
+   "shootAt": 4.8000000000004945,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "brown",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 0.98,
+     "fov": 40.1,
+     "endAngle": 30
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "cut-V3",
+   "step": 33,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 159,
+   "seconds": 5.3,
+   "kb": 73.1,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.83333333333263,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h1-now",
+   "step": 31,
+   "cfg": {
+    "v": "now"
+   },
+   "aim": {
+    "target": "yellow",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0.292,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 30,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "h1-V1F1",
+   "step": 31,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "yellow",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0.292,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 77.1,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "yellow",
+     "endH": 0.16,
+     "endDist": 1.85,
+     "slid": 0.8,
+     "fov": 32.8,
+     "endAngle": 5
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h1-V1F2",
+   "step": 31,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "yellow",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0.292,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 85.3,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "yellow",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 1.3,
+     "fov": 40.1,
+     "endAngle": 30
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h1-V2F1",
+   "step": 31,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "yellow",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0.292,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 74,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "yellow",
+     "endH": 0.55,
+     "endDist": 2.41,
+     "slid": 0.8,
+     "fov": 25.3,
+     "endAngle": 13.2
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h1-V2F2",
+   "step": 31,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "yellow",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0.292,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 81.1,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "yellow",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 1.82,
+     "fov": 40.1,
+     "endAngle": 30
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h1-V3",
+   "step": 31,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "aim": {
+    "target": "yellow",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": 0.292,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "plain",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 75.3,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h2-now",
+   "step": 15,
+   "cfg": {
+    "v": "now"
+   },
+   "aim": {
+    "target": "red8",
+    "pocket": "topLeft",
+    "ob": {
+     "x": -0.23319865844410262,
+     "y": 1.0629797652762933
+    },
+    "mouth": {
+     "x": -0.8897520023066785,
+     "y": 1.7852520023066785
+    },
+    "inward": {
+     "x": -0.7071067811865475,
+     "y": 0.7071067811865475
+    }
+   },
+   "shotType": "softCannon",
+   "kind": null,
+   "outcome": "success",
+   "frames": 79,
+   "seconds": 2.63,
+   "kb": 31.2,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.166666666666824,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "h2-V1F1",
+   "step": 15,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "red8",
+    "pocket": "topLeft",
+    "ob": {
+     "x": -0.23319865844410262,
+     "y": 1.0629797652762933
+    },
+    "mouth": {
+     "x": -0.8897520023066785,
+     "y": 1.7852520023066785
+    },
+    "inward": {
+     "x": -0.7071067811865475,
+     "y": 0.7071067811865475
+    }
+   },
+   "shotType": "softCannon",
+   "kind": null,
+   "outcome": "success",
+   "frames": 91,
+   "seconds": 3.03,
+   "kb": 68.9,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.5666666666668534,
+   "cam": {
+    "back": 0.5,
+    "h": 0.343,
+    "cueElDeg": 23.4,
+    "notes": [
+     "raised over the cue 0.16 -> 0.34 m"
+    ],
+    "follow": {
+     "pocket": "topLeft",
+     "target": "red8",
+     "endH": 0.343,
+     "endDist": 1.56,
+     "slid": 0.36,
+     "fov": 38.5,
+     "endAngle": 12.7
+    },
+    "seeThrough": 1
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h2-V1F2",
+   "step": 15,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "red8",
+    "pocket": "topLeft",
+    "ob": {
+     "x": -0.23319865844410262,
+     "y": 1.0629797652762933
+    },
+    "mouth": {
+     "x": -0.8897520023066785,
+     "y": 1.7852520023066785
+    },
+    "inward": {
+     "x": -0.7071067811865475,
+     "y": 0.7071067811865475
+    }
+   },
+   "shotType": "softCannon",
+   "kind": null,
+   "outcome": "success",
+   "frames": 91,
+   "seconds": 3.03,
+   "kb": 69.4,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.5666666666668534,
+   "cam": {
+    "back": 0.5,
+    "h": 0.343,
+    "cueElDeg": 23.4,
+    "notes": [
+     "raised over the cue 0.16 -> 0.34 m"
+    ],
+    "follow": {
+     "pocket": "topLeft",
+     "target": "red8",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 0.41,
+     "fov": 40.1,
+     "endAngle": 30
+    },
+    "seeThrough": 1
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h2-V2F1",
+   "step": 15,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "red8",
+    "pocket": "topLeft",
+    "ob": {
+     "x": -0.23319865844410262,
+     "y": 1.0629797652762933
+    },
+    "mouth": {
+     "x": -0.8897520023066785,
+     "y": 1.7852520023066785
+    },
+    "inward": {
+     "x": -0.7071067811865475,
+     "y": 0.7071067811865475
+    }
+   },
+   "shotType": "softCannon",
+   "kind": null,
+   "outcome": "success",
+   "frames": 91,
+   "seconds": 3.03,
+   "kb": 72.4,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.5666666666668534,
+   "cam": {
+    "back": 1.05,
+    "h": 0.58,
+    "cueElDeg": 23.4,
+    "notes": [
+     "raised over the cue 0.55 -> 0.58 m"
+    ],
+    "follow": {
+     "pocket": "topLeft",
+     "target": "red8",
+     "endH": 0.58,
+     "endDist": 1.64,
+     "slid": 0.8,
+     "fov": 36.9,
+     "endAngle": 20.8
+    },
+    "seeThrough": 1
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h2-V2F2",
+   "step": 15,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "red8",
+    "pocket": "topLeft",
+    "ob": {
+     "x": -0.23319865844410262,
+     "y": 1.0629797652762933
+    },
+    "mouth": {
+     "x": -0.8897520023066785,
+     "y": 1.7852520023066785
+    },
+    "inward": {
+     "x": -0.7071067811865475,
+     "y": 0.7071067811865475
+    }
+   },
+   "shotType": "softCannon",
+   "kind": null,
+   "outcome": "success",
+   "frames": 91,
+   "seconds": 3.03,
+   "kb": 72.4,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.5666666666668534,
+   "cam": {
+    "back": 1.05,
+    "h": 0.58,
+    "cueElDeg": 23.4,
+    "notes": [
+     "raised over the cue 0.55 -> 0.58 m"
+    ],
+    "follow": {
+     "pocket": "topLeft",
+     "target": "red8",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 0.94,
+     "fov": 40.1,
+     "endAngle": 30
+    },
+    "seeThrough": 1
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "h2-V3",
+   "step": 15,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "aim": {
+    "target": "red8",
+    "pocket": "topLeft",
+    "ob": {
+     "x": -0.23319865844410262,
+     "y": 1.0629797652762933
+    },
+    "mouth": {
+     "x": -0.8897520023066785,
+     "y": 1.7852520023066785
+    },
+    "inward": {
+     "x": -0.7071067811865475,
+     "y": 0.7071067811865475
+    }
+   },
+   "shotType": "softCannon",
+   "kind": null,
+   "outcome": "success",
+   "frames": 91,
+   "seconds": 3.03,
+   "kb": 70.5,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.5666666666668534,
+   "cam": {
+    "back": 0.5,
+    "h": 0.343,
+    "cueElDeg": 23.4,
+    "notes": [
+     "raised over the cue 0.16 -> 0.34 m"
+    ],
+    "seeThrough": 1
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "long-now",
+   "step": 27,
+   "cfg": {
+    "v": "now"
+   },
+   "aim": {
+    "target": "red3",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": -0.2141735574378132,
+     "y": 0.7831846567725693
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "long",
+   "kind": null,
+   "outcome": "success",
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 30.3,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "long-V1F1",
+   "step": 27,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "red3",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": -0.2141735574378132,
+     "y": 0.7831846567725693
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "long",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 73.8,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "red3",
+     "endH": 0.16,
+     "endDist": 3.1,
+     "slid": 0.8,
+     "fov": 24,
+     "endAngle": 3
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "long-V1F2",
+   "step": 27,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "red3",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": -0.2141735574378132,
+     "y": 0.7831846567725693
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "long",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 87.5,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "red3",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 2.6,
+     "fov": 40.1,
+     "endAngle": 30
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "long-V2F1",
+   "step": 27,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "red3",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": -0.2141735574378132,
+     "y": 0.7831846567725693
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "long",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 70.2,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "red3",
+     "endH": 0.55,
+     "endDist": 3.68,
+     "slid": 0.8,
+     "fov": 24,
+     "endAngle": 8.6
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "long-V2F2",
+   "step": 27,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "red3",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": -0.2141735574378132,
+     "y": 0.7831846567725693
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "long",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 84.5,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "bottomRight",
+     "target": "red3",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 3.14,
+     "fov": 40.1,
+     "endAngle": 30
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "long-V3",
+   "step": 27,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "aim": {
+    "target": "red3",
+    "pocket": "bottomRight",
+    "ob": {
+     "x": -0.2141735574378132,
+     "y": 0.7831846567725693
+    },
+    "mouth": {
+     "x": 0.8897520023066785,
+     "y": -1.7852520023066785
+    },
+    "inward": {
+     "x": 0.7071067811865475,
+     "y": -0.7071067811865475
+    }
+   },
+   "shotType": "long",
+   "kind": null,
+   "outcome": "success",
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 76.6,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "miss-now",
+   "step": 33,
+   "cfg": {
+    "v": "now"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "middleRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.969,
+     "y": 0
+    },
+    "inward": {
+     "x": 1,
+     "y": 0
+    }
+   },
+   "shotType": "attempt",
+   "kind": "plainMiss",
+   "outcome": "plainMiss",
+   "frames": 106,
+   "seconds": 3.53,
+   "kb": 30.4,
+   "ballsStopAt": 2.63333333333295,
+   "shootAt": null,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "miss-V1F1",
+   "step": 33,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "middleRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.969,
+     "y": 0
+    },
+    "inward": {
+     "x": 1,
+     "y": 0
+    }
+   },
+   "shotType": "attempt",
+   "kind": "plainMiss",
+   "outcome": "plainMiss",
+   "frames": 106,
+   "seconds": 3.53,
+   "kb": 73.2,
+   "ballsStopAt": 2.63333333333295,
+   "shootAt": null,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "middleRight",
+     "target": "brown",
+     "endH": 0.16,
+     "endDist": 1.63,
+     "slid": 0.61,
+     "fov": 37.1,
+     "endAngle": 5.6
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "miss-V1F2",
+   "step": 33,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "middleRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.969,
+     "y": 0
+    },
+    "inward": {
+     "x": 1,
+     "y": 0
+    }
+   },
+   "shotType": "attempt",
+   "kind": "plainMiss",
+   "outcome": "plainMiss",
+   "frames": 106,
+   "seconds": 3.53,
+   "kb": 80.1,
+   "ballsStopAt": 2.63333333333295,
+   "shootAt": null,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "middleRight",
+     "target": "brown",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 0.93,
+     "fov": 40.1,
+     "endAngle": 30
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "miss-V2F1",
+   "step": 33,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F1"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "middleRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.969,
+     "y": 0
+    },
+    "inward": {
+     "x": 1,
+     "y": 0
+    }
+   },
+   "shotType": "attempt",
+   "kind": "plainMiss",
+   "outcome": "plainMiss",
+   "frames": 106,
+   "seconds": 3.53,
+   "kb": 68.8,
+   "ballsStopAt": 2.63333333333295,
+   "shootAt": null,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "middleRight",
+     "target": "brown",
+     "endH": 0.55,
+     "endDist": 2.04,
+     "slid": 0.8,
+     "fov": 29.8,
+     "endAngle": 15.7
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "miss-V2F2",
+   "step": 33,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "follow": "F2"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "middleRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.969,
+     "y": 0
+    },
+    "inward": {
+     "x": 1,
+     "y": 0
+    }
+   },
+   "shotType": "attempt",
+   "kind": "plainMiss",
+   "outcome": "plainMiss",
+   "frames": 106,
+   "seconds": 3.53,
+   "kb": 71.8,
+   "ballsStopAt": 2.63333333333295,
+   "shootAt": null,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": [],
+    "follow": {
+     "pocket": "middleRight",
+     "target": "brown",
+     "endH": 0.75,
+     "endDist": 1.5,
+     "slid": 1.46,
+     "fov": 40.1,
+     "endAngle": 30
+    }
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "miss-V3",
+   "step": 33,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "aim": {
+    "target": "brown",
+    "pocket": "middleRight",
+    "ob": {
+     "x": 0,
+     "y": -1.0475
+    },
+    "mouth": {
+     "x": 0.969,
+     "y": 0
+    },
+    "inward": {
+     "x": 1,
+     "y": 0
+    }
+   },
+   "shotType": "attempt",
+   "kind": "plainMiss",
+   "outcome": "plainMiss",
+   "frames": 106,
+   "seconds": 3.53,
+   "kb": 68.9,
+   "ballsStopAt": 2.63333333333295,
+   "shootAt": null,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.00511911320977
+  }
+ ],
+ "errors": []
+}

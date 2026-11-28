@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player's view camera 3</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; --bg: #0f1513; --panel: #18211e; --text: #e8ece9; --dim: #9aa7a2; --yellow: #f2c94c; --ok: #7bd389; --no: #ef8a7a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .intro { color: var(--dim); margin: 0 0 18px; }
+  .intro b, .what b, td b, li b { color: var(--text); }
+  section { background: var(--panel); border-radius: 14px; padding: 12px; margin-bottom: 18px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  .what { margin: 0 0 8px; color: var(--dim); }
+  .ok { color: var(--ok); } .no { color: var(--no); }
+  .grid { display: grid; gap: 10px; align-items: start; grid-template-columns: repeat(6, 1fr); }
+  figure { margin: 0; min-width: 0; }
+  video { width: 100%; height: auto; aspect-ratio: 390 / 844; display: block; border-radius: 8px; background: #000; }
+  .missing { aspect-ratio: 390 / 844; display: grid; place-items: center; background: #300; border-radius: 8px; }
+  figcaption { font-size: 12px; color: var(--dim); margin-top: 4px; overflow-wrap: anywhere; }
+  figcaption b { color: var(--yellow); }
+  button { background: var(--yellow); color: #111; border: 0; border-radius: 8px; padding: 6px 12px; font-weight: 700; cursor: pointer; margin-bottom: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2a3531; vertical-align: top; }
+  th { color: var(--dim); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  ul, ol { margin: 6px 0 0 18px; padding: 0; } li { margin-bottom: 6px; }
+  .q { color: var(--yellow); font-weight: 700; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Player's view camera, round 3: V1 and V2 follow the ball to the pocket</h1>
+  <p class="intro">Video clips only, <b>the game is not changed</b>. Same round as before (<b>reds15-v3-3191475780</b>,
+    15 reds), filmed inside the real round (real top bar and ladder), 390×844, 30 frames a second. A clip starts at
+    the SHOOT press and ends 0.5 s after SHOOT comes back. Every V clip uses your choices: the hard-case fixes (over
+    the cue, over the rail, see-through ball, full cue) and the <b>R2 0.4 s glide</b> back to 57°. Each shot shows
+    6 clips: <b>TODAY</b>, <b>V3</b>, then <b>V1 F1</b>, <b>V1 F2</b>, <b>V2 F1</b>, <b>V2 F2</b>.</p>
+
+  <section>
+    <h2>The two follow options (V1 and V2 only)</h2>
+    <ul>
+      <li><b>F1 "turn"</b>: 0.1 s after the cue hits the cue ball, the camera turns in 0.8 s (a smooth start and stop)
+        to look at the pocket the shot aims at. It may slide up to 80 cm to a spot on the line pocket → ball, behind the
+        ball and at most 1.6 m from the pocket (25 cm to the side if that spot is in front of the ball, so the ball
+        never rolls under the lens). It keeps its height (V1 16 cm, V2 55 cm, or more where a fix lifted it) and zooms
+        in so the view is about 80 cm wide at the pocket.</li>
+      <li><b>F2 "turn and lift"</b>: the same turn and slide, but it also rises to <b>30° above the cloth</b> (seen from
+        the pocket) and comes to at most 1.5 m from the pocket, so you look down into the pocket and see the drop.</li>
+      <li>Safe path (the H2/H3 rules): the move is an arc around the moving look-at point (never top-down, the
+        steepest angle in any clip is the 57° of the main camera); it never slides further outside the cloth than the
+        hold spot; outside the cloth it stays at least 10 cm above the rail; it never goes lower than its hold height.</li>
+      <li>Then R2: when the balls stop, a 0.4 s glide back to 57°, and SHOOT waits for it.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Fair for a pot and a miss</h2>
+    <ul>
+      <li>The follow uses only the <b>planned shot</b>: which ball (target), which pocket it is played at (pocket), where
+        that ball stands before the shot, and the pocket's mouth. It never reads the recorded roll of the balls, where
+        they stop, or whether anything dropped.</li>
+      <li>The timing is fixed from the hit (start 0.1 s, move 0.8 s), the same for every shot. A pot and a miss give the
+        same camera move; only the balls themselves show the result, when they reach the pocket.</li>
+      <li>The only thing that differs is when the camera goes back to 57°: when the balls stop. That is the same as today.</li>
+    </ul>
+  </section>
+
+  <section data-shot="cut">
+    <h2>Thin cut on the brown (step 33)</h2>
+    <p class="what">The shot of rounds 1 and 2 where the pot was off-screen in V1/V2.</p>
+    <button type="button">Play all together</button>
+    <div class="grid"><figure><video src="cut-now.mp4" poster="cut-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>TODAY</b> · <span class="ok">potted</span> · 4.87 s clip · balls stop at 4.40 s · SHOOT back at 4.40 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="cut-V3.mp4" poster="cut-V3.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 (rise)</b> · <span class="ok">potted</span> · 5.30 s clip · balls stop at 4.40 s · SHOOT back at 4.83 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · steepest angle 57.0°.</figcaption></figure>
+<figure><video src="cut-V1F1.mp4" poster="cut-V1F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F1 turn</b> · <span class="ok">potted</span> · 5.30 s clip · balls stop at 4.40 s · SHOOT back at 4.83 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · follows the <b>brown</b> to the <b>bottom right corner</b> pocket: slides 57 cm, ends 1.63 m from the pocket, 16 cm high, <b>5.6°</b> above the cloth, zoom 37.1°.</figcaption></figure>
+<figure><video src="cut-V1F2.mp4" poster="cut-V1F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F2 turn and lift</b> · <span class="ok">potted</span> · 5.30 s clip · balls stop at 4.40 s · SHOOT back at 4.83 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · follows the <b>brown</b> to the <b>bottom right corner</b> pocket: slides 61 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure>
+<figure><video src="cut-V2F1.mp4" poster="cut-V2F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F1 turn</b> · <span class="ok">potted</span> · 5.30 s clip · balls stop at 4.40 s · SHOOT back at 4.83 s<br>holds at <b>55 cm</b> high, 105 cm behind the cue ball · follows the <b>brown</b> to the <b>bottom right corner</b> pocket: slides 80 cm, ends 1.76 m from the pocket, 55 cm high, <b>18.2°</b> above the cloth, zoom 34.3°.</figcaption></figure>
+<figure><video src="cut-V2F2.mp4" poster="cut-V2F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F2 turn and lift</b> · <span class="ok">potted</span> · 5.27 s clip · balls stop at 4.40 s · SHOOT back at 4.80 s<br>holds at <b>55 cm</b> high, 105 cm behind the cue ball · follows the <b>brown</b> to the <b>bottom right corner</b> pocket: slides 98 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure></div>
+  </section>
+
+  <section data-shot="miss">
+    <h2>The same brown, a forced MISS (step 33, plain miss)</h2>
+    <p class="what">The round was played again with step 33 forced to a plain miss: the brown is aimed at a pocket with a small error and stays out. Same follow rules as the pot. The round ends here, so no SHOOT comes back.</p>
+    <button type="button">Play all together</button>
+    <div class="grid"><figure><video src="miss-now.mp4" poster="miss-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>TODAY</b> · <span class="no">missed (plainMiss)</span> · 3.53 s clip · balls stop at 2.63 s · round over (miss)<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="miss-V3.mp4" poster="miss-V3.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 (rise)</b> · <span class="no">missed (plainMiss)</span> · 3.53 s clip · balls stop at 2.63 s · round over (miss)<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · steepest angle 57.0°.</figcaption></figure>
+<figure><video src="miss-V1F1.mp4" poster="miss-V1F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F1 turn</b> · <span class="no">missed (plainMiss)</span> · 3.53 s clip · balls stop at 2.63 s · round over (miss)<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · follows the <b>brown</b> to the <b>right middle</b> pocket: slides 61 cm, ends 1.63 m from the pocket, 16 cm high, <b>5.6°</b> above the cloth, zoom 37.1°.</figcaption></figure>
+<figure><video src="miss-V1F2.mp4" poster="miss-V1F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F2 turn and lift</b> · <span class="no">missed (plainMiss)</span> · 3.53 s clip · balls stop at 2.63 s · round over (miss)<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · follows the <b>brown</b> to the <b>right middle</b> pocket: slides 93 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure>
+<figure><video src="miss-V2F1.mp4" poster="miss-V2F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F1 turn</b> · <span class="no">missed (plainMiss)</span> · 3.53 s clip · balls stop at 2.63 s · round over (miss)<br>holds at <b>55 cm</b> high, 105 cm behind the cue ball · follows the <b>brown</b> to the <b>right middle</b> pocket: slides 80 cm, ends 2.04 m from the pocket, 55 cm high, <b>15.7°</b> above the cloth, zoom 29.8°.</figcaption></figure>
+<figure><video src="miss-V2F2.mp4" poster="miss-V2F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F2 turn and lift</b> · <span class="no">missed (plainMiss)</span> · 3.53 s clip · balls stop at 2.63 s · round over (miss)<br>holds at <b>55 cm</b> high, 105 cm behind the cue ball · follows the <b>brown</b> to the <b>right middle</b> pocket: slides 146 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure></div>
+  </section>
+
+  <section data-shot="h1">
+    <h2>H1 · cue ball mid-table, yellow (step 31)</h2>
+    <p class="what">In round 2 the yellow was potted off-screen in V1 and V2.</p>
+    <button type="button">Play all together</button>
+    <div class="grid"><figure><video src="h1-now.mp4" poster="h1-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>TODAY</b> · <span class="ok">potted</span> · 2.80 s clip · balls stop at 2.33 s · SHOOT back at 2.33 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="h1-V3.mp4" poster="h1-V3.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 (rise)</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · steepest angle 57.0°.</figcaption></figure>
+<figure><video src="h1-V1F1.mp4" poster="h1-V1F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F1 turn</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · follows the <b>yellow</b> to the <b>bottom right corner</b> pocket: slides 80 cm, ends 1.85 m from the pocket, 16 cm high, <b>5°</b> above the cloth, zoom 32.8°.</figcaption></figure>
+<figure><video src="h1-V1F2.mp4" poster="h1-V1F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F2 turn and lift</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · follows the <b>yellow</b> to the <b>bottom right corner</b> pocket: slides 130 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure>
+<figure><video src="h1-V2F1.mp4" poster="h1-V2F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F1 turn</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>55 cm</b> high, 105 cm behind the cue ball · follows the <b>yellow</b> to the <b>bottom right corner</b> pocket: slides 80 cm, ends 2.41 m from the pocket, 55 cm high, <b>13.2°</b> above the cloth, zoom 25.3°.</figcaption></figure>
+<figure><video src="h1-V2F2.mp4" poster="h1-V2F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F2 turn and lift</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>55 cm</b> high, 105 cm behind the cue ball · follows the <b>yellow</b> to the <b>bottom right corner</b> pocket: slides 182 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure></div>
+  </section>
+
+  <section data-shot="h2">
+    <h2>H2 · a ball right behind the cue ball (step 15)</h2>
+    <p class="what">The camera is raised over the cue and the red behind is see-through while it holds; then the follow.</p>
+    <button type="button">Play all together</button>
+    <div class="grid"><figure><video src="h2-now.mp4" poster="h2-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>TODAY</b> · <span class="ok">potted</span> · 2.63 s clip · balls stop at 2.17 s · SHOOT back at 2.17 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="h2-V3.mp4" poster="h2-V3.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 (rise)</b> · <span class="ok">potted</span> · 3.03 s clip · balls stop at 2.17 s · SHOOT back at 2.57 s<br>holds at <b>34 cm</b> high, 50 cm behind the cue ball · raised over the cue 0.16 -> 0.34 m · 1 ball(s) see-through while it holds · steepest angle 57.0°.</figcaption></figure>
+<figure><video src="h2-V1F1.mp4" poster="h2-V1F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F1 turn</b> · <span class="ok">potted</span> · 3.03 s clip · balls stop at 2.17 s · SHOOT back at 2.57 s<br>holds at <b>34 cm</b> high, 50 cm behind the cue ball · raised over the cue 0.16 -> 0.34 m · 1 ball(s) see-through while it holds · follows the <b>red8</b> to the <b>top left corner</b> pocket: slides 36 cm, ends 1.56 m from the pocket, 34 cm high, <b>12.7°</b> above the cloth, zoom 38.5°.</figcaption></figure>
+<figure><video src="h2-V1F2.mp4" poster="h2-V1F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F2 turn and lift</b> · <span class="ok">potted</span> · 3.03 s clip · balls stop at 2.17 s · SHOOT back at 2.57 s<br>holds at <b>34 cm</b> high, 50 cm behind the cue ball · raised over the cue 0.16 -> 0.34 m · 1 ball(s) see-through while it holds · follows the <b>red8</b> to the <b>top left corner</b> pocket: slides 41 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure>
+<figure><video src="h2-V2F1.mp4" poster="h2-V2F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F1 turn</b> · <span class="ok">potted</span> · 3.03 s clip · balls stop at 2.17 s · SHOOT back at 2.57 s<br>holds at <b>58 cm</b> high, 105 cm behind the cue ball · raised over the cue 0.55 -> 0.58 m · 1 ball(s) see-through while it holds · follows the <b>red8</b> to the <b>top left corner</b> pocket: slides 80 cm, ends 1.64 m from the pocket, 58 cm high, <b>20.8°</b> above the cloth, zoom 36.9°.</figcaption></figure>
+<figure><video src="h2-V2F2.mp4" poster="h2-V2F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F2 turn and lift</b> · <span class="ok">potted</span> · 3.03 s clip · balls stop at 2.17 s · SHOOT back at 2.57 s<br>holds at <b>58 cm</b> high, 105 cm behind the cue ball · raised over the cue 0.55 -> 0.58 m · 1 ball(s) see-through while it holds · follows the <b>red8</b> to the <b>top left corner</b> pocket: slides 94 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure></div>
+  </section>
+
+  <section data-shot="long">
+    <h2>The long red (step 27)</h2>
+    <p class="what">A long pot: the follow slides towards the far pocket and zooms in.</p>
+    <button type="button">Play all together</button>
+    <div class="grid"><figure><video src="long-now.mp4" poster="long-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>TODAY</b> · <span class="ok">potted</span> · 2.80 s clip · balls stop at 2.33 s · SHOOT back at 2.33 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="long-V3.mp4" poster="long-V3.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 (rise)</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · steepest angle 57.0°.</figcaption></figure>
+<figure><video src="long-V1F1.mp4" poster="long-V1F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F1 turn</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · follows the <b>red3</b> to the <b>bottom right corner</b> pocket: slides 80 cm, ends 3.10 m from the pocket, 16 cm high, <b>3°</b> above the cloth, zoom 24°.</figcaption></figure>
+<figure><video src="long-V1F2.mp4" poster="long-V1F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · F2 turn and lift</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>16 cm</b> high, 50 cm behind the cue ball · follows the <b>red3</b> to the <b>bottom right corner</b> pocket: slides 260 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure>
+<figure><video src="long-V2F1.mp4" poster="long-V2F1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F1 turn</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>55 cm</b> high, 105 cm behind the cue ball · follows the <b>red3</b> to the <b>bottom right corner</b> pocket: slides 80 cm, ends 3.68 m from the pocket, 55 cm high, <b>8.6°</b> above the cloth, zoom 24°.</figcaption></figure>
+<figure><video src="long-V2F2.mp4" poster="long-V2F2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · F2 turn and lift</b> · <span class="ok">potted</span> · 3.23 s clip · balls stop at 2.33 s · SHOOT back at 2.77 s<br>holds at <b>55 cm</b> high, 105 cm behind the cue ball · follows the <b>red3</b> to the <b>bottom right corner</b> pocket: slides 314 cm, ends 1.50 m from the pocket, 75 cm high, <b>30°</b> above the cloth, zoom 40.1°.</figcaption></figure></div>
+  </section>
+
+  <section>
+    <h2>Extra seconds per shot</h2>
+    <p class="what">Measured: when SHOOT came back in each V clip minus when it came back in the TODAY clip of the
+      same shot (30 frames a second, so ±0.03 s).</p>
+    <div class="scroll"><table>
+      <tr><th>Camera</th><th>Brown cut</th><th>H1 yellow</th><th>H2 red</th><th>Long red</th><th>Average</th></tr>
+      <tr><td>V1 F1</td><td>+0.43</td><td>+0.43</td><td>+0.40</td><td>+0.43</td><td><b>+0.42</b></td></tr><tr><td>V1 F2</td><td>+0.43</td><td>+0.43</td><td>+0.40</td><td>+0.43</td><td><b>+0.42</b></td></tr><tr><td>V2 F1</td><td>+0.43</td><td>+0.43</td><td>+0.40</td><td>+0.43</td><td><b>+0.42</b></td></tr><tr><td>V2 F2</td><td>+0.40</td><td>+0.43</td><td>+0.40</td><td>+0.43</td><td><b>+0.42</b></td></tr><tr><td>V3 (mockup waits the glide; the game would not)</td><td>+0.43</td><td>+0.43</td><td>+0.40</td><td>+0.43</td><td><b>+0.42</b></td></tr>
+    </table></div>
+    <ul>
+      <li>The follow itself adds <b>nothing</b>: it happens while the balls roll. The extra is only the R2 glide
+        (0.4 s), the same as without the follow.</li>
+      <li>With PC + R2 (per 100 shots from step 2): 16.7 pocket cuts × 1.9 s, plus V1 and V2 (20.8 each) × 0.4 s, V3
+        and TODAY 0 s = <b>about +0.49 s per shot</b> on average, with F1 or F2 the same.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Your questions (your decision)</h2>
+    <ol>
+      <li><span class="q">Follow for V1 and V2:</span> F1 (turn, stays low) or F2 (turn and lift to 30°)? Or F1 for one and F2 for the other?</li>
+      <li><span class="q">Speed of the turn:</span> 0.8 s (as shown), faster, or slower?</li>
+    </ol>
+  </section>
+</main>
+<script>
+  for (const s of document.querySelectorAll('section[data-shot]')) {
+    s.querySelector('button').addEventListener('click', () => {
+      for (const v of s.querySelectorAll('video')) { v.currentTime = 0; v.play().catch(() => {}); }
+    });
+  }
+</script>
+</body>
+</html>
