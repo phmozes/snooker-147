@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 ## Owner's turn
-- Night 8 (docs/REPORT.md): switch v4 on anyway? (7x fewer RE-RACKs, still fails D.6); pick caption style A/B/C
-  (mockups/captions/); 2 Rules-box text errors; game vs mockups "check" items (mockups/compare-mockups/); speed ideas 1-3.
+- 2026-11-28 task (docs/REPORT.md): pick how the shot chance could show (mockups/chance/: A none, B hint, C chips,
+  D above SHOOT); phone-check the captions (dev menu CAPTIONS), the Rules box table, the bet-screen gap. Speed idea 3 open.
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the camera at 57° (option 1: in-app about 91% wide).
@@ -12,9 +12,8 @@
 ## Claude's turn (waiting for the owner's answers)
 - Owner 2026-11-27: NO playback speed-up (failure shots over 3 s OK, SLOW-SHOTS.md D); KEEP the cue's extra 0.25 s;
   pocket cam AUTO ON 1 in 6 (success = failure), P1b/P2 70/30, +0.32 s/shot.
-- Night 8 done (docs/REPORT.md): v4 6-red library built, NOT on (RE-RACK 10.5 per 100k, rule 1); new cut chances ON.
-- Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1, POS410=1 = old 4.10, RNG=2 = old break library), summary
-  node bench/soak-night4.mjs <dir>; replays bench/night4/fp.test.ts; marks bench/replay-shot.test.ts; scripts/*.mjs.
+- 6 reds v4: about 10 RE-RACKs per 100,000 shots, accepted for now (owner 2026-11-28); the remaining ones are the last red at step 11, to be fixed in shot choice later.
+- Measure: soak bench/soak.test.ts (ROUNDS, SHOTS=1, POS410=1, RNG=2), sum bench/soak-night4.mjs; replays bench/night4/fp.test.ts.
 - Dev server: port 5181 only, phone http://192.168.1.111:5181. Only BALANCE shows = stale .vite-cache: `npx vite --host --force`.
 ## Later (waiting on others: nothing)
 - LAUNCH BLOCKER: outcomes on a server before real money (plan: docs/SERVER-OUTCOMES.md; v2/v3 HMAC is ready for it).

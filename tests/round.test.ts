@@ -296,8 +296,8 @@ describe('night 6: round version 3 = the v2 generator + the new break-off librar
     expect(breakLibraryOf(2)).toBe('old');
     expect(breakLibraryOf(3)).toBe('v3');
   });
-  it('night 8: v4 = v3 generator + the v4 6-red break library; not switched on (every level stays v3)', () => {
-    expect(newRngFor('reds6')).toBe(3);
+  it('night 8: v4 = v3 generator + the v4 6-red break library; on for 6 reds only (owner 2026-11-28)', () => {
+    expect(newRngFor('reds6')).toBe(4);
     expect(newRngFor('reds10')).toBe(3);
     expect(newRngFor('reds15')).toBe(3);
     for (let seed = 1; seed <= 200; seed++) for (const stream of ['outcome', 'failureType', 'break', 'variety'])

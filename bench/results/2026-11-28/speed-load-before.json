@@ -1,0 +1,38 @@
+{
+ "mode": "load",
+ "url": "http://localhost:5190/",
+ "profile": "slow 4G (150 ms, 1.6 Mbit/s down, 750 kbit/s up), CPU x4 slower, 390x844 @3x",
+ "loadEventMs": 5669,
+ "startButtonMs": 5727,
+ "networkIdleMs": 7245,
+ "domContentLoaded": 5663,
+ "fcp": 696,
+ "totalKB": 192,
+ "byType": {
+  "Document": 4,
+  "Script": 188
+ },
+ "files": [
+  "188 KB assets/index-lXnknBpW.js",
+  "4 KB "
+ ],
+ "firstStartToShootMs": 5973,
+ "firstStartKB": 395,
+ "firstStartFiles": [
+  "71 KB sounds/applause-6.mp3",
+  "67 KB breaks-v4/reds6.json",
+  "60 KB sounds/applause-5.mp3",
+  "46 KB sounds/applause-4.mp3",
+  "36 KB sounds/applause-3.mp3",
+  "27 KB sounds/applause-2.mp3",
+  "21 KB sounds/break.mp3",
+  "19 KB sounds/miss.mp3",
+  "19 KB sounds/applause-1.mp3",
+  "13 KB sounds/pocket.mp3",
+  "5 KB sounds/cue.mp3",
+  "4 KB sounds/ball-hard.mp3",
+  "3 KB sounds/ball-soft.mp3",
+  "2 KB sounds/cushion.mp3",
+  "2 KB sounds/tap.mp3"
+ ]
+}

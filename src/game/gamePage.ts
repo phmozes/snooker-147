@@ -13,7 +13,6 @@ import { breakFilesFor, breakLibraryOf, createPhysicsProvider, type BreakLibrary
 import { awaitingStep1, peekStep1, startRound, cashOut, FORCED_OUTCOMES, newRound, nextOutcome, nextTarget, setBet, setLevel, shoot, shootForced, start, successEnd, outcomeDraw, RNG_VERSION_NEW, newRngFor, type RngVersion, type ForcedOutcome,
   type LevelId, type Round } from '../core/round';
 import { newFrame, type FrameState } from '../core/rules';
-import { ladderForLevel, rtpText } from '../core/ladder';
 import { shotCaps, type FallbackLogEntry } from '../core/solver';
 import { buildTable } from '../core/table/geometry';
 import { rackBalls } from '../core/table/rack';
@@ -26,12 +25,14 @@ import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
 import { isMuted, muteIcon, setMuted } from './sound';
-import { breakOffMoment, initTableSounds, lastSoundAt, missMoment, playApplause, playCueStrike, playEventsBetween, playMiss, playTap, potHeardAt } from './tableSounds';
+import { breakOffMoment, initTableSounds, lastSoundAt, loadApplause, missMoment, playApplause, playCueStrike, playEventsBetween, playMiss, playTap, potHeardAt } from './tableSounds';
 import { endLevel, milestoneLevel, type ApplauseLevel } from './applause';
 import { costBody, COST_LINE_VERSION, stepCost } from './stepCost';
 import { createPresolver, solvedProvider, type SolveRequest, type Solved } from './presolve';
 import { clearanceText, endLine, FAILURE_TEXT, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
 import { codeColour, colourSteps, roundCodeOf, type RoundCode } from '../core/roundCode';
+import { rulesHtml } from './rulesText';
+import { afterCaption, CAPTION_IDS, CAPTION_TEXT, captionSeconds, roundBeforeCaption, type CaptionId } from './captions';
 
 type ScreenId = 'D' | 'A' | 'C';
 type Mode = 'live' | ScreenId;
@@ -91,6 +92,44 @@ let shownBreak = 0;
 /** Owner 2026-11-27: the applause levels already heard this round (each level at most once a round, applause.ts). */
 let applauseHeard = new Set<ApplauseLevel>();
 const breakHtml = () => `<span class="brk">BREAK ${shownBreak}</span>`;
+// owner 2026-11-28: captions in the hint line (style B, captions.ts). An AFTER caption shows for its seconds from the
+// moment its pot drops; a BEFORE caption shows while the game waits for SHOOT (worked out once per wait from the table
+// and the score only). Each caption shows at most once a round. Display only: nothing here reads or changes an outcome.
+let captionsShown = new Set<CaptionId>();
+let afterCap: { id: CaptionId; until: number } | null = null;
+let beforeCap: { step: number; id: CaptionId | null } | null = null;
+let hintNormal = '';
+const CAP_MARK = '<b class="cap">';
+const capActive = () => afterCap !== null && performance.now() < afterCap.until;
+function showCaption(id: CaptionId, seconds = captionSeconds(id)) {
+  captionsShown.add(id);
+  afterCap = { id, until: performance.now() + seconds * 1000 };
+  refreshHint();
+  setTimeout(refreshHint, seconds * 1000 + 20);
+}
+/** The hint line: an active AFTER caption, else `normal` (which may itself be a BEFORE caption). */
+function hintDiv(normal: string): string {
+  hintNormal = normal;
+  if (capActive()) return `<div class="hint capB">${CAPTION_TEXT[afterCap!.id]}</div>`;
+  return `<div class="hint${normal.startsWith(CAP_MARK) ? ' capB' : ''}">${normal}</div>`;
+}
+function refreshHint() {
+  const h = document.querySelector('#bottom .hint');
+  if (!h) return;
+  const on = capActive();
+  h.innerHTML = on ? CAPTION_TEXT[afterCap!.id] : hintNormal;
+  h.classList.toggle('capB', on || hintNormal.startsWith(CAP_MARK));
+}
+/** The hint while the game waits for SHOOT: the BEFORE caption if there is one, else "RED · NEXT x1.61". */
+function waitingHint(picked: BallKind | null): string {
+  const normal = `${breakHtml()}${hintText(round, picked)}`;
+  if (!beforeCap || beforeCap.step !== round.step) {
+    const id = roundBeforeCaption(round, captionsShown);
+    if (id) captionsShown.add(id);
+    beforeCap = { step: round.step, id };
+  }
+  return beforeCap.id ? `${CAP_MARK}${CAPTION_TEXT[beforeCap.id]}</b>` : normal;
+}
 let lastShot = '—';
 /** Dev only (owner 2026-11-25): solver cost of the last shot, to read on a real phone. */
 let lastCost = '—';
@@ -214,6 +253,13 @@ function buildView(balls: Ball[]) {
   view3d?.dispose();
   view3d = createTable3d(canvas, table, balls.map((b) => b.kind), tableLook);
   view3d.setBallScale(ballScale);
+  void view3d.warmUp(); // owner 2026-11-28 (speed): the cue's shaders compile now, not at the first break-off
+}
+/** Owner 2026-11-28 (speed): while the player is on the betting screen, download and read the break library the next
+ *  START of this level will use (it used to load on START). Nothing about the round is decided here. */
+function prepareLibrary() {
+  if (replay || pendingSeed !== null) return; // a replay or a code: START loads the library of that code
+  void loadLibrary(round.levelId, newRngFor(round.levelId)).catch(() => { /* START tries again and shows the error */ });
 }
 function setTableLook(l: TableLookId) {
   tableLook = l;
@@ -269,7 +315,7 @@ function cueProtect(balls: Ball[], C: Vec2, d: Vec2) {
 }
 /** Play a shot from `balls` on screen; resolves with its length in seconds when every ball has stopped. */
 function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target: string; pocket: string; view: PocketView }; breakOff?: boolean;
-  applause?: { ball: string; level: ApplauseLevel }; miss?: { label: string; target?: string } } = {}): Promise<number> {
+  applause?: { ball: string; level: ApplauseLevel }; caption?: { ball: string; id: CaptionId }; miss?: { label: string; target?: string } } = {}): Promise<number> {
   const sim = createSim(balls, table);
   strike(sim, 'cue', s.dir, s.speed, s.spin);
   const rec = recordShot(sim);
@@ -282,6 +328,9 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
   let applause = opts.applause ?? null;
   const potEv = applause ? rec.events.find((e) => e.type === 'pot' && e.a === applause!.ball) : undefined;
   const applauseAt = applause ? (potEv ? potHeardAt(rec, potEv.t, potEv.a, rs) : rec.duration) : null;
+  let caption = opts.caption ?? null; // the AFTER caption: the same moment as the applause (the pot seen dropping)
+  const capEv = caption ? rec.events.find((e) => e.type === 'pot' && e.a === caption!.ball) : undefined;
+  const captionAt = caption ? (capEv ? potHeardAt(rec, capEv.t, capEv.a, rs) : rec.duration) : null;
   // owner 2026-11-27: the miss sound, once, when the failure is clear on screen (tableSounds.ts missMoment); it follows
   // the playback clock, so the pocket-camera slow motion delays it like every other sound
   let miss = opts.miss ?? null;
@@ -353,6 +402,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
       if (import.meta.env.DEV && devLastRec) devLastRec.simT = t;
       playEventsBetween(rec, tPrev, t, rs, breakAt); // PLAN 9.1: the hits of this moment, at the speed shown (slow motion too)
       if (applause && applauseAt !== null && t >= applauseAt) { playApplause(applause.level); applause = null; }
+      if (caption && captionAt !== null && t >= captionAt) { showCaption(caption.id); caption = null; }
       if (miss && missAt !== null && t >= missAt) { playMiss(); miss = null; }
       const p = positionsAt(rec, t);
       rest = ids.map(() => null);
@@ -366,13 +416,23 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
 }
 
 // ---------------- the game loop ----------------
+const libraryLoads = new Map<string, Promise<void>>(); // one download per file, even if START comes while it loads
 async function loadLibrary(id: LevelId, rng: RngVersion) {
   const library = libraryFor(rng);
   if (library[id]) return;
   // BASE_URL: '/' on the dev server, './' in the build (night 7: the build loads from any folder, relative URLs only)
-  const res = await fetch(`${import.meta.env.BASE_URL}${breakFilesFor(rng)[id]}`);
-  if (!res.ok) throw new Error(`no break-off library for ${id} (npm run breaks)`);
-  library[id] = await res.json();
+  const url = `${import.meta.env.BASE_URL}${breakFilesFor(rng)[id]}`;
+  let p = libraryLoads.get(url);
+  if (!p) {
+    p = (async () => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`no break-off library for ${id} (npm run breaks)`);
+      library[id] = await res.json();
+    })();
+    libraryLoads.set(url, p);
+    p.catch(() => libraryLoads.delete(url)); // a failed download is tried again next time
+  }
+  await p;
 }
 
 /** Start solving the next shot (both outcomes) while the player decides. */
@@ -426,6 +486,7 @@ async function onStart() {
   shownBalance = round.balance;
   shownBreak = 0; // a new break
   applauseHeard = new Set();
+  captionsShown = new Set(); afterCap = null; beforeCap = null;
   presolveNext(); // solving (of step 2) starts during the break-off animation
   // RULES B.1: the balls re-rack quickly, then the opponent breaks off (from the library)
   const rack = newFrame(level().reds, table).balls;
@@ -436,6 +497,7 @@ async function onStart() {
   const brk = round.breakShot as { cueStart: Vec2; shot: Shot };
   busy = 'break';
   render();
+  loadApplause(); // owner 2026-11-28 (speed): the applause files load now, while the break-off plays
   // owner 2026-11-27: the opponent's break-off is played with the same cue, look and timing as our shots
   await playShot(rack.map((b) => (b.kind === 'cue' ? { ...b, pos: { ...brk.cueStart } } : b)), brk.shot, { cue: true, breakOff: true });
   // RULES B.2 (owner 2026-11-27): the game now waits; SHOOT plays step 1 (no CASH OUT before it)
@@ -509,6 +571,7 @@ async function onShoot() {
   if (h.outcome === 'reRack') {
     lastShot = `step ${step}: RE-RACK (no shot found) · ${work}`;
     lastInfo = { code: round.roundCode, step, type: 'reRack', target: h.target, outcome: 'reRack', length: 0 };
+    showCaption('RE_RACK');
   } else {
     // developer jump: no animation, the balls just move to where the shot leaves them
     const pc = import.meta.env.DEV ? devPocketCam : null; // dev only: "pocket cam on next shot"
@@ -524,7 +587,11 @@ async function onShoot() {
     const ms = round.free || h.outcome !== 'success' ? null : milestoneLevel(before.frame!, round.frame!, applauseHeard);
     if (ms) applauseHeard.add(ms);
     const applause = ms && sh.target ? { ball: sh.target, level: ms } : undefined;
-    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam, applause, miss: missFor(h) });
+    // owner 2026-11-28: the AFTER caption of this pot (captions.ts), shown as the pot drops (the applause moment)
+    const capId = h.outcome === 'success' ? afterCaption(before.frame!, round.frame!, (h.shot as { type?: string }).type ?? null, captionsShown) : null;
+    if (capId) captionsShown.add(capId);
+    const caption = capId && sh.target && !jumped ? { ball: sh.target, id: capId } : undefined;
+    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam, applause, caption, miss: missFor(h) });
     // PLAN 8.2 / RULES B.6: a clearance's last pot is replayed from the pocket camera, then the clearance message
     if (!jumped && round.end?.type === 'clearance' && sh.target && sh.pocket) await clearanceReplay(sh.target, sh.pocket);
     const type = (h.shot as { type?: string }).type ?? '?';
@@ -705,28 +772,30 @@ function render() {
     : chipsHtml(round.step, !inRound);
 
   const bottom = $('bottom');
+  // the bet area without a hint line: the spare space goes above the ladder strip (index.html #screen.betnohint)
+  $('screen').classList.toggle('betnohint', !busy && round.phase !== 'decide' && showBetArea && !round.roundCode);
   if (busy) {
     const what = { rerack: 'RACKING', break: 'OPPONENT BREAKS OFF', step1: 'STEP 1 · RED', shot: '', solving: 'THINKING…' }[busy];
-    bottom.innerHTML = `<div class="hint">${breakHtml()}${what}</div><button class="big" disabled>SHOOT</button>`;
+    bottom.innerHTML = `${hintDiv(`${breakHtml()}${what}`)}<button class="big" disabled>SHOOT</button>`;
   } else if (awaitingStep1(round)) {
     // RULES B.2: before step 1 nothing has been won yet: only SHOOT
-    bottom.innerHTML = `<div class="hint">${breakHtml()}${hintText(round)}</div><button class="big" id="bShoot">SHOOT</button>`;
+    bottom.innerHTML = `${hintDiv(waitingHint(null))}<button class="big" id="bShoot">SHOOT</button>`;
     $('bShoot').onclick = () => { void onShoot(); };
   } else if (round.phase === 'decide') {
     const amount = (cashOut(round).end as { amount: number }).amount; // exactly what CASH OUT pays
     // a free replay pays nothing: CASH OUT shows the multiplier, never an amount that looks like money
     const cashText = round.free ? `${formatMult(ladder()[round.step - 1]!.multiplier)} · REPLAY` : money(amount);
     bottom.innerHTML = `<button class="cash" id="bCash">CASH OUT<b>${cashText}</b></button>` +
-      `<div class="hint">${breakHtml()}${hintText(round, presolver.target())}</div><button class="big" id="bShoot">SHOOT</button>`;
+      `${hintDiv(waitingHint(presolver.target()))}<button class="big" id="bShoot">SHOOT</button>`;
     $('bCash').onclick = onCashOut;
     $('bShoot').onclick = () => { void onShoot(); };
   } else if (!showBetArea) {
-    bottom.innerHTML = `<div class="hint">${breakHtml()}</div><button class="big" disabled>START</button>`;
+    bottom.innerHTML = `${hintDiv(breakHtml())}<button class="big" disabled>START</button>`;
   } else {
     const bet = round.bet;
     const can = round.balance >= bet;
     // night 4 (Part 5): one row with - BET + and the quick amounts, then START (the RTP text moved into the Rules)
-    bottom.innerHTML = `${round.roundCode ? `<div class="hint">${breakHtml()}</div>` : ''}
+    bottom.innerHTML = `${round.roundCode ? hintDiv(breakHtml()) : ''}
       <div class="row betrow"><button class="sq" id="bMinus">−</button><div class="bet">BET<b>${money(bet)}</b></div><button class="sq" id="bPlus">+</button>${CONFIG.money.quickBets.map((q) => `<button class="quick${q === bet ? ' on' : ''}" data-q="${q}">${q}</button>`).join('')}</div>
       <button class="big" id="bStart" ${can ? '' : 'disabled'}>${can ? `START · ${money(bet)}` : 'BALANCE TOO LOW'}</button>`;
     const setB = (b: number) => { round = setBet(round, b); render(); };
@@ -775,21 +844,11 @@ function renderFooter() {
   $('footLeft').textContent = `147 · DEMO · Round ${code} · ${clock}`;
 }
 setInterval(renderFooter, 20_000);
-/** The Rules box (Part 5): how a round works, and the RTP range of every level (moved here from the bet area). */
+/** The Rules box (Part 5): how a round works, the chance of every step of the chosen level, the RTP of every level.
+ *  The text is in rulesText.ts (pure), so the truth check reads the same text. */
 function openRules() {
   const el = $('rules');
-  const rtps = CONFIG.levels.map((l) => {
-    const top = Math.max(...ladderForLevel(l.id).map((x) => x.multiplier));
-    return `<li><b>${l.reds} reds</b> (up to ${formatMult(top)}): ${rtpText(l.id)}</li>`;
-  }).join('');
-  el.innerHTML = `<div class="box"><h2>Rules</h2>
-    <ul><li>Pick a level and a bet, then START. The opponent breaks off and your first red plays itself.</li>
-    <li>Each SHOOT plays the next ball in snooker order: a red, then a colour, and so on. A pot moves you one step up the ladder.</li>
-    <li>CASH OUT after any pot to take bet × the current multiplier. A miss, a foul or an in-off ends the round and the bet is lost.</li>
-    <li>Clearing the table pays the top multiplier. If no shot can be found the balls are re-racked and the round is paid.</li>
-    <li>Every outcome is decided before the shot is shown and does not depend on where the balls lie.</li></ul>
-    <h2>Return to player (RTP)</h2><ul>${rtps}</ul>
-    <button class="close" id="rulesClose">Close</button></div>`;
+  el.innerHTML = rulesHtml(round.levelId);
   el.classList.add('open');
   $('rulesClose').onclick = () => el.classList.remove('open');
   el.onclick = (e) => { if (e.target === el) el.classList.remove('open'); };
@@ -927,7 +986,8 @@ function renderDev() {
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
       '<div class="opts" id="devAuto"></div>' +
       '<h3>POCKET CAM ON NEXT SHOT (DEV ONLY)</h3><div class="opts" id="devPocketCam"></div><div class="info" id="devCut"></div>' +
-      '<h3>APPLAUSE / MISS (DEV ONLY)</h3><div class="opts" id="devApplause"></div>' : '') +
+      '<h3>APPLAUSE / MISS (DEV ONLY)</h3><div class="opts" id="devApplause"></div>' +
+      '<h3>CAPTIONS (DEV ONLY, 3 s in the hint line)</h3><div class="opts" id="devCaptions"></div>' : '') +
     '<h3>TABLE LOOK</h3><div class="opts" id="devLook"></div><h3>CUE</h3><div class="opts" id="devCue"></div><h3>POSITION PLAY (EXPERIMENT)</h3><div class="opts" id="devPos"></div><h3>COMPARE WITH MOCKUP</h3><div class="opts" id="devCompare"></div><h3>BALL SIZE (DRAWN ONLY)</h3><div class="opts" id="devScale"></div>' +
     '<h3>LEVEL</h3><div class="opts" id="devLevel"></div><h3>CHECK PAGES</h3>' +
     '<a href="/replay.html">Replay check: 2D and 3D</a><a href="/debug.html">Table debug</a>';
@@ -1039,6 +1099,8 @@ function renderTestPanel(opt: (label: string, on: boolean, click: () => void, di
   const APPLAUSE_TEXT = ['', '1 CASH OUT', '2 BREAK 50', '3 SNOOKERS', '4 BREAK 100', '5 CLEARANCE', '6 MAXIMUM'];
   for (const l of [1, 2, 3, 4, 5, 6] as const) $('devApplause').appendChild(opt(APPLAUSE_TEXT[l]!, false, () => playApplause(l)));
   $('devApplause').appendChild(opt('MISS', false, () => playMiss())); // owner 2026-11-27: hear the miss sound
+  // owner 2026-11-28: show each caption in the hint line for 3 s (display only; not counted as shown for the round)
+  for (const id of CAPTION_IDS) $('devCaptions').appendChild(opt(CAPTION_TEXT[id], false, () => { const was = captionsShown.has(id); showCaption(id, 3); if (!was) captionsShown.delete(id); }));
 }
 /** Dev: jump to the last ball and clear it on screen (the clearance replay). */
 function devClearLast() {
@@ -1073,6 +1135,7 @@ function changeLevel(id: LevelId) {
   const rack = rackBalls(level().reds, table);
   if (mode === 'live') { buildView(newFrame(level().reds, table).balls); showBalls(rack); } else setMode(mode);
   render();
+  prepareLibrary();
 }
 if (import.meta.env.DEV) {
   // the developer test panel's actions, for scripts (the same calls the panel buttons make)
@@ -1130,6 +1193,7 @@ else $('menu').style.visibility = 'hidden'; // no developer menu in the real bui
 if (DEV) (window as unknown as { __game: unknown }).__game = () => ({ round, drawn: rest, ids, busy });
 if (mode === 'live') { const rack = newFrame(level().reds, table).balls; buildView(rack); showBalls(rack); } else setMode(mode);
 render();
+setTimeout(prepareLibrary, 0); // after the first screen is drawn
 renderFlag();
 window.addEventListener('resize', layout);
 // browser bars showing or hiding change the visible area without always firing a window resize

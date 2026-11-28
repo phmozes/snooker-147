@@ -1,0 +1,49 @@
+{
+ "mode": "frames",
+ "url": "http://localhost:5191/",
+ "profile": "slow 4G (150 ms, 1.6 Mbit/s down, 750 kbit/s up), CPU x4 slower, 390x844 @3x",
+ "loadEventMs": 4754,
+ "startButtonMs": 4811,
+ "networkIdleMs": 6450,
+ "domContentLoaded": 4748,
+ "fcp": 608,
+ "totalKB": 264,
+ "byType": {
+  "Document": 4,
+  "Script": 194,
+  "Fetch": 67
+ },
+ "files": [
+  "194 KB assets/index-Y8E4fR44.js",
+  "67 KB breaks-v4/reds6.json",
+  "4 KB "
+ ],
+ "breakOff": {
+  "frames": 147,
+  "p50": 33.2,
+  "p95": 50,
+  "max": 217,
+  "over33": 15,
+  "over50": 5
+ },
+ "pocketCut": [
+  {
+   "frames": 155,
+   "p50": 16.7,
+   "p95": 33.5,
+   "max": 83,
+   "over33": 14,
+   "over50": 2,
+   "cut": "P2 at topLeft: 0.12-1.12 s of the shot, +1.86 s slow motion"
+  },
+  {
+   "frames": 127,
+   "p50": 33.2,
+   "p95": 49.9,
+   "max": 83,
+   "over33": 30,
+   "over50": 4,
+   "cut": "P2 at topLeft: 0.12-1.12 s of the shot, +1.86 s slow motion"
+  }
+ ]
+}

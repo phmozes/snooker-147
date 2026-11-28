@@ -1,0 +1,47 @@
+{
+ "mode": "frames",
+ "url": "http://localhost:5191/",
+ "profile": "slow 4G (150 ms, 1.6 Mbit/s down, 750 kbit/s up), CPU x4 slower, 390x844 @3x",
+ "loadEventMs": 5116,
+ "startButtonMs": 5165,
+ "networkIdleMs": 6668,
+ "domContentLoaded": 5108,
+ "fcp": 884,
+ "totalKB": 197,
+ "byType": {
+  "Document": 4,
+  "Script": 193
+ },
+ "files": [
+  "193 KB assets/index-D2xHs5UK.js",
+  "4 KB "
+ ],
+ "breakOff": {
+  "frames": 136,
+  "p50": 16.8,
+  "p95": 50,
+  "max": 1066,
+  "over33": 15,
+  "over50": 5
+ },
+ "pocketCut": [
+  {
+   "frames": 114,
+   "p50": 33.3,
+   "p95": 50,
+   "max": 133,
+   "over33": 10,
+   "over50": 2,
+   "cut": "P2 at topRight: 0.00-0.98 s of the shot, +1.83 s slow motion"
+  },
+  {
+   "frames": 116,
+   "p50": 33.3,
+   "p95": 50,
+   "max": 100,
+   "over33": 23,
+   "over50": 3,
+   "cut": "P2 at topLeft: 0.22-1.22 s of the shot, +1.86 s slow motion"
+  }
+ ]
+}

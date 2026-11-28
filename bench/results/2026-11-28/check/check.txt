@@ -1,0 +1,9 @@
+bet screen: table {"top":66,"bottom":624} ladder {"top":654,"bottom":688} betrow {"top":698,"bottom":742} start {"top":752,"bottom":818}; gap ladder->betrow 10 px
+START font-weight: 700
+rules text: Pick a level and a bet, then START. The opponent breaks off, then you press SHOOT for your first shot. | Each SHOOT plays the next ball in snooker order: a red, then a colour, and so on. A pot moves you one step up the ladder. | CASH OUT after any pot to take bet × the current multiplier. A miss, a foul or an in-off ends the round and the bet is lost. | Clearing the table pays the top multiplier. In the rare case of a stalemate (re-rack), the round ends and you are paid the next step's multiplier. | Every outcome is decided before the shot is shown and does not depend on where the balls lie.
+rules table rows: 18
+in round: table {"top":66,"bottom":624} ladder {"top":630,"bottom":664}
+dev caption buttons: RE-RACK / OPPONENT NEEDS SNOOKERS / CENTURY / FIFTY BREAK / FRAME BALL / MAXIMUM IS ON / LAST RED / FLUKE
+dev caption: "FRAME BALL" class hint capB
+captions seen in a forced 6-red clearance (step:text): 9:FRAME BALL, 10:OPPONENT NEEDS SNOOKERS, 10:LAST RED, 15:FIFTY BREAK
+end: {"busy":null,"phase":"over","step":18,"balance":1240,"code":"reds6-v4-306173633","mode":"live","waiting":false,"cash":false,"shootBtn":false,"hist":"success,success,success,success,success,success,success,success,success,success,success,success,success,success,success,success,success,success","end":"{\"type\":\"clearance\",\"amount\":250,\"multiplier\":25}","replaying":false}

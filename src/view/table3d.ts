@@ -243,14 +243,28 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     return { axis: axis as THREE.Vector3, el, len };
   }
   /** Draw the cue at rest `gap` behind the cue ball (negative = past the hit), with opacity alpha and visible length. */
+  function makeCue() {
+    if (cue) return;
+    const mesh = makeNewCue(scene, renderer) as THREE.Mesh;
+    const plane = new THREE.Plane();
+    (mesh.material as THREE.Material).clippingPlanes = [plane];
+    renderer.localClippingEnabled = true;
+    cue = { mesh, plane, shadow: createCueShadow(scene, { hw: table.halfWidth, hl: table.halfLength, rim: G.rim, railZ: heights.railZ }) };
+  }
+  /** Owner 2026-11-28 (speed): make the cue and compile every shader the first break-off needs while the player is
+   *  on the betting screen (compiling them at the first break-off froze the screen for about 0.85 s on a slow phone).
+   *  Nothing is drawn: the cue is shown to the compiler only, then hidden again. */
+  async function warmUp() {
+    makeCue();
+    if (!cue) return;
+    const axis = new THREE.Vector3(0, 1, 0.2).normalize();
+    placeCue(cue.mesh, { x: 0, y: 0 }, rsNow(), axis, 0.05, 0.004); // opacity 0.004: on for the compiler, unseen if drawn
+    cue.shadow.cast(new THREE.Vector3(0, 0, rsNow()), axis, 0.004);
+    try { await renderer.compileAsync(scene, camera); } catch { /* compiling now is only a head start */ }
+    hideCue();
+  }
   function showCue(C: Vec2, plan: { axis: THREE.Vector3; len: number }, gap: number, alpha: number) {
-    if (!cue) {
-      const mesh = makeNewCue(scene, renderer) as THREE.Mesh;
-      const plane = new THREE.Plane();
-      (mesh.material as THREE.Material).clippingPlanes = [plane];
-      renderer.localClippingEnabled = true;
-      cue = { mesh, plane, shadow: createCueShadow(scene, { hw: table.halfWidth, hl: table.halfLength, rim: G.rim, railZ: heights.railZ }) };
-    }
+    makeCue();
     if (alpha <= 0.003) { hideCue(); return; }
     if (!cue) return;
     const tip = placeCue(cue.mesh, C, rsNow(), plan.axis, gap, alpha) as THREE.Vector3;
@@ -265,5 +279,5 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     const v = new THREE.Vector3(x, y, z).project(camera);
     return { x: ((v.x + 1) / 2) * canvas.clientWidth, y: ((1 - v.y) / 2) * canvas.clientHeight };
   }
-  return { resize, draw, dispose, setPreset, setBallScale, setKinds, setSpeed, setCameraOverride, project, planCue, showCue, hideCue, look, getFit: () => fit };
+  return { resize, draw, dispose, setPreset, setBallScale, setKinds, setSpeed, setCameraOverride, project, planCue, showCue, hideCue, warmUp, look, getFit: () => fit };
 }

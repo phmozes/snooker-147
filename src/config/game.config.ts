@@ -387,9 +387,9 @@ export const CONFIG = {
     // plus two library rules for the redPottable breaks: no red within redPinkMinGap (m, ball surface to surface) of the
     // pink, and no red that no pocket can take (path or ghost-ball spot blocked, the other balls as blockers).
     filesV4: { reds6: 'breaks-v4/reds6.json' } as Partial<Record<'reds6' | 'reds10' | 'reds15', string>>,
-    // Night 8: v4 is built and replays, but it is NOT switched on for new rounds: the step-2 soak failed RULES D.6
-    // (5 RE-RACKs in 47,474 shots). Switch on (owner's word) with v4Levels: ['reds6'].
-    v4Levels: [] as readonly string[],
+    // Night 8: the step-2 soak failed RULES D.6 (5 RE-RACKs in 47,474 shots, about 10 per 100,000); the owner
+    // accepted that for now and switched v4 on for 6 reds (2026-11-28). 10 / 15 reds stay on v3.
+    v4Levels: ['reds6'] as readonly string[],
     v4Rules: { redPinkMinGap: 0.002, noLockedRed: true },
     // the v3 break-off start: cue ball centre at y = baulk line, |x| from xMin to xMax (m), on the yellow side (x > 0)
     // or the green side (x < 0). Brown is at x = 0 and yellow / green at |x| = 0.292 (the D radius); a ball is 0.0525

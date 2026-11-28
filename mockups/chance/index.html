@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>147 · shot chance options</title>
+<style>
+  :root { --bg: #0f1412; --card: #18201d; --text: #e8ece9; --dim: #9aa6a1; --gold: #f2c94c; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 24px; margin: 0 0 6px; } h2 { font-size: 19px; margin: 30px 0 8px; color: var(--gold); }
+  p, li { color: var(--dim); } b { color: var(--text); }
+  .row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+  figure { margin: 0; background: var(--card); border-radius: 10px; padding: 10px; }
+  figure img { width: 100%; height: auto; display: block; border-radius: 6px; }
+  figcaption { font-size: 13px; color: var(--dim); margin-top: 8px; }
+  figcaption b { color: var(--gold); }
+  @media (max-width: 900px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Success chance of the next shot: 4 options</h1>
+<p>Options page only: nothing in the game was changed. Each picture is the real game screen (390x844, 6 reds, round
+<b>reds6-v4-2970798829</b>, after step 3, CASH OUT and SHOOT on screen). The chance was drawn on top by
+<code>scripts/chance-shots.mjs</code>. The numbers are the config p of each step (the same p the game draws against),
+rounded to a whole %. The next shot is step 4 (the black after a red): <b>89%</b>. The chance depends only on the step,
+never on the ball or where the balls lie.</p>
+<div class="row">
+  <figure><img src="A-none.jpg" alt="Option A: no chance on screen" loading="lazy">
+    <figcaption><b>A. No chance on screen</b> (today). The chance of every step is in the Rules box table.</figcaption></figure>
+  <figure><img src="B-hint.jpg" alt="Option B: chance in the hint line" loading="lazy">
+    <figcaption><b>B. In the hint line:</b> "BLACK · NEXT x1.42 · 89%". Nothing new on the screen; a caption
+    (FRAME BALL etc.) would hide it for its time.</figcaption></figure>
+  <figure><img src="C-chips.jpg" alt="Option C: a small percent under each ladder chip" loading="lazy">
+    <figcaption><b>C. Under each ladder chip:</b> the chance of reaching that step (x1.42 = 89%). Shows how the
+    chance falls as the multiplier rises.</figcaption></figure>
+  <figure><img src="D-above-shoot.jpg" alt="Option D: one line above SHOOT" loading="lazy">
+    <figcaption><b>D. One line above SHOOT:</b> "Chance to pot: 89%". The clearest; SHOOT is 16 px lower to make room
+    (the bottom area keeps its height, so the table does not change).</figcaption></figure>
+</div>
+<h2>For you to decide</h2>
+<ul>
+  <li>Which option (A, B, C or D)? Whole % (89%) or one decimal (89.4%, as in the Rules table)?</li>
+  <li>Before step 1 (right after the break-off) the next shot is step 1: 92%. Show it there too?</li>
+</ul>
+</main>
+</body>
+</html>

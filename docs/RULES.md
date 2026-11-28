@@ -28,8 +28,8 @@
    library (public/breaks-v3, every new round); old v1 / v2 round codes replay with the old library (cue ball
    anywhere in the D) so that they stay exactly the same (docs/FAIRNESS.md).
    Night 8 (owner, RE-RACK fix A): v4 (public/breaks-v4) is built: the same baulk-line break, but no 6-red break that
-   leaves a red within 2 mm of the pink, or a red that no pocket can take. NOT switched on (the soak failed D.6):
-   every new round is still v3; v4 codes replay. Switching on is config breakLibrary.v4Levels (owner's word).
+   leaves a red within 2 mm of the pink, or a red that no pocket can take. Switched ON for 6 reds (owner 2026-11-28,
+   config breakLibrary.v4Levels: ['reds6']): every new 6-red round is v4; 10 / 15 reds stay v3; old codes replay.
 2. Step 1 (our first red) is played by SHOOT, like every other step (owner 2026-11-27; until then it played by itself).
    Before step 1 there is no CASH OUT (nothing has been won yet): only SHOOT. Step 1 is still decided by seed + step
    only, so old round codes (v1 and v2) give the same rounds; a replay presses SHOOT by itself.
@@ -101,6 +101,7 @@ known before SHOOT is pressed. Every fallback is logged with the round code and 
 5. **Colour steps:** a colour is offered only if both its success shot and its failure shot were found. The one
    exception is black, which is always offered. If black is picked and has no success shot, rule 4 applies.
 6. The soak test fails if rule 4 happens more than once in 100,000 shots.
+   6 reds v4: about 10 RE-RACKs per 100,000 shots, accepted for now (owner 2026-11-28); the remaining ones are the last red at step 11, to be fixed in shot choice later.
 
 ## E. In-game rules text (menu) must include
 "In the rare case of a stalemate (re-rack), the round ends and you are paid the next step's multiplier."

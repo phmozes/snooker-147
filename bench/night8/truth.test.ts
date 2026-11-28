@@ -5,6 +5,8 @@ import { it } from 'vitest';
 import { CONFIG } from '../../src/config/game.config';
 import { ladderForLevel, rtpText } from '../../src/core/ladder';
 import { formatMult } from '../../src/game/roundView';
+import { CHANCE_NOTE, chanceRows, RERACK_SENTENCE, RULE_LINES, rulesHtml } from '../../src/game/rulesText';
+import { newRound, outcomeDraw, setLevel } from '../../src/core/round';
 
 it('truth check', () => {
   const out: string[] = [];
@@ -40,5 +42,21 @@ it('truth check', () => {
   row('default bet / START label', 'bet row, START · <bet>', String(M.defaultBet), 'config money.defaultBet', String(M.defaultBet), true);
   row('starting balance', 'top bar', String(M.startingBalance), 'config money.startingBalance', String(M.startingBalance), true);
   row('RE-RACK strip text', 'ladder strip', CONFIG.reRack.stripText, 'RULES D.4', 'RE-RACK · WON <amount> · x<multiplier>', CONFIG.reRack.stripText === 'RE-RACK · WON {amount} · x{multiplier}');
+  // Rules box text (src/game/rulesText.ts, the same text openRules shows)
+  const ruleE = /## E\. In-game rules text[^\n]*\n"([^"]+)"/.exec(rules)![1]!;
+  row('Rules box line 1 (break-off, first shot)', 'Rules box', RULE_LINES[0]!, 'RULES B.2', 'step 1 is played by SHOOT', /SHOOT for your first shot/.test(RULE_LINES[0]!) && !/plays itself/.test(RULE_LINES[0]!));
+  row('Rules box line 4 (re-rack)', 'Rules box', RULE_LINES[3]!, 'RULES E (exact sentence)', ruleE, RULE_LINES[3]!.includes(ruleE) && RERACK_SENTENCE === ruleE && !/re-racked/.test(RULE_LINES[3]!));
+  row('Rules box line 3 (end of round)', 'Rules box', RULE_LINES[2]!, 'RULES C.5', 'miss / foul / in-off end the round', /miss, a foul or an in-off ends the round/.test(RULE_LINES[2]!));
+  row('Rules box chance note', 'Rules box', CHANCE_NOTE, 'RULES A.6 (p depends on the step only)', 'step only', /only on the step/.test(CHANCE_NOTE));
+  // chance table: every row, every level, against config p AND against the p the game draws with (outcomeDraw)
+  for (const l of CONFIG.levels) {
+    const lad = ladderForLevel(l.id); const html = rulesHtml(l.id); const r = setLevel(newRound(1), l.id as Parameters<typeof setLevel>[1]);
+    for (const c of chanceRows(l.id)) {
+      const cfgP = l.p![c.step - 1]!; const gameP = outcomeDraw(r, c.step).p;
+      const want = `${(cfgP * 100).toFixed(1)}%`;
+      const ok = c.chance === want && gameP === cfgP && c.mult === formatMult(lad[c.step - 1]!.multiplier) && html.includes(`<tr><td>${c.step}</td><td>${c.mult}</td><td>${c.chance}</td></tr>`);
+      row(`${l.reds} reds chance table step ${c.step}`, 'Rules box table', `${c.mult} ${c.chance}`, 'config levels[].p / game outcomeDraw p', `${formatMult(lad[c.step - 1]!.multiplier)} ${want} (p ${cfgP.toFixed(6)}, game ${gameP.toFixed(6)})`, ok);
+    }
+  }
   writeFileSync('bench/results/night8/truth.txt', out.join('\n') + '\n');
 });

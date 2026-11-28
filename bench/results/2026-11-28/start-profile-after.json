@@ -1,0 +1,28 @@
+{
+ "longTasks": [
+  581,
+  124,
+  68,
+  53,
+  55,
+  68,
+  60
+ ],
+ "topSelf": [
+  "405 ms Up index-Y8E4fR44.js:4225",
+  "290 ms setFromRotationMatrix index-Y8E4fR44.js:0",
+  "195 ms invert index-Y8E4fR44.js:0",
+  "184 ms m index-Y8E4fR44.js:4173",
+  "147 ms zf index-Y8E4fR44.js:4224",
+  "146 ms copy index-Y8E4fR44.js:0",
+  "121 ms updateProjectionMatrix index-Y8E4fR44.js:4",
+  "118 ms Rf.renderBufferDirect index-Y8E4fR44.js:4224",
+  "114 ms applyMatrix4 index-Y8E4fR44.js:0",
+  "109 ms Bf index-Y8E4fR44.js:4224",
+  "101 ms st index-Y8E4fR44.js:4224",
+  "100 ms p index-Y8E4fR44.js:3822",
+  "99 ms rt index-Y8E4fR44.js:4224",
+  "97 ms decompose index-Y8E4fR44.js:0",
+  "77 ms s index-Y8E4fR44.js:3822"
+ ]
+}

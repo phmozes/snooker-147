@@ -1,0 +1,7 @@
+6 reds p: 92% 92% 90% 89% 88% 87% 86% 85% 84% 83% 82% 81% 80% 79% 78% 77% 76% 75%
+state: {"busy":null,"phase":"decide","step":3,"balance":990,"code":"reds6-v4-2970798829","mode":"live","waiting":false,"cash":true,"shootBtn":true,"hist":"success,success,success","end":null,"replaying":false}
+next step 4: p 0.8943661971830986 -> 89%
+A-none.jpg no chance on screen 80 KB
+B-hint.jpg BREAK 9BLACK · NEXT x1.42 · 89% 80 KB
+C-chips.jpg chips steps 2-6: 92% 90% 89% 88% 87% 82 KB
+D-above-shoot.jpg Chance to pot: 89% 82 KB

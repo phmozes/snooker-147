@@ -76,6 +76,10 @@
     #rules .box { background: #111816; border: 1px solid var(--line); border-radius: 12px; padding: 14px; max-height: 90%;
                   overflow-y: auto; font-size: 13px; line-height: 1.45; }
     #rules h2 { margin: 0 0 8px; font-size: 15px; } #rules ul { margin: 6px 0; padding-left: 18px; }
+    #rules .note { margin: 0 0 6px; color: var(--dim); }
+    #rules table.chances { border-collapse: collapse; width: 100%; margin: 0 0 10px; font-variant-numeric: tabular-nums; }
+    #rules table.chances th, #rules table.chances td { padding: 1px 6px; text-align: right; border-bottom: 1px solid rgba(255,255,255,.06); }
+    #rules table.chances th:first-child, #rules table.chances td:first-child { text-align: left; }
     #rules .close { margin-top: 10px; width: 100%; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
     button:disabled { opacity: .45; cursor: default; }
     .endline { flex: 1; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
@@ -115,8 +119,11 @@
     /* the current break (owner 2026-11-27): left end of the status line, the centred text stays centred */
     .hint { position: relative; flex: none; }
     .hint .brk { position: absolute; left: 0; top: 0; color: var(--yellow); font-weight: 700; }
+    /* owner 2026-11-28: captions (style B, mockups/captions/): the caption takes the place of the whole hint line */
+    .hint.capB { font-weight: 800; letter-spacing: .14em; color: var(--yellow); font-size: 13px; }
+    .hint.capB b.cap { font-weight: 800; }
     .big { height: 66px; border-radius: 18px; border: none; background: var(--yellow); color: #111;
-           font-size: 24px; font-weight: 800; letter-spacing: .04em; }
+           font-size: 24px; font-weight: 700; letter-spacing: .04em; } /* 700 = the mockup's weight (owner 2026-11-28) */
     .row { display: flex; gap: 10px; }
     .row > * { flex: 1; }
     .sq { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
@@ -138,6 +145,13 @@
     #screen.short .big, #screen.short .colour { height: 50px; font-size: 21px; border-radius: 14px; }
     #screen.short .sq, #screen.short .quick, #screen.short .bet { height: 38px; }
     #screen.short .footer { height: 14px; }
+    /* owner 2026-11-28 (game vs mockups): the bet area with no hint line (before the first round) is 24 px shorter
+       than the fixed bottom height; the spare space goes ABOVE the ladder strip, not between the strip and the bet
+       row. Same total height, so the table keeps its size. */
+    #screen.betnohint .ladder { margin-top: 24px; }
+    #screen.betnohint .bottom { height: 120px; }
+    #screen.short.betnohint .ladder { margin-top: 18px; }
+    #screen.short.betnohint .bottom { height: 94px; }
     .quick.on { border-color: var(--yellow); color: var(--yellow); background: #24210f; }
     .colour { height: 66px; border-radius: 18px; border: none; font-size: 20px; font-weight: 700; }
     .colour.blue { background: #2f6fdb; color: #fff; }

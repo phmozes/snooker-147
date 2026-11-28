@@ -37,11 +37,22 @@ function unlock() {
   master.gain.value = CONFIG.sound.masterVolume;
   master.connect(ctx.destination);
   void ctx.resume();
-  for (const n of NAMES) {
-    fetch(`${import.meta.env.BASE_URL}sounds/${n}.mp3`)
-      .then((r) => r.arrayBuffer()).then((a) => ctx!.decodeAudioData(a)).then((b) => { buffers.set(n, b); })
-      .catch(() => { /* no file or no decoder: that sound stays silent */ });
-  }
+  for (const n of NAMES) if (!n.startsWith('applause-')) fetchSound(n);
+  if (applauseWanted) loadApplause();
+}
+function fetchSound(n: Name) {
+  fetch(`${import.meta.env.BASE_URL}sounds/${n}.mp3`)
+    .then((r) => r.arrayBuffer()).then((a) => ctx!.decodeAudioData(a)).then((b) => { buffers.set(n, b); })
+    .catch(() => { /* no file or no decoder: that sound stays silent */ });
+}
+/** Owner 2026-11-28 (speed): the 6 applause files (259 KB) load after the first break-off has started, not on the
+ *  first tap, so the first START downloads less. Called once a break-off starts; later calls do nothing. */
+let applauseWanted = false, applauseAsked = false;
+export function loadApplause() {
+  applauseWanted = true;
+  if (!ctx || applauseAsked) return; // no sound system yet: unlock() loads them
+  applauseAsked = true;
+  for (const n of NAMES) if (n.startsWith('applause-')) fetchSound(n);
 }
 /** Call once at page start: the first tap anywhere switches the sound system on (phone rule). */
 export function initTableSounds() {
