@@ -34,6 +34,17 @@ res.totalKB = Math.round(files.reduce((a, x) => a + x.size, 0) / 1024);
 res.byType = {}; for (const f of files) res.byType[f.type] = Math.round(((res.byType[f.type] ?? 0) * 1024 + f.size) / 1024);
 res.files = files.map((f) => `${Math.round(f.size / 1024)} KB ${f.url.replace(url, '')}`).sort((a, c) => parseInt(c) - parseInt(a));
 
+if (mode === 'load') { // the first START: the break library and the sounds come now
+  const before = new Set(bytes.keys()); const t1 = Date.now();
+  await p.click('#bStart');
+  await p.waitForFunction(() => !!document.getElementById('bShoot') || !!document.getElementById('bStart'), { timeout: 600000, polling: 50 });
+  await p.waitForFunction(() => !!document.getElementById('bShoot') || (document.getElementById('bStart') && !document.getElementById('bStart').disabled), { timeout: 600000, polling: 50 });
+  res.firstStartToShootMs = Date.now() - t1;
+  await p.waitForNetworkIdle({ idleTime: 1500, timeout: 600000 }).catch(() => {});
+  const after = [...bytes.entries()].filter(([k, x]) => !before.has(k) && x.url && x.size !== undefined).map(([, x]) => x);
+  res.firstStartKB = Math.round(after.reduce((a, x) => a + x.size, 0) / 1024);
+  res.firstStartFiles = after.map((f) => `${Math.round(f.size / 1024)} KB ${f.url.replace(url, '')}`).sort((a, c) => parseInt(c) - parseInt(a));
+}
 if (mode === 'frames') {
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
   const startRec = () => p.evaluate(() => { window.__ft = []; let last = performance.now(); window.__ftOn = true;

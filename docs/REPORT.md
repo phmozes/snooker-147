@@ -257,3 +257,36 @@ Page: `mockups/compare-mockups/index.html`: mockups D, A, C next to the game in 
   − / + and the quick bets are on one row with smaller buttons (mockup: two rows); an empty gap of about 40 px between the
   ladder strip and the bet row; the SHOOT / START font is heavier than in the mockups.
 - Same as the mockup: multiplier, ladder chips, CASH OUT amounts, hint text, gold and background colours.
+
+## Step 8: speed (report only; nothing applied)
+Script: `scripts/speed-check.mjs` (headless Chrome, profile "slow 4G": 150 ms round trip, 1.6 Mbit/s down, 750 kbit/s
+up, CPU 4x slower, 390x844 at 3x). Load: production build (`dist/`, `vite preview`, gzip on). Frame times: the test
+build (`dist-test/`: the same optimised code plus the dev hooks needed to force a pocket cut). The PC's GPU is not
+slowed down, so the frame times flatter a real mid-range phone. Results: `bench/results/night8/speed-load.json`, `speed-frames.json`.
+
+| Measure | Result |
+|---|---|
+| main JS `assets/index-*.js` | 698 KB (192.5 KB gzip); solver worker 50 KB |
+| first screen: data downloaded | 191 KB (the JS 187 KB gzip + the page 3 KB) |
+| first screen: first paint / START button ready | 0.65 s / 4.2 s |
+| first START: data downloaded | 391 KB: the 6 applause sounds 259 KB, the 6-red break library 64 KB, other sounds 68 KB |
+| first START until SHOOT shows (includes the re-rack and break-off animation) | 7.3 s |
+| frame times during the first break-off | 194 frames: median 16.7 ms (60 fps), 95% 33.3 ms, 7 frames over 33 ms, **1 frame of 850 ms** (at the start: the freeze when the break library is read and the table is set up) |
+| frame times during a pocket-camera cut (P1b, +1.66 s slow motion) | 170 frames: median 16.7 ms, 95% 33.4 ms, worst 67 ms, 2 frames over 50 ms. A second measured shot: worst 50 ms (that shot may not have had a cut; the dev hook kept showing the last cut) |
+
+**Proposals (not applied; your choice):**
+1. **Load the applause sounds later** (when the round first reaches a milestone, or quietly after the break-off has
+   started). Gain: the first START downloads 259 KB less (about 1.3 s on slow 4G). Risk: on a very slow network the
+   first applause of a session could come late or be skipped once.
+2. **Prepare the break library on the betting screen** (download and read it while the player chooses the bet, not on
+   START). Gain: removes the 850 ms freeze at the first break-off and about 0.5 s of waiting. Risk: low; 64 KB is
+   downloaded even if the player never presses START, and a level change loads that level's file instead.
+3. **Hosting: brotli compression + "cache forever" for the hashed files** (`assets/*`, breaks, sounds). Gain: the JS
+   about 160 KB instead of 192 KB, and a second visit downloads almost nothing. Risk: depends on the host's settings;
+   a wrong cache rule on `index.html` could keep an old version, so that file must never be cached long.
+
+## What was switched on, what was not
+- **On:** the new pocket-cut chances for 10 and 15 reds (and the `reds6-v4` entry, which only v4 rounds use). Players see a cut about 1 shot in 6, the same for success and failure.
+- **Not on:** v4 for new 6-red rounds (step 2 failed). `v4Levels: []`. Every new round is still v3. v4 codes replay.
+- **Not changed:** odds, multipliers, RTP, bets; the Rules box text (2 mismatches reported); the game screen (captions and the compare page are options only).
+- Dev server: the one on port 5181 had a stale cache (only BALANCE showed), so I restarted it with `npx vite --host --force` on port 5181 (http://192.168.1.111:5181).

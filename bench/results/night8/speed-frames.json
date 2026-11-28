@@ -1,0 +1,47 @@
+{
+ "mode": "frames",
+ "url": "http://localhost:4174/",
+ "profile": "slow 4G (150 ms, 1.6 Mbit/s down, 750 kbit/s up), CPU x4 slower, 390x844 @3x",
+ "loadEventMs": 4128,
+ "startButtonMs": 4158,
+ "networkIdleMs": 5669,
+ "domContentLoaded": 4123,
+ "fcp": 552,
+ "totalKB": 196,
+ "byType": {
+  "Document": 4,
+  "Script": 192
+ },
+ "files": [
+  "192 KB assets/index-CceScDPE.js",
+  "4 KB "
+ ],
+ "breakOff": {
+  "frames": 194,
+  "p50": 16.7,
+  "p95": 33.3,
+  "max": 850,
+  "over33": 7,
+  "over50": 2
+ },
+ "pocketCut": [
+  {
+   "frames": 170,
+   "p50": 16.7,
+   "p95": 33.4,
+   "max": 67,
+   "over33": 6,
+   "over50": 2,
+   "cut": "P1b at topRight: 0.00-0.89 s of the shot, +1.66 s slow motion"
+  },
+  {
+   "frames": 301,
+   "p50": 16.7,
+   "p95": 33.3,
+   "max": 50,
+   "over33": 4,
+   "over50": 0,
+   "cut": "P1b at topRight: 0.00-0.89 s of the shot, +1.66 s slow motion"
+  }
+ ]
+}
