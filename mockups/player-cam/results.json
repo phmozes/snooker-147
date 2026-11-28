@@ -1,0 +1,190 @@
+{
+ "level": "reds15",
+ "fps": 30,
+ "variants": {
+  "now": {
+   "label": "Today (57°)"
+  },
+  "V1": {
+   "label": "V1 eye level",
+   "back": 0.5,
+   "h": 0.16,
+   "ahead": 1.2,
+   "fov": 50
+  },
+  "V2": {
+   "label": "V2 over the shoulder",
+   "back": 1.05,
+   "h": 0.55,
+   "ahead": 0.9,
+   "fov": 52
+  },
+  "V3": {
+   "label": "V3 eye level then rise",
+   "back": 0.5,
+   "h": 0.16,
+   "ahead": 1.2,
+   "fov": 50,
+   "riseAfter": 0,
+   "riseTime": 1
+  }
+ },
+ "shots": [
+  {
+   "key": "straight",
+   "i": 7,
+   "code": "reds15-v3-3191475780",
+   "step": 7,
+   "target": "red7",
+   "kind": "red",
+   "pocket": "topLeft",
+   "type": "plain",
+   "cut": 0.5499775040252597,
+   "dist": 0.7625398258082082,
+   "potLen": 1.021507515803036,
+   "corner": true,
+   "alongY": 0.8148081625468923
+  },
+  {
+   "key": "thin",
+   "i": 33,
+   "code": "reds15-v3-3191475780",
+   "step": 33,
+   "target": "brown",
+   "kind": "brown",
+   "pocket": "bottomRight",
+   "type": "plain",
+   "cut": 74.986492897363,
+   "dist": 0.3390017995735775,
+   "potLen": 1.1558272546173398,
+   "corner": true,
+   "alongY": 0.5781727900189896
+  },
+  {
+   "key": "long",
+   "i": 27,
+   "code": "reds15-v3-3191475780",
+   "step": 27,
+   "target": "red3",
+   "kind": "red",
+   "pocket": "bottomRight",
+   "type": "long",
+   "cut": 16.625826889667884,
+   "dist": 0.6299198846669373,
+   "potLen": 2.7956248877772136,
+   "corner": true,
+   "alongY": 0.9933075660762856
+  }
+ ],
+ "clips": [
+  {
+   "shot": "straight",
+   "variant": "now",
+   "file": "mockups/player-cam/straight-now.mp4",
+   "frames": 90,
+   "kb": 26.5,
+   "potAt": 0.6520833333333317,
+   "shotLen": 1.1166666666666696
+  },
+  {
+   "shot": "straight",
+   "variant": "V1",
+   "file": "mockups/player-cam/straight-V1.mp4",
+   "frames": 90,
+   "kb": 28.2,
+   "potAt": 0.6520833333333317,
+   "shotLen": 1.1166666666666696
+  },
+  {
+   "shot": "straight",
+   "variant": "V2",
+   "file": "mockups/player-cam/straight-V2.mp4",
+   "frames": 90,
+   "kb": 25,
+   "potAt": 0.6520833333333317,
+   "shotLen": 1.1166666666666696
+  },
+  {
+   "shot": "straight",
+   "variant": "V3",
+   "file": "mockups/player-cam/straight-V3.mp4",
+   "frames": 90,
+   "kb": 65.9,
+   "potAt": 0.6520833333333317,
+   "shotLen": 1.1166666666666696
+  },
+  {
+   "shot": "thin",
+   "variant": "now",
+   "file": "mockups/player-cam/thin-now.mp4",
+   "frames": 90,
+   "kb": 27.8,
+   "potAt": 1.4229166666666848,
+   "shotLen": 4.139583333333259
+  },
+  {
+   "shot": "thin",
+   "variant": "V1",
+   "file": "mockups/player-cam/thin-V1.mp4",
+   "frames": 90,
+   "kb": 27.9,
+   "potAt": 1.4229166666666848,
+   "shotLen": 4.139583333333259
+  },
+  {
+   "shot": "thin",
+   "variant": "V2",
+   "file": "mockups/player-cam/thin-V2.mp4",
+   "frames": 90,
+   "kb": 25.1,
+   "potAt": 1.4229166666666848,
+   "shotLen": 4.139583333333259
+  },
+  {
+   "shot": "thin",
+   "variant": "V3",
+   "file": "mockups/player-cam/thin-V3.mp4",
+   "frames": 90,
+   "kb": 65.9,
+   "potAt": 1.4229166666666848,
+   "shotLen": 4.139583333333259
+  },
+  {
+   "shot": "long",
+   "variant": "now",
+   "file": "mockups/player-cam/long-now.mp4",
+   "frames": 90,
+   "kb": 26.5,
+   "potAt": 1.022916666666665,
+   "shotLen": 2.0666666666667095
+  },
+  {
+   "shot": "long",
+   "variant": "V1",
+   "file": "mockups/player-cam/long-V1.mp4",
+   "frames": 90,
+   "kb": 27,
+   "potAt": 1.022916666666665,
+   "shotLen": 2.0666666666667095
+  },
+  {
+   "shot": "long",
+   "variant": "V2",
+   "file": "mockups/player-cam/long-V2.mp4",
+   "frames": 90,
+   "kb": 24.9,
+   "potAt": 1.022916666666665,
+   "shotLen": 2.0666666666667095
+  },
+  {
+   "shot": "long",
+   "variant": "V3",
+   "file": "mockups/player-cam/long-V3.mp4",
+   "frames": 90,
+   "kb": 61.1,
+   "potAt": 1.022916666666665,
+   "shotLen": 2.0666666666667095
+  }
+ ],
+ "errors": []
+}

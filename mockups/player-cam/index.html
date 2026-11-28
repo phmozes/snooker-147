@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player's view camera</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; --bg: #0f1513; --panel: #18211e; --text: #e8ece9; --dim: #9aa7a2; --yellow: #f2c94c; --ok: #7bd389; --no: #ef8a7a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .intro { color: var(--dim); margin: 0 0 18px; }
+  .intro b, .what b { color: var(--text); }
+  section { background: var(--panel); border-radius: 14px; padding: 12px; margin-bottom: 18px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  .what { margin: 0 0 8px; color: var(--dim); }
+  .ok { color: var(--ok); } .no { color: var(--no); }
+  .row4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: start; }
+  figure { margin: 0; }
+  video { width: 100%; height: auto; aspect-ratio: 390 / 844; display: block; border-radius: 8px; background: #000; }
+  figcaption { font-size: 12px; color: var(--dim); margin-top: 4px; }
+  figcaption b { color: var(--yellow); }
+  button { background: var(--yellow); color: #111; border: 0; border-radius: 8px; padding: 6px 12px; font-weight: 700; cursor: pointer; margin-bottom: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2a3531; vertical-align: top; }
+  th { color: var(--dim); font-weight: 600; }
+  ol { margin: 6px 0 0 18px; padding: 0; } li { margin-bottom: 8px; }
+  .q { color: var(--yellow); font-weight: 700; }
+  @media (max-width: 700px) { .row4 { grid-template-columns: 1fr 1fr; } .scroll { overflow-x: auto; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Player's view camera: 3 options and today's camera</h1>
+  <p class="intro">Video clips only, <b>the game is not changed</b>. Recorded from the real game (the developer
+    version, same code as the test build) at <b>390×844</b>, 30 frames a second, <b>3 seconds</b> each, from the
+    moment SHOOT is pressed (the cue's 0.25 s stroke is included). The same 3 real shots from one recorded round
+    (<b>reds15-v3-3191475780</b>, 15 reds) in every option. The black area above the table in the low cameras is the
+    empty room (there is no room behind the table yet).</p>
+
+  <section>
+    <h2>The 4 cameras</h2>
+    <div class="scroll"><table>
+      <tr><th></th><th>Height above the cloth</th><th>Distance behind the cue ball</th><th>Looks at / angle</th><th>Lens</th><th>Extra seconds per shot vs today</th></tr>
+      <tr><td><b>Today</b></td><td>fitted to the screen</td><td>fitted (whole table)</td><td>57° above the cloth</td><td>38°</td><td>0 (this is today)</td></tr>
+      <tr><td><b>V1 eye level</b></td><td>16 cm (just above the cue)</td><td>50 cm, on the shot line</td><td>a point 1.2 m ahead on the line: 5° down</td><td>50°</td><td><b>0</b>: only the camera changes; holds the whole shot</td></tr>
+      <tr><td><b>V2 over the shoulder</b></td><td>55 cm</td><td>1.05 m, on the shot line</td><td>a point 0.9 m ahead on the line: 16° down</td><td>52°</td><td><b>0</b>: holds the whole shot</td></tr>
+      <tr><td><b>V3 eye level then rise</b></td><td>starts as V1</td><td>starts as V1</td><td>after the tip hits the cue ball it rises smoothly to today's 57° camera in 1.0 s</td><td>50° → 38°</td><td><b>0</b> as recorded: the rise runs while the balls roll. On a very short shot (balls stop less than 1.0 s after the hit) the rise would need the rest of that 1.0 s more, or a faster rise.</td></tr>
+    </table></div>
+  </section>
+
+  <section data-shot="straight">
+    <h2>Shot 1 · straight red into a corner pocket</h2>
+    <p class="what">Step 7, red into the top-left corner, cut 0.5°, cue ball 76 cm from the red, red 1.02 m from the pocket. Potted 0.65 s after the tip hits.</p>
+    <button type="button">Play all 4 again together</button>
+    <div class="row4">
+      <figure><video src="straight-now.mp4" poster="straight-now.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>Today</b> · 57°</figcaption></figure>
+      <figure><video src="straight-V1.mp4" poster="straight-V1.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V1</b> eye level</figcaption></figure>
+      <figure><video src="straight-V2.mp4" poster="straight-V2.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V2</b> over the shoulder</figcaption></figure>
+      <figure><video src="straight-V3.mp4" poster="straight-V3.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V3</b> eye level then rise</figcaption></figure>
+    </div>
+  </section>
+
+  <section data-shot="thin">
+    <h2>Shot 2 · thin cut on a colour</h2>
+    <p class="what">Step 33, brown into the bottom-right corner, cut 75° (very thin), cue ball 34 cm from the brown. Potted 1.42 s after the tip hits.
+      <span class="no">Seen in V1 and V2: on a thin cut both balls leave the picture to the side, so the pot itself is not seen.</span></p>
+    <button type="button">Play all 4 again together</button>
+    <div class="row4">
+      <figure><video src="thin-now.mp4" poster="thin-now.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>Today</b> · 57°</figcaption></figure>
+      <figure><video src="thin-V1.mp4" poster="thin-V1.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V1</b> eye level</figcaption></figure>
+      <figure><video src="thin-V2.mp4" poster="thin-V2.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V2</b> over the shoulder</figcaption></figure>
+      <figure><video src="thin-V3.mp4" poster="thin-V3.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V3</b> eye level then rise</figcaption></figure>
+    </div>
+  </section>
+
+  <section data-shot="long">
+    <h2>Shot 3 · long red down the table</h2>
+    <p class="what">Step 27, red into the bottom-right corner, 2.8 m from the pocket (the solver calls it a long pot), cut 17°. Potted 1.02 s after the tip hits.</p>
+    <button type="button">Play all 4 again together</button>
+    <div class="row4">
+      <figure><video src="long-now.mp4" poster="long-now.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>Today</b> · 57°</figcaption></figure>
+      <figure><video src="long-V1.mp4" poster="long-V1.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V1</b> eye level</figcaption></figure>
+      <figure><video src="long-V2.mp4" poster="long-V2.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V2</b> over the shoulder</figcaption></figure>
+      <figure><video src="long-V3.mp4" poster="long-V3.jpg" muted loop playsinline autoplay preload="auto"></video><figcaption><b>V3</b> eye level then rise</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Your questions (your decision)</h2>
+    <ol>
+      <li><span class="q">Which variant?</span> V1 / V2 / V3 / none.</li>
+      <li><span class="q">When does it show?</span>
+        (a) a player button to choose the camera (normal / player's view), or
+        (b) random cuts like the pocket camera (if so: how often, e.g. 1 shot in 6?), or
+        (c) both.</li>
+      <li>Already fixed for any random use (no question): the chance of the player's view is the same for a pot and a
+        miss, P(cut | success) = P(cut | failure); it is decided before the shot and never shows the result; and only
+        one special camera per shot, so it never clashes with the pocket camera (if both are drawn for one shot, one
+        of them is chosen before the shot by a fixed rule, again the same for a pot and a miss).</li>
+    </ol>
+  </section>
+</main>
+<script>
+  for (const s of document.querySelectorAll('section[data-shot]')) {
+    s.querySelector('button').addEventListener('click', () => {
+      for (const v of s.querySelectorAll('video')) { v.currentTime = 0; v.play().catch(() => {}); }
+    });
+  }
+</script>
+</body>
+</html>
