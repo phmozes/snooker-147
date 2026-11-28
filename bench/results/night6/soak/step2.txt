@@ -1,0 +1,65 @@
+BASELINE night 6 (v3) (bench/results/night6/soak): 1000 rounds, 6521 shots, solver 4.11p
+  RE-RACK 5 in 6521 shots = 76.7 per 100,000 shots; upper 95% bound 161.2 per 100,000
+  night-6 seeds (5,000,000-5,000,999: 923 rounds with a SHOOT shot logged, 6521 shots): RE-RACK 5, long A 65, B 141, C 212
+  all rounds: long A 65 (9.97 per 1,000 shots), B 141, C 212 (of 6521 logged shots)
+  per-step success (success or RE-RACK counts as success) against p(step):
+    step  1:    923/1000   = 92.30%  p 92.38%  (-0.10 SE)
+    step  2:    836/923    = 90.57%  p 92.11%  (-1.72 SE)
+    step  3:    760/836    = 90.91%  p 89.76%  (+1.09 SE)
+    step  4:    675/760    = 88.82%  p 89.44%  (-0.56 SE)
+    step  5:    603/675    = 89.33%  p 88.20%  (+0.91 SE)
+    step  6:    520/603    = 86.24%  p 87.03%  (-0.58 SE)
+    step  7:    433/520    = 83.27%  p 86.45%  (-2.12 SE)
+    step  8:    356/433    = 82.22%  p 85.26%  (-1.79 SE)
+    step  9:    303/356    = 85.11%  p 83.95%  (+0.60 SE)
+    step 10:    255/303    = 84.16%  p 83.29%  (+0.41 SE)
+    step 11:    211/255    = 82.75%  p 81.96%  (+0.32 SE)
+    step 12:    166/206    = 80.58%  p 81.11%  (-0.19 SE)
+    step 13:    138/166    = 83.13%  p 80.00%  (+1.01 SE)
+    step 14:    118/138    = 85.51%  p 79.04%  (+1.87 SE)
+    step 15:     93/118    = 78.81%  p 77.99%  (+0.22 SE)
+    step 16:     76/93     = 81.72%  p 77.00%  (+1.08 SE)
+    step 17:     60/76     = 78.95%  p 75.92%  (+0.62 SE)
+    step 18:     50/60     = 83.33%  p 74.92%  (+1.50 SE)
+  *failures.txt lines: 6
+    reds6-0-failures.txt: reds6-v3-5000520 step 11: RE-RACK (target red)
+    reds6-2-failures.txt: reds6-v3-5000094 step 10: solver took 10472 ms (stuck limit 10000)
+    reds6-2-failures.txt: reds6-v3-5000094 step 11: RE-RACK (target red)
+    reds6-2-failures.txt: reds6-v3-5000282 step 11: RE-RACK (target red)
+    reds6-2-failures.txt: reds6-v3-5000510 step 11: RE-RACK (target red)
+    reds6-3-failures.txt: reds6-v3-5000347 step 11: RE-RACK (target red)
+
+NIGHT 8 (v4) (bench/results/night6/soak): 1000 rounds, 6521 shots, solver 4.11p
+  RE-RACK 5 in 6521 shots = 76.7 per 100,000 shots; upper 95% bound 161.2 per 100,000
+  night-6 seeds (5,000,000-5,000,999: 923 rounds with a SHOOT shot logged, 6521 shots): RE-RACK 5, long A 65, B 141, C 212
+  all rounds: long A 65 (9.97 per 1,000 shots), B 141, C 212 (of 6521 logged shots)
+  per-step success (success or RE-RACK counts as success) against p(step):
+    step  1:    923/1000   = 92.30%  p 92.38%  (-0.10 SE)
+    step  2:    836/923    = 90.57%  p 92.11%  (-1.72 SE)
+    step  3:    760/836    = 90.91%  p 89.76%  (+1.09 SE)
+    step  4:    675/760    = 88.82%  p 89.44%  (-0.56 SE)
+    step  5:    603/675    = 89.33%  p 88.20%  (+0.91 SE)
+    step  6:    520/603    = 86.24%  p 87.03%  (-0.58 SE)
+    step  7:    433/520    = 83.27%  p 86.45%  (-2.12 SE)
+    step  8:    356/433    = 82.22%  p 85.26%  (-1.79 SE)
+    step  9:    303/356    = 85.11%  p 83.95%  (+0.60 SE)
+    step 10:    255/303    = 84.16%  p 83.29%  (+0.41 SE)
+    step 11:    211/255    = 82.75%  p 81.96%  (+0.32 SE)
+    step 12:    166/206    = 80.58%  p 81.11%  (-0.19 SE)
+    step 13:    138/166    = 83.13%  p 80.00%  (+1.01 SE)
+    step 14:    118/138    = 85.51%  p 79.04%  (+1.87 SE)
+    step 15:     93/118    = 78.81%  p 77.99%  (+0.22 SE)
+    step 16:     76/93     = 81.72%  p 77.00%  (+1.08 SE)
+    step 17:     60/76     = 78.95%  p 75.92%  (+0.62 SE)
+    step 18:     50/60     = 83.33%  p 74.92%  (+1.50 SE)
+  *failures.txt lines: 6
+    reds6-0-failures.txt: reds6-v3-5000520 step 11: RE-RACK (target red)
+    reds6-2-failures.txt: reds6-v3-5000094 step 10: solver took 10472 ms (stuck limit 10000)
+    reds6-2-failures.txt: reds6-v3-5000094 step 11: RE-RACK (target red)
+    reds6-2-failures.txt: reds6-v3-5000282 step 11: RE-RACK (target red)
+    reds6-2-failures.txt: reds6-v3-5000510 step 11: RE-RACK (target red)
+    reds6-3-failures.txt: reds6-v3-5000347 step 11: RE-RACK (target red)
+
+PASS RULES (fixed before the run):
+  RE-RACK at most 1 per 100,000 shots: 5 in 6521 shots; FAIL
+  long shots fewer than night 7 (65, measure A on the night-6 seeds): 65 vs 65 -> FAIL

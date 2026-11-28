@@ -1,0 +1,1 @@
+reds10-v3-5400514 step 17: solver took 10130 ms (stuck limit 10000)

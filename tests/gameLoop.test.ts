@@ -27,7 +27,7 @@ describe('task 5.2: texts (RULES B.4, D.4)', () => {
     expect(parseRoundCode('V2-12345-K-C1')).toEqual({ levelId: null, seed: 12345, rng: 2, colours: ['black'], cashOutAfter: 1 });
     // night 6: v3 is the marker of every new round (v2 generator + the baulk-line break-off library)
     expect(parseRoundCode('reds6-v3-12345')).toEqual({ levelId: 'reds6', seed: 12345, rng: 3, colours: null, cashOutAfter: null });
-    expect(parseRoundCode('reds6-v4-12345')).toBeNull();
+    expect(parseRoundCode('reds6-v4-12345')!.rng).toBe(4); expect(parseRoundCode('reds6-v5-12345')).toBeNull(); // night 8: v4
     expect(parseRoundCode('reds6-12345-BKPk-C7')).toEqual({ levelId: 'reds6', seed: 12345, rng: 1, colours: ['blue', 'black', 'pink', 'black'], cashOutAfter: 7 });
     expect(parseRoundCode('reds10-5-C3')).toEqual({ levelId: 'reds10', seed: 5, rng: 1, colours: null, cashOutAfter: 3 });
     expect(parseRoundCode('reds6-5-X')).toBeNull();

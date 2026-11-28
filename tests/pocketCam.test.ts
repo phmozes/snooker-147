@@ -121,6 +121,13 @@ describe('automatic cut draw (owner 2026-11-27: 1 in 6, same on success and fail
     }
     expect([2, 4, 5, 8, 9, 12, 13, 20, 21, 36].map(stepGroup)).toEqual([2, 2, 5, 5, 9, 9, 13, 13, 21, 21]);
   });
+  it('night 8: a v4 6-red round uses the reds6-v4 chances; v1-v3 6-red rounds and 10 / 15 reds keep their own', () => {
+    const v4 = CONFIG.pocketCut.cutChance['reds6-v4']!, v3 = CONFIG.pocketCut.cutChance.reds6!;
+    expect(cutChance('reds6', 6, 'jawRattle', 4)).toBe(v4.failure[1]);
+    expect(cutChance('reds6', 6, 'jawRattle', 3)).toBe(v3.failure[1]);
+    expect(cutChance('reds6', 6, 'jawRattle')).toBe(v3.failure[1]);
+    expect(cutChance('reds10', 6, 'jawRattle', 4)).toBe(CONFIG.pocketCut.cutChance.reds10!.failure[1]);
+  });
   it('the draw matches its chance, and the same round and step always give the same answer', () => {
     const N = 6000;
     let hit = 0;

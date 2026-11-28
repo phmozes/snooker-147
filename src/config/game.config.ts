@@ -340,9 +340,11 @@ export const CONFIG = {
     // when it is a rattle (99%) or an in-off (90%), almost never otherwise, so 22-33% of failures by step group (failure
     // mix from bench/results/night6/soak). reds6 has no step 21+ (its value = all steps). Redo after 6-red fix A.
     cutChance: {
-      reds6:  { success: 0.1667, failure: [0.6407, 0.6131, 0.5113, 0.7300, 0.6078] },
-      reds10: { success: 0.1667, failure: [0.6787, 0.6690, 0.5412, 0.7338, 0.6654] },
-      reds15: { success: 0.1667, failure: [0.6667, 0.5939, 0.5403, 0.7346, 0.7365] },
+      reds6:  { success: 0.1667, failure: [0.6407, 0.6131, 0.5113, 0.7300, 0.6078] }, // v1-v3 6-red rounds
+      // night 8 (bench/results/night8/pocketcut/calib.txt, even seeds; checked on the odd seeds: test.txt)
+      'reds6-v4': { success: 0.1667, failure: [0.6552, 0.6151, 0.6526, 0.6303, 0.6369] }, // v4 6-red rounds
+      reds10: { success: 0.1667, failure: [0.6829, 0.6734, 0.5439, 0.7389, 0.6758] },
+      reds15: { success: 0.1667, failure: [0.6709, 0.5974, 0.5433, 0.7409, 0.7453] },
     } as Record<string, { success: number; failure: number[] }>,
     stepGroups: [2, 5, 9, 13, 21], // first step of each group: 2-4, 5-8, 9-12, 13-20, 21+
     fromStep: 2,                 // no cut on step 1 (nor on the break-off, which is not a SHOOT shot)
@@ -385,7 +387,9 @@ export const CONFIG = {
     // plus two library rules for the redPottable breaks: no red within redPinkMinGap (m, ball surface to surface) of the
     // pink, and no red that no pocket can take (path or ghost-ball spot blocked, the other balls as blockers).
     filesV4: { reds6: 'breaks-v4/reds6.json' } as Partial<Record<'reds6' | 'reds10' | 'reds15', string>>,
-    v4Levels: ['reds6'] as readonly string[],
+    // Night 8: v4 is built and replays, but it is NOT switched on for new rounds: the step-2 soak failed RULES D.6
+    // (5 RE-RACKs in 47,474 shots). Switch on (owner's word) with v4Levels: ['reds6'].
+    v4Levels: [] as readonly string[],
     v4Rules: { redPinkMinGap: 0.002, noLockedRed: true },
     // the v3 break-off start: cue ball centre at y = baulk line, |x| from xMin to xMax (m), on the yellow side (x > 0)
     // or the green side (x < 0). Brown is at x = 0 and yellow / green at |x| = 0.292 (the D radius); a ball is 0.0525

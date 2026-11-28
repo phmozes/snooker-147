@@ -40,7 +40,7 @@ Every random number of a round is u = f(seed, stream, k) in [0, 1): stream = 'ou
   (cue ball on the baulk line, RULES B.1); v1 and v2 rounds keep the old public/breaks. The library pick uses the same
   'variety' value as before, so a v3 round has the same outcomes (success / failure per step, failure type) as the v2
   round of that seed; only the shots differ. The 200M v2 result below therefore still stands for v3.
-- **v4 (every new 6-red round since night 8; 10 and 15 reds stay v3):** the same v2 HMAC generator again (a test
+- **v4 (night 8; built but NOT switched on: new rounds stay v3 until the owner says so):** the same v2 HMAC generator again (a test
   checks every stream value v4 == v3). Only the 6-red break-off library changed: public/breaks-v4/reds6.json, whose
   redPottable breaks leave no red within 2 mm of the pink and no red that no pocket can take (RE-RACK fix A, night 8).
   The library pick and every outcome stay as for v3, so the 200M v2 result still stands for v4.

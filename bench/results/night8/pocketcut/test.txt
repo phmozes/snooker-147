@@ -1,0 +1,27 @@
+TEST (odd seeds): 29537 shots, 26150 paired failures, from bench/results/night8/pocketcut
+config cutChance: {"reds6":{"success":0.1667,"failure":[0.6407,0.6131,0.5113,0.73,0.6078]},"reds6-v4":{"success":0.1667,"failure":[0.6552,0.6151,0.6526,0.6303,0.6369]},"reds10":{"success":0.1667,"failure":[0.6829,0.6734,0.5439,0.7389,0.6758]},"reds15":{"success":0.1667,"failure":[0.6709,0.5974,0.5433,0.7409,0.7453]}}
+pass rule: per level, each rate within 3 SE of 1/6 and the difference within 3 SE of 0 (SE at p = 1/6)
+
+reds6: 9570 shots: 8306 success, 1264 failure
+  P(cut | success) = 16.60%  SE 0.41%  (-0.16 SE from 1/6)
+  P(cut | failure) = 15.11%  SE 1.05%  (-1.48 SE from 1/6)
+  difference 1.49 points, SE 1.13% (1.33 SE) -> PASS
+  extra (not in the rule): paired failures 8307, weighted P(cut | failure) = 15.65%, SE about 0.43%
+  cuts 1570 of 9570 shots, added time per shot 0.292 s, per cut 1.78 s
+
+reds10: 10564 shots: 9385 success, 1179 failure
+  P(cut | success) = 16.74%  SE 0.38%  (0.19 SE from 1/6)
+  P(cut | failure) = 15.52%  SE 1.09%  (-1.05 SE from 1/6)
+  difference 1.22 points, SE 1.15% (1.06 SE) -> PASS
+  extra (not in the rule): paired failures 9385, weighted P(cut | failure) = 16.29%, SE about 0.40%
+  cuts 1754 of 10564 shots, added time per shot 0.299 s, per cut 1.80 s
+
+reds15: 9403 shots: 8457 success, 946 failure
+  P(cut | success) = 16.89%  SE 0.41%  (0.54 SE from 1/6)
+  P(cut | failure) = 15.43%  SE 1.21%  (-1.02 SE from 1/6)
+  difference 1.45 points, SE 1.28% (1.14 SE) -> PASS
+  extra (not in the rule): paired failures 8458, weighted P(cut | failure) = 15.00%, SE about 0.41%
+  cuts 1574 of 9403 shots, added time per shot 0.301 s, per cut 1.80 s
+
+ALL: 29537 shots, 4898 cuts (16.58%), P1b 69.64%, added time per shot 0.297 s
+RESULT: PASS at every level

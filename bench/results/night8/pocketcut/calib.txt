@@ -1,0 +1,46 @@
+CALIBRATION (even seeds): 29062 shots, 25819 paired failures, from bench/results/night8/pocketcut
+
+cuttable share per failure kind (pooled over levels; per level in brackets)
+  inOff                        566/655   = 86.41%   (reds6 217/246, reds10 195/232, reds15 154/177)
+  inOff->plainMiss               6/2219  = 0.27%   (reds6 4/681, reds10 0/818, reds15 2/720)
+  inOff->softFoul                0/46    = 0.00%   (reds6 0/10, reds10 0/18, reds15 0/18)
+  jawRattle                   6660/6743  = 98.77%   (reds6 2135/2170, reds10 2387/2408, reds15 2138/2165)
+  jawRattle->plainMiss           0/389   = 0.00%   (reds6 0/85, reds10 0/166, reds15 0/138)
+  jawRattle->softFoul            0/123   = 0.00%   (reds6 0/33, reds10 0/58, reds15 0/32)
+  jawRattle->tap                 0/2     = 0.00%   (reds6 0/0, reds10 0/2, reds15 0/0)
+  plainMiss                     46/17053 = 0.27%   (reds6 21/5489, reds10 15/6100, reds15 10/5464)
+  plainMiss->softFoul            0/338   = 0.00%   (reds6 0/75, reds10 0/155, reds15 0/108)
+  plainMiss->tap                 0/3     = 0.00%   (reds6 0/0, reds10 0/1, reds15 0/2)
+  wrongBallFirst                 0/175   = 0.00%   (reds6 0/31, reds10 0/72, reds15 0/72)
+  wrongBallFirst->plainMiss      6/1302  = 0.46%   (reds6 1/438, reds10 3/452, reds15 2/412)
+  wrongBallFirst->softFoul       0/14    = 0.00%   (reds6 0/1, reds10 0/7, reds15 0/6)
+  wrongBallFirst->tap            0/1     = 0.00%   (reds6 0/1, reds10 0/0, reds15 0/0)
+
+failure mix from bench/results/night8/soak6,bench/results/night6/soak: 8192 failures (reds6 6374, reds10 902, reds15 916)
+
+reds6: P(cuttable | success) = 100.00% (8036 successes) -> success chance 0.1667
+  P(cuttable | failure), all steps = 26.17% -> failure chance 0.6369
+  steps 2-4    1785 failures in the mix, cuttable 25.44% -> chance 0.6552
+  steps 5-8    2137 failures in the mix, cuttable 27.10% -> chance 0.6151
+  steps 9-12   1486 failures in the mix, cuttable 25.54% -> chance 0.6526
+  steps 13-20   966 failures in the mix, cuttable 26.44% -> chance 0.6303
+  steps 21+       0 failures in the mix, cuttable 0.00% -> chance NaN
+
+reds10: P(cuttable | success) = 100.00% (9364 successes) -> success chance 0.1667
+  P(cuttable | failure), all steps = 25.35% -> failure chance 0.6575
+  steps 2-4     227 failures in the mix, cuttable 24.41% -> chance 0.6829
+  steps 5-8     275 failures in the mix, cuttable 24.75% -> chance 0.6734
+  steps 9-12    171 failures in the mix, cuttable 30.65% -> chance 0.5439
+  steps 13-20   175 failures in the mix, cuttable 22.56% -> chance 0.7389
+  steps 21+      54 failures in the mix, cuttable 24.66% -> chance 0.6758
+
+reds15: P(cuttable | success) = 100.00% (8418 successes) -> success chance 0.1667
+  P(cuttable | failure), all steps = 25.78% -> failure chance 0.6466
+  steps 2-4     215 failures in the mix, cuttable 24.84% -> chance 0.6709
+  steps 5-8     237 failures in the mix, cuttable 27.90% -> chance 0.5974
+  steps 9-12    151 failures in the mix, cuttable 30.68% -> chance 0.5433
+  steps 13-20   196 failures in the mix, cuttable 22.49% -> chance 0.7409
+  steps 21+     117 failures in the mix, cuttable 22.36% -> chance 0.7453
+
+config cutChance (failure = per step group 2-4, 5-8, 9-12, 13-20, 21+):
+{"reds6-v4":{"success":0.1667,"failure":[0.6552,0.6151,0.6526,0.6303,0.6369]},"reds10":{"success":0.1667,"failure":[0.6829,0.6734,0.5439,0.7389,0.6758]},"reds15":{"success":0.1667,"failure":[0.6709,0.5974,0.5433,0.7409,0.7453]}}

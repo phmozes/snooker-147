@@ -44,11 +44,12 @@ export const STEP_GROUPS = PC.stepGroups.map((from, i) => {
 export const stepGroup = (step: number): number => [...(PC.stepGroups as readonly number[])].reverse().find((f) => step >= f) ?? PC.stepGroups[0]!;
 
 /** The chance that a CUTTABLE shot of this level / step / outcome gets the automatic cut (0 on step 1). */
-export function cutChance(levelId: string, step: number, outcome: string): number {
+/** rng (night 8): a v4 round uses the `<level>-v4` chances when the config has them (6 reds), else the level's. */
+export function cutChance(levelId: string, step: number, outcome: string, rng?: RngVersion): number {
   if (step < PC.fromStep || outcome === 'reRack') return 0;
   const last = CONFIG.levels.find((l) => l.id === levelId)?.steps;
   if (last !== undefined && step >= last) return 0; // the last ball: never cut (the clearance replay comes instead)
-  const c = PC.cutChance[levelId];
+  const c = (rng === 4 ? PC.cutChance[`${levelId}-v4`] : undefined) ?? PC.cutChance[levelId];
   if (!c) return 0;
   return Math.min(1, outcome === 'success' ? c.success : c.failure[(PC.stepGroups as readonly number[]).indexOf(stepGroup(step))]!);
 }
@@ -57,7 +58,7 @@ export function cutChance(levelId: string, step: number, outcome: string): numbe
  *  this is true AND it is cuttable (planCut is not null). Outcome classes get different chances so that, over all
  *  shots, P(cut | success) = P(cut | failure) = CONFIG.pocketCut.rate (RULES B.6). */
 export function autoCutDraw(levelId: string, step: number, outcome: string, seed: number, rng: RngVersion): boolean {
-  const p = cutChance(levelId, step, outcome);
+  const p = cutChance(levelId, step, outcome, rng);
   return p > 0 && pocketCamDraw(seed, step, rng, 'cut') < p;
 }
 

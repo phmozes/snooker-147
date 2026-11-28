@@ -1,0 +1,23 @@
+YES | 6 reds ladder chips (18 multipliers) | ladder strip | shown: x1.05 x1.14 x1.27 x1.42 x1.61 x1.85 x2.14 x2.51 x2.99 x3.59 x4.38 x5.40 x6.75 x8.54 x10.95 x14.22 x18.73 x25.00 | RTP-OPTION3 3c: x1.05 x1.14 x1.27 x1.42 x1.61 x1.85 x2.14 x2.51 x2.99 x3.59 x4.38 x5.40 x6.75 x8.54 x10.95 x14.22 x18.73 x25.00
+YES | 6 reds p(step) behind the ladder (not shown) | config levels[].p | shown: 18 values | RTP-OPTION3 3c (2 dp): all equal
+YES | 6 reds top multiplier | Rules box "(up to ...)" | shown: x25.00 | RULES A.4 / config label: x25 / "6 reds · up to x25"
+YES | 6 reds number of steps | ladder strip | shown: 18 | RULES A.2: 18
+YES | 6 reds RTP text | Rules box | shown: RTP 97% at every cash-out step | RTP-OPTION3 player text + RULES A.6: RTP 97% at every cash-out step
+YES | 6 reds cash-out RTP measured (200M rounds, v2) | (behind the RTP text) | shown: 96.9994%-97.0124%, worst |z| 1.44 | pass rule |z|<4 and formula = config: formula column = config
+YES | 10 reds ladder chips (26 multipliers) | ladder strip | shown: x1.05 x1.14 x1.25 x1.37 x1.52 x1.69 x1.89 x2.13 x2.42 x2.75 x3.15 x3.64 x4.22 x4.92 x5.77 x6.81 x8.08 x9.65 x11.60 x14.03 x17.07 x20.90 x25.75 x31.92 x39.82 x50.00 | RTP-OPTION3 3c: x1.05 x1.14 x1.25 x1.37 x1.52 x1.69 x1.89 x2.13 x2.42 x2.75 x3.15 x3.64 x4.22 x4.92 x5.77 x6.81 x8.08 x9.65 x11.60 x14.03 x17.07 x20.90 x25.75 x31.92 x39.82 x50.00
+YES | 10 reds p(step) behind the ladder (not shown) | config levels[].p | shown: 26 values | RTP-OPTION3 3c (2 dp): all equal
+YES | 10 reds top multiplier | Rules box "(up to ...)" | shown: x50.00 | RULES A.4 / config label: x50 / "10 reds · up to x50"
+YES | 10 reds number of steps | ladder strip | shown: 26 | RULES A.2: 26
+YES | 10 reds RTP text | Rules box | shown: RTP 97% (between 96.94% and 97%, depending on the cash-out step) | RTP-OPTION3 player text + RULES A.6: between 96.94% and 97%
+YES | 10 reds cash-out RTP measured (200M rounds, v2) | (behind the RTP text) | shown: 96.9201%-97.0115%, worst |z| 1.84 | pass rule |z|<4 and formula = config: formula column = config
+YES | 15 reds ladder chips (36 multipliers) | ladder strip | shown: x1.05 x1.13 x1.24 x1.35 x1.48 x1.62 x1.78 x1.97 x2.18 x2.42 x2.69 x3.01 x3.37 x3.78 x4.26 x4.80 x5.44 x6.18 x7.03 x8.03 x9.20 x10.56 x12.17 x14.06 x16.29 x18.93 x22.06 x25.78 x30.22 x35.54 x41.91 x49.57 x58.81 x69.98 x83.53 x100.00 | RTP-OPTION3 3c: x1.05 x1.13 x1.24 x1.35 x1.48 x1.62 x1.78 x1.97 x2.18 x2.42 x2.69 x3.01 x3.37 x3.78 x4.26 x4.80 x5.44 x6.18 x7.03 x8.03 x9.20 x10.56 x12.17 x14.06 x16.29 x18.93 x22.06 x25.78 x30.22 x35.54 x41.91 x49.57 x58.81 x69.98 x83.53 x100.00
+YES | 15 reds p(step) behind the ladder (not shown) | config levels[].p | shown: 36 values | RTP-OPTION3 3c (2 dp): all equal
+YES | 15 reds top multiplier | Rules box "(up to ...)" | shown: x100.00 | RULES A.4 / config label: x100 / "15 reds · up to x100"
+YES | 15 reds number of steps | ladder strip | shown: 36 | RULES A.2: 36
+YES | 15 reds RTP text | Rules box | shown: RTP 97% (between 96.42% and 97%, depending on the cash-out step) | RTP-OPTION3 player text + RULES A.6: between 96.42% and 97%
+YES | 15 reds cash-out RTP measured (200M rounds, v2) | (behind the RTP text) | shown: 96.4270%-97.0849%, worst |z| 1.50 | pass rule |z|<4 and formula = config: formula column = config
+YES | bet limits | BET - / + (clamped in core setBet) | shown: 1-100, step 1 | RULES A.1: 1-100
+YES | quick bets | bet row | shown: 1 5 10 50 | config money.quickBets: 1 5 10 50
+YES | default bet / START label | bet row, START · <bet> | shown: 10 | config money.defaultBet: 10
+YES | starting balance | top bar | shown: 1000 | config money.startingBalance: 1000
+YES | RE-RACK strip text | ladder strip | shown: RE-RACK · WON {amount} · x{multiplier} | RULES D.4: RE-RACK · WON <amount> · x<multiplier>

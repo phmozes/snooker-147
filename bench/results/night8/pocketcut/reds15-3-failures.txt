@@ -1,0 +1,5 @@
+reds15-v3-5400107 step 10: solver took 12239 ms (stuck limit 10000)
+reds15-v3-5400311 step 9: solver took 10181 ms (stuck limit 10000)
+reds15-v3-5400427 step 29: RE-RACK (target red)
+reds15-v3-5400867 step 11: solver took 12091 ms (stuck limit 10000)
+reds15-v3-5400943 step 5: solver took 13152 ms (stuck limit 10000)

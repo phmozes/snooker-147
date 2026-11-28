@@ -27,8 +27,9 @@
    breakLibrary.baulkStart), and is played at the outer red on its own side, like a real break-off. This is the v3
    library (public/breaks-v3, every new round); old v1 / v2 round codes replay with the old library (cue ball
    anywhere in the D) so that they stay exactly the same (docs/FAIRNESS.md).
-   Night 8 (owner, RE-RACK fix A): new 6-red rounds are v4 (public/breaks-v4): the same baulk-line break, but no
-   6-red break that leaves a red within 2 mm of the pink, or a red that no pocket can take. 10 and 15 reds stay v3.
+   Night 8 (owner, RE-RACK fix A): v4 (public/breaks-v4) is built: the same baulk-line break, but no 6-red break that
+   leaves a red within 2 mm of the pink, or a red that no pocket can take. NOT switched on (the soak failed D.6):
+   every new round is still v3; v4 codes replay. Switching on is config breakLibrary.v4Levels (owner's word).
 2. Step 1 (our first red) is played by SHOOT, like every other step (owner 2026-11-27; until then it played by itself).
    Before step 1 there is no CASH OUT (nothing has been won yet): only SHOOT. Step 1 is still decided by seed + step
    only, so old round codes (v1 and v2) give the same rounds; a replay presses SHOOT by itself.

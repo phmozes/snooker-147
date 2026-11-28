@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>147 · game vs mockups</title>
+<style>
+  :root { --bg: #0f1412; --card: #18201d; --text: #e8ece9; --dim: #9aa6a1; --gold: #f2c94c; --ok: #9fe0b0; --warn: #ffb39a; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 24px; margin: 0 0 6px; } h2 { font-size: 19px; margin: 36px 0 10px; color: var(--gold); }
+  p, li { color: var(--dim); } b { color: var(--text); }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; max-width: 760px; }
+  figure { margin: 0; background: var(--card); border-radius: 10px; padding: 10px; }
+  figure img { width: 100%; height: auto; display: block; border-radius: 6px; }
+  figcaption { font-size: 13px; color: var(--dim); margin-top: 6px; text-align: center; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 12px; }
+  th, td { border-bottom: 1px solid #2a3531; padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { color: var(--gold); font-weight: 600; }
+  .d { color: var(--ok); font-weight: 700; white-space: nowrap; } .u { color: var(--warn); font-weight: 700; white-space: nowrap; }
+  .wrap { overflow-x: auto; }
+</style></head>
+<body><main>
+<h1>Game vs mockups (PLAN 10.2)</h1>
+<p>Left: the approved mockup (mockups/A.png, C.png, D.png). Right: the game today (dev server, 390x844, the same
+state; developer-only marks hidden). Report only: nothing was changed.
+<span class="d">deliberate</span> = an owner decision since the mockups;
+<span class="u">check</span> = may be unintended, your call.</p>
+
+<h2>D: between rounds</h2>
+<div class="pair">
+  <figure><img src="../D.png" alt="mockup D"><figcaption>mockup D</figcaption></figure>
+  <figure><img src="game-D.jpg" alt="game between rounds"><figcaption>game: between rounds</figcaption></figure>
+</div>
+<div class="wrap"><table>
+<tr><th>What</th><th>Mockup</th><th>Game</th><th></th></tr>
+<tr><td>Layout</td><td>table smaller, flat, dark gap above and below</td><td>full-screen layout, the table fills the width</td><td class="d">deliberate</td></tr>
+<tr><td>Table look</td><td>flat 2D, light green, plain brown rails, round black pockets</td><td>3D view at 57°, wood rails, pocket leathers, D and baulk line drawn</td><td class="d">deliberate</td></tr>
+<tr><td>Top centre</td><td>pill "6 reds · up to x25"</td><td>three level balls 6 / 10 / 15</td><td class="d">deliberate</td></tr>
+<tr><td>Top bar</td><td>BALANCE left, menu right</td><td>back + menu left; sound + BALANCE right</td><td class="d">deliberate</td></tr>
+<tr><td>Cue ball</td><td>inside the D, below the baulk line</td><td>ON the baulk line, between brown and yellow</td><td class="d">deliberate (night 6)</td></tr>
+<tr><td>Ladder label</td><td>"STEP 0 / 18"</td><td>"UP TO x25.00" in gold</td><td class="u">check</td></tr>
+<tr><td>Bet area</td><td>− / BET / + on one row, then 4 wide quick bets (1, 5, 10, 50) on a second row</td><td>− / BET / + and the 4 quick bets on ONE row; buttons smaller</td><td class="u">check</td></tr>
+<tr><td>Space</td><td>even gaps</td><td>an empty gap of about 40 px between the ladder strip and the bet row</td><td class="u">check</td></tr>
+<tr><td>Footer</td><td>none</td><td>"147 · DEMO · Round — · 04:57" and "Rules · PLAY RESPONSIBLY"</td><td class="d">deliberate</td></tr>
+<tr><td>START button</td><td>"START · 10.00"</td><td>same text; heavier font</td><td class="u">check (font only)</td></tr>
+</table></div>
+
+<h2>A: a red to play (step 4)</h2>
+<div class="pair">
+  <figure><img src="../A.png" alt="mockup A"><figcaption>mockup A</figcaption></figure>
+  <figure><img src="game-A.jpg" alt="game step 4"><figcaption>game: step 4, red next</figcaption></figure>
+</div>
+<div class="wrap"><table>
+<tr><th>What</th><th>Mockup</th><th>Game</th><th></th></tr>
+<tr><td>Layout, table look, top bar</td><td>as in D</td><td>as in D</td><td class="d">deliberate</td></tr>
+<tr><td>Top centre</td><td>x1.42</td><td>x1.42</td><td>same</td></tr>
+<tr><td>Ladder strip</td><td>STEP 4 / 18, x1.27 · <b>x1.42</b> · x1.61 (outlined) · x1.85 · x2.14</td><td>the same</td><td>same</td></tr>
+<tr><td>CASH OUT</td><td>CASH OUT 14.20</td><td>the same</td><td>same</td></tr>
+<tr><td>Hint line</td><td>"RED · NEXT x1.61" centred</td><td>"BREAK 16" on the left + "RED · NEXT x1.61"</td><td class="d">deliberate (BREAK n)</td></tr>
+<tr><td>SHOOT</td><td>SHOOT</td><td>SHOOT, heavier font</td><td class="u">check (font only)</td></tr>
+<tr><td>Footer</td><td>none</td><td>DEMO line with the round code</td><td class="d">deliberate</td></tr>
+</table></div>
+
+<h2>C: a colour to play (step 5)</h2>
+<div class="pair">
+  <figure><img src="../C.png" alt="mockup C"><figcaption>mockup C</figcaption></figure>
+  <figure><img src="game-C.jpg" alt="game step 5"><figcaption>game: step 5, colour next</figcaption></figure>
+</div>
+<div class="wrap"><table>
+<tr><th>What</th><th>Mockup</th><th>Game</th><th></th></tr>
+<tr><td>Colour choice</td><td>"CHOOSE A COLOUR · NEXT x1.85" and three buttons Blue / Pink / Black</td><td>"PINK · NEXT x1.85" and one SHOOT button: the game picks the colour</td><td class="d">deliberate (RULES B.3: automatic pick until the colour-choice stage)</td></tr>
+<tr><td>Ladder strip, CASH OUT 16.10, x1.61</td><td>as shown</td><td>the same</td><td>same</td></tr>
+<tr><td>Hint line</td><td>centred</td><td>"BREAK 17" on the left</td><td class="d">deliberate</td></tr>
+<tr><td>Layout, table, top bar, footer</td><td>as in D</td><td>as in D</td><td class="d">deliberate</td></tr>
+</table></div>
+
+<h2>Colours and sizes (all three)</h2>
+<ul>
+<li>Gold (multiplier, current chip, SHOOT / START) and the dark background match the mockups.</li>
+<li>Measured on the pictures (CSS px at 390 wide): top bar about 62 px in both; the table (with rails) about 500 px high
+in the game against about 485 px in the mockup, but the game's table is wider at the bottom (3D view) and fills the width.</li>
+<li>The mockup's table starts lower (gap of about 50 px under the top bar); the game's starts about 40 px under it.</li>
+</ul>
+</main></body></html>

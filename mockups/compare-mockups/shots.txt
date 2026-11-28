@@ -1,0 +1,3 @@
+D: {"busy":null,"phase":"betting","step":0,"balance":1000,"code":"","mode":"live","waiting":false,"cash":false,"shootBtn":false,"hist":"","end":null,"replaying":false} hint ""
+A: {"busy":null,"phase":"decide","step":4,"balance":990,"code":"reds6-v3-3195942526","mode":"live","waiting":false,"cash":true,"shootBtn":true,"hist":"success,success,success,success","end":null,"replaying":false} hint "BREAK 16RED · NEXT x1.61"
+C: {"busy":null,"phase":"decide","step":5,"balance":990,"code":"reds6-v3-3195942526","mode":"live","waiting":false,"cash":true,"shootBtn":true,"hist":"success,success,success,success,success","end":null,"replaying":false} hint "BREAK 17PINK · NEXT x1.85"

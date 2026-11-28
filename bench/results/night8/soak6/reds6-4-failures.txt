@@ -1,0 +1,4 @@
+reds6-v4-5003708 step 8: solver took 10712 ms (stuck limit 10000)
+reds6-v4-5003708 step 10: solver took 13914 ms (stuck limit 10000)
+reds6-v4-5003708 step 11: RE-RACK (target red)
+reds6-v4-5005372 step 8: solver took 10679 ms (stuck limit 10000)

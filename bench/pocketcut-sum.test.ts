@@ -12,6 +12,7 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { it } from 'vitest';
 import { CONFIG } from '../src/config/game.config';
 import { parseRoundCode } from '../src/core/roundCode';
+import { newRngFor } from '../src/core/round';
 import { autoCutDraw, pickView, STEP_GROUPS, stepGroup } from '../src/view/pocketCam';
 
 const DIR = process.env.DIR ?? 'bench/results/pocketcut-quick';
@@ -19,18 +20,23 @@ const MIX = process.env.MIX ?? 'bench/results/night6/soak';
 const LEVELS = ['reds6', 'reds10', 'reds15'];
 const P = CONFIG.pocketCut.rate;
 type Row = { code: string; step: number; outcome: string; fallback: string | null; cc?: number; add?: number; w?: number };
-type R2 = Row & { level: string; seed: number; rng: 1 | 2 | 3 };
+type R2 = Row & { level: string; seed: number; rng: 1 | 2 | 3 | 4 };
 const pct = (x: number) => `${(x * 100).toFixed(2)}%`;
 const kindOf = (r: Row) => `${r.outcome}${r.fallback ? `->${r.fallback}` : ''}`;
-function load(dir: string, suffix: string): R2[] {
+// night 8: DIR / MIX may list several folders (comma); CURRENT=1 keeps only rows of each level's NEW round version
+// (6 reds: v4, 10 / 15 reds: v3), so a v3 6-red soak never enters the v4 6-red numbers.
+const CURRENT = !!process.env.CURRENT;
+const want = (L: string) => (L === 'reds6' && process.env.V4 ? 4 : newRngFor(L)); // V4=1: the 6-red v4 rows even while v4 is off for new rounds
+function load(dirs: string, suffix: string): R2[] {
   const out: R2[] = [];
-  for (const f of readdirSync(dir).filter((x) => x.endsWith(suffix))) {
+  for (const dir of dirs.split(',')) for (const f of readdirSync(dir).filter((x) => x.endsWith(suffix))) {
     for (const l of readFileSync(`${dir}/${f}`, 'utf8').split('\n')) {
       if (!l.trim()) continue;
       const r = JSON.parse(l) as Row;
       if (r.outcome === 'reRack' || r.step < 2) continue;
       const c = parseRoundCode(r.code)!;
-      out.push({ ...r, level: c.levelId!, seed: c.seed, rng: c.rng as 1 | 2 | 3 });
+      if (CURRENT && c.rng !== want(c.levelId!)) continue;
+      out.push({ ...r, level: c.levelId!, seed: c.seed, rng: c.rng as 1 | 2 | 3 | 4 });
     }
   }
   return out;
@@ -73,7 +79,7 @@ it('pocket cut summary', () => {
       for (const x of groups) out.push(`  steps ${x.g.label.padEnd(6)} ${String(x.n).padStart(4)} failures in the mix, cuttable ${pct(x.ccF)} -> chance ${x.chance.toFixed(4)}` +
         `${x.chance > 1 ? '  (OVER 1: 1/6 NOT reachable here)' : ''}${x.miss ? ` (${x.miss} of an unmeasured kind, counted not cuttable)` : ''}`);
       // a group with too few failures in the mix (< 50) uses the level's all-steps value
-      cfg[L] = { success: +(P / cS).toFixed(4), failure: groups.map((x) => +(x.n >= 50 ? x.chance : P / ccAll).toFixed(4)) };
+      cfg[CURRENT && want(L) === 4 ? `${L}-v4` : L] = { success: +(P / cS).toFixed(4), failure: groups.map((x) => +(x.n >= 50 ? x.chance : P / ccAll).toFixed(4)) };
     }
     out.push('', `config cutChance (failure = per step group ${STEP_GROUPS.map((g) => g.label).join(', ')}):`, JSON.stringify(cfg));
   } else {
@@ -106,6 +112,6 @@ it('pocket cut summary', () => {
     out.push('', `ALL: ${nAll} shots, ${cutsAll} cuts (${pct(cutsAll / nAll)}), P1b ${pct(p1b / (cutsAll || 1))}, added time per shot ${(addAll / nAll).toFixed(3)} s`,
       `RESULT: ${all ? 'PASS at every level' : 'FAIL at some level'}`);
   }
-  writeFileSync(`${DIR}/${part}.txt`, out.join('\n') + '\n');
+  writeFileSync(`${process.env.SUMDIR ?? DIR.split(',')[0]}/${part}.txt`, out.join('\n') + '\n');
   console.log(out.join('\n'));
 }, 600000);

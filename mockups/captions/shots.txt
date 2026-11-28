@@ -1,0 +1,12 @@
+state pre: {"busy":null,"phase":"decide","step":2,"balance":990,"code":"reds6-v3-3030534826","mode":"live","waiting":false,"cash":true,"shootBtn":true,"hist":"success,success","end":null,"replaying":false}
+A-pre.jpg MAXIMUM IS ON {"topBottom":62,"tableTop":105,"capBottom":91} 80 KB
+B-pre.jpg MAXIMUM IS ON {"topBottom":62,"tableTop":105,"hint":true} 75 KB
+C-pre.jpg MAXIMUM IS ON {"topBottom":62,"tableTop":105} 76 KB
+state pot: {"busy":null,"phase":"decide","step":3,"balance":990,"code":"reds6-v3-3030534826","mode":"live","waiting":false,"cash":true,"shootBtn":true,"hist":"success,success,success","end":null,"replaying":false}
+A-pot.jpg CENTURY {"topBottom":62,"tableTop":105,"capBottom":91} 78 KB
+B-pot.jpg CENTURY {"topBottom":62,"tableTop":105,"hint":true} 74 KB
+C-pot.jpg CENTURY {"topBottom":62,"tableTop":105} 74 KB
+state miss: {"busy":null,"phase":"over","step":3,"balance":990,"code":"reds6-v3-3030534826","mode":"live","waiting":false,"cash":false,"shootBtn":false,"hist":"success,success,success,plainMiss","end":"{\"type\":\"failure\",\"label\":\"plainMiss\",\"step\":4}","replaying":false}
+A-miss.jpg MISSED {"topBottom":62,"tableTop":105,"capBottom":91} 82 KB
+B-miss.jpg MISSED {"topBottom":62,"tableTop":105,"hint":true} 80 KB
+C-miss.jpg MISSED {"topBottom":62,"tableTop":105} 75 KB

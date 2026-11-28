@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>147 · caption styles</title>
+<style>
+  :root { --bg: #0f1412; --card: #18201d; --text: #e8ece9; --dim: #9aa6a1; --gold: #f2c94c; --red: #ff6b5e; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 24px; margin: 0 0 6px; } h2 { font-size: 19px; margin: 34px 0 8px; color: var(--gold); }
+  p, li { color: var(--dim); } b { color: var(--text); }
+  .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  figure { margin: 0; background: var(--card); border-radius: 10px; padding: 10px; }
+  figure img { width: 100%; height: auto; display: block; border-radius: 6px; }
+  figcaption { font-size: 13px; color: var(--dim); margin-top: 6px; text-align: center; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-top: 8px; }
+  th, td { border-bottom: 1px solid #2a3531; padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { color: var(--gold); font-weight: 600; } td:first-child { font-weight: 700; white-space: nowrap; }
+  .wrap { overflow-x: auto; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+  .pre { background: #24452f; color: #9fe0b0; } .post { background: #3a2a24; color: #ffb39a; }
+  @media (max-width: 760px) { .row { grid-template-columns: 1fr; } }
+</style></head>
+<body><main>
+<h1>On-screen captions: 3 styles</h1>
+<p>Options page only: nothing in the game was changed. Each picture is the real game screen (390x844, dev server); the
+caption was drawn on top by <code>scripts/captions-shots.mjs</code> to show where it would go. The table behind is a
+normal 6-red round, so the balls do not match the caption (a CENTURY is not possible with 6 reds). No caption is on the cloth.</p>
+<p>Before a shot: <b>MAXIMUM IS ON</b> · after a pot: <b>CENTURY</b> · after a miss: <b>MISSED</b>.</p>
+
+<h2>Style A: banner above the table</h2>
+<p>A short gold label (red for a failure) in the strip between the top bar and the table. The top bar and the table stay visible.</p>
+<div class="row">
+  <figure><img src="A-pre.jpg" alt="Style A before a shot"><figcaption>before a shot · MAXIMUM IS ON</figcaption></figure>
+  <figure><img src="A-pot.jpg" alt="Style A after a pot"><figcaption>after a pot · CENTURY</figcaption></figure>
+  <figure><img src="A-miss.jpg" alt="Style A after a miss"><figcaption>after a miss · MISSED</figcaption></figure>
+</div>
+
+<h2>Style B: in the hint line</h2>
+<p>The caption takes the place of the hint line ("RED · NEXT x1.61") for its time, in bold gold (red for a failure). This is the
+quietest option: nothing new appears on the screen.</p>
+<div class="row">
+  <figure><img src="B-pre.jpg" alt="Style B before a shot"><figcaption>before a shot · MAXIMUM IS ON</figcaption></figure>
+  <figure><img src="B-pot.jpg" alt="Style B after a pot"><figcaption>after a pot · CENTURY</figcaption></figure>
+  <figure><img src="B-miss.jpg" alt="Style B after a miss"><figcaption>after a miss · MISSED</figcaption></figure>
+</div>
+
+<h2>Style C: over the top bar</h2>
+<p>A large caption covers the whole top bar (balance and multiplier) for its time. The loudest option; the balance is hidden
+for that moment.</p>
+<div class="row">
+  <figure><img src="C-pre.jpg" alt="Style C before a shot"><figcaption>before a shot · MAXIMUM IS ON</figcaption></figure>
+  <figure><img src="C-pot.jpg" alt="Style C after a pot"><figcaption>after a pot · CENTURY</figcaption></figure>
+  <figure><img src="C-miss.jpg" alt="Style C after a miss"><figcaption>after a miss · MISSED</figcaption></figure>
+</div>
+
+<h2>When each message appears (proposal)</h2>
+<p><span class="tag pre">BEFORE</span> messages are shown while the game waits for SHOOT. They use only the table and
+the score so far (balls on the table, reds left, points, which colours were potted). They never use the outcome the RNG
+has already decided for the next shot, so they cannot give the result away. <span class="tag post">AFTER</span> messages
+are shown when the shot has finished on screen (the ball has dropped, or the balls have stopped).
+Times use config <code>messages.durationSeconds</code> (1.0 s) and <code>clearanceMessageMaxSeconds</code> (3 s).
+Priority 1 is the highest. Only one caption shows at a time; when two happen together, the higher one is shown and the
+other is dropped (not queued).</p>
+<div class="wrap"><table>
+<tr><th>Message</th><th>When it appears (rule)</th><th>How long</th><th>Priority</th><th>Before / after</th></tr>
+<tr><td>MAXIMUM</td><td>The table is cleared and every red was followed by the black (75 / 107 / 147, RULES C.9).</td><td>up to 3 s, tap to skip</td><td>1</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>TOTAL CLEARANCE</td><td>The table is cleared, but not a maximum.</td><td>up to 3 s, tap to skip</td><td>2</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>RE-RACK</td><td>No shot could be found for a decided success (RULES D.4). The round ends and is paid.</td><td>1.5 s, then the strip line stays</td><td>2 (ends the round; nothing else can happen at the same time)</td><td><span class="tag post">AFTER</span> (in place of the shot)</td></tr>
+<tr><td>MISSED</td><td>A failed shot with label plain miss or jaw rattle.</td><td>1.5 s, then the strip line "MISSED · LOST" stays</td><td>2 (ends the round)</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>IN-OFF</td><td>A failed shot where the cue ball is potted.</td><td>1.5 s, then the strip line stays</td><td>2 (ends the round)</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>FOUL</td><td>A failed shot that hits the wrong ball first or no ball (the D.2 fallback).</td><td>1.5 s, then the strip line stays</td><td>2 (ends the round)</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>SNOOKERED</td><td>Step 1 fails because the break left us snookered.</td><td>1.5 s, then the strip line stays</td><td>2 (ends the round)</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>OPPONENT NEEDS SNOOKERS</td><td>The pot that first makes our score greater than the points remaining (RULES C.8). Once a round.</td><td>1.0 s</td><td>3</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>CENTURY</td><td>The pot that first takes the break to 100 or more (10 and 15 reds only). Once a round.</td><td>1.0 s</td><td>4</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>FIFTY BREAK</td><td>The pot that first takes the break to 50 or more. Once a round.</td><td>1.0 s</td><td>5</td><td><span class="tag post">AFTER</span></td></tr>
+<tr><td>FRAME BALL</td><td>The next ball, if potted, would make our score greater than the points remaining (from score and table only). Once a round.</td><td>until SHOOT</td><td>6</td><td><span class="tag pre">BEFORE</span></td></tr>
+<tr><td>MAXIMUM IS ON</td><td>Every red so far was followed by the black, and at least 3 / 4 / 5 reds are potted (config maximumIsOnFromRed). Once a round.</td><td>until SHOOT</td><td>7</td><td><span class="tag pre">BEFORE</span></td></tr>
+<tr><td>LAST RED</td><td>Exactly one red is left on the table and a red is next.</td><td>until SHOOT</td><td>8</td><td><span class="tag pre">BEFORE</span></td></tr>
+<tr><td>FLUKE</td><td>A pot the game marks as a fluke (config flukeRate; a variety choice only, never the odds).</td><td>1.0 s</td><td>10</td><td><span class="tag post">AFTER</span></td></tr>
+</table></div>
+<p>Notes. (1) The config priority list also has ON THE COLOURS (priority 9), which is not one of the 14 messages here.
+(2) The failure messages and RE-RACK always end the round, so they never compete with a pot message; the "2" only says
+they are never dropped. (3) A BEFORE message and an AFTER message never meet: the AFTER one ends before the game waits for
+SHOOT again. (4) RULES B.4 today shows the clearance message on the empty cloth; with these captions MAXIMUM /
+TOTAL CLEARANCE would move above the table too. That is the owner's choice. (5) After a failure the ladder strip
+already says "MISSED · LOST 10.00", so a failure caption repeats it (see the MISSED pictures); a failure caption could
+be left out, or shown only during the 1.5 s before the strip line appears. (6) The developer-only marks (DEV tag, flag,
+solver version) are hidden in these pictures.</p>
+</main></body></html>
