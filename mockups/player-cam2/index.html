@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player's view camera 2</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; --bg: #0f1513; --panel: #18211e; --text: #e8ece9; --dim: #9aa7a2; --yellow: #f2c94c; --ok: #7bd389; --no: #ef8a7a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .intro { color: var(--dim); margin: 0 0 18px; }
+  .intro b, .what b, td b { color: var(--text); }
+  section { background: var(--panel); border-radius: 14px; padding: 12px; margin-bottom: 18px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  h3 { font-size: 14px; margin: 12px 0 4px; }
+  .what { margin: 0 0 8px; color: var(--dim); }
+  .ok { color: var(--ok); } .no { color: var(--no); }
+  .grid { display: grid; gap: 10px; align-items: start; }
+  .c2 { grid-template-columns: repeat(2, minmax(0, 260px)); } .c3 { grid-template-columns: repeat(3, 1fr); }
+  .c4 { grid-template-columns: repeat(4, 1fr); } .c7 { grid-template-columns: repeat(4, 1fr); }
+  figure { margin: 0; }
+  video { width: 100%; height: auto; aspect-ratio: 390 / 844; display: block; border-radius: 8px; background: #000; }
+  .missing { aspect-ratio: 390 / 844; display: grid; place-items: center; background: #300; border-radius: 8px; }
+  figcaption { font-size: 12px; color: var(--dim); margin-top: 4px; }
+  figcaption b { color: var(--yellow); }
+  button { background: var(--yellow); color: #111; border: 0; border-radius: 8px; padding: 6px 12px; font-weight: 700; cursor: pointer; margin-bottom: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2a3531; vertical-align: top; }
+  th { color: var(--dim); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  ol, ul { margin: 6px 0 0 18px; padding: 0; } li { margin-bottom: 6px; }
+  .q { color: var(--yellow); font-weight: 700; }
+  @media (max-width: 700px) { .c3, .c4, .c7 { grid-template-columns: 1fr 1fr; } .c2 { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Player's view camera, round 2: the random draw of 4 cameras</h1>
+  <p class="intro">Video clips only, <b>the game is not changed</b>. Your choice: for each shot one camera is drawn at
+    random, equal chance (1 in 4): <b>TODAY (57°), V1, V2, V3</b>. All clips come from the real game (developer
+    version, same code as the test build), 390×844, 30 frames a second, in one recorded round
+    (<b>reds15-v3-3191475780</b>, 15 reds). Each step is filmed <b>as it is really shot inside the round</b>, so the top
+    bar, the ladder and the step count are the real ones of that shot. A clip starts at the SHOOT press (the cue's
+    0.25 s stroke included) and ends 0.5 s after SHOOT comes back. In every V clip the camera goes back to 57°
+    before SHOOT comes back.</p>
+
+  <section>
+    <h2>The fixed rules inside V1, V2 and V3 (used in every V clip below except the ones marked "as before")</h2>
+    <ul>
+      <li><b>Rise path (V3)</b>: the point the camera looks at moves in a straight line, and the camera's angle above the
+        cloth, its direction round the table and its distance are blended separately. The angle only grows from 5° to
+        57°, so the path never looks straight down (measured: highest angle in every fixed clip 57.0°).</li>
+      <li><b>Over the cue</b>: the camera always stands at least 9 cm above the cue's centre line at its own spot. A
+        cue raised over a ball or a cushion lifts the camera (H2, H3).</li>
+      <li><b>Over the rail</b>: if the camera spot is outside the cloth, it stays at least 10 cm above the rail top.</li>
+      <li><b>Balls in the way</b>: a ball between the camera and the cue ball (or within 10 cm of the camera) is drawn
+        see-through (22%) while the camera holds, and solid again when the camera goes back to 57°.</li>
+      <li><b>Full cue</b>: today the cue is shortened so that, from 57°, it never covers the object ball or its
+        pocket. From behind the cue ball that rule is not needed, so the V cameras show the whole cue.</li>
+      <li>All of these depend only on the layout and the planned cue direction, never on the outcome. No V camera ever
+        falls back to TODAY.</li>
+    </ul>
+  </section>
+
+  <section data-shot="rise">
+    <h2>1 · V3 rise fixed: the 3 shots of round 1</h2>
+    <p class="what">The old V3 (straight blend of position and look-at point) passes through a close top-down view of the cloth about 0.5 s after the hit; the new one rises along an arc. Shot 1 = straight red into a corner (step 7), shot 2 = thin cut on the brown (step 33), shot 3 = long red (step 27).</p>
+    <button type="button">Play all together</button>
+    <div class="grid c3"><figure><video src="s1-now.mp4" poster="s1-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 1 · TODAY</b> · 1.83 s clip · balls stop / SHOOT back at 1.37 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="s1-V3old.mp4" poster="s1-V3old.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 1 · V3 as before</b> · 1.83 s clip · balls stop / SHOOT back at 1.37 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure>
+<figure><video src="s1-V3new.mp4" poster="s1-V3new.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 1 · V3 fixed</b> · 1.83 s clip · balls stop / SHOOT back at 1.37 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure>
+<figure><video src="s2-now.mp4" poster="s2-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 2 · TODAY</b> · 4.87 s clip · balls stop / SHOOT back at 4.40 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="s2-V3old.mp4" poster="s2-V3old.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 2 · V3 as before</b> · 4.87 s clip · balls stop / SHOOT back at 4.40 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure>
+<figure><video src="s2-V3new.mp4" poster="s2-V3new.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 2 · V3 fixed</b> · 4.87 s clip · balls stop / SHOOT back at 4.40 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure>
+<figure><video src="s3-now.mp4" poster="s3-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 3 · TODAY</b> · 2.80 s clip · balls stop / SHOOT back at 2.33 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="s3-V3old.mp4" poster="s3-V3old.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 3 · V3 as before</b> · 2.80 s clip · balls stop / SHOOT back at 2.33 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>85.9°</b>.</figcaption></figure>
+<figure><video src="s3-V3new.mp4" poster="s3-V3new.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>Shot 3 · V3 fixed</b> · 2.80 s clip · balls stop / SHOOT back at 2.33 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure></div>
+  </section>
+
+  <section data-shot="ret">
+    <h2>2 · Back to 57° after the shot, before SHOOT comes back</h2>
+    <p class="what">R1 = instant cut back to 57° the moment the balls stop. R2 = a 0.4 s glide back, and SHOOT waits for it.
+     Extra seconds per shot: <b>R1 0 s</b>; <b>R2 +0.4 s</b> on every V1 and V2 shot (measured: SHOOT came back
+     0.43 s later for V1 and 0.43 s later for V2; 0.4 s
+     plus up to one frame). V3 is already at 57° when the balls stop (its rise ends 1.0 s after the hit), so R1 and R2
+     look the same there and need <b>0 s</b> in the game. In this mockup the V3 R2 clip still waited the 0.4 s
+     (SHOOT 0.43 s later); the game would skip that wait when the camera is already at 57°.
+     Only a shot whose balls stop less than 1.0 s after the hit would need the cut or the glide on V3.</p>
+    <button type="button">Play all together</button>
+    <div class="grid c2"><figure><video src="s1-V1-R1.mp4" poster="s1-V1-R1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · R1 cut (shot 1)</b> · 1.83 s clip · balls stop / SHOOT back at 1.37 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4°.</figcaption></figure>
+<figure><video src="s1-V1-R2.mp4" poster="s1-V1-R2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 · R2 glide (shot 1)</b> · 2.27 s clip · balls stop / SHOOT back at 1.80 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4°.</figcaption></figure>
+<figure><video src="s2-V2-R1.mp4" poster="s2-V2-R1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · R1 cut (shot 2)</b> · 4.87 s clip · balls stop / SHOOT back at 4.40 s<br>height <b>55 cm</b>, 105 cm behind the cue ball · cue angle 4°.</figcaption></figure>
+<figure><video src="s2-V2-R2.mp4" poster="s2-V2-R2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 · R2 glide (shot 2)</b> · 5.30 s clip · balls stop / SHOOT back at 4.83 s<br>height <b>55 cm</b>, 105 cm behind the cue ball · cue angle 4°.</figcaption></figure>
+<figure><video src="s3-V3new.mp4" poster="s3-V3new.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 · R1 cut (shot 3)</b> · 2.80 s clip · balls stop / SHOOT back at 2.33 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure>
+<figure><video src="s3-V3-R2.mp4" poster="s3-V3-R2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 · R2 glide (shot 3)</b> · 3.23 s clip · balls stop / SHOOT back at 2.77 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure></div>
+  </section>
+
+  <section data-shot="h1">
+    <h2>H1 · cue ball in the middle of the table, cue lying over the cloth (step 31, yellow)</h2>
+    <p class="what">The cue ball is near the middle; 1.7 m of cloth behind it, so the whole cue lies over the cloth.</p>
+    <button type="button">Play all together</button>
+    <div class="grid c4"><figure><video src="h1-now.mp4" poster="h1-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>TODAY</b> · 2.80 s clip · balls stop / SHOOT back at 2.33 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="h1-V1.mp4" poster="h1-V1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1</b> · 2.80 s clip · balls stop / SHOOT back at 2.33 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4°.</figcaption></figure>
+<figure><video src="h1-V2.mp4" poster="h1-V2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2</b> · 2.80 s clip · balls stop / SHOOT back at 2.33 s<br>height <b>55 cm</b>, 105 cm behind the cue ball · cue angle 4°.</figcaption></figure>
+<figure><video src="h1-V3.mp4" poster="h1-V3.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3</b> · 2.80 s clip · balls stop / SHOOT back at 2.33 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure></div>
+  </section>
+
+  <section data-shot="h2">
+    <h2>H2 · a ball right behind the cue ball on the shot line (step 15, red5 10 cm behind)</h2>
+    <p class="what">Top row: TODAY and the cameras as before (the camera stands behind the red, which hides the cue ball, and the cue, raised 23° over the red, runs past the lens). Bottom row: fixed (raised over the cue, the red drawn see-through).</p>
+    <button type="button">Play all together</button>
+    <div class="grid c4"><figure><video src="h2-now.mp4" poster="h2-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>TODAY</b> · 2.63 s clip · balls stop / SHOOT back at 2.17 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="h2-V1raw.mp4" poster="h2-V1raw.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 as before</b> · 2.63 s clip · balls stop / SHOOT back at 2.17 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 23.4°.</figcaption></figure>
+<figure><video src="h2-V2raw.mp4" poster="h2-V2raw.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 as before</b> · 2.63 s clip · balls stop / SHOOT back at 2.17 s<br>height <b>55 cm</b>, 105 cm behind the cue ball · cue angle 23.4°.</figcaption></figure>
+<figure><video src="h2-V3raw.mp4" poster="h2-V3raw.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 as before</b> · 2.63 s clip · balls stop / SHOOT back at 2.17 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 23.4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure>
+<div></div>
+<figure><video src="h2-V1.mp4" poster="h2-V1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 fixed</b> · 2.63 s clip · balls stop / SHOOT back at 2.17 s<br>height <b>34 cm</b>, 50 cm behind the cue ball · raised over the cue 0.16 -> 0.34 m · 1 ball(s) drawn see-through while the camera holds · cue angle 23.4°.</figcaption></figure>
+<figure><video src="h2-V2.mp4" poster="h2-V2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 fixed</b> · 2.63 s clip · balls stop / SHOOT back at 2.17 s<br>height <b>58 cm</b>, 105 cm behind the cue ball · raised over the cue 0.55 -> 0.58 m · 1 ball(s) drawn see-through while the camera holds · cue angle 23.4°.</figcaption></figure>
+<figure><video src="h2-V3.mp4" poster="h2-V3.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 fixed</b> · 2.63 s clip · balls stop / SHOOT back at 2.17 s<br>height <b>34 cm</b>, 50 cm behind the cue ball · raised over the cue 0.16 -> 0.34 m · 1 ball(s) drawn see-through while the camera holds · cue angle 23.4° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure></div>
+  </section>
+
+  <section data-shot="h3">
+    <h2>H3 · cue ball 5 cm from a cushion (step 30, blue)</h2>
+    <p class="what">The camera spot (50 cm or 1.05 m behind the cue ball) is outside the table. Top row: as before. Bottom row: fixed (raised over the raised cue and over the rail).</p>
+    <button type="button">Play all together</button>
+    <div class="grid c4"><figure><video src="h3-now.mp4" poster="h3-now.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>TODAY</b> · 2.03 s clip · balls stop / SHOOT back at 1.57 s<br>Today: 57°, whole table.</figcaption></figure>
+<figure><video src="h3-V1raw.mp4" poster="h3-V1raw.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 as before</b> · 2.03 s clip · balls stop / SHOOT back at 1.57 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 17.3°.</figcaption></figure>
+<figure><video src="h3-V2raw.mp4" poster="h3-V2raw.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 as before</b> · 2.03 s clip · balls stop / SHOOT back at 1.57 s<br>height <b>55 cm</b>, 105 cm behind the cue ball · cue angle 17.3°.</figcaption></figure>
+<figure><video src="h3-V3raw.mp4" poster="h3-V3raw.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 as before</b> · 2.03 s clip · balls stop / SHOOT back at 1.57 s<br>height <b>16 cm</b>, 50 cm behind the cue ball · cue angle 17.3° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure>
+<div></div>
+<figure><video src="h3-V1.mp4" poster="h3-V1.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V1 fixed</b> · 2.03 s clip · balls stop / SHOOT back at 1.57 s<br>height <b>28 cm</b>, 50 cm behind the cue ball · raised over the cue 0.16 -> 0.28 m · cue angle 17.3°.</figcaption></figure>
+<figure><video src="h3-V2.mp4" poster="h3-V2.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V2 fixed</b> · 2.03 s clip · balls stop / SHOOT back at 1.57 s<br>height <b>55 cm</b>, 105 cm behind the cue ball · cue angle 17.3°.</figcaption></figure>
+<figure><video src="h3-V3.mp4" poster="h3-V3.jpg" muted loop playsinline autoplay preload="auto"></video>
+  <figcaption><b>V3 fixed</b> · 2.03 s clip · balls stop / SHOOT back at 1.57 s<br>height <b>28 cm</b>, 50 cm behind the cue ball · raised over the cue 0.16 -> 0.28 m · cue angle 17.3° · steepest camera angle during the clip <b>57.0°</b>.</figcaption></figure></div>
+  </section>
+
+  <section>
+    <h2>3 · Pocket camera with the new draw (proposal, not built)</h2>
+    <p class="what">Only one special camera per shot. The camera draw (1 in 4 each) is made from a visual-only seeded
+      stream before the shot, so it says nothing about the outcome. Today's pocket cut: 1 in 6 of shots from step 2
+      (never step 1 or the last ball), same for a pot and a miss; it adds about <b>1.9 s per cut</b> (NOW.md: +0.32 s
+      per shot at 1 in 6). Rates per 100 shots from step 2:</p>
+    <div class="scroll"><table>
+      <tr><th>Option</th><th>How</th><th>Pocket cuts</th><th>TODAY (no cut)</th><th>V1 / V2 / V3</th><th>Extra s per shot, R1</th><th>Extra s per shot, R2</th></tr>
+      <tr><td><b>PA</b></td><td>Pocket cut only on TODAY shots, with today's chances</td><td>4.2</td><td>20.8</td><td>25 / 25 / 25</td><td>0.08</td><td>0.28</td></tr>
+      <tr><td><b>PB</b></td><td>Pocket cut only on TODAY shots, chances raised as far as the misses allow (x1.34: the miss chance of one step group then reaches 100%)</td><td>5.6</td><td>19.4</td><td>25 / 25 / 25</td><td>0.11</td><td>0.31</td></tr>
+      <tr><td><b>PC</b></td><td>Pocket cut decided first, as today (1 in 6); only if there is no cut, the 4-camera draw</td><td>16.7</td><td>20.8</td><td>20.8 / 20.8 / 20.8</td><td>0.32</td><td>0.49</td></tr>
+    </table></div>
+    <ul>
+      <li><b>Fairness</b>, P(camera | success) = P(camera | failure): PA and PB: the camera draw does not look at the
+        outcome, and inside TODAY the pocket cut uses the calibrated chances that make pot and miss equal, so every
+        camera has the same chance for a pot and a miss. PC: the pocket cut is equal for pot and miss (as today), so
+        the rest, (1 - 1/6) / 4 for each camera, is equal too.</li>
+      <li>Keeping 1 in 6 pocket cuts <b>only</b> on TODAY shots is not possible: it needs 4x the chances, and the miss
+        chances (0.51-0.75 now) cannot go above 100%. The most is PB (5.6 per 100).</li>
+      <li>PA is the simplest to check. PC keeps as many pocket cuts as today, but a V camera is then used only on
+        shots without a pocket cut, so V is not "drawn first" any more (the rates still stay equal).</li>
+      <li>Extra seconds: pocket cut 1.9 s per cut; R2 0.4 s per V1 or V2 shot; V3 about 0 (already at 57° when the
+        balls stop). Step 1 and the last ball: no pocket cut in any option; the V draw is used there too.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Your questions (your decision)</h2>
+    <ol>
+      <li><span class="q">Return after the shot:</span> R1 (instant cut, 0 s) or R2 (0.4 s glide, +0.4 s on V1/V2 shots)?</li>
+      <li><span class="q">Hard-case fixes:</span> OK as shown (raise over the cue and the rail, see-through ball, full cue)?</li>
+      <li><span class="q">Pocket camera:</span> PA, PB or PC?</li>
+    </ol>
+  </section>
+</main>
+<script>
+  for (const s of document.querySelectorAll('section[data-shot]')) {
+    s.querySelector('button').addEventListener('click', () => {
+      for (const v of s.querySelectorAll('video')) { v.currentTime = 0; v.play().catch(() => {}); }
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,715 @@
+{
+ "seed": "reds15-v3-3191475780",
+ "level": "reds15",
+ "fps": 30,
+ "variants": {
+  "V1": {
+   "back": 0.5,
+   "h": 0.16,
+   "ahead": 1.2,
+   "fov": 50
+  },
+  "V2": {
+   "back": 1.05,
+   "h": 0.55,
+   "ahead": 0.9,
+   "fov": 52
+  },
+  "V3": {
+   "back": 0.5,
+   "h": 0.16,
+   "ahead": 1.2,
+   "fov": 50,
+   "rise": 1
+  }
+ },
+ "clips": [
+  {
+   "name": "h1-now",
+   "step": 31,
+   "cfg": {
+    "v": "now"
+   },
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 30.2,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "h1-V1",
+   "step": 31,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 38.5,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h1-V2",
+   "step": 31,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 35.7,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h1-V3",
+   "step": 31,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 74.7,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h2-now",
+   "step": 15,
+   "cfg": {
+    "v": "now"
+   },
+   "frames": 79,
+   "seconds": 2.63,
+   "kb": 31.1,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.166666666666824,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "h2-V1",
+   "step": 15,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 79,
+   "seconds": 2.63,
+   "kb": 34.1,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.166666666666824,
+   "cam": {
+    "back": 0.5,
+    "h": 0.343,
+    "cueElDeg": 23.4,
+    "notes": [
+     "raised over the cue 0.16 -> 0.34 m"
+    ],
+    "seeThrough": 1
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h2-V1raw",
+   "step": 15,
+   "cfg": {
+    "v": "V1",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 79,
+   "seconds": 2.63,
+   "kb": 44.1,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.166666666666824,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 23.4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h2-V2",
+   "step": 15,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 79,
+   "seconds": 2.63,
+   "kb": 39.1,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.166666666666824,
+   "cam": {
+    "back": 1.05,
+    "h": 0.58,
+    "cueElDeg": 23.4,
+    "notes": [
+     "raised over the cue 0.55 -> 0.58 m"
+    ],
+    "seeThrough": 1
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h2-V2raw",
+   "step": 15,
+   "cfg": {
+    "v": "V2",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 79,
+   "seconds": 2.63,
+   "kb": 38.4,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.166666666666824,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 23.4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h2-V3",
+   "step": 15,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 79,
+   "seconds": 2.63,
+   "kb": 68.2,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.166666666666824,
+   "cam": {
+    "back": 0.5,
+    "h": 0.343,
+    "cueElDeg": 23.4,
+    "notes": [
+     "raised over the cue 0.16 -> 0.34 m"
+    ],
+    "seeThrough": 1
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h2-V3raw",
+   "step": 15,
+   "cfg": {
+    "v": "V3",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 79,
+   "seconds": 2.63,
+   "kb": 73.7,
+   "ballsStopAt": 2.166666666666824,
+   "shootAt": 2.166666666666824,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 23.4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h3-now",
+   "step": 30,
+   "cfg": {
+    "v": "now"
+   },
+   "frames": 61,
+   "seconds": 2.03,
+   "kb": 28,
+   "ballsStopAt": 1.5666666666664386,
+   "shootAt": 1.5666666666664386,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "h3-V1",
+   "step": 30,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 61,
+   "seconds": 2.03,
+   "kb": 34.5,
+   "ballsStopAt": 1.5666666666664386,
+   "shootAt": 1.5666666666664386,
+   "cam": {
+    "back": 0.5,
+    "h": 0.282,
+    "cueElDeg": 17.3,
+    "notes": [
+     "raised over the cue 0.16 -> 0.28 m"
+    ]
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h3-V1raw",
+   "step": 30,
+   "cfg": {
+    "v": "V1",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 61,
+   "seconds": 2.03,
+   "kb": 44.1,
+   "ballsStopAt": 1.5666666666664386,
+   "shootAt": 1.5666666666664386,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 17.3,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h3-V2",
+   "step": 30,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 61,
+   "seconds": 2.03,
+   "kb": 33,
+   "ballsStopAt": 1.5666666666664386,
+   "shootAt": 1.5666666666664386,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 17.3,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h3-V2raw",
+   "step": 30,
+   "cfg": {
+    "v": "V2",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 61,
+   "seconds": 2.03,
+   "kb": 34,
+   "ballsStopAt": 1.5666666666664386,
+   "shootAt": 1.5666666666664386,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 17.3,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h3-V3",
+   "step": 30,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 61,
+   "seconds": 2.03,
+   "kb": 61.7,
+   "ballsStopAt": 1.5666666666664386,
+   "shootAt": 1.5666666666664386,
+   "cam": {
+    "back": 0.5,
+    "h": 0.282,
+    "cueElDeg": 17.3,
+    "notes": [
+     "raised over the cue 0.16 -> 0.28 m"
+    ]
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "h3-V3raw",
+   "step": 30,
+   "cfg": {
+    "v": "V3",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 61,
+   "seconds": 2.03,
+   "kb": 69.3,
+   "ballsStopAt": 1.5666666666664386,
+   "shootAt": 1.5666666666664386,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 17.3,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "s1-now",
+   "step": 7,
+   "cfg": {
+    "v": "now"
+   },
+   "frames": 55,
+   "seconds": 1.83,
+   "kb": 28.8,
+   "ballsStopAt": 1.366666666666617,
+   "shootAt": 1.366666666666617,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "s1-V1-R1",
+   "step": 7,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 55,
+   "seconds": 1.83,
+   "kb": 36.5,
+   "ballsStopAt": 1.366666666666617,
+   "shootAt": 1.366666666666617,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "s1-V1-R2",
+   "step": 7,
+   "cfg": {
+    "v": "V1",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 68,
+   "seconds": 2.27,
+   "kb": 53.9,
+   "ballsStopAt": 1.366666666666617,
+   "shootAt": 1.7999999999999345,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "s1-V3new",
+   "step": 7,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 55,
+   "seconds": 1.83,
+   "kb": 62.8,
+   "ballsStopAt": 1.366666666666617,
+   "shootAt": 1.366666666666617,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "s1-V3old",
+   "step": 7,
+   "cfg": {
+    "v": "V3",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 55,
+   "seconds": 1.83,
+   "kb": 64,
+   "ballsStopAt": 1.366666666666617,
+   "shootAt": 1.366666666666617,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "s2-now",
+   "step": 33,
+   "cfg": {
+    "v": "now"
+   },
+   "frames": 146,
+   "seconds": 4.87,
+   "kb": 35,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.39999999999936,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "s2-V2-R1",
+   "step": 33,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 146,
+   "seconds": 4.87,
+   "kb": 38.1,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.39999999999936,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "s2-V2-R2",
+   "step": 33,
+   "cfg": {
+    "v": "V2",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 159,
+   "seconds": 5.3,
+   "kb": 53.5,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.83333333333263,
+   "cam": {
+    "back": 1.05,
+    "h": 0.55,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "s2-V3new",
+   "step": 33,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 146,
+   "seconds": 4.87,
+   "kb": 71.8,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.39999999999936,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "s2-V3old",
+   "step": 33,
+   "cfg": {
+    "v": "V3",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 146,
+   "seconds": 4.87,
+   "kb": 75.7,
+   "ballsStopAt": 4.39999999999936,
+   "shootAt": 4.39999999999936,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "s3-now",
+   "step": 27,
+   "cfg": {
+    "v": "now"
+   },
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 30.1,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": null,
+   "maxAngle": null
+  },
+  {
+   "name": "s3-V3-R2",
+   "step": 27,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R2",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 97,
+   "seconds": 3.23,
+   "kb": 76.5,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.7666666666662643,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.00511911320977
+  },
+  {
+   "name": "s3-V3new",
+   "step": 27,
+   "cfg": {
+    "v": "V3",
+    "fix": true,
+    "ret": "R1",
+    "fullCue": true,
+    "rise": "new"
+   },
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 74.8,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 57.005119113209794
+  },
+  {
+   "name": "s3-V3old",
+   "step": 27,
+   "cfg": {
+    "v": "V3",
+    "fix": false,
+    "ret": "R1",
+    "rise": "old"
+   },
+   "frames": 84,
+   "seconds": 2.8,
+   "kb": 65.9,
+   "ballsStopAt": 2.3333333333329938,
+   "shootAt": 2.3333333333329938,
+   "cam": {
+    "back": 0.5,
+    "h": 0.16,
+    "cueElDeg": 4,
+    "notes": []
+   },
+   "maxAngle": 85.90814887040577
+  }
+ ],
+ "errors": []
+}

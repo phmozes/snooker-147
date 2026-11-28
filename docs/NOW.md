@@ -1,6 +1,6 @@
 # NOW (max 30 lines, no history)
 ## Owner's turn
-- 2026-11-28 player's view camera options page (mockups/player-cam/index.html, docs/REPORT.md): pick V1/V2/V3/none + when.
+- 2026-11-28 player's view round 2 (mockups/player-cam2/index.html, docs/REPORT.md): R1 or R2, hard-case fixes OK?, pocket PA/PB/PC.
 - 2026-11-28 (docs/reports/2026-11-28-433ab97.md, waiting): strip frame fix + % under the chips (option C). Phone-check both, the
   captions (dev menu CAPTIONS) and the Rules box table. Speed idea 3 (hosting) open.
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
