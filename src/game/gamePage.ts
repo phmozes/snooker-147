@@ -20,7 +20,8 @@ import { COLOURS, type Ball, type BallKind, type Colour, type Vec2 } from '../co
 import { positionsAt } from '../view/playback';
 import { createTable3d, type TableLookId } from '../view/table3d';
 import { pos411pOn, setPos411p, solverVersion } from '../core/solverMode';
-import { cuePose, VARIANTS } from '../view/cue';
+import { CUE, cuePose, VARIANTS } from '../view/cue';
+import { followInputOf, glideBack, pickPlayerCam, planPlayerCam, playerCamPose, type FollowInput, type PlayerCamId, type Pose, type ShotAimFields, type ShotCamera } from '../view/playerCam';
 import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
@@ -79,6 +80,11 @@ let jumpText = '';
  *  (owner: about 1 shot in 6, same chance on success and failure, pocketCam.ts autoCutDraw). Null outside a dev build. */
 let devPocketCam: null | PocketView | 'random' = null;
 let lastCut = ''; // dev panel: what the last forced cut did
+/** 2026-11-28 (dev only): CAMERA: AUTO = the game's own draw; TODAY / V1 / V2 / V3 / POCKET = that camera on every
+ *  SHOOT shot from step 2 (POCKET: when the shot is cuttable; else TODAY), for phone checks. Always AUTO outside a dev build. */
+let devCamera: 'AUTO' | ShotCamera = 'AUTO';
+/** The camera each SHOOT shot was shown with (dev: scripts check a replayed code shows the same cameras). */
+let camLog: { step: number; cam: ShotCamera }[] = [];
 const FORCE_TEXT: Record<ForcedOutcome, string> = { success: 'Success', plainMiss: 'Miss', jawRattle: 'Rattle', inOff: 'In-off',
   wrongBallFirst: 'Foul (wrong ball)', reRack: 'RE-RACK' };
 /** The forced outcome of the next shot, if any (auto jump / clearance force success). Always null outside a dev build. */
@@ -316,6 +322,7 @@ function cueProtect(balls: Ball[], C: Vec2, d: Vec2) {
 }
 /** Play a shot from `balls` on screen; resolves with its length in seconds when every ball has stopped. */
 function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target: string; pocket: string; view: PocketView }; breakOff?: boolean;
+  player?: { cam: Exclude<PlayerCamId, 'TODAY'>; follow: FollowInput }; onCamera?: (cam: ShotCamera) => void;
   applause?: { ball: string; level: ApplauseLevel }; caption?: { ball: string; id: CaptionId }; miss?: { label: string; target?: string } } = {}): Promise<number> {
   const sim = createSim(balls, table);
   strike(sim, 'cue', s.dir, s.speed, s.spin);
@@ -341,8 +348,8 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
   const cueBall = balls.find((b) => b.kind === 'cue');
   // the solver's shot direction is ghost ball - cue ball (metres, not unit length): the cue needs the unit direction
   const dl = Math.hypot(s.dir.x, s.dir.y) || 1, cueDir = { x: s.dir.x / dl, y: s.dir.y / dl };
-  const cuePlan = opts.cue && cueOn && cueBall && view3d ? view3d.planCue(cueBall.pos, cueDir, balls.filter((b) => b.kind !== 'cue').map((b) => b.pos), cueProtect(balls, cueBall.pos, cueDir)) : null;
-  const lead = cuePlan ? CUE_TIMING.added : 0;
+  const cuePlan0 = opts.cue && cueOn && cueBall && view3d ? view3d.planCue(cueBall.pos, cueDir, balls.filter((b) => b.kind !== 'cue').map((b) => b.pos), cueProtect(balls, cueBall.pos, cueDir)) : null;
+  const lead = cuePlan0 ? CUE_TIMING.added : 0;
   const fastFrom = fastEndOn ? startOf(rec, { ...CONFIG.shot.fastEnd, enabled: true }) : null;
   const FE = { ...CONFIG.shot.fastEnd, enabled: true };
   // the pocket-camera cut (automatic, or forced from the dev panel). Playback only: the same recording, part of it from the
@@ -354,6 +361,24 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
     ? `${cut.view} at ${cut.pocket}: ${cut.from.toFixed(2)}-${cut.to.toFixed(2)} s of the shot, +${addedSeconds(cut).toFixed(2)} s slow motion`
     : `no cut: ${opts.cam.target} never came near ${opts.cam.pocket}`;
   let camOn = false;
+  // 2026-11-28 (RULES B.7): the player's view camera, on a shot without a pocket cut. Planned before the shot plays,
+  // from the planned shot only (playerCam.ts): the hold behind the cue ball, the follow to the AIMED pocket (V1 / V2),
+  // the rise (V3). Its clock starts when the tip hits the cue ball; the same for a pot and a miss.
+  const heights = view3d?.getHeights() ?? { railZ: 0 };
+  const pplan = !cut && opts.player && view3d && cueBall
+    ? planPlayerCam(opts.player.cam, opts.player.follow, cuePlan0?.el ?? 0, table, heights, view3d.drawnBallRadius()) : null;
+  const cuePlan = cuePlan0 && pplan && CONFIG.playerCam.fixes.fullCue ? { ...cuePlan0, len: CUE.length } : cuePlan0;
+  opts.onCamera?.(cut ? 'POCKET' : pplan ? pplan.cam : 'TODAY');
+  const mainPose = (): Pose => { const f = view3d!.getFit(); return { pos: f.position, at: f.lookAt, fov: f.fov }; };
+  const showPose = (P: Pose) => view3d?.setCameraOverride({ position: P.pos, lookAt: P.at, fov: P.fov }, false);
+  let lastPose: Pose | null = null, poseDone = false;
+  const playerFrame = (sinceHit: number) => {
+    if (!pplan || !view3d) return;
+    const P = playerCamPose(pplan, sinceHit, mainPose(), table, heights);
+    lastPose = P.pose; poseDone = P.done;
+    showPose(P.pose);
+    view3d.setSeeThrough(P.seeThrough ? { cam: pplan.hold.pos, C: cueBall!.pos } : null);
+  };
   // the recording's end, or later while a cut holds the still table, or until a ball potted at the very end is seen
   // dropping (its sound and applause come then; at most about 0.1 s more)
   const end = Math.max(playbackEnd(rec.duration, cut), lastSoundAt(rec, rs), applauseAt ?? 0, missAt ?? 0);
@@ -378,6 +403,7 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
       const paused = !!(import.meta.env.DEV && devPause?.paused && !devResume);
       if (!paused) tau += dReal;
       if (cuePlan) { const { gap, alpha } = cuePose(CUE_TIMING, tau); if (alpha > 0.003) view3d?.showCue(cueBall!.pos, cuePlan, gap, alpha); else view3d?.hideCue(); }
+      playerFrame(tau - lead);
       if (tau < lead) { // the stroke: the balls wait until the tip reaches the cue ball
         const p0 = positionsAt(rec, 0);
         rest = ids.map(() => null);
@@ -410,7 +436,26 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
       slot.forEach((j, n) => { if (j >= 0) rest[j] = p[n]!; });
       draw3d();
       if (t < end) requestAnimationFrame(tick);
-      else { view3d?.hideCue(); if (camOn) view3d?.setCameraOverride(null); res(rec.duration); }
+      else {
+        view3d?.hideCue();
+        if (camOn) view3d?.setCameraOverride(null);
+        if (!pplan || !lastPose || poseDone) { if (pplan) { view3d?.setSeeThrough(null); view3d?.setCameraOverride(null); } res(rec.duration); return; }
+        // R2 (owner 2026-11-28): the balls have stopped: a glide back to the main camera; SHOOT waits for it
+        view3d?.setSeeThrough(null);
+        const from = lastPose;
+        let since = 0, prev = performance.now();
+        const glide = () => {
+          const n = performance.now();
+          since += ((n - prev) / 1000) * devSlow; prev = n;
+          const G = glideBack(from, mainPose(), since);
+          showPose(G.pose);
+          draw3d();
+          if (!G.done) { requestAnimationFrame(glide); return; }
+          view3d?.setCameraOverride(null);
+          res(rec.duration);
+        };
+        requestAnimationFrame(glide);
+      }
     };
     tick();
   });
@@ -469,6 +514,7 @@ async function onStart() {
   if (busy || round.phase === 'decide') return;
   if (!replay && round.balance < round.bet) return; // a replay is free (owner, night 4): no bet, no pay
   presolver.cancel();
+  camLog = [];
   busy = 'rerack';
   showBetArea = false;
   render();
@@ -536,6 +582,9 @@ async function onShootStep1() {
 async function onShoot() {
   if (busy || round.phase !== 'decide') return;
   if (awaitingStep1(round)) return onShootStep1();
+  // RULES B.7: the player's view camera of this step, drawn FIRST, from its own stream (seed, step) only: before the
+  // outcome is read or used, and never with it
+  const camPick = pickPlayerCam(round.seed, round.step + 1, round.rng);
   const decided = nextOutcome(round);
   const step = decided.step;
   const forced = forcedNow(); // developer panel only (null in the real game)
@@ -577,10 +626,14 @@ async function onShoot() {
     // developer jump: no animation, the balls just move to where the shot leaves them
     const pc = import.meta.env.DEV ? devPocketCam : null; // dev only: "pocket cam on next shot"
     // the automatic cut (owner 2026-11-27): a visual-only draw; it happens only if the shot is also cuttable (planCut)
-    const autoCut = autoCutDraw(round.levelId, step, h.outcome, round.seed, round.rng);
+    const devCam = import.meta.env.DEV ? devCamera : 'AUTO'; // dev only: CAMERA forced on every shot
+    const autoCut = devCam === 'AUTO' && autoCutDraw(round.levelId, step, h.outcome, round.seed, round.rng);
     const sh = h.shot as { target?: string; pocket?: string };
     const camView = pc && pc !== 'random' ? pc : pickView(round.seed, step, round.rng);
-    const cam = (pc || autoCut) && sh.target && sh.pocket ? { target: sh.target, pocket: sh.pocket, view: camView } : undefined;
+    const cam = (pc || autoCut || devCam === 'POCKET') && sh.target && sh.pocket ? { target: sh.target, pocket: sh.pocket, view: camView } : undefined;
+    // the player's view (shown when there is no cut): the pick drawn above; its follow reads the planned shot only
+    const pick: PlayerCamId = devCam === 'AUTO' ? camPick : devCam === 'POCKET' ? 'TODAY' : devCam;
+    const player = pick !== 'TODAY' ? { cam: pick, follow: followInputOf(h.shot as ShotAimFields, before.frame!.balls, table) } : undefined;
     if (import.meta.env.DEV && pc) { devPocketCam = null; if (!cam) lastCut = 'no cut: this shot has no target pocket'; }
     const jumped = auto?.mode === 'jump';
     // owner 2026-11-27: levels 2-4 (break 50, opponent needs snookers, break 100), the highest reached by this pot, once a
@@ -592,7 +645,8 @@ async function onShoot() {
     const capId = h.outcome === 'success' ? afterCaption(before.frame!, round.frame!, (h.shot as { type?: string }).type ?? null, captionsShown) : null;
     if (capId) captionsShown.add(capId);
     const caption = capId && sh.target && !jumped ? { ball: sh.target, id: capId } : undefined;
-    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam, applause, caption, miss: missFor(h) });
+    const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam, player, applause, caption, miss: missFor(h),
+      onCamera: (c) => { camLog.push({ step, cam: c }); } });
     // PLAN 8.2 / RULES B.6: a clearance's last pot is replayed from the pocket camera, then the clearance message
     if (!jumped && round.end?.type === 'clearance' && sh.target && sh.pocket) await clearanceReplay(sh.target, sh.pocket);
     const type = (h.shot as { type?: string }).type ?? '?';
@@ -975,6 +1029,7 @@ function renderDev() {
     (import.meta.env.DEV ? '<h3>TEST PANEL (DEV ONLY) · NEXT SHOT</h3><div class="opts" id="devForce"></div>' +
       '<div class="opts"><input id="devJump" placeholder="step" inputmode="numeric" /><button id="devJumpGo">Jump to step</button></div>' +
       '<div class="opts" id="devAuto"></div>' +
+      '<h3>CAMERA (DEV ONLY, every shot from step 2)</h3><div class="opts" id="devCamera"></div>' +
       '<h3>POCKET CAM ON NEXT SHOT (DEV ONLY)</h3><div class="opts" id="devPocketCam"></div><div class="info" id="devCut"></div>' +
       '<h3>APPLAUSE / MISS (DEV ONLY)</h3><div class="opts" id="devApplause"></div>' +
       '<h3>CAPTIONS (DEV ONLY, 3 s in the hint line)</h3><div class="opts" id="devCaptions"></div>' : '') +
@@ -1085,6 +1140,7 @@ function renderTestPanel(opt: (label: string, on: boolean, click: () => void, di
   // small task 2: force a pocket-camera cut on the next SHOOT (one shot, then off again)
   for (const v of ['P1b', 'P2', 'random'] as const) $('devPocketCam').appendChild(opt(v, devPocketCam === v, () => { devPocketCam = devPocketCam === v ? null : v; render(); }));
   $('devCut').textContent = lastCut ? `last cut · ${lastCut}` : '';
+  for (const c of ['AUTO', 'TODAY', 'V1', 'V2', 'V3', 'POCKET'] as const) $('devCamera').appendChild(opt(c, devCamera === c, () => { devCamera = c; render(); }));
   // owner 2026-11-27: hear each applause level (works any time, even during a round)
   const APPLAUSE_TEXT = ['', '1 CASH OUT', '2 BREAK 50', '3 SNOOKERS', '4 BREAK 100', '5 CLEARANCE', '6 MAXIMUM'];
   for (const l of [1, 2, 3, 4, 5, 6] as const) $('devApplause').appendChild(opt(APPLAUSE_TEXT[l]!, false, () => playApplause(l)));
@@ -1105,7 +1161,7 @@ function renderDevTag() {
   const el = $('devTag');
   const text = auto ? (auto.mode === 'round' ? 'DEV · AUTO PLAY' : auto.mode === 'jump' ? `DEV · FORCED · JUMP TO ${auto.to}` : 'DEV · FORCED · CLEARANCE')
     : force ? `DEV · NEXT FORCED: ${FORCE_TEXT[force].toUpperCase()}` : round.forced ? 'DEV · FORCED ROUND'
-    : devPocketCam ? `DEV · POCKET CAM NEXT: ${devPocketCam.toUpperCase()}` : '';
+    : devPocketCam ? `DEV · POCKET CAM NEXT: ${devPocketCam.toUpperCase()}` : devCamera !== 'AUTO' ? `DEV · CAMERA: ${devCamera}` : '';
   el.textContent = text;
   el.classList.toggle('show', !!text);
 }
@@ -1144,6 +1200,10 @@ if (import.meta.env.DEV) {
     hideBalls: () => { showBalls([]); },
     /** small task 2: pocket cam on the next shot ('P1b' | 'P2' | 'random' | null), and what the last cut did */
     pocketCam: (v: null | PocketView | 'random') => { devPocketCam = v; render(); }, lastCut: () => lastCut,
+    /** 2026-11-28: CAMERA forced on every shot ('AUTO' = the game's draw), and the camera of every SHOOT shot so far */
+    camera: (v: 'AUTO' | ShotCamera) => { devCamera = v; render(); }, camLog: () => camLog.slice(),
+    /** the next shot is solved for both outcomes (SHOOT would play at once, no THINKING…) */
+    solved: () => presolver.ready(),
     /** PLAN 8.2: jump to the last ball and clear it on screen (as the panel's "Clearance: last ball") */
     clearLast: () => devClearLast(),
     pauseOn: (kind: 'jaw' | 'pot' | 'potCue', offset: number) => { devPauseOn = { kind, offset }; devPause = null; devResume = false; },

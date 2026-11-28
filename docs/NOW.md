@@ -1,6 +1,6 @@
 # NOW (max 30 lines, no history)
 ## Owner's turn
-- 2026-11-28 player's view round 3 (mockups/player-cam3/index.html, docs/REPORT.md): follow F1 or F2 (rec. F2), turn speed, build? (R2/H1-3/V3/PC decided)
+- 2026-11-28 player's view cameras BUILT (docs/REPORT.md, RULES B.7): phone-check (menu > CAMERA), 3.5 s glide point, pocket cut on aimed pocket?
 - 2026-11-28 (docs/reports/2026-11-28-433ab97.md, waiting): strip frame fix + % under the chips (option C). Phone-check both, the
   captions (dev menu CAPTIONS) and the Rules box table. Speed idea 3 (hosting) open.
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);

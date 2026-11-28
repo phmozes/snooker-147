@@ -101,6 +101,14 @@ export function pocketCamDraw(seed: number, k: number, version: RngVersion = RNG
   if ((CONFIG.rng.streams as readonly string[]).includes(stream)) throw new Error(`pocket camera stream ${stream} is a game stream`);
   return streamValue(seed, stream, k, version);
 }
+/** 2026-11-28: the VISUAL-ONLY draw of the player's view camera for step k (CONFIG.playerCam.stream). Its own
+ *  stream (round seed, stream, k): never a game stream, never the outcome, so the same for a pot and a miss. */
+export function playerCamDraw(seed: number, k: number, version: RngVersion = RNG_VERSION_NEW): number {
+  const stream: string = CONFIG.playerCam.stream;
+  if ((CONFIG.rng.streams as readonly string[]).includes(stream) || stream === CONFIG.pocketCut.stream || stream === CONFIG.pocketCut.cutStream)
+    throw new Error(`player camera stream ${stream} is not its own stream`);
+  return streamValue(seed, stream, k, version);
+}
 /** The round code of a round that has just started (no colour letters yet): v2 / v3 / v4 codes carry the marker `v2` / `v3` / `v4`. */
 export const baseCode = (levelId: string, seed: number, rng: RngVersion): string => `${levelId}-${rng === 1 ? '' : `v${rng}-`}${seed}`;
 

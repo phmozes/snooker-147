@@ -1,0 +1,18 @@
+reds6: 100000 shots (86728 success, 13272 failure)
+  POCKET  16484 = 16.48% (target 16.53%) · given success 14367 = 16.57% · given failure 2117 = 15.95% · diff 0.61%
+  TODAY   20792 = 20.79% (target 20.87%) · given success 18042 = 20.80% · given failure 2750 = 20.72% · diff 0.08%
+  V1      20794 = 20.79% (target 20.87%) · given success 18047 = 20.81% · given failure 2747 = 20.70% · diff 0.11%
+  V2      21029 = 21.03% (target 20.87%) · given success 18161 = 20.94% · given failure 2868 = 21.61% · diff 0.67%
+  V3      20901 = 20.90% (target 20.87%) · given success 18111 = 20.88% · given failure 2790 = 21.02% · diff 0.14%
+reds10: 100000 shots (88788 success, 11212 failure)
+  POCKET  16541 = 16.54% (target 16.62%) · given success 14751 = 16.61% · given failure 1790 = 15.97% · diff 0.65%
+  TODAY   20648 = 20.65% (target 20.85%) · given success 18353 = 20.67% · given failure 2295 = 20.47% · diff 0.20%
+  V1      20762 = 20.76% (target 20.85%) · given success 18430 = 20.76% · given failure 2332 = 20.80% · diff 0.04%
+  V2      21168 = 21.17% (target 20.85%) · given success 18744 = 21.11% · given failure 2424 = 21.62% · diff 0.51%
+  V3      20881 = 20.88% (target 20.85%) · given success 18510 = 20.85% · given failure 2371 = 21.15% · diff 0.30%
+reds15: 100000 shots (90191 success, 9809 failure)
+  POCKET  16547 = 16.55% (target 16.65%) · given success 14995 = 16.63% · given failure 1552 = 15.82% · diff 0.80%
+  TODAY   20764 = 20.76% (target 20.84%) · given success 18691 = 20.72% · given failure 2073 = 21.13% · diff 0.41%
+  V1      20693 = 20.69% (target 20.84%) · given success 18664 = 20.69% · given failure 2029 = 20.69% · diff 0.01%
+  V2      21072 = 21.07% (target 20.84%) · given success 18975 = 21.04% · given failure 2097 = 21.38% · diff 0.34%
+  V3      20924 = 20.92% (target 20.84%) · given success 18866 = 20.92% · given failure 2058 = 20.98% · diff 0.06%

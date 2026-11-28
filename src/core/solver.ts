@@ -33,6 +33,9 @@ export interface SolvedShot {
   type: ShotType; // what kind of shot it is (task 4.7)
   natural: number; // naturalness cost (0 = what a professional would play)
   whyNot: string | null; // null = natural by the strict check (owner 2026-11-24), else the reason
+  // 2026-11-28 (RULES B.7): the ball and pocket the shot was AIMED at (not where it went: a fluke pots elsewhere). The
+  // player's view camera follows this. Not set on shots without an aim (spray, soft foul, gentle tap): playerCam.ts aimOf
+  aim?: { ball: string; pocket: PocketId };
 }
 
 const Sv = CONFIG.solver;
@@ -328,6 +331,7 @@ export function solveSuccess(state: FrameState, target: BallKind, table: TableGe
     const pottedIn = sim.events.find((e) => e.type === 'pot' && e.a === v.potted);
     const shot: SolvedShot = { target: v.potted, pocket: pottedIn && pottedIn.type === 'pot' ? pottedIn.pocket : pocket, dir, speed,
       spin, duration, computeMs: 0, tried: 0, score, nextCost: nexts.length ? cost : null, cueEnd: { ...cueEnd }, type, natural, whyNot,
+      aim: { ball: ballId, pocket },
       ...(locked ? { lockedReds: true } : {}) };
     cands.push(shot);
     if (!best || score < best.score) best = shot;
@@ -632,7 +636,7 @@ export function solveDoubles(state: FrameState, target: BallKind, table: TableGe
               const type = classifySuccess({ state: state.balls, target, potted: v.potted, aimedPocket: null, events: sim.events, table });
               best = { target: v.potted, pocket: pot && pot.type === 'pot' ? pot.pocket : pk.id, dir, speed, spin,
                 duration: sim.time, score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos },
-                computeMs: 0, tried: 0, type, natural: typeCost(type), whyNot: 'double' };
+                computeMs: 0, tried: 0, type, natural: typeCost(type), whyNot: 'double', aim: { ball: ball.id, pocket: pk.id } };
             }
           }
         }

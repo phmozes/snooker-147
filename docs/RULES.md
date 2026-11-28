@@ -53,6 +53,20 @@
    motion) is played on a share of rattles AND on a share of successful pots. Both rates are in the config and are set
    so that P(cut | success) = P(cut | failure). The clearance finale does not cut during the shot: the final pot plays
    from the main camera, then is replayed from the pocket camera in slow motion.
+7. **Player's view cameras must never reveal the result** (owner 2026-11-28). From step 2 (never step 1 or the
+   opponent's break-off), each SHOOT shot first gets the pocket-cut draw of B.6, unchanged. A shot without a pocket cut
+   is shown with TODAY (main camera), V1 (eye level), V2 (over the shoulder) or V3 (eye level, then a rise to the main
+   camera), 1 in 4 each (config `playerCam`, master switch `enabled`). The pick comes from its own seeded stream
+   (round seed, 'playerCam', step), is drawn before the outcome is used and never reads it, so the same round code
+   always shows the same cameras and a pot and a miss of the same step get the same pick.
+   V1 and V2 hold behind the cue ball, then 0.1 s after the hit turn in 0.8 s to the pocket the shot is AIMED at
+   (for a pot and a miss alike; never the pocket a ball really went into, so a fluke is not shown early). They read only
+   the aimed pocket, the target ball's place before the shot, the cue ball's place and the planned cue direction.
+   The aimed pocket is the solver's aim (`aim`); a shot without one (the soft foul and the gentle tap of D.2, a spray
+   pot) uses: the first ball on the cue ball's planned path (ghost-ball contact), then the pocket whose direction from
+   that ball is closest to that ball's line from the contact; with no ball on the path, the pocket closest in direction
+   to the cue ball's own line. Every V1 / V2 shot follows; no shot type skips it. When the balls stop, a 0.4 s glide
+   back to the main camera, then SHOOT.
 
 ## C. Snooker rules (simplified: only our player shoots after the break)
 1. **Order:** red, colour, red, colour ... While reds remain, a pot of a red is followed by a pot of one colour.

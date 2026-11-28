@@ -48,7 +48,8 @@ export const CONFIG = {
     algorithm: 'mulberry32',     // seeded, fast; one independent stream per purpose
     // outcome of step k = f(seed, 'outcome', k) -> never depends on colour choices or visuals
     streams: ['outcome', 'break', 'failureType', 'variety', 'solver', 'messages'],
-    // visual only, kept OUT of this list on purpose: 'pocketCam', 'pocketCamCut' (pocket camera, round.ts pocketCamDraw)
+    // visual only, kept OUT of this list on purpose: 'pocketCam', 'pocketCamCut' (pocket camera, round.ts pocketCamDraw),
+    // 'playerCam' (player's view camera, round.ts playerCamDraw)
   },
 
   // ---------------- TABLE GEOMETRY (real snooker table) ----------------
@@ -369,6 +370,51 @@ export const CONFIG = {
                                  // or its first jaw / pot event at that pocket, whichever is first (same rule pot or rattle)
     p1bShare: 0.70,              // share of cuts that use P1b (the rest use P2); visual-only stream 'pocketCam'
     stream: 'pocketCam',         // seeded stream name: u = f(round seed, 'pocketCam', step). Visual only, never physics
+  },
+
+  // ---------------- PLAYER'S VIEW CAMERAS (owner 2026-11-28, mockups/player-cam3; RULES B.7) ----------------
+  // Per SHOOT shot from step 2: the pocket cut first, exactly as above; on a shot without a pocket cut, one of TODAY
+  // (the main camera) / V1 / V2 / V3 from shares below. Visual only: its own seeded stream (round seed, stream, step),
+  // drawn before the outcome is used and never with the outcome, so a result cannot change and the camera cannot hint.
+  playerCam: {
+    enabled: true,               // master switch: false = every shot keeps today's camera (the pocket cut stays as above)
+    stream: 'playerCam',         // seeded stream name (visual only, NOT in rng.streams)
+    fromStep: 2,                 // step 1 and the opponent's break-off: always TODAY
+    shares: { TODAY: 0.25, V1: 0.25, V2: 0.25, V3: 0.25 }, // of the shots without a pocket cut (sum 1)
+    // the hold: the camera behind the cue ball on the planned cue line. back = m behind the cue ball, h = height (m),
+    // ahead = the look-at point that far in front of the cue ball (on the cloth), fov = lens (degrees, vertical)
+    views: {
+      V1: { back: 0.50, h: 0.16, ahead: 1.2, fov: 50 },   // eye level
+      V2: { back: 1.05, h: 0.55, ahead: 0.9, fov: 52 },   // over the shoulder
+      V3: { back: 0.50, h: 0.16, ahead: 1.2, fov: 50 },   // eye level, then the rise to the main camera
+    },
+    v3RiseSeconds: 1.0,          // V3: from the hit, an arc up to the main camera (57°) in this long (smooth start/stop)
+    // V1 / V2 follow (F2 "turn and lift", owner 2026-11-28): looks at the AIMED pocket's mouth; always the same timing
+    follow: {
+      startAfterHit: 0.10,       // s after the tip hits the cue ball
+      moveSeconds: 0.80,         // length of the turn (smooth start and stop)
+      slide: 0.80,               // the camera's spot moves at most this far (m) from the hold spot ...
+      behind: 0.55,              // ... towards a spot on the line pocket -> target ball, this far behind the ball,
+      lineMax: 1.60,             // ... but at most this far from the pocket (m)
+      side: 0.25,                // when that spot is in front of the ball (long pot): this far to the side (m)
+      liftDeg: 30,               // the end angle above the cloth, seen from the pocket
+      maxDist: 1.50,             // the end distance from the pocket's mouth (m), at most
+      frameWidth: 0.8,           // zoom: about this wide (m) at the pocket ...
+      fovFactor: (844 / 390) * 0.62, // ... (phone portrait factor of the mockup) ...
+      minFov: 24,                // ... never narrower than this, never wider than the hold's lens
+      clothInset: 0.03,          // the slide never takes the camera further outside the cloth than the hold was
+    },
+    fixes: {                     // the hard cases H1-H3 (round 2)
+      overCue: 0.09,             // H1: at least this far (m) above the cue's centre line where the camera stands
+      overRail: 0.10,            // H1/H3: outside the cloth at least this far (m) above the rail top
+      minHeight: 0.12,           // H3: while moving, never lower than the hold height or this (m), whichever is lower
+      seeThroughOpacity: 0.22,   // H2: a ball between the camera and the cue ball is drawn this see-through ...
+      seeThroughRadius: 2.1,     // ... when it is within this many (drawn) ball radii of the line camera -> cue ball
+      seeThroughNearCam: 0.10,   // ... or this close (m) to the camera
+      seeThroughUntil: 0.35,     // ... until the move (follow / rise) is this far done (0..1)
+      fullCue: true,             // the cue is drawn full length (the shortening is for the main camera's view)
+    },
+    glideBackSeconds: 0.4,       // R2: when the balls stop, a glide back to the main camera; SHOOT waits for it
   },
 
   // ---------------- RE-RACK (last resort, RULES D.4) ----------------

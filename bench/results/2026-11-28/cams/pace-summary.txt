@@ -1,0 +1,15 @@
+reds6: 300 shots (257 success, 43 failure); cams {"POCKET":47,"V2":60,"V3":49,"TODAY":74,"V1":70}
+  extra s/shot: new vs plain 0.45 (today vs plain 0.27), new vs today 0.18
+  shot time s (cue + playback + cut + glide): mean 2.34, median 2.15, 90% 3.60, max 5.17 | today: median 1.92, 90% 3.59
+  over 3.5 s: 38 (pocket cut 32, last resort 1, V1/V2/V3 5, TODAY 1); recording alone over 3.25 s (cue 0.25 + rec > 3.5): 5; pushed over 3.5 s by the new glide: 1 [[31000231,6,"V2",3.242,3.642,"jawRattle"]]
+  over 3.5 s and not last resort and not pocket cut: [[31000056,10,"plainMiss","V1",3.425,4.075],[31000077,9,"success","V3",3.64,3.89],[31000224,7,"jawRattle","V3",3.708,3.958],[31000231,6,"jawRattle","V2",2.992,3.642],[31000315,6,"plainMiss","TODAY",3.337,3.587]]
+reds10: 300 shots (264 success, 36 failure); cams {"POCKET":49,"V2":65,"V3":51,"TODAY":66,"V1":69}
+  extra s/shot: new vs plain 0.48 (today vs plain 0.30), new vs today 0.19
+  shot time s (cue + playback + cut + glide): mean 2.41, median 2.25, 90% 3.62, max 5.21 | today: median 2.03, 90% 3.58
+  over 3.5 s: 34 (pocket cut 32, last resort 0, V1/V2/V3 2, TODAY 0); recording alone over 3.25 s (cue 0.25 + rec > 3.5): 1; pushed over 3.5 s by the new glide: 1 [[31000056,10,"V1",3.223,3.623,"plainMiss"]]
+  over 3.5 s and not last resort and not pocket cut: [[31000056,10,"plainMiss","V1",2.973,3.623],[31000140,11,"success","V1",4.287,4.937]]
+reds15: 300 shots (269 success, 31 failure); cams {"V1":69,"V2":64,"V3":58,"TODAY":64,"POCKET":45}
+  extra s/shot: new vs plain 0.46 (today vs plain 0.27), new vs today 0.19
+  shot time s (cue + playback + cut + glide): mean 2.37, median 2.26, 90% 3.60, max 4.61 | today: median 2.00, 90% 3.56
+  over 3.5 s: 35 (pocket cut 28, last resort 1, V1/V2/V3 5, TODAY 2); recording alone over 3.25 s (cue 0.25 + rec > 3.5): 5; pushed over 3.5 s by the new glide: 2 [[31000049,7,"V2",3.421,3.821,"success"],[31000133,8,"V1",3.296,3.696,"plainMiss"]]
+  over 3.5 s and not last resort and not pocket cut: [[31000084,8,"success","TODAY",4.315,4.565],[31000133,8,"plainMiss","V1",3.046,3.696],[31000154,4,"plainMiss","TODAY",3.265,3.515],[31000210,10,"success","V2",3.546,4.196],[31000217,13,"success","V2",3.406,4.056],[31000217,17,"success","V3",3.473,3.723]]

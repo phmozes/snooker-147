@@ -143,7 +143,7 @@ function searchFailure(state: FrameState, target: BallKind, kind: FailureKind, t
           : v.type === 'wrongBallFirst';
         if (!ok) continue;
         const cand: SolvedFailure = { target: ball.id, pocket, dir, speed, spin, duration: sim.time, computeMs: 0, tried: 0, kind, fallback: null,
-          type: 'attempt', natural: 0, whyNot: null,
+          type: 'attempt', natural: 0, whyNot: null, aim: { ball: ball.id, pocket },
           score: sim.time, nextCost: null, cueEnd: { ...sim.balls.find((b) => b.kind === 'cue')!.pos } };
         if (kind === 'inOff') {
           const cp = sim.events.find((e) => e.type === 'pot' && e.a === 'cue');

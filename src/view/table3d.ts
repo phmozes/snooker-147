@@ -103,8 +103,12 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
   let drops: (Drop | null)[] = [];
   let moveVel: ({ x: number; y: number } | null)[] = [];
   let movedAt: (number | undefined)[] = [];
+  let ballKinds: BallKind[] = kinds;
+  let seeThrough: { cam: [number, number, number]; C: Vec2 } | null = null;
+  let faded: THREE.Mesh[] = [];
   function setKinds(ks: BallKind[]) {
     for (const m of balls) { scene.remove(m); (m.material as THREE.Material).dispose(); }
+    ballKinds = ks; faded = [];
     balls = ks.map((k) => {
       const m = new THREE.Mesh(sphere, matFor(k));
       m.scale.setScalar(ballScale);
@@ -118,9 +122,33 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
   }
   setKinds(kinds);
 
+  // H2 (player's view camera, playerCam.ts): a ball between the camera and the cue ball is drawn see-through while the
+  // camera holds behind the cue ball. Visual only.
+  const unfade = () => {
+    for (const m of faded) { const mat = m.material as THREE.Material; mat.opacity = 1; mat.transparent = false; mat.depthWrite = true; mat.needsUpdate = true; }
+    faded = [];
+  };
+  /** On: from now on, any ball near the line camera -> cue ball (or near the camera) is see-through. Null: all solid. */
+  function setSeeThrough(s: { cam: [number, number, number]; C: Vec2 } | null) { if (!s) unfade(); seeThrough = s; }
+  function applySeeThrough() {
+    if (!seeThrough) return;
+    const PF = CONFIG.playerCam.fixes, rs = r * ballScale, [cx, cy, cz] = seeThrough.cam, C = seeThrough.C;
+    const ex = C.x - cx, ey = C.y - cy, ez = rs - cz, L2 = ex * ex + ey * ey + ez * ez;
+    balls.forEach((m, i) => {
+      if (!m.visible || ballKinds[i] === 'cue' || faded.includes(m)) return;
+      const bx = m.position.x, by = m.position.y;
+      const t = Math.max(0, Math.min(1, ((bx - cx) * ex + (by - cy) * ey + (rs - cz) * ez) / L2));
+      const dist = Math.hypot(cx + ex * t - bx, cy + ey * t - by, cz + ez * t - rs);
+      if ((dist < rs * PF.seeThroughRadius && t < 0.98) || Math.hypot(bx - cx, by - cy, rs - cz) < PF.seeThroughNearCam) {
+        const mat = m.material as THREE.Material;
+        mat.transparent = true; mat.opacity = PF.seeThroughOpacity; mat.depthWrite = false; mat.needsUpdate = true;
+        faded.push(m);
+      }
+    });
+  }
   let override: CameraFit | null = null;
   /** Show the scene from another camera (a pocket camera), or null = back to the main camera. Visual only. */
-  function setCameraOverride(pose: CameraFit | null) { override = pose; resize(); }
+  function setCameraOverride(pose: CameraFit | null, now = true) { override = pose; if (now) resize(); }
   function resize() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
@@ -201,6 +229,7 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     prev = last.map((p, i) => (positions[i] ? p : null));
     last = positions.map((q) => (q ? { x: q.x, y: q.y } : null));
     lastAt = now;
+    applySeeThrough();
     renderer.render(scene, camera);
     // a ball still falling after the caller stopped drawing: keep drawing until it is gone
     cancelAnimationFrame(frameReq);
@@ -279,5 +308,6 @@ export function createTable3d(canvas: HTMLCanvasElement, table: TableGeometry, k
     const v = new THREE.Vector3(x, y, z).project(camera);
     return { x: ((v.x + 1) / 2) * canvas.clientWidth, y: ((1 - v.y) / 2) * canvas.clientHeight };
   }
-  return { resize, draw, dispose, setPreset, setBallScale, setKinds, setSpeed, setCameraOverride, project, planCue, showCue, hideCue, warmUp, look, getFit: () => fit };
+  return { resize, draw, dispose, setPreset, setBallScale, setKinds, setSpeed, setCameraOverride, setSeeThrough, project, planCue, showCue, hideCue, warmUp, look,
+    getFit: () => fit, getHeights: () => ({ railZ: heights.railZ }), drawnBallRadius: () => r * ballScale };
 }

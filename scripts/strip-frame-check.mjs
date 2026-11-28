@@ -1,7 +1,8 @@
 // 2026-11-28 bug check: the ladder strip's frame (the end line "WON … · x…", or the chips) must be fully visible and not
 // covered by anything (the 3D canvas above it, the bottom area below it), in every state, for 6 / 10 / 15 reds, at
 // 390x844 and at in-app phone sizes (360 wide, shorter). Measures boxes + hit-tests the frame's top and bottom edges,
-// and saves a crop round the strip. Needs the dev server on port 5181.
+// and saves a crop round the strip. Needs the dev server on port 5181 (or BASE=<url>, e.g. the test build: it posts
+// nothing to the PC).
 // node scripts/strip-frame-check.mjs <outDir> [WxH,WxH,...]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launch } from './shot.mjs';
@@ -14,7 +15,7 @@ for (const [w, h] of sizes) for (const level of (process.env.LEVELS ?? 'reds6,re
   const p = await b.newPage();
   p.on('pageerror', (e) => rows.push(`pageerror ${e.message}`));
   await p.setViewport({ width: w, height: h, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-  await p.goto('http://localhost:5181/', { waitUntil: 'networkidle0', timeout: 120000 });
+  await p.goto(process.env.BASE ?? 'http://localhost:5181/', { waitUntil: 'networkidle0', timeout: 120000 });
   await p.waitForFunction('window.__dev && window.__dev.state().busy === null', { timeout: 120000 });
   await p.evaluate((l) => document.querySelector(`.lvl[data-l="${l}"]`)?.click(), level);
   await new Promise((r) => setTimeout(r, 400));

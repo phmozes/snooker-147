@@ -1,0 +1,25 @@
+dist-test/assets/index-CkAR38nr.js 723.6
+dist-test/assets/solverWorker-Bj_gPCSr.js 50.7
+dist-test/breaks/reds10.json 589.1
+dist-test/breaks/reds15.json 712.7
+dist-test/breaks/reds6.json 489.9
+dist-test/breaks-v3/reds10.json 589.8
+dist-test/breaks-v3/reds15.json 712.9
+dist-test/breaks-v3/reds6.json 488.8
+dist-test/breaks-v4/reds6.json 491.9
+dist-test/index.html 11.8
+dist-test/sounds/applause-1.mp3 18.8
+dist-test/sounds/applause-2.mp3 27.3
+dist-test/sounds/applause-3.mp3 36.7
+dist-test/sounds/applause-4.mp3 46.4
+dist-test/sounds/applause-5.mp3 60.8
+dist-test/sounds/applause-6.mp3 72.7
+dist-test/sounds/ball-hard.mp3 4.1
+dist-test/sounds/ball-soft.mp3 2.5
+dist-test/sounds/break.mp3 21.4
+dist-test/sounds/cue.mp3 5.0
+dist-test/sounds/cushion.mp3 2.2
+dist-test/sounds/miss.mp3 18.8
+dist-test/sounds/pocket.mp3 13.2
+dist-test/sounds/tap.mp3 1.9
+TOTAL 5192.9 KB, 24 files

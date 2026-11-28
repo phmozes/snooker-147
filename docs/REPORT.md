@@ -1,116 +1,174 @@
-# Report: player's view camera, round 3: V1 and V2 follow the ball to the pocket (2026-11-28, fifth task)
+# Report: player's view cameras built into the game (2026-11-28, sixth task)
 
-**What this is.** A third options page: `mockups/player-cam3/index.html`, with 30 video clips. **The game is not
-changed**, so no build was needed. Your answers from round 2 are used in every V clip: R2 (0.4 s glide back), the
-hard-case fixes H1-H3, and V3 as fixed. PC (pocket cut first, then the 4-camera draw) is used for the time sums.
+**What this is.** Your decisions from round 3 are now in the real game: from step 2, each SHOOT shot gets the pocket
+cut first (exactly as before). A shot without a pocket cut is shown with TODAY, V1, V2 or V3, 1 in 4 each. V1 and V2
+use the follow F2 and the glide back R2. Every number is in `src/config/game.config.ts`, block `playerCam`, with a
+master switch `enabled`. The rule is written in `docs/RULES.md` as **B.7**. Stopped here for your review.
 
-## The problem and the two follow options
-In V1 and V2 the camera stayed low and looked forward, so on cut shots the pot happened off-screen. Now, after the hit,
-V1 and V2 turn to the pocket the shot is played at:
-- **F1 "turn"**: 0.1 s after the cue hits the cue ball, the camera turns in 0.8 s (smooth start and stop) to look at
-  the planned pocket. It may slide up to 80 cm towards a spot on the line from the pocket through the target ball:
-  behind that ball and at most 1.6 m from the pocket. If that spot would be in front of the ball, it is 25 cm to the
-  side, so the ball never rolls under the lens. It keeps its height (V1 16 cm, V2 55 cm, or more where a fix lifted it).
-  It zooms in so the view is about 80 cm wide at the pocket.
-- **F2 "turn and lift"**: the same turn and slide, but it also rises to **30° above the cloth** (seen from the pocket)
-  and comes to at most 1.5 m from the pocket.
-- **Safe path** (the H2/H3 rules): the move is an arc around the moving look-at point. The steepest angle in all 30
-  clips is 57.0°, the main camera's angle. The camera never slides further outside the cloth than where it held. Outside
-  the cloth it stays at least 10 cm above the rail, and it never goes lower than its hold height. The ball behind the
-  cue ball (H2) stays see-through until the turn is about one third done.
-- Then **R2**: when the balls stop, a 0.4 s glide back to 57°, and SHOOT waits for it.
+## Checks
+| Check | Result |
+|---|---|
+| `npm test` | **PASS**: 349/349 (37 files, 16 new tests in `tests/playerCam.test.ts`) |
+| Replay check, v1-v4 codes (outcomes unchanged) | **PASS**: 916/916 identical (10 runs, all ended 13:00:01, before this report) |
+| Pace: extra seconds per shot (target about +0.5, fail over +0.7) | **PASS**: +0.45 / +0.48 / +0.46 s (6 / 10 / 15 reds) compared with plain play |
+| Pace: no shot over 3.5 s except the last resort | **FAIL** (if read strictly). Details below: mostly pocket-cut shots (today's rule); the new glide pushed 4 of 900 shots over 3.5 s |
+| Clips from the test build: V1, V2, V3 on a pot and a miss | **PASS**: 6 clips + 18 stills, right camera on every clip, no page errors |
+| Replay by code shows the same cameras | **PASS**: 4 codes, each replayed twice in the test build, same camera on every shot (42 shots) |
+| Strip-frame check | **PASS**: 54/54 |
+| No writes to `bench/results/phone-cost.jsonl` | **PASS**: 2324 lines before and after, same checksum; `docs/WEIRD-SHOTS.md` same checksum too |
+| `npm run build`, `npm run build:test` | **PASS**: both built |
 
-What the clips show:
-- **F2** shows the drop clearly on every shot: you look down into the pocket from about 1.5 m. On the miss, you see
-  the brown stop outside the middle pocket.
-- **F1** shows the ball reaching the pocket too, but from low down. On a far pocket the ball is small: on the long red
-  the camera is still 3.1 m from the pocket with V1, because the slide is only 80 cm. V2 F1 is better than V1 F1
-  because it is higher (8-21° above the cloth instead of 3-13°).
-- **My recommendation: F2 for both V1 and V2.**
+## How the camera is chosen (fairness points 1, 3 and 5)
+- `pickPlayerCam(seed, step, rng)` reads one number from its **own stream** `playerCam` (round seed + step). That
+  stream is not a game stream (outcome, break, failure type, solver …) and is not one of the pocket-camera streams.
+  The code checks this and stops if it ever is.
+- The function has **no outcome input at all**. In `onShoot` it is called first, before `nextOutcome(round)`.
+  A test reads the game page's code and checks that order.
+- Order per shot: (1) the pocket cut, exactly today's rule; (2) if there is no cut, the pick is shown.
+  `CAMERA` in the dev menu can force a camera instead.
+- Same round code = same cameras, because the pick depends only on seed and step. Tested in Node, and in the test build
+  by replaying 4 codes twice each. Example `reds15-v3-1001`: 2:V2 3:V2 4:TODAY 5:V1 6:V1 7:V3 8:V2 9:POCKET 10:V2
+  11:V3 12:V1 13:POCKET 14:V2 15:V1, the same on both replays.
+- Step 1 and the opponent's break-off always use TODAY.
 
-## Fairness: exactly what the follow uses
-The follow reads only the **planned shot**, as stored in the round history (`h.shot`):
-1. `shot.target`: the ball the shot is played at
-2. `shot.pocket`: the pocket
-3. where that ball stands **before** the shot
-4. that pocket's mouth point (`table.pockets[...].mouthMid`, fixed table geometry)
-5. the cue ball's place and the planned cue direction (the hold, as in round 2)
+**Rates over 100,000 simulated shots per level** (`bench/results/2026-11-28/cams/rates-100k.txt`). These are real
+rounds from the outcome stream: a failure ends the round. The pocket cut is today's rule. Whether a failure shot can
+be cut at all is modelled with the share the calibration assumes, because there is no physics in this test.
+| Level | Camera | Count | Rate (target) | Given success | Given failure | Difference |
+|---|---|---|---|---|---|---|
+| 6 reds | POCKET | 16,484 | 16.48% (16.53) | 14,367 = 16.57% | 2,117 = 15.95% | 0.61% |
+| | TODAY | 20,792 | 20.79% (20.87) | 18,042 = 20.80% | 2,750 = 20.72% | 0.08% |
+| | V1 | 20,794 | 20.79% (20.87) | 18,047 = 20.81% | 2,747 = 20.70% | 0.11% |
+| | V2 | 21,029 | 21.03% (20.87) | 18,161 = 20.94% | 2,868 = 21.61% | 0.67% |
+| | V3 | 20,901 | 20.90% (20.87) | 18,111 = 20.88% | 2,790 = 21.02% | 0.14% |
+| 10 reds | POCKET | 16,541 | 16.54% (16.62) | 14,751 = 16.61% | 1,790 = 15.97% | 0.65% |
+| | TODAY | 20,648 | 20.65% (20.85) | 18,353 = 20.67% | 2,295 = 20.47% | 0.20% |
+| | V1 | 20,762 | 20.76% (20.85) | 18,430 = 20.76% | 2,332 = 20.80% | 0.04% |
+| | V2 | 21,168 | 21.17% (20.85) | 18,744 = 21.11% | 2,424 = 21.62% | 0.51% |
+| | V3 | 20,881 | 20.88% (20.85) | 18,510 = 20.85% | 2,371 = 21.15% | 0.30% |
+| 15 reds | POCKET | 16,547 | 16.55% (16.65) | 14,995 = 16.63% | 1,552 = 15.82% | 0.80% |
+| | TODAY | 20,764 | 20.76% (20.84) | 18,691 = 20.72% | 2,073 = 21.13% | 0.41% |
+| | V1 | 20,693 | 20.69% (20.84) | 18,664 = 20.69% | 2,029 = 20.69% | 0.01% |
+| | V2 | 21,072 | 21.07% (20.84) | 18,975 = 21.04% | 2,097 = 21.38% | 0.34% |
+| | V3 | 20,924 | 20.92% (20.84) | 18,866 = 20.92% | 2,058 = 20.98% | 0.06% |
 
-It never reads the recorded roll of the balls, where they stop, or whether anything dropped. Its timing is fixed from
-the hit (start 0.1 s, move 0.8 s), so a pot and a miss get the same kind of camera move. Only the balls show the result,
-when they get to the pocket. The one thing that still depends on the roll is the moment of the glide back: when the
-balls stop. That is the same as today.
+Every rate is within ±1% of its target, and every success/failure difference is under 1%. The pocket cut has the
+biggest difference (0.6-0.8%). That is today's rule, which I did not change. One reason: a failure on the last ball
+never gets a cut, and failures come at later steps more often. The rest is chance: there are only 10,000-13,000
+failures per level, so about ±0.35% is normal noise.
 
-Two points to know (from the solver code; nothing is changed):
-- For a **pot**, the stored `pocket` is the pocket the ball really went into (`solver.ts`: the pocket of the pot
-  event, otherwise the aimed one). For a **miss or rattle** (`solverFailure.ts`), it is the pocket the shot was aimed
-  at. Either way it is the pocket of the shot that is played, and it is known before the shot is shown.
-- **Open point for the build:** one failure fallback, the "soft foul" (wrong ball first, `solverFailure.ts` line
-  ~183), stores the first pocket of the list as a placeholder. It is not a real aim. In the game, such a shot should
-  get no follow (it keeps the hold, as round 2 did) or a different rule. A soft foul is visible as a foul at the first
-  contact anyway, so this does not hint at a pot or a miss before the ball reaches a pocket. The miss shown here is a
-  plain miss: it aims at a real pocket.
+## What the follow uses (fairness point 2 and the soft foul, point 3)
+- The follow looks at the pocket the shot was **AIMED** at. The solver now stores that as `shot.aim` (ball + pocket)
+  for: normal pots, doubles, and every miss, rattle, in-off and wrong-ball attempt. Before this, a pot stored the pocket
+  the ball really went into. On a fluke, that would have turned the camera to the "surprise" pocket. The follow now
+  never reads `shot.pocket` or `shot.target`.
+- Shots with no aim (the **soft foul** and the **gentle tap** of RULES D.2, and a "spray" pot) use a rule from the
+  layout and the planned cue direction only. Find the first ball on the cue ball's path. Then take the pocket whose
+  direction from that ball is closest to that ball's line from the contact. If no ball is on the path, take the pocket
+  closest to the cue ball's own line. The old placeholder (`topLeft`) is no longer used for the camera. This rule is in
+  RULES B.7.
+- **Every V1 / V2 shot follows**: there is no "skip" path in the code.
+- The follow's input is exactly 4 things: `pocket` (aimed), `ball` (the target ball's place before the shot), `cue`
+  (cue ball's place), `dir` (planned cue direction). Tests check:
+  - the input has only these 4 fields;
+  - adding roll data changes nothing: a fake "real" pocket and ball, a length, where the cue ball stopped, pot events;
+  - `playerCam.ts` never imports the physics and never mentions frames, events, potted balls, the recording or its length.
+- The move runs on a fixed clock from the hit: it starts 0.1 s after the hit and takes 0.8 s, for a pot and a miss alike.
+- The only thing that depends on the roll is when the glide back starts: when the balls stop, as before.
 
-## Shots on the page (round reds15-v3-3191475780; 6 clips each: TODAY, V3, V1 F1, V1 F2, V2 F1, V2 F2)
-| Shot | Step | Played at | Result |
+## The cameras as built (all numbers in config `playerCam`)
+- **V1** (eye level 16 cm, 50 cm behind the cue ball) and **V2** (55 cm high, 1.05 m behind): hold during the stroke.
+  Then F2: turn and lift to 30° above the cloth, at most 1.5 m from the aimed pocket's mouth, zoomed so about 80 cm shows
+  at the pocket.
+- **V3**: the same hold as V1, then from the hit a 1.0 s arc up to the main camera (57°). When the balls stop it is
+  already there, so there is no wait.
+- **R2**: when the balls stop, a 0.4 s glide back to 57° (V1/V2; also V3 if the balls stop before its rise ends), then
+  SHOOT.
+- **H fixes**:
+  - H1: the camera rises over the cue (9 cm above the cue's line), and outside the cloth stays 10 cm above the rail.
+  - H2: a ball between the camera and the cue ball is drawn see-through (opacity 0.22) until the move is a third done.
+  - H3: the move is an arc, never steeper than 57°, and never lower than the hold or 12 cm. Tested on every frame of
+    300 random shots × 3 cameras.
+  - The full cue is drawn in V1/V2/V3.
+- **Dev menu** (test build and dev server only): **CAMERA: AUTO / TODAY / V1 / V2 / V3 / POCKET**. It stays on every
+  shot until you change it. The red tag shows "DEV · CAMERA: V1". POCKET falls back to TODAY when the shot cannot be
+  cut. The real game is always AUTO.
+
+## Pace (300 real shots per level, real solver, `bench/cam-pace.test.ts`; `bench/results/2026-11-28/cams/pace-summary.txt`)
+Shot time = the cue's stroke + the playback + the pocket-cut slow motion + the glide. Thinking time is not counted.
+| | 6 reds | 10 reds | 15 reds |
 |---|---|---|---|
-| Thin cut on the brown | 33 | bottom right corner | potted |
-| The same brown, forced miss (FAIL_STEP=33, plainMiss) | 33 | right middle | missed |
-| H1 cue ball mid-table, yellow | 31 | bottom right corner | potted |
-| H2 ball behind the cue ball | 15 | top left corner | potted |
-| Long red | 27 | bottom right corner | potted |
+| Extra s/shot, new vs plain (no camera extras) | **+0.45** | **+0.48** | **+0.46** |
+| Of that: the pocket cut (as before) / the new glide | +0.27 / +0.18 | +0.30 / +0.19 | +0.27 / +0.19 |
+| Shot time: average / median / 90% | 2.34 / 2.15 / 3.60 s | 2.41 / 2.25 / 3.62 s | 2.37 / 2.26 / 3.60 s |
+| The same before this task: median / 90% | 1.92 / 3.59 s | 2.03 / 3.58 s | 2.00 / 3.56 s |
+| Shots over 3.5 s | 38 | 34 | 35 |
+| … of which pocket-cut shots | 32 | 32 | 28 |
+| … pushed over 3.5 s only by the new glide | 1 | 1 | 2 |
+| … last resort | 1 | 0 | 1 |
 
-The miss run is a second play of the same round with step 33 forced to a plain miss. The solver picks that miss's
-own shot, so it is aimed at another pocket than the pot was.
+**Why "no shot over 3.5 s" fails on a strict reading:**
+1. Most long shots are pocket-cut shots. The slow motion adds about 1.3-1.9 s, and you approved that on 2026-11-27.
+2. A few shots are long on their own: the recording is over 3.25 s, or close to 3.5 s before any camera. You accepted
+   failure shots over 3 s (SLOW-SHOTS.md D).
+3. **The new glide pushed 4 of 900 shots (0.4%) from 3.0-3.5 s to 3.6-3.8 s.**
 
-## Extra seconds per shot
-Measured as when SHOOT came back in each V clip, minus when it came back in TODAY for the same shot (30 frames a
-second, so ±0.03 s):
-| | Brown cut | H1 | H2 | Long red |
+If you want the 3.5 s rule kept for the new cameras, one simple option is: when a shot is already over 3.1 s, use
+TODAY's hard cut back instead of the 0.4 s glide. Your choice; I changed nothing there.
+
+## Clips (test build, `bench/results/2026-11-28/cams/`)
+Round `reds15-v3-3191475780`, step 7. The camera is forced from the dev menu; the miss is forced as a plain miss.
+Filmed at 30 frames a second.
+| Clip | Shown camera | Result | SHOOT back after | KB |
 |---|---|---|---|---|
-| V1 F1, V1 F2, V2 F1 | +0.43 | +0.43 | +0.40 | +0.43 |
-| V2 F2 | +0.40 | +0.43 | +0.40 | +0.43 |
+| V1-pot.mp4 | V1 | potted | 1.77 s | 70.7 |
+| V1-miss.mp4 | V1 | plain miss | 2.87 s | 80.7 |
+| V2-pot.mp4 | V2 | potted | 1.77 s | 69.6 |
+| V2-miss.mp4 | V2 | plain miss | 2.90 s | 76.8 |
+| V3-pot.mp4 | V3 | potted | 1.33 s (no glide) | 66.9 |
+| V3-miss.mp4 | V3 | plain miss | 2.47 s | 71.6 |
 
-- **F1 and F2 add 0 s themselves.** The follow happens while the balls roll; the extra is only the R2 glide (0.4 s),
-  the same as without the follow.
-- V3 also showed +0.4 s in the mockup (it waits for the glide). In the game it would not wait: V3 is already at 57°
-  when the balls stop.
-- **PC + R2 average:** 1/6 of shots get a pocket cut × 1.9 s = 0.32 s. V1 and V2 are 2 × (5/6)/4 of shots × 0.4 s =
-  0.17 s. V3 and TODAY add 0 s. That is **about +0.49 s per shot** (step 2 onwards), the same with F1 or F2.
+There are three stills per clip: `-hold.jpg` (0.15 s), `-move.jpg` (0.7 s) and `-end.jpg`, 18 in all. The clips show
+the dev tag and the "forced" note, because they come from the test build.
 
-## How it was made
-- `scripts/player-cam3.mjs` (new, made from `player-cam2.mjs`) films the real round on the dev server (port 5181).
-  It edits `table3d.ts` and `gamePage.ts` only inside the recording browser, as before. New in it:
-  - the follow;
-  - the planned target and pocket passed to the camera;
-  - `FAIL_STEP` / `FAIL_KIND` to force the miss;
-  - the filmed shot is keyed on the number of shots played. A miss leaves `round.step` as it was, so the old key
-    missed it.
-- `scripts/player-cam3-page.mjs` (new) builds the page and results.json.
-- 12 runs, 4 at a time, 7 min 50 s. Page errors: none. Chrome processes left: 0.
-- **phone-cost.jsonl:** 2324 lines before and after (unchanged). The recording does not send shot-cost lines (the
-  edit from round 2). It also now blocks every request to `/__dev/cost` and `/__dev/weird`: 1 blocked per run (the
-  PC-link check). Nothing was written to `docs/WEIRD-SHOTS.md`.
-- Page check (headless Chrome, 390 px and 1200 px wide): 30 of 30 videos load at 390×844, none missing, no side scroll.
-- Not run: `npm test` and `npm run build:test`, because no game file changed.
+## Points to know
+- The **pocket cut** itself still uses its old pocket rule: the stored pocket, which for a pot is where the ball
+  really went. I left it unchanged because you said "pocket cut exactly as today". The cut starts 0.5 s before the ball
+  arrives, so on a fluke it shows the real pocket only at that moment. If you want, it can use the aimed pocket too.
+- The camera moves are shown on screen only. The replay check proves every shot and outcome is unchanged (916/916).
+- The strip-frame check now accepts `BASE=<url>`. I ran it against the test build, which never sends anything to the PC.
 
-## Files (mockups/player-cam3/, 62 files, 2,778 KB in all, 1 KB = 1000 bytes)
+## Files
+New:
+- `src/view/playerCam.ts` (12.4 KB): the pick, the aimed pocket, all camera poses
+- `tests/playerCam.test.ts` (13.3 KB)
+- `bench/cam-pace.test.ts` (3.8 KB)
+- `scripts/cams-check.mjs` (7.6 KB)
+
+Changed:
+- `src/config/game.config.ts`: block `playerCam`
+- `src/core/round.ts`: `playerCamDraw`
+- `src/core/solver.ts`, `src/core/solverFailure.ts`: `aim` stored; no search change
+- `src/view/table3d.ts`: see-through balls, camera pose without a resize, rail height
+- `src/game/gamePage.ts`: the draw, the follow, the glide, dev CAMERA, `__dev.camera/camLog/solved`
+- `scripts/strip-frame-check.mjs`: `BASE`
+- `docs/RULES.md` (B.7), `docs/NOW.md`
+
+Results are in `bench/results/2026-11-28/cams/` (2.4 MB). The old report moved to `docs/reports/2026-11-28-cbee746.md`.
+
+**dist-test/** (test build, 24 files, 5,192.9 KB; 1 KB = 1000 bytes):
 | File | KB |
 |---|---|
-| index.html / results.json | 21.8 / 25.7 |
-| cut-now, -V3, -V1F1, -V1F2, -V2F1, -V2F2 .mp4 | 35.1, 73.1, 85.3, 88.1, 80.4, 82.5 |
-| miss-now, -V3, -V1F1, -V1F2, -V2F1, -V2F2 .mp4 | 30.4, 68.9, 73.2, 80.1, 68.8, 71.8 |
-| h1-now, -V3, -V1F1, -V1F2, -V2F1, -V2F2 .mp4 | 30.0, 75.3, 77.1, 85.3, 74.0, 81.1 |
-| h2-now, -V3, -V1F1, -V1F2, -V2F1, -V2F2 .mp4 | 31.2, 70.5, 68.9, 69.4, 72.4, 72.4 |
-| long-now, -V3, -V1F1, -V1F2, -V2F1, -V2F2 .mp4 | 30.3, 76.6, 73.8, 87.5, 70.2, 84.5 |
-| 30 posters (.jpg, the frame at 0.4 s) | 19.8 to 26.0 each, 662.3 in all |
+| assets/index-CkAR38nr.js | 723.6 |
+| assets/solverWorker-Bj_gPCSr.js | 50.7 |
+| index.html | 11.8 |
+| breaks/reds6, reds10, reds15 .json | 489.9, 589.1, 712.7 |
+| breaks-v3/reds6, reds10, reds15 .json | 488.8, 589.8, 712.9 |
+| breaks-v4/reds6.json | 491.9 |
+| sounds: applause-1 … 6 .mp3 | 18.8, 27.3, 36.7, 46.4, 60.8, 72.7 |
+| sounds: ball-hard, ball-soft, break, cue, cushion, miss, pocket, tap .mp3 | 4.1, 2.5, 21.4, 5.0, 2.2, 18.8, 13.2, 1.9 |
 
-Other files:
-- `scripts/player-cam3.mjs` (22.1 KB) and `scripts/player-cam3-page.mjs` (11.2 KB), both new
-- `docs/REPORT.md`; the old report moved to `docs/reports/2026-11-28-81538e8.md`
-- `docs/NOW.md` (one line)
-
-## Your turn (questions on the page)
-1. Follow for V1 and V2: F1 (turn, stays low) or F2 (turn and lift to 30°)? My recommendation is F2.
-2. Speed of the turn: 0.8 s as shown, faster, or slower?
-3. Then: build it in the game (the draw PC + 4 cameras, R2, fixes, follow)?
+## Your turn
+1. Phone check (test build or `http://192.168.1.111:5181`): menu > CAMERA > V1 / V2 / V3 / POCKET, then AUTO.
+2. The 3.5 s point: is 4 shots in 900 going over because of the glide OK, or do you want "no glide after a long shot"?
+3. Should the pocket cut also use the aimed pocket? (Today it uses where the ball really went.)
