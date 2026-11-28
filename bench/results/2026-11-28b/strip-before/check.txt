@@ -1,0 +1,6 @@
+PASS | 360x640 (short) | reds6 | bet-first | 5 chips | frame 490-520, strip 490-520, canvas bottom 470, table h 418 | gap above 20, below 4 | covered edge points 0 | 360x640-reds6-bet-first.jpg
+PASS | 360x640 (short) | reds6 | in-round | 5 chips | frame 472-502, strip 472-502, canvas bottom 470, table h 418 | gap above 2, below 4 | covered edge points 0 | 360x640-reds6-in-round.jpg
+FAIL | 360x640 (short) | reds6 | after-cashout | endline | frame 469-505, strip 472-502, canvas bottom 470, table h 418 | gap above -1, below 1 | covered edge points 53 (canvas#c3d.) | 360x640-reds6-after-cashout.jpg
+FAIL | 360x640 (short) | reds6 | after-miss | endline | frame 469-505, strip 472-502, canvas bottom 470, table h 418 | gap above -1, below 1 | covered edge points 53 (canvas#c3d.) | 360x640-reds6-after-miss.jpg
+FAIL | 360x640 (short) | reds6 | after-rerack | endline | frame 469-505, strip 472-502, canvas bottom 470, table h 418 | gap above -1, below 1 | covered edge points 53 (canvas#c3d.) | 360x640-reds6-after-rerack.jpg
+FAIL | 360x640 (short) | reds6 | after-clearance | endline | frame 469-505, strip 472-502, canvas bottom 470, table h 418 | gap above -1, below 1 | covered edge points 53 (div#message.show) | 360x640-reds6-after-clearance.jpg

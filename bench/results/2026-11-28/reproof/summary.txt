@@ -10,3 +10,6 @@ v3-reds15:  Tests 1 passed (1)
 v2-reds15:  Tests 1 passed (1)
 done
 v2-reds10 (bench/results/night6/old-v2-reds10.jsonl):  Tests 1 passed (1) | 
+v3-reds10 (bench/results/night6/v3-reds10.jsonl):  Tests 1 passed (1) | 
+v2-reds15 (bench/results/night6/old-v2-reds15.jsonl):  Tests 1 passed (1) | 
+v3-reds15 (bench/results/night6/v3-reds15.jsonl):  Tests 1 passed (1) | 

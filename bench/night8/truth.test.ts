@@ -5,6 +5,7 @@ import { it } from 'vitest';
 import { CONFIG } from '../../src/config/game.config';
 import { ladderForLevel, rtpText } from '../../src/core/ladder';
 import { formatMult } from '../../src/game/roundView';
+import { stripHtml, stripSteps } from '../../src/game/ladderStrip';
 import { CHANCE_NOTE, chanceRows, RERACK_SENTENCE, RULE_LINES, rulesHtml } from '../../src/game/rulesText';
 import { newRound, outcomeDraw, setLevel } from '../../src/core/round';
 
@@ -56,6 +57,27 @@ it('truth check', () => {
       const want = `${(cfgP * 100).toFixed(1)}%`;
       const ok = c.chance === want && gameP === cfgP && c.mult === formatMult(lad[c.step - 1]!.multiplier) && html.includes(`<tr><td>${c.step}</td><td>${c.mult}</td><td>${c.chance}</td></tr>`);
       row(`${l.reds} reds chance table step ${c.step}`, 'Rules box table', `${c.mult} ${c.chance}`, 'config levels[].p / game outcomeDraw p', `${formatMult(lad[c.step - 1]!.multiplier)} ${want} (p ${cfgP.toFixed(6)}, game ${gameP.toFixed(6)})`, ok);
+    }
+  }
+  // ladder chips (owner 2026-11-28, option C): the whole % under every chip, in every strip the game can show (every step
+  // 0..n, in a round and between rounds), against round-half-up of the config p and of the p the game draws with, and
+  // against the Rules table's one-decimal value
+  for (const l of CONFIG.levels) {
+    const lad = ladderForLevel(l.id); const r = setLevel(newRound(1), l.id as Parameters<typeof setLevel>[1]);
+    const seen = new Map<number, Set<string>>();
+    for (let step = 0; step <= lad.length; step++) for (const between of [false, true]) {
+      const chips = [...stripHtml(lad, step, between).matchAll(/<span>(x[\d.]+)<\/span><small class="pc">(\d+%)<\/small>/g)];
+      stripSteps(lad.length, step).forEach((k, i) => { const c = chips[i]!; (seen.get(k) ?? seen.set(k, new Set()).get(k)!).add(`${c[1]} ${c[2]}`); });
+    }
+    const table = chanceRows(l.id);
+    for (let k = 1; k <= lad.length; k++) {
+      const shown = [...(seen.get(k) ?? [])];
+      const cfgP = l.p![k - 1]!; const gameP = outcomeDraw(r, k).p;
+      const half = (x: number) => Math.floor(x * 100 + 0.5 + 1e-9);
+      const want = `${formatMult(lad[k - 1]!.multiplier)} ${half(cfgP)}%`;
+      const tableWhole = Math.floor(parseFloat(table[k - 1]!.chance) + 0.5);
+      const ok = shown.length === 1 && shown[0] === want && half(gameP) === half(cfgP) && tableWhole === half(cfgP);
+      row(`${l.reds} reds chip % step ${k}`, 'ladder strip chip', shown.join(' / ') || '(never shown)', 'round half up of config p / game outcomeDraw p / Rules table', `${want} (p ${cfgP.toFixed(6)}, game ${gameP.toFixed(6)}, table ${table[k - 1]!.chance})`, ok);
     }
   }
   writeFileSync('bench/results/night8/truth.txt', out.join('\n') + '\n');

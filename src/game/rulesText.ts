@@ -19,6 +19,9 @@ export const RULE_LINES: readonly string[] = [
 /** The chance shown for one step: the same p the game draws against (config levels[].p), in % with 1 decimal. */
 export const chanceText = (p: number): string => `${(p * 100).toFixed(1)}%`;
 
+/** The chance under a ladder chip (owner 2026-11-28, option C): whole percent, half up, of the same p. */
+export const chipPercent = (p: number): string => `${Math.floor(p * 100 + 0.5 + 1e-9)}%`;
+
 /** One row per step of a level: step, multiplier after a pot, chance that this step's shot is potted. */
 export function chanceRows(levelId: string): { step: number; mult: string; chance: string; p: number }[] {
   return ladderForLevel(levelId).map((s) => ({ step: s.step, mult: formatMult(s.multiplier), chance: chanceText(s.p), p: s.p }));

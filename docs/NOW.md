@@ -1,7 +1,7 @@
 # NOW (max 30 lines, no history)
 ## Owner's turn
-- 2026-11-28 task (docs/REPORT.md): pick how the shot chance could show (mockups/chance/: A none, B hint, C chips,
-  D above SHOOT); phone-check the captions (dev menu CAPTIONS), the Rules box table, the bet-screen gap. Speed idea 3 open.
+- 2026-11-28 (docs/REPORT.md, waiting for review): strip frame fix + % under the chips (option C). Phone-check both, the
+  captions (dev menu CAPTIONS) and the Rules box table. Speed idea 3 (hosting) open.
 - Phone check http://192.168.1.111:5181, in this order: the break-off (cue ball ON the baulk line, played WITH the cue);
   the game waits, SHOOT plays step 1; the baulk line, D and spots on the cloth (thin, subtle); any stutter while balls
   roll; the cue; the rail wood; "BREAK n"; the camera at 57° (option 1: in-app about 91% wide).

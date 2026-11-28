@@ -60,6 +60,9 @@
     .chip.prev { color: var(--dim); background: #141b19; }
     .chip.current { background: var(--yellow); color: #111; font-weight: 700; }
     .chip.next { border: 1px solid #55625e; }
+    /* owner 2026-11-28 (option C of mockups/chance/): the chance of each step, small, under the chip's multiplier */
+    .chip { flex-direction: column; line-height: 1.05; }
+    .chip .pc { font-size: 9.5px; font-weight: 600; opacity: .75; letter-spacing: .02em; }
 
     /* bottom area */
     /* one fixed height for every state (bet area, SHOOT, playing), so the table never changes size during a round */
@@ -82,7 +85,9 @@
     #rules table.chances th:first-child, #rules table.chances td:first-child { text-align: left; }
     #rules .close { margin-top: 10px; width: 100%; height: 44px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
     button:disabled { opacity: .45; cursor: default; }
-    .endline { flex: 1; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    /* 2026-11-28 bug fix: the end line is exactly the strip's height, borders included (it was 34 px + 2 px borders = 36 px,
+       so in the 30 px strip of a short screen its top border went 3 px up under the 3D canvas, which paints on top) */
+    .endline { flex: 1; height: 100%; box-sizing: border-box; border-radius: 10px; display: flex; align-items: center; justify-content: center;
                font-size: 14px; font-weight: 700; letter-spacing: .06em; background: var(--panel); }
     .endline.won { color: var(--yellow); border: 1px solid var(--yellow); }
     .endline.lost { color: #e57373; border: 1px solid #6b3434; }

@@ -32,6 +32,7 @@ import { createPresolver, solvedProvider, type SolveRequest, type Solved } from 
 import { clearanceText, endLine, FAILURE_TEXT, formatMoney as money, formatMult, hintText, parseRoundCode } from './roundView';
 import { codeColour, colourSteps, roundCodeOf, type RoundCode } from '../core/roundCode';
 import { rulesHtml } from './rulesText';
+import { stripHtml } from './ladderStrip';
 import { afterCaption, CAPTION_IDS, CAPTION_TEXT, captionSeconds, roundBeforeCaption, type CaptionId } from './captions';
 
 type ScreenId = 'D' | 'A' | 'C';
@@ -737,19 +738,8 @@ const renderBalance = () => {
   if (t.length !== balanceLen) { balanceLen = t.length; fitTop(); } // a longer amount (also during the count-up) must not touch the centre slot
 };
 
-function chipsHtml(step: number, between = false) {
-  const L = ladder();
-  const { previous, next } = CONFIG.ui.ladderStrip;
-  const count = previous + 1 + next;
-  const first = Math.max(1, Math.min(L.length - count + 1, step - previous));
-  const chips = Array.from({ length: count }, (_, i) => first + i).map((k) => {
-    const cls = k < step ? 'prev' : k === step ? 'current' : k === step + 1 ? 'next' : '';
-    return `<div class="chip ${cls}">${formatMult(L[k - 1]!.multiplier)}</div>`;
-  });
-  // night 4 (Part 5): between rounds the first cell names the level's top multiplier instead of the step
-  const first0 = between ? `<div class="step upto">UP TO<br>${formatMult(L[L.length - 1]!.multiplier)}</div>` : `<div class="step">STEP ${step}<br>/ ${L.length}</div>`;
-  return `${first0}${chips.join('')}`;
-}
+/** The ladder strip of this round's ladder (ladderStrip.ts, pure: the truth check reads the same chips). */
+const chipsHtml = (step: number, between = false) => stripHtml(ladder(), step, between);
 
 /** The end line of a free replay: what happened, no money (the balance did not change). */
 function replayEndLine(end: NonNullable<Round['end']>): string {
