@@ -10,7 +10,7 @@ import { parseRoundCode } from '../src/core/roundCode';
 import { buildTable, type PocketId } from '../src/core/table/geometry';
 import { fitCamera } from '../src/view/camera';
 import { cutChance } from '../src/view/pocketCam';
-import { aimOf, FOLLOW_INPUT_KEYS, followInputOf, followPose, glideBack, holdPose, pickPlayerCam, planPlayerCam, playerCamPose,
+import { aimOf, FOLLOW_INPUT_KEYS, followInputOf, followPose, glideBack, glideSeconds, glideSkipped, holdPose, pickPlayerCam, planPlayerCam, playerCamPose,
   shotCamera, type Pose, type ShotCamera } from '../src/view/playerCam';
 
 const table = buildTable();
@@ -102,6 +102,7 @@ describe('camera rates over 100,000 simulated shots per level (pocket cut first,
       for (const l of lines) {
         expect(Math.abs(l.rate - l.target), `${lv.id} ${l.c} rate`).toBeLessThan(0.01);
         expect(Math.abs(l.rs - l.rf), `${lv.id} ${l.c} success vs failure`).toBeLessThan(0.01);
+        if (l.c !== 'POCKET' && CONFIG.playerCam.shares[l.c as 'V3'] === 0) expect(l.count, `${lv.id} ${l.c} weight 0: never drawn`).toBe(0);
       }
     });
   }
@@ -198,6 +199,47 @@ describe('camera path (hold, follow, rise, glide back): the H1-H3 rules', () => 
       const k1 = playerCamPose(plan, CONFIG.playerCam.follow.startAfterHit + CONFIG.playerCam.follow.moveSeconds, main, table, heights).pose;
       k1.pos.forEach((v, j) => expect(v).toBeCloseTo(plan.follow!.pos[j]!, 6));
     }
+  });
+  it('a MIDDLE aimed pocket: the end is 50 degrees up, 1.8 m from the mouth, over the cloth, looking just onto the cloth (300 random shots)', () => {
+    const M = CONFIG.playerCam.follow.middle;
+    let u = 777;
+    const rnd = () => ((u = (Math.imul(u, 1103515245) + 12345) >>> 0) / 2 ** 32);
+    for (let i = 0; i < 300; i++) {
+      const pk = table.pockets.filter((p) => p.kind === 'middle')[i % 2]!;
+      const cue = { x: (rnd() * 2 - 1) * (table.halfWidth - 0.05), y: (rnd() * 2 - 1) * (table.halfLength - 0.05) };
+      const ob = { x: (rnd() * 2 - 1) * (table.halfWidth - 0.05), y: (rnd() * 2 - 1) * (table.halfLength - 0.05) };
+      const dir = { x: ob.x - cue.x, y: ob.y - cue.y }, dl = Math.hypot(dir.x, dir.y);
+      const input = { pocket: pk.id, ball: ob, cue, dir: { x: dir.x / dl, y: dir.y / dl } };
+      for (const cam of ['V1', 'V2'] as const) {
+        const plan = planPlayerCam(cam, input, 0.1, table, heights, rs);
+        const P = plan.follow!, m = pk.mouthMid;
+        expect(Math.hypot(P.pos[0] - m.x, P.pos[1] - m.y, P.pos[2])).toBeCloseTo(M.dist, 6);
+        expect(Math.atan2(P.pos[2], Math.hypot(P.pos[0] - m.x, P.pos[1] - m.y)) * 180 / Math.PI).toBeCloseTo(M.liftDeg, 6);
+        expect(Math.abs(P.pos[0])).toBeLessThan(table.halfWidth); // over the cloth, not over the rail
+        expect(Math.hypot(P.at[0] - m.x, P.at[1] - m.y)).toBeCloseTo(M.atInward, 6);
+        expect(Math.abs(P.at[0])).toBeLessThan(Math.abs(m.x));
+        expect(P.fov).toBeLessThanOrEqual(plan.hold.fov);
+        // the whole move: never steeper than the main camera
+        for (let t = 0; t <= 1.2; t += 1 / 30) expect(elev(playerCamPose(plan, t, main, table, heights).pose)).toBeLessThanOrEqual(mainEl + 0.01);
+      }
+    }
+  });
+  it('a corner aimed pocket keeps the old end (the middle rule does not touch it)', () => {
+    const input = { pocket: 'bottomLeft' as PocketId, ball: { x: -0.3, y: -1.2 }, cue: { x: 0.2, y: -0.4 }, dir: { x: -0.5, y: -0.8 } };
+    const P = planPlayerCam('V2', input, 0.1, table, heights, rs).follow!;
+    const m = table.pockets.find((p) => p.id === 'bottomLeft')!.mouthMid;
+    expect(P.at).toEqual([m.x, m.y, 0]);
+    expect(elev(P)).toBeCloseTo(CONFIG.playerCam.follow.liftDeg, 6);
+  });
+  it('3.5 s rule: no glide when the shot is already over longShotSeconds when the balls stop', () => {
+    const L = CONFIG.playerCam.longShotSeconds;
+    expect(glideSkipped(L + 0.001)).toBe(true);
+    expect(glideSkipped(L)).toBe(false);
+    expect(glideSeconds('V2', 2, L + 0.2)).toBe(0);
+    expect(glideSeconds('V1', 2, L - 0.2)).toBe(CONFIG.playerCam.glideBackSeconds);
+    // a glide only on a shot of at most L s: never past L + glide = 3.5 s
+    expect(L + CONFIG.playerCam.glideBackSeconds).toBeLessThanOrEqual(3.5 + 1e-9);
+    expect(readFileSync('src/game/gamePage.ts', 'utf8')).toContain('glideSkipped(tau)');
   });
   it('H1: the hold rises over a raised cue', () => {
     const low = holdPose('V1', { x: 0, y: 0 }, { x: 0, y: 1 }, 0, table, heights, rs);

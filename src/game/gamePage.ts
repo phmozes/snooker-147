@@ -21,7 +21,7 @@ import { positionsAt } from '../view/playback';
 import { createTable3d, type TableLookId } from '../view/table3d';
 import { pos411pOn, setPos411p, solverVersion } from '../core/solverMode';
 import { CUE, cuePose, VARIANTS } from '../view/cue';
-import { followInputOf, glideBack, pickPlayerCam, planPlayerCam, playerCamPose, type FollowInput, type PlayerCamId, type Pose, type ShotAimFields, type ShotCamera } from '../view/playerCam';
+import { aimOf, followInputOf, glideBack, glideSkipped, pickPlayerCam, planPlayerCam, playerCamPose, type FollowInput, type PlayerCamId, type Pose, type ShotAimFields, type ShotCamera } from '../view/playerCam';
 import { cueExampleShot } from '../view/cueExamples';
 import { rateAt, startOf } from '../view/fastEnd';
 import { addedSeconds, autoCutDraw, clearanceReplayWindow, cutRateAt, pickView, planCut, playbackEnd, pocketCamPose, type PocketCut, type PocketView } from '../view/pocketCam';
@@ -84,7 +84,7 @@ let lastCut = ''; // dev panel: what the last forced cut did
  *  SHOOT shot from step 2 (POCKET: when the shot is cuttable; else TODAY), for phone checks. Always AUTO outside a dev build. */
 let devCamera: 'AUTO' | ShotCamera = 'AUTO';
 /** The camera each SHOOT shot was shown with (dev: scripts check a replayed code shows the same cameras). */
-let camLog: { step: number; cam: ShotCamera }[] = [];
+let camLog: { step: number; cam: ShotCamera; aim?: string }[] = []; // aim = the AIMED pocket (dev clips)
 const FORCE_TEXT: Record<ForcedOutcome, string> = { success: 'Success', plainMiss: 'Miss', jawRattle: 'Rattle', inOff: 'In-off',
   wrongBallFirst: 'Foul (wrong ball)', reRack: 'RE-RACK' };
 /** The forced outcome of the next shot, if any (auto jump / clearance force success). Always null outside a dev build. */
@@ -439,7 +439,8 @@ function playShot(balls: Ball[], s: Shot, opts: { cue?: boolean; cam?: { target:
       else {
         view3d?.hideCue();
         if (camOn) view3d?.setCameraOverride(null);
-        if (!pplan || !lastPose || poseDone) { if (pplan) { view3d?.setSeeThrough(null); view3d?.setCameraOverride(null); } res(rec.duration); return; }
+        // a long shot (already over longShotSeconds from the cue's stroke): an instant cut back, no glide (3.5 s rule)
+        if (!pplan || !lastPose || poseDone || glideSkipped(tau)) { if (pplan) { view3d?.setSeeThrough(null); view3d?.setCameraOverride(null); } res(rec.duration); return; }
         // R2 (owner 2026-11-28): the balls have stopped: a glide back to the main camera; SHOOT waits for it
         view3d?.setSeeThrough(null);
         const from = lastPose;
@@ -646,7 +647,7 @@ async function onShoot() {
     if (capId) captionsShown.add(capId);
     const caption = capId && sh.target && !jumped ? { ball: sh.target, id: capId } : undefined;
     const len = jumped ? (h.shot as { duration: number }).duration : await playShot(before.frame!.balls, h.shot as Shot, { cue: true, cam, player, applause, caption, miss: missFor(h),
-      onCamera: (c) => { camLog.push({ step, cam: c }); } });
+      onCamera: (c) => { camLog.push({ step, cam: c, aim: aimOf(h.shot as ShotAimFields, before.frame!.balls, table).pocket }); } });
     // PLAN 8.2 / RULES B.6: a clearance's last pot is replayed from the pocket camera, then the clearance message
     if (!jumped && round.end?.type === 'clearance' && sh.target && sh.pocket) await clearanceReplay(sh.target, sh.pocket);
     const type = (h.shot as { type?: string }).type ?? '?';

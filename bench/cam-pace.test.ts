@@ -19,7 +19,7 @@ import { glideSeconds, pickPlayerCam } from '../src/view/playerCam';
 const table = buildTable();
 const LEVEL = (process.env.LEVEL ?? 'reds6') as LevelId;
 const SHOTS = +(process.env.SHOTS ?? 300);
-const OUT = process.env.OUT ?? 'bench/results/2026-11-28/cams';
+const OUT = process.env.OUT ?? 'bench/results/2026-11-28/cams2';
 const LEAD = (VARIANTS.C1 as unknown as { added: number }).added; // the cue's stroke before the hit (0.25 s)
 
 it(`camera pace ${LEVEL}`, () => {
@@ -45,7 +45,7 @@ it(`camera pace ${LEVEL}`, () => {
         const pick = pickPlayerCam(seed, ctx.step, rng);
         const cam = cut ? 'POCKET' : pick;
         const plain = LEAD + rec.duration, today = plain + (cut ? addedSeconds(cut) : 0);
-        const glide = cut ? 0 : glideSeconds(cam, rec.duration);
+        const glide = cut ? 0 : glideSeconds(cam, rec.duration, plain); // plain = the shot's time when the balls stop
         n++;
         appendFileSync(file, `${JSON.stringify({ seed, step: ctx.step, last: ctx.step >= steps, outcome, cam, d: +rec.duration.toFixed(3),
           plain: +plain.toFixed(3), today: +today.toFixed(3), now: +(today + glide).toFixed(3), fallback: s.fallback ?? null, whyNot: s.whyNot ?? null })}\n`);

@@ -1,0 +1,20 @@
+reds6: 100000 shots (86728 success, 13272 failure)
+  POCKET  16484 = 16.48% (target 16.53%) · given success 14367 = 16.57% · given failure 2117 = 15.95% · diff 0.61%
+  TODAY   62615 = 62.61% (target 62.60%) · given success 54250 = 62.55% · given failure 8365 = 63.03% · diff 0.48%
+  V1       8328 = 8.33% (target 8.35%) · given success 7223 = 8.33% · given failure 1105 = 8.33% · diff 0.00%
+  V2      12573 = 12.57% (target 12.52%) · given success 10888 = 12.55% · given failure 1685 = 12.70% · diff 0.14%
+  V3          0 = 0.00% (target 0.00%) · given success 0 = 0.00% · given failure 0 = 0.00% · diff 0.00%
+reds10: 100000 shots (88788 success, 11212 failure)
+  POCKET  16541 = 16.54% (target 16.62%) · given success 14751 = 16.61% · given failure 1790 = 15.97% · diff 0.65%
+  TODAY   62578 = 62.58% (target 62.54%) · given success 55527 = 62.54% · given failure 7051 = 62.89% · diff 0.35%
+  V1       8297 = 8.30% (target 8.34%) · given success 7366 = 8.30% · given failure 931 = 8.30% · diff 0.01%
+  V2      12584 = 12.58% (target 12.51%) · given success 11144 = 12.55% · given failure 1440 = 12.84% · diff 0.29%
+  V3          0 = 0.00% (target 0.00%) · given success 0 = 0.00% · given failure 0 = 0.00% · diff 0.00%
+reds15: 100000 shots (90191 success, 9809 failure)
+  POCKET  16547 = 16.55% (target 16.65%) · given success 14995 = 16.63% · given failure 1552 = 15.82% · diff 0.80%
+  TODAY   62529 = 62.53% (target 62.51%) · given success 56330 = 62.46% · given failure 6199 = 63.20% · diff 0.74%
+  V1       8303 = 8.30% (target 8.34%) · given success 7500 = 8.32% · given failure 803 = 8.19% · diff 0.13%
+  V2      12621 = 12.62% (target 12.50%) · given success 11366 = 12.60% · given failure 1255 = 12.79% · diff 0.19%
+  V3          0 = 0.00% (target 0.00%) · given success 0 = 0.00% · given failure 0 = 0.00% · diff 0.00%
+ Test Files  1 passed (1)
+      Tests  19 passed (19)

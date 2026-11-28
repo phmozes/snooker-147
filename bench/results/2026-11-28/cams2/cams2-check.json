@@ -1,0 +1,237 @@
+{
+ "base": "http://localhost:5190",
+ "code": "reds15-v3-3191475780",
+ "scout": [
+  {
+   "step": 2,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 3,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 4,
+   "cam": "V1",
+   "aim": "topRight"
+  },
+  {
+   "step": 5,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 6,
+   "cam": "V1",
+   "aim": "topRight"
+  },
+  {
+   "step": 7,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 8,
+   "cam": "V1",
+   "aim": "topRight"
+  },
+  {
+   "step": 9,
+   "cam": "V1",
+   "aim": "bottomRight"
+  },
+  {
+   "step": 10,
+   "cam": "V1",
+   "aim": "topRight"
+  },
+  {
+   "step": 11,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 12,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 13,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 14,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 15,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 16,
+   "cam": "V1",
+   "aim": "bottomRight"
+  },
+  {
+   "step": 17,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 18,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 19,
+   "cam": "V1",
+   "aim": "middleLeft"
+  },
+  {
+   "step": 20,
+   "cam": "V1",
+   "aim": "middleLeft"
+  },
+  {
+   "step": 21,
+   "cam": "V1",
+   "aim": "topRight"
+  },
+  {
+   "step": 22,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 23,
+   "cam": "V1",
+   "aim": "bottomLeft"
+  },
+  {
+   "step": 24,
+   "cam": "V1",
+   "aim": "middleLeft"
+  },
+  {
+   "step": 25,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 26,
+   "cam": "V1",
+   "aim": "topRight"
+  },
+  {
+   "step": 27,
+   "cam": "V1",
+   "aim": "bottomRight"
+  },
+  {
+   "step": 28,
+   "cam": "V1",
+   "aim": "topRight"
+  },
+  {
+   "step": 29,
+   "cam": "V1",
+   "aim": "topLeft"
+  },
+  {
+   "step": 30,
+   "cam": "V1",
+   "aim": "middleLeft"
+  },
+  {
+   "step": 31,
+   "cam": "V1",
+   "aim": "bottomRight"
+  },
+  {
+   "step": 32,
+   "cam": "V1",
+   "aim": "middleRight"
+  },
+  {
+   "step": 33,
+   "cam": "V1",
+   "aim": "bottomRight"
+  },
+  {
+   "step": 34,
+   "cam": "V1",
+   "aim": "middleRight"
+  },
+  {
+   "step": 35,
+   "cam": "V1",
+   "aim": "topRight"
+  },
+  {
+   "step": 36,
+   "cam": "V1",
+   "aim": "topRight"
+  }
+ ],
+ "clips": [
+  {
+   "name": "V1-corner",
+   "cam": "V1",
+   "kind": "corner",
+   "step": 2,
+   "aim": "topLeft",
+   "outcome": "success",
+   "shownCamera": "V1",
+   "frames": 76,
+   "seconds": 2.53,
+   "shootBackAt": 2.13,
+   "kb": 78.8
+  },
+  {
+   "name": "V1-middle",
+   "cam": "V1",
+   "kind": "middle",
+   "step": 19,
+   "aim": "middleLeft",
+   "outcome": "success",
+   "shownCamera": "V1",
+   "frames": 92,
+   "seconds": 3.07,
+   "shootBackAt": 2.67,
+   "kb": 89.6
+  },
+  {
+   "name": "V2-corner",
+   "cam": "V2",
+   "kind": "corner",
+   "step": 2,
+   "aim": "topLeft",
+   "outcome": "success",
+   "shownCamera": "V2",
+   "frames": 76,
+   "seconds": 2.53,
+   "shootBackAt": 2.13,
+   "kb": 74.1
+  },
+  {
+   "name": "V2-middle",
+   "cam": "V2",
+   "kind": "middle",
+   "step": 19,
+   "aim": "middleLeft",
+   "outcome": "success",
+   "shownCamera": "V2",
+   "frames": 92,
+   "seconds": 3.07,
+   "shootBackAt": 2.67,
+   "kb": 84.5
+  }
+ ],
+ "blockedDevRequests": 0,
+ "errors": []
+}

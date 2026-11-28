@@ -380,7 +380,9 @@ export const CONFIG = {
     enabled: true,               // master switch: false = every shot keeps today's camera (the pocket cut stays as above)
     stream: 'playerCam',         // seeded stream name (visual only, NOT in rng.streams)
     fromStep: 2,                 // step 1 and the opponent's break-off: always TODAY
-    shares: { TODAY: 0.25, V1: 0.25, V2: 0.25, V3: 0.25 }, // of the shots without a pocket cut (sum 1)
+    // of the shots without a pocket cut (sum 1). Owner phone check 2026-11-28: TODAY 75%, V2 15%, V1 10%; V3 out of the
+    // draw (its rise moved too much), its code kept: give it a weight here to bring it back
+    shares: { TODAY: 0.75, V1: 0.10, V2: 0.15, V3: 0 },
     // the hold: the camera behind the cue ball on the planned cue line. back = m behind the cue ball, h = height (m),
     // ahead = the look-at point that far in front of the cue ball (on the cloth), fov = lens (degrees, vertical)
     views: {
@@ -403,6 +405,15 @@ export const CONFIG = {
       fovFactor: (844 / 390) * 0.62, // ... (phone portrait factor of the mockup) ...
       minFov: 24,                // ... never narrower than this, never wider than the hold's lens
       clothInset: 0.03,          // the slide never takes the camera further outside the cloth than the hold was
+      // the AIMED pocket is a middle pocket (owner 2026-11-28): no low close end that fills the screen with the pocket;
+      // a higher, further end that frames the pocket and the cloth around it. Corner pockets keep the numbers above.
+      middle: {
+        liftDeg: 50,             // the end angle above the cloth
+        dist: 1.80,              // the end distance from the pocket's mouth (m), always
+        frameWidth: 1.0,         // zoom: about this wide (m) at the pocket (same fovFactor / minFov / hold's lens cap)
+        atInward: 0.15,          // the look-at point this far (m) from the mouth onto the cloth, so more cloth shows
+        minInward: 0.5,          // the camera's direction from the mouth points onto the cloth at least this much (cos)
+      },
     },
     fixes: {                     // the hard cases H1-H3 (round 2)
       overCue: 0.09,             // H1: at least this far (m) above the cue's centre line where the camera stands
@@ -415,6 +426,8 @@ export const CONFIG = {
       fullCue: true,             // the cue is drawn full length (the shortening is for the main camera's view)
     },
     glideBackSeconds: 0.4,       // R2: when the balls stop, a glide back to the main camera; SHOOT waits for it
+    longShotSeconds: 3.1,        // ... but when the shot (from the cue's stroke) is already longer than this when the balls
+                                 // stop: an instant cut back to the main camera instead (owner 2026-11-28: 3.5 s rule)
   },
 
   // ---------------- RE-RACK (last resort, RULES D.4) ----------------

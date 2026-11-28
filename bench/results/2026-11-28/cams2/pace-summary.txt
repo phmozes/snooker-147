@@ -1,0 +1,18 @@
+reds6: 300 shots; cams {"POCKET":47,"TODAY":204,"V1":20,"V2":29}
+  extra s/shot vs plain: mean 0.34, median 0.00, 90% 1.86 (pocket cut part 0.27, glide part 0.06)
+  shot time s: mean 2.22, median 2.06, 90% 3.60, max 4.77
+  glides: 46, longest shot with a glide 3.215 s; V1/V2 shots with the glide skipped (over 3.1 s): 3
+  over 3.5 s: 37 (pocket cut 32, last 0, V1/V2 2, TODAY 3)
+  PUSHED over 3.5 s by the glide: 0 []
+reds10: 300 shots; cams {"POCKET":49,"TODAY":200,"V1":20,"V2":31}
+  extra s/shot vs plain: mean 0.36, median 0.00, 90% 1.86 (pocket cut part 0.30, glide part 0.07)
+  shot time s: mean 2.29, median 2.10, 90% 3.63, max 5.21
+  glides: 51, longest shot with a glide 3.131 s; V1/V2 shots with the glide skipped (over 3.1 s): 0
+  over 3.5 s: 33 (pocket cut 32, last 0, V1/V2 0, TODAY 1)
+  PUSHED over 3.5 s by the glide: 0 []
+reds15: 300 shots; cams {"TODAY":197,"V1":22,"V2":36,"POCKET":45}
+  extra s/shot vs plain: mean 0.35, median 0.00, 90% 1.86 (pocket cut part 0.27, glide part 0.08)
+  shot time s: mean 2.26, median 2.08, 90% 3.60, max 4.61
+  glides: 57, longest shot with a glide 3.202 s; V1/V2 shots with the glide skipped (over 3.1 s): 1
+  over 3.5 s: 33 (pocket cut 28, last 0, V1/V2 1, TODAY 4)
+  PUSHED over 3.5 s by the glide: 0 []

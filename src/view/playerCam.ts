@@ -122,7 +122,8 @@ export function holdPose(cam: Exclude<PlayerCamId, 'TODAY'>, C: Vec2, dir: Vec2,
   return { pos: [x, y, h], at: [C.x + d.x * V.ahead, C.y + d.y * V.ahead, 0], fov: V.fov, raised };
 }
 
-/** The end of the V1 / V2 follow (F2): looks at the aimed pocket's mouth from 30° above the cloth, at most 1.5 m away,
+/** The end of the V1 / V2 follow (F2): looks at the aimed pocket's mouth from 30° above the cloth, at most 1.5 m away
+ *  (a middle pocket: middleEnd, 50° and 1.8 m),
  *  from a spot slid at most 0.8 m from the hold towards the pot line behind the target ball. Inputs: the hold and the
  *  FollowInput only. */
 export function followPose(hold: Pose, f: FollowInput, table: TableGeometry): Pose {
@@ -141,12 +142,29 @@ export function followPose(hold: Pose, f: FollowInput, table: TableGeometry): Po
   if (Math.abs(px) > inX && Math.abs(px) > Math.abs(hold.pos[0])) px = Math.sign(px) * Math.max(inX, Math.abs(hold.pos[0]));
   if (Math.abs(py) > inY && Math.abs(py) > Math.abs(hold.pos[1])) py = Math.sign(py) * Math.max(inY, Math.abs(hold.pos[1]));
   const hor = Math.hypot(px - mouth.x, py - mouth.y);
+  if (pk.kind === 'middle') return middleEnd(hold, mouth, px - mouth.x, py - mouth.y);
   const el = FW.liftDeg * DEG;
   const D = Math.min(Math.hypot(hor, hold.pos[2]), FW.maxDist);
   const h = D * Math.cos(el), yaw = Math.atan2(py - mouth.y, px - mouth.x);
   const pos: [number, number, number] = [mouth.x + h * Math.cos(yaw), mouth.y + h * Math.sin(yaw), D * Math.sin(el)];
   const fov = Math.max(FW.minFov, Math.min(hold.fov, (2 * Math.atan(FW.frameWidth / 2 / D) / DEG) * FW.fovFactor));
   return { pos, at: [mouth.x, mouth.y, 0], fov };
+}
+
+/** The follow's end when the AIMED pocket is a middle pocket (owner 2026-11-28): from the same compass direction as a
+ *  corner end (but pointing onto the cloth at least FW.middle.minInward), always FW.middle.dist from the mouth at
+ *  FW.middle.liftDeg above the cloth, looking a little onto the cloth, zoomed to about FW.middle.frameWidth. */
+function middleEnd(hold: Pose, mouth: Vec2, vx0: number, vy0: number): Pose {
+  const M = FW.middle, inX = -Math.sign(mouth.x) || 1; // middle pockets sit on the long cushions (x = +-halfWidth)
+  let vl = Math.hypot(vx0, vy0);
+  let vx = vl > 1e-9 ? vx0 / vl : inX, vy = vl > 1e-9 ? vy0 / vl : 0;
+  if (vx * inX < M.minInward) { vx = inX * M.minInward; vy = (Math.sign(vy) || 1) * Math.sqrt(1 - M.minInward * M.minInward); }
+  vl = Math.hypot(vx, vy); vx /= vl; vy /= vl;
+  const el = M.liftDeg * DEG, D = M.dist, h = D * Math.cos(el);
+  const at: [number, number, number] = [mouth.x + vx * M.atInward, mouth.y + vy * M.atInward, 0];
+  const pos: [number, number, number] = [mouth.x + vx * h, mouth.y + vy * h, D * Math.sin(el)];
+  const fov = Math.max(FW.minFov, Math.min(hold.fov, (2 * Math.atan(M.frameWidth / 2 / D) / DEG) * FW.fovFactor));
+  return { pos, at, fov };
 }
 
 /** H2/H3 on every frame of a move: outside the cloth at least overRail above the rail top; never lower than the hold
@@ -184,7 +202,13 @@ export function glideBack(from: Pose, main: Pose, since: number): { pose: Pose; 
   return { pose: orbit(from, main, k), done: since >= T };
 }
 
-/** Seconds the glide back adds once the balls have stopped (0 when the camera is already at the main camera). */
-export const glideSeconds = (cam: ShotCamera, sinceHitAtEnd: number): number =>
-  cam === 'V1' || cam === 'V2' ? PCAM.glideBackSeconds
+/** Owner 2026-11-28 (3.5 s rule): no glide when the shot is already longer than longShotSeconds when the balls stop
+ *  (`shotSeconds` = from the start of the cue's stroke); the camera cuts back to the main camera at once. */
+export const glideSkipped = (shotSeconds: number): boolean => shotSeconds > PCAM.longShotSeconds;
+
+/** Seconds the glide back adds once the balls have stopped (0 when the camera is already at the main camera, or when
+ *  the shot is long: glideSkipped). */
+export const glideSeconds = (cam: ShotCamera, sinceHitAtEnd: number, shotSeconds = 0): number =>
+  glideSkipped(shotSeconds) ? 0
+    : cam === 'V1' || cam === 'V2' ? PCAM.glideBackSeconds
     : cam === 'V3' && sinceHitAtEnd < PCAM.v3RiseSeconds ? PCAM.glideBackSeconds : 0;
